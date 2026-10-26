@@ -77,6 +77,25 @@
     <button id="modeles-fermer" class="discret">Annuler</button>
   </dialog>
 
+  <script>
+    // Diagnostic : affiche un message clair si l'application ne démarre pas
+    (function () {
+      function montrer(texte) {
+        var b = document.getElementById("erreur");
+        if (b) { b.textContent = texte; b.hidden = false; }
+      }
+      if (location.protocol === "file:") {
+        montrer("Cette page est ouverte comme un simple fichier (file://). Google refuse la connexion dans ce cas. Ouvrez-la avec http://localhost:8000/ (commande « python -m http.server 8000 » dans le dossier) ou depuis votre site Firebase.");
+      }
+      window.addEventListener("error", function (e) { montrer("Erreur dans la page : " + (e.message || "inconnue")); });
+      window.addEventListener("unhandledrejection", function (e) { montrer("Erreur : " + ((e.reason && e.reason.message) || e.reason || "inconnue")); });
+      setTimeout(function () {
+        if (!window.__appPret) {
+          montrer("L'application n'a pas démarré. Vérifiez votre connexion internet (les composants Firebase se chargent depuis Google), désactivez un éventuel bloqueur de publicités, puis rechargez. Appuyez sur F12 > Console pour voir le détail.");
+        }
+      }, 6000);
+    })();
+  </script>
   <script type="module" src="app.js"></script>
 </body>
 </html>

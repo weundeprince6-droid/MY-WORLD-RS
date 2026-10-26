@@ -61,6 +61,7 @@ onAuthStateChanged(auth, (user) => {
   $("bouton-actualiser").hidden = !user;
   $("utilisateur").textContent = user ? user.displayName || user.email : "";
 });
+window.__appPret = true;
 
 // ---------- Utilitaires ----------
 function afficherErreur(texte) {
