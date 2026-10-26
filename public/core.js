@@ -150,9 +150,11 @@ export function construireAlertes({ messages = [], agenda = { aujourdhui: [], aV
   }
 
   for (const k of kpis) {
-    if (k.etat === "bas") alertes.push({ niveau: "moyenne", source: "données", texte: `${k.label} est sous le seuil (${k.valeur})` });
-    if (k.etat === "haut") alertes.push({ niveau: "moyenne", source: "données", texte: `${k.label} dépasse le seuil (${k.valeur})` });
-    if (k.erreur) alertes.push({ niveau: "basse", source: "données", texte: `${k.label} : lecture impossible` });
+    const origine = k.base ? `${k.base} · données` : "données";
+    const personnalise = k.messageAlerte ? remplirModele(k.messageAlerte, { valeur: k.valeur }) : null;
+    if (k.etat === "bas") alertes.push({ niveau: "moyenne", source: origine, texte: personnalise || `${k.label} est sous le seuil (${k.valeur})` });
+    if (k.etat === "haut") alertes.push({ niveau: k.niveauAlerte || "moyenne", source: origine, texte: personnalise || `${k.label} dépasse le seuil (${k.valeur})` });
+    if (k.erreur) alertes.push({ niveau: "basse", source: origine, texte: `${k.label} : lecture impossible` });
   }
 
   const socialImportant = social.filter((s) => s.important);

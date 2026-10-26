@@ -63,6 +63,9 @@ a { color: var(--accent); }
 .kpi .valeur small { font-size: .8rem; color: var(--doux); font-weight: 400; }
 .kpi .libelle { color: var(--doux); font-size: .88rem; }
 .kpi.alerte { border-color: var(--moyenne); }
+.kpi.erreur { opacity: .6; border-style: dashed; }
+.titre-base { margin: 14px 0 8px; font-size: .85rem; color: var(--doux); text-transform: uppercase; letter-spacing: .04em; }
+.titre-base:first-child { margin-top: 0; }
 dialog { border: 1px solid var(--bord); border-radius: 14px; background: var(--carte); color: var(--texte); max-width: 420px; width: calc(100% - 32px); }
 dialog::backdrop { background: rgba(0, 0, 0, .45); }
 .modeles { display: grid; gap: 8px; margin: 12px 0; }

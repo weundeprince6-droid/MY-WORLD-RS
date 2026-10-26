@@ -4,18 +4,21 @@ import {
   getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {
-  getFirestore, collection, getDocs, getCountFromServer, query, where, orderBy, limit,
-} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import {
-  messagesImportants, repartirAgenda, minutesAvant, evaluerSeuil, construireAlertes,
+  messagesImportants, repartirAgenda, evaluerSeuil, construireAlertes,
   resumeDuJour, remplirModele, construireBrouillonBrut, expediteurLisible,
 } from "./core.js";
+import {
+  corpsAgregation, lireAgregat, corpsListe, lireListe, decoderDocument,
+  calculerCreditsAvec, MESURES_CREDITS_AVEC,
+} from "./firestore.js";
 
 const $ = (id) => document.getElementById(id);
 const SCOPES = [
   "https://www.googleapis.com/auth/gmail.readonly",
   "https://www.googleapis.com/auth/gmail.compose",
   "https://www.googleapis.com/auth/calendar.readonly",
+  // Lecture des bases Firestore avec les droits de VOTRE compte Google (propriétaire des projets)
+  "https://www.googleapis.com/auth/datastore",
 ];
 
 let config;
@@ -24,13 +27,12 @@ try {
 } catch {
   $("configuration-manquante").hidden = false;
   $("zone-connexion").hidden = true;
-  throw new Error("config.js introuvable : copiez config.example.js en config.js");
+  throw new Error("config.js introuvable dans le dossier public");
 }
-const { firebaseConfig, reglages } = config;
+const { firebaseConfig, reglages, bases } = config;
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
 let jetonGoogle = null;
 let etat = { messages: [], agenda: { aujourdhui: [], aVenir: [] }, kpis: [], social: [] };
 
@@ -117,37 +119,75 @@ async function chargerAgenda() {
   return repartirAgenda(data.items || []);
 }
 
-async function chargerKpis() {
-  const resultats = [];
-  for (const k of reglages.kpis) {
-    try {
-      let ref = collection(db, k.collection);
-      if (k.filtre) ref = query(ref, where(k.filtre.champ, "==", k.filtre.valeur));
-      let valeur;
-      if (k.op === "sum") {
-        const snap = await getDocs(ref);
-        valeur = snap.docs.reduce((t, d) => t + (Number(d.data()[k.champ]) || 0), 0);
-      } else {
-        valeur = (await getCountFromServer(ref)).data().count;
-      }
-      resultats.push({ label: k.label, valeur, unite: k.unite || "", etat: evaluerSeuil(valeur, k.seuil) });
-    } catch (e) {
-      resultats.push({ label: k.label, valeur: "—", unite: "", etat: "ok", erreur: e.message });
-    }
+// --- Firestore (API REST, avec les droits de votre compte Google) ---
+function urlFirestore(projectId, suite) {
+  return `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents${suite}`;
+}
+function firestore(projectId, suite, corps) {
+  return google(urlFirestore(projectId, suite), {
+    method: corps ? "POST" : "GET",
+    body: corps ? JSON.stringify(corps) : undefined,
+    headers: { "x-goog-user-project": projectId },
+  });
+}
+
+// Tous les documents d'une collection (pagination), mis en cache le temps d'une actualisation
+let cacheDocuments = new Map();
+function tousLesDocuments(projectId, collectionId) {
+  const cle = `${projectId}/${collectionId}`;
+  if (!cacheDocuments.has(cle)) {
+    cacheDocuments.set(cle, (async () => {
+      const docs = [];
+      let page = "";
+      do {
+        const r = await firestore(projectId, `/${collectionId}?pageSize=300${page ? `&pageToken=${page}` : ""}`);
+        (r.documents || []).forEach((d) => docs.push(decoderDocument(d)));
+        page = r.nextPageToken || "";
+      } while (page);
+      return docs;
+    })());
   }
-  return resultats;
+  return cacheDocuments.get(cle);
+}
+
+async function valeurKpi(k) {
+  const base = bases[k.base];
+  if (!base) throw new Error(`Base inconnue : ${k.base}`);
+  if (k.op === "avec_credits") {
+    const membres = await tousLesDocuments(base.projectId, "members");
+    const mesure = MESURES_CREDITS_AVEC[k.mesure];
+    if (!mesure) throw new Error(`Mesure inconnue : ${k.mesure}`);
+    return mesure(calculerCreditsAvec(membres, new Date().toISOString().slice(0, 10)));
+  }
+  const reponse = await firestore(base.projectId, ":runAggregationQuery", corpsAgregation(k));
+  return lireAgregat(reponse);
+}
+
+async function chargerKpis() {
+  cacheDocuments = new Map();
+  return Promise.all(
+    reglages.kpis.map(async (k) => {
+      const base = bases[k.base]?.nom || "";
+      try {
+        const valeur = await valeurKpi(k);
+        return { ...k, base, valeur, unite: k.unite || "", etat: evaluerSeuil(valeur, k.seuil) };
+      } catch (e) {
+        return { ...k, base, valeur: "—", unite: "", etat: "ok", erreur: e.message };
+      }
+    }),
+  );
 }
 
 async function chargerSocial() {
   const s = reglages.social;
-  if (!s) return [];
+  const base = s && bases[s.base];
+  if (!base) return [];
   try {
-    const q = query(collection(db, s.collection), orderBy("date", "desc"), limit(s.max));
-    const snap = await getDocs(q);
-    return snap.docs.map((d) => {
-      const x = d.data();
-      return { id: d.id, source: x.source || "autre", de: x.de || "", texte: x.texte || "", date: x.date?.toDate?.() || null, important: !!x.important };
-    });
+    const r = await firestore(base.projectId, ":runQuery", corpsListe({ collection: s.collection, tri: "date", max: s.max }));
+    return lireListe(r).map((x) => ({
+      id: x.id, source: x.source || "autre", de: x.de || "", texte: x.texte || "",
+      date: x.date instanceof Date ? x.date : null, important: !!x.important,
+    }));
   } catch {
     return [];
   }
@@ -188,15 +228,26 @@ function rendreAgenda() {
 }
 
 function rendreKpis() {
-  $("grille-kpis").innerHTML = etat.kpis.length
-    ? etat.kpis
+  if (!etat.kpis.length) {
+    $("grille-kpis").innerHTML = '<p class="vide">Aucun indicateur configuré (voir config.js).</p>';
+    return;
+  }
+  const groupes = new Map();
+  for (const k of etat.kpis) {
+    if (!groupes.has(k.base)) groupes.set(k.base, []);
+    groupes.get(k.base).push(k);
+  }
+  $("grille-kpis").innerHTML = [...groupes.entries()]
+    .map(
+      ([nom, liste]) => `<h3 class="titre-base">${echapper(nom || "Données")}</h3><div class="kpis">${liste
         .map(
-          (k) => `<div class="kpi ${k.etat !== "ok" ? "alerte" : ""}">
+          (k) => `<div class="kpi ${k.erreur ? "erreur" : k.etat !== "ok" ? "alerte" : ""}" ${k.erreur ? `title="${echapper(k.erreur)}"` : ""}>
             <div class="valeur">${echapper(typeof k.valeur === "number" ? k.valeur.toLocaleString("fr-FR") : k.valeur)} <small>${echapper(k.unite)}</small></div>
             <div class="libelle">${echapper(k.label)}</div></div>`,
         )
-        .join("")
-    : '<p class="vide">Aucun indicateur configuré (voir config.js).</p>';
+        .join("")}</div>`,
+    )
+    .join("");
 }
 
 function rendreSocial() {

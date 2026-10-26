@@ -5,7 +5,7 @@
   "description": "Tableau de bord unique : messagerie, agenda, bases de données, réseaux sociaux. L'essentiel en un coup d'œil.",
   "type": "module",
   "scripts": {
-    "test": "node test/core.test.mjs",
+    "test": "node test/core.test.mjs && node test/firestore.test.mjs",
     "serve": "npx --yes serve public",
     "deploy": "npx --yes firebase-tools deploy --only hosting"
   },

@@ -1,7 +1,8 @@
 {
   "hosting": {
+    "target": "dashboard",
     "public": "public",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**", "config.example.js"],
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "headers": [
       { "source": "**", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] }
     ]

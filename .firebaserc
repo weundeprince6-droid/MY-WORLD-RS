@@ -1,0 +1,12 @@
+{
+  "projects": {
+    "default": "avec-la-sagesse"
+  },
+  "targets": {
+    "avec-la-sagesse": {
+      "hosting": {
+        "dashboard": ["my-world-rs"]
+      }
+    }
+  }
+}

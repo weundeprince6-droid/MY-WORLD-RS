@@ -1,0 +1,24 @@
+# Déploiement manuel sur Firebase Hosting : GitHub > onglet Actions > « Déployer sur Firebase » > Run workflow.
+# Prérequis (une seule fois) : créer le secret FIREBASE_SERVICE_ACCOUNT (voir README, section « Déployer sur Firebase »).
+name: Déployer sur Firebase
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deployer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Tests
+        run: npm test
+      - name: Déploiement
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: avec-la-sagesse
+          target: dashboard
+          channelId: live
