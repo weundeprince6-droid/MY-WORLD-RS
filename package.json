@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "test": "node test/core.test.mjs && node test/firestore.test.mjs",
+    "build:html": "node scripts/build-html.mjs",
     "serve": "npx --yes serve public",
     "deploy": "npx --yes firebase-tools deploy --only hosting"
   },
