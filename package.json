@@ -1,0 +1,13 @@
+{
+  "name": "my-world-rs",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Tableau de bord unique : messagerie, agenda, bases de données, réseaux sociaux. L'essentiel en un coup d'œil.",
+  "type": "module",
+  "scripts": {
+    "test": "node test/core.test.mjs",
+    "serve": "npx --yes serve public",
+    "deploy": "npx --yes firebase-tools deploy --only hosting"
+  },
+  "license": "UNLICENSED"
+}

@@ -1,0 +1,69 @@
+:root {
+  --fond: #f4f6f8;
+  --carte: #ffffff;
+  --texte: #1c2430;
+  --doux: #5d6b7b;
+  --bord: #e2e7ed;
+  --accent: #0b6e4f;
+  --accent-fond: #e3f4ec;
+  --haute: #c0392b;
+  --moyenne: #d98a00;
+  --basse: #5d6b7b;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fond: #0f141a; --carte: #171e26; --texte: #e8edf2; --doux: #93a1b1; --bord: #263140;
+    --accent: #3ec99a; --accent-fond: #12332a; --haute: #ff6b5b; --moyenne: #f0b341; --basse: #93a1b1;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--fond); color: var(--texte); }
+.entete { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px; background: var(--carte); border-bottom: 1px solid var(--bord); position: sticky; top: 0; z-index: 2; }
+.marque { display: flex; align-items: center; gap: 10px; }
+.marque h1 { font-size: 1.1rem; margin: 0; }
+.logo { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 9px; background: var(--accent); color: #fff; font-weight: 700; font-size: .85rem; }
+.outils { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+main { max-width: 1100px; margin: 0 auto; padding: 16px; }
+button { font: inherit; cursor: pointer; border: 1px solid var(--bord); background: var(--carte); color: var(--texte); padding: 8px 14px; border-radius: 8px; }
+button:hover { border-color: var(--accent); }
+button.principal { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; padding: 12px 20px; }
+button.discret { color: var(--doux); }
+a { color: var(--accent); }
+.meta { color: var(--doux); font-size: .85rem; }
+.bandeau { padding: 10px 14px; border-radius: 8px; margin-bottom: 12px; }
+.bandeau.erreur { background: #fdecea; color: #8a1f14; }
+.bandeau.ok { background: var(--accent-fond); color: var(--accent); }
+@media (prefers-color-scheme: dark) { .bandeau.erreur { background: #3a1b18; color: #ffb4ab; } }
+.carte { background: var(--carte); border: 1px solid var(--bord); border-radius: 14px; padding: 16px; }
+.carte h2 { margin: 0 0 10px; font-size: 1rem; }
+.carte h3 { margin: 16px 0 6px; font-size: .85rem; color: var(--doux); text-transform: uppercase; letter-spacing: .04em; }
+.accueil { text-align: center; padding: 40px 20px; max-width: 520px; margin: 40px auto; }
+.accueil h2 { font-size: 1.4rem; }
+.resume-jour { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.resume-jour p { margin: 0; font-size: 1.1rem; font-weight: 600; }
+.grille { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+.large { grid-column: 1 / -1; }
+@media (max-width: 760px) { .grille { grid-template-columns: 1fr; } }
+.liste { list-style: none; margin: 0; padding: 0; }
+.liste li { padding: 10px 0; border-bottom: 1px solid var(--bord); }
+.liste li:last-child { border-bottom: 0; }
+.liste .ligne { display: flex; justify-content: space-between; gap: 10px; }
+.liste .extrait { color: var(--doux); font-size: .88rem; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.liste .actions { display: flex; gap: 10px; align-items: center; margin-top: 6px; font-size: .88rem; }
+.liste .actions button { padding: 4px 10px; font-size: .85rem; }
+.liste li.non-lu { border-left: 3px solid var(--accent); padding-left: 10px; }
+.vide { color: var(--doux); }
+.alertes li { display: flex; align-items: center; gap: 10px; }
+.pastille { width: 10px; height: 10px; border-radius: 50%; background: var(--basse); flex: none; }
+.niveau-haute .pastille { background: var(--haute); }
+.niveau-moyenne .pastille { background: var(--moyenne); }
+.kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
+.kpi { border: 1px solid var(--bord); border-radius: 12px; padding: 14px; }
+.kpi .valeur { font-size: 1.6rem; font-weight: 700; }
+.kpi .valeur small { font-size: .8rem; color: var(--doux); font-weight: 400; }
+.kpi .libelle { color: var(--doux); font-size: .88rem; }
+.kpi.alerte { border-color: var(--moyenne); }
+dialog { border: 1px solid var(--bord); border-radius: 14px; background: var(--carte); color: var(--texte); max-width: 420px; width: calc(100% - 32px); }
+dialog::backdrop { background: rgba(0, 0, 0, .45); }
+.modeles { display: grid; gap: 8px; margin: 12px 0; }
+code { background: var(--accent-fond); padding: 1px 6px; border-radius: 4px; }

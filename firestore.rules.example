@@ -1,0 +1,18 @@
+// EXEMPLE de règles Firestore pour My World RS — NON déployé automatiquement.
+//
+// ATTENTION : si vous utilisez le même projet Firebase que « AVEC LA SAGESSE »,
+// ne remplacez PAS ses règles par celles-ci. Ajoutez seulement le bloc
+// « social_inbox » à vos règles existantes (ou utilisez un projet Firebase séparé).
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Boîte de réception des réseaux sociaux : lecture réservée à votre compte Google.
+    match /social_inbox/{doc} {
+      allow read: if request.auth != null
+                  && request.auth.token.email == "VOTRE_EMAIL@gmail.com";
+      allow write: if false; // alimenté uniquement par le serveur (connecteurs), jamais par le navigateur
+    }
+  }
+}

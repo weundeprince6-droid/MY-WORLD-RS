@@ -1,0 +1,8 @@
+node_modules/
+.firebase/
+firebase-debug.log
+.env
+.env.*
+# Vos valeurs personnelles : ne jamais publier
+public/config.js
+.DS_Store

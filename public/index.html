@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My World RS</title>
+  <meta name="description" content="Votre essentiel : messages, agenda, chiffres clés et alertes au même endroit.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="entete">
+    <div class="marque"><span class="logo" aria-hidden="true">RS</span><h1>My World RS</h1></div>
+    <div class="outils">
+      <span id="utilisateur" class="meta"></span>
+      <button id="bouton-actualiser" hidden>Actualiser</button>
+      <button id="bouton-deconnexion" class="discret" hidden>Déconnexion</button>
+    </div>
+  </header>
+
+  <main>
+    <div id="erreur" class="bandeau erreur" role="alert" hidden></div>
+    <div id="confirmation" class="bandeau ok" role="status" hidden></div>
+
+    <section id="configuration-manquante" class="carte" hidden>
+      <h2>Configuration à terminer</h2>
+      <p>Copiez <code>public/config.example.js</code> en <code>public/config.js</code>, remplissez vos valeurs Firebase, puis rechargez la page. Les étapes complètes sont dans le fichier <code>README.md</code>.</p>
+    </section>
+
+    <section id="zone-connexion" class="carte accueil">
+      <h2>Votre essentiel, en un coup d'œil</h2>
+      <p>Messages importants, rendez-vous du jour, chiffres clés de vos bases et alertes, réunis sur une seule page.</p>
+      <button id="bouton-connexion" class="principal">Se connecter avec Google</button>
+      <p class="meta">Vos données restent entre Google, Firebase et votre navigateur.</p>
+    </section>
+
+    <div id="tableau" hidden>
+      <section class="resume-jour">
+        <p id="resume" aria-live="polite">Chargement…</p>
+        <span id="derniere-maj" class="meta"></span>
+      </section>
+
+      <div class="grille">
+        <section class="carte large">
+          <h2>Alertes</h2>
+          <ul id="liste-alertes" class="liste alertes"></ul>
+        </section>
+
+        <section class="carte">
+          <h2>Messages importants</h2>
+          <ul id="liste-messages" class="liste"></ul>
+        </section>
+
+        <section class="carte">
+          <h2>Aujourd'hui</h2>
+          <ul id="liste-agenda" class="liste"></ul>
+          <h3>À venir</h3>
+          <ul id="liste-avenir" class="liste"></ul>
+        </section>
+
+        <section class="carte large">
+          <h2>Chiffres clés</h2>
+          <div id="grille-kpis" class="kpis"></div>
+        </section>
+
+        <section class="carte large">
+          <h2>Réseaux sociaux</h2>
+          <ul id="liste-social" class="liste"></ul>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <dialog id="modeles">
+    <h2 id="modeles-titre">Répondre</h2>
+    <p class="meta">Un brouillon sera créé dans Gmail. Rien n'est envoyé sans votre validation.</p>
+    <div id="modeles-liste" class="modeles"></div>
+    <button id="modeles-fermer" class="discret">Annuler</button>
+  </dialog>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
