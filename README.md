@@ -40,10 +40,10 @@ Si un chiffre reste grisé avec un trait pointillé, votre compte n'a pas accès
 ## Mise en route
 
 1. **Connexion Google** : Console Firebase du projet `avec-la-sagesse` > Authentication > Méthode de connexion > activez **Google**.
-2. **APIs Google** : dans Google Cloud Console (projet `avec-la-sagesse`), activez **Gmail API**, **Google Calendar API** et **Google Drive API** et **Google Tasks API**.
+2. **APIs Google** : dans Google Cloud Console (projet `avec-la-sagesse`), activez **Gmail API**, **Google Calendar API**, **Google Drive API** et **Google Tasks API**.
 3. **Écran de consentement OAuth** : mode « Test », ajoutez votre adresse Gmail comme utilisateur test.
    Google affiche « application non vérifiée » : c'est normal pour un usage personnel. Acceptez les autorisations
-   (Gmail, Agenda, Firestore, lecture des métadonnées Drive et consultation des tâches Google Tasks). Après l'ajout de Drive, déconnectez-vous puis reconnectez-vous pour accorder cette nouvelle autorisation.
+   (Gmail, Agenda, Firestore, lecture des métadonnées Drive et consultation des tâches Google Tasks). Après l'ajout de Drive ou de Tasks, déconnectez-vous puis reconnectez-vous pour accorder les nouvelles autorisations.
 4. **Essai en local** : `npm run serve`, ouvrez l'adresse affichée (ajoutez `localhost` dans Authentication > Paramètres > Domaines autorisés).
 5. Mettez en ligne (section suivante).
 
