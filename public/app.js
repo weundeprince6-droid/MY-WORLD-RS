@@ -1,8 +1,4 @@
 // app.js — interface My World RS : connexion Google, lecture Gmail/Agenda/Firestore, rendu.
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-import {
-  getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged,
-} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {
   messagesImportants, repartirAgenda, evaluerSeuil, construireAlertes,
   resumeDuJour, remplirModele, construireBrouillonBrut, expediteurLisible,
@@ -13,6 +9,7 @@ import {
 } from "./firestore.js";
 
 const $ = (id) => document.getElementById(id);
+const SDK = "https://www.gstatic.com/firebasejs/10.14.1/";
 const SCOPES = [
   "https://www.googleapis.com/auth/gmail.readonly",
   "https://www.googleapis.com/auth/gmail.compose",
@@ -20,6 +17,22 @@ const SCOPES = [
   // Lecture des bases Firestore avec les droits de VOTRE compte Google (propriétaire des projets)
   "https://www.googleapis.com/auth/datastore",
 ];
+
+let jetonGoogle = null;
+let fb = null; // composants Firebase, chargés après l'affichage de la page
+let etat = { messages: [], agenda: { aujourdhui: [], aVenir: [] }, kpis: [], social: [] };
+
+// Les boutons réagissent dès le départ, même si Firebase n'est pas encore chargé
+$("adresse-page").textContent = location.protocol === "file:"
+  ? "Page ouverte comme un fichier local : la connexion Google ne marchera pas (voir le message ci-dessus)."
+  : `Domaine de cette page : ${location.hostname} (il doit figurer dans Firebase > Authentication > Paramètres > Domaines autorisés).`;
+$("bouton-connexion").addEventListener("click", seConnecter);
+$("bouton-deconnexion").addEventListener("click", async () => {
+  try { if (fb) await fb.signOut(fb.auth); } catch { /* ignoré */ }
+  jetonGoogle = null;
+  afficherSession(false);
+});
+$("bouton-actualiser").addEventListener("click", () => tout());
 
 let config;
 try {
@@ -31,37 +44,68 @@ try {
 }
 const { firebaseConfig, reglages, bases } = config;
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-let jetonGoogle = null;
-let etat = { messages: [], agenda: { aujourdhui: [], aVenir: [] }, kpis: [], social: [] };
-
-// ---------- Connexion ----------
-$("bouton-connexion").addEventListener("click", async () => {
-  const fournisseur = new GoogleAuthProvider();
-  SCOPES.forEach((s) => fournisseur.addScope(s));
+// Chargement de Firebase en arrière-plan : une panne ici est expliquée au clic, elle n'arrête pas la page
+const sdkPret = (async () => {
   try {
-    const resultat = await signInWithPopup(auth, fournisseur);
-    jetonGoogle = GoogleAuthProvider.credentialFromResult(resultat)?.accessToken || null;
+    const [appM, authM] = await Promise.all([import(SDK + "firebase-app.js"), import(SDK + "firebase-auth.js")]);
+    const app = appM.initializeApp(firebaseConfig);
+    fb = { ...authM, auth: authM.getAuth(app) };
+  } catch (e) {
+    const erreur = new Error(e?.message || "chargement impossible");
+    erreur.code = "sdk-load";
+    throw erreur;
+  }
+})();
+sdkPret.catch(() => {});
+window.__appPret = true;
+
+function afficherSession(connecte, nom = "") {
+  $("zone-connexion").hidden = connecte;
+  $("tableau").hidden = !connecte;
+  $("bouton-deconnexion").hidden = !connecte;
+  $("bouton-actualiser").hidden = !connecte;
+  $("utilisateur").textContent = connecte ? nom : "";
+}
+
+function expliquerErreur(e) {
+  const code = e?.code || "";
+  const domaine = location.hostname || "ce domaine";
+  const aides = {
+    "sdk-load": "Les composants Firebase n'ont pas pu être chargés depuis www.gstatic.com. Vérifiez votre connexion internet, désactivez un bloqueur de publicités ou un VPN, puis rechargez la page.",
+    "auth/unauthorized-domain": `Le domaine « ${domaine} » n'est pas autorisé. Console Firebase > Authentication > Paramètres > Domaines autorisés > Ajouter « ${domaine} ».`,
+    "auth/operation-not-allowed": "La connexion Google est désactivée. Console Firebase > Authentication > Méthode de connexion > activez « Google ».",
+    "auth/popup-blocked": "Le navigateur a bloqué la fenêtre de connexion. Autorisez les fenêtres surgissantes pour cette page (icône dans la barre d'adresse), puis cliquez à nouveau.",
+    "auth/popup-closed-by-user": "La fenêtre de connexion a été fermée avant la fin. Cliquez à nouveau et terminez la connexion.",
+    "auth/network-request-failed": "Problème de réseau pendant la connexion. Vérifiez votre internet et réessayez.",
+    "auth/operation-not-supported-in-this-environment": "Cette page doit être ouverte avec une adresse http:// ou https://, pas comme un fichier local.",
+    "auth/invalid-api-key": "La clé Firebase de config.js est refusée. Vérifiez firebaseConfig.",
+    "no-token": "Connexion réussie, mais Google n'a pas donné l'accès à Gmail, Agenda et aux bases. Recommencez et cochez toutes les autorisations demandées.",
+  };
+  return aides[code] || `Connexion impossible (${code || e?.message || "erreur inconnue"}).`;
+}
+
+async function seConnecter() {
+  afficherErreur("");
+  const bouton = $("bouton-connexion");
+  bouton.disabled = true;
+  bouton.textContent = "Connexion en cours…";
+  try {
+    await sdkPret;
+    const fournisseur = new fb.GoogleAuthProvider();
+    SCOPES.forEach((s) => fournisseur.addScope(s));
+    fournisseur.setCustomParameters({ prompt: "select_account" });
+    const resultat = await fb.signInWithPopup(fb.auth, fournisseur);
+    jetonGoogle = fb.GoogleAuthProvider.credentialFromResult(resultat)?.accessToken || null;
+    if (!jetonGoogle) throw Object.assign(new Error("pas de jeton"), { code: "no-token" });
+    afficherSession(true, resultat.user.displayName || resultat.user.email);
     await tout();
   } catch (e) {
-    afficherErreur(`Connexion impossible : ${e.message}`);
+    if (e?.code !== "auth/cancelled-popup-request") afficherErreur(expliquerErreur(e));
+  } finally {
+    bouton.disabled = false;
+    bouton.textContent = "Se connecter avec Google";
   }
-});
-$("bouton-deconnexion").addEventListener("click", async () => {
-  await signOut(auth);
-  jetonGoogle = null;
-});
-$("bouton-actualiser").addEventListener("click", () => tout());
-
-onAuthStateChanged(auth, (user) => {
-  $("zone-connexion").hidden = !!user;
-  $("tableau").hidden = !user;
-  $("bouton-deconnexion").hidden = !user;
-  $("bouton-actualiser").hidden = !user;
-  $("utilisateur").textContent = user ? user.displayName || user.email : "";
-});
-window.__appPret = true;
+}
 
 // ---------- Utilitaires ----------
 function afficherErreur(texte) {
@@ -84,6 +128,7 @@ async function google(url, options = {}) {
   });
   if (r.status === 401) {
     jetonGoogle = null;
+    afficherSession(false);
     throw new Error("Session Google expirée (1 h). Reconnectez-vous.");
   }
   if (!r.ok) throw new Error(`Google a répondu ${r.status}`);

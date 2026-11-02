@@ -74,6 +74,16 @@ Si le nom `my-world-rs` est déjà pris, choisissez-en un autre (par exemple `my
 - **Alertes** : rendez-vous dans l'heure, messages très importants non lus, crédits en retard,
   réclamations et demandes à traiter, messages importants de vos réseaux.
 
+## Si la connexion ne marche pas
+
+La page affiche un message rouge en haut qui dit quoi faire. Les cas fréquents :
+
+- **Page ouverte comme un fichier (file://)** : ouvrez-la avec une adresse web (`npm run serve`, ou le site Firebase).
+- **Domaine non autorisé** : ajoutez-le dans Firebase > Authentication > Paramètres > Domaines autorisés.
+- **Connexion Google désactivée** : Firebase > Authentication > Méthode de connexion > Google.
+- **Fenêtre bloquée** : autorisez les fenêtres surgissantes pour la page.
+- **« Accès bloqué » dans la fenêtre Google** : écran de consentement OAuth en mode Test, avec votre adresse en utilisateur test.
+
 ## Limites connues
 
 - La session Google dure **1 heure** : au-delà, reconnectez-vous.
