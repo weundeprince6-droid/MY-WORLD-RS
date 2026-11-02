@@ -72,3 +72,9 @@ dialog{border:1px solid var(--border);border-radius:16px;background:var(--surfac
 .task-delete{color:#c0392b!important}
 .task-liste li{padding:10px 0}
 @media(max-width:600px){.tasks-toolbar{align-items:stretch;flex-direction:column}.task-ajout-liste{width:100%}.task-ajout-liste input{min-width:0}.task-ligne{align-items:flex-start;flex-direction:column}.task-actions{padding-left:28px}.task-ajout input{min-width:100%}}
+
+/* Défilement des tâches dans l’en-tête : une tâche toutes les 20 secondes */
+.tasks-entete{min-width:0;max-width:min(42vw,560px);display:flex;align-items:center;gap:10px;padding:9px 14px;border:1px solid var(--border);border-radius:999px;background:var(--background, #f5f7fa);overflow:hidden}
+.tasks-entete-label{flex:0 0 auto;font-size:10px;font-weight:800;letter-spacing:.08em;color:var(--primary);}
+#tasks-entete-texte{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text);}
+@media(max-width:760px){.tasks-entete{order:3;flex:1 1 100%;max-width:none;padding:7px 10px}.entete{flex-wrap:wrap}.tasks-entete-label{font-size:9px}#tasks-entete-texte{font-size:11px}}
