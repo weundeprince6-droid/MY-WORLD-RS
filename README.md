@@ -49,7 +49,7 @@ Si un chiffre reste grisé avec un trait pointillé, votre compte n'a pas accès
    `firebase functions:secrets:set GOOGLE_CLIENT_ID --project my-world-rs`
    `firebase functions:secrets:set GOOGLE_CLIENT_SECRET --project my-world-rs`
    `firebase functions:secrets:set GOOGLE_STATE_SECRET --project my-world-rs`
-   Pour générer le troisième secret : `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`.
+   Pour générer le troisième secret : `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`. Gardez l’écran de consentement OAuth en **Production** : en mode Test, les autorisations des utilisateurs test expirent après 7 jours.
 6. Activez la facturation Blaze sur `my-world-rs`, puis depuis la racine du dépôt exécutez `npm install -g firebase-tools`, `firebase login`, puis `firebase deploy --only functions --project my-world-rs`.
 7. Dans les règles Firestore du projet `my-world-rs`, ajoutez le bloc `googleOAuthTokens` de `firestore.rules.example` (refuse tout accès depuis le navigateur ; les fonctions serveur utilisent Admin SDK).
 8. **Essai en local** : `npm run serve`, ouvrez l'adresse affichée (ajoutez `localhost` dans Authentication > Paramètres > Domaines autorisés).
