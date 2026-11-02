@@ -345,7 +345,9 @@ async function seConnecter() {
       afficherSession(true, resultat.user.displayName || resultat.user.email);
       chargerProfilGoogle(resultat.user);
       await tout();
-      afficherErreur("Connexion temporaire active. Le renouvellement automatique sera disponible après la configuration des fonctions Firebase. " + erreurServeur.message);
+      // Situation attendue tant que les fonctions Firebase ne sont pas déployées : simple information, pas une erreur
+      console.info("Renouvellement automatique indisponible :", erreurServeur?.message);
+      afficherInfo("Connexion active pour environ 1 heure. Pour rester connecté plus longtemps, il faudra déployer les fonctions Firebase (voir la documentation).");
     }
   } catch (e) {
     connexionGoogleEnCours = false;
@@ -359,8 +361,17 @@ async function seConnecter() {
 // ---------- Utilitaires ----------
 function afficherErreur(texte) {
   const bandeau = $("erreur");
+  bandeau.classList.remove("info");
   bandeau.textContent = texte;
   bandeau.hidden = !texte;
+}
+let minuteurInfo = null;
+function afficherInfo(texte, duree = 10000) {
+  afficherErreur(texte);
+  const bandeau = $("erreur");
+  bandeau.classList.add("info");
+  clearTimeout(minuteurInfo);
+  minuteurInfo = setTimeout(() => { if (bandeau.classList.contains("info")) { bandeau.hidden = true; bandeau.classList.remove("info"); } }, duree);
 }
 function echapper(s) {
   return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));

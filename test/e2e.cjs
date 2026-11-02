@@ -100,7 +100,7 @@ srv.listen(8765, async () => {
   }));
   res.push(await scenario('Quota Gmail dépassé : nouvel essai automatique', { quotaGmail: true }, async (p) => {
     await p.click('#bouton-connexion'); await p.waitForTimeout(6000);
-    const msgs = await p.textContent('#liste-messages'); const erreur = (await p.textContent('#erreur')).trim().replace(/^Connexion temporaire active\..*$/s, '');
+    const msgs = await p.textContent('#liste-messages'); const erreur = (await p.textContent('#erreur')).trim().replace(/^Connexion active pour environ 1 heure.*$/s, "");
     return { ok: msgs.includes('Marie Dupont') && erreur === '', detail: erreur ? 'erreur=' + erreur.slice(0, 100) : 'message récupéré au 2e essai' };
   }));
   res.push(await scenario('Telegram : bot connecté, messages lus et enregistrés sans doublon', {}, async (p, appels, logs, etat) => {
