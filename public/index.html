@@ -33,7 +33,7 @@
       <h2>Tout votre monde,<br><span>au même endroit.</span></h2>
       <p>Retrouvez vos messages importants, votre agenda et les chiffres de vos activités dans un tableau de bord clair.</p>
       <button id="bouton-connexion" class="btn btn-primary">Continuer avec Google <span aria-hidden="true">→</span></button>
-      <p class="meta">Vos données restent entre Google, Firebase et votre navigateur.</p>
+      <p class="meta">Votre profil est synchronisé avec Firebase lorsque vous enregistrez vos informations.</p>
       <p class="meta" id="adresse-page"></p>
     </section>
     <div id="tableau" hidden>
@@ -84,7 +84,7 @@
             <section class="carte"><ul id="liste-social" class="liste"></ul></section>
           </section>
           <section class="tab-pane" id="pane-profile" role="tabpanel" data-pane="profile" hidden>
-            <div class="section-heading"><div><p class="eyebrow">VOS INFORMATIONS</p><h2>Mon profil</h2><p>Complétez vos informations une seule fois. Elles seront conservées sur cet appareil.</p></div><span class="section-icon blue">♙</span></div>
+            <div class="section-heading"><div><p class="eyebrow">VOS INFORMATIONS</p><h2>Mon profil</h2><p>Complétez vos informations une seule fois. Elles seront synchronisées dans Firebase avec votre compte Google.</p></div><span class="section-icon blue">♙</span></div>
             <section class="carte profile-card">
               <div class="profile-google"><span class="profile-avatar" id="profil-avatar">G</span><div><strong id="profil-google-nom">Compte Google</strong><p id="profil-google-email" class="meta"></p><span class="profile-status" id="profil-status">Informations à compléter</span></div></div>
               <form id="form-profil" class="profile-form">
@@ -97,7 +97,7 @@
                   <label>Téléphone<input name="telephone" type="tel" autocomplete="tel"></label>
                   <label class="profile-wide">Adresse / ville<input name="adresse" autocomplete="street-address"></label>
                 </div>
-                <div class="profile-actions"><span class="meta">Votre profil est enregistré sur ce navigateur.</span><button class="btn btn-primary" type="submit">Enregistrer mon profil</button></div>
+                <div class="profile-actions"><span class="meta">Votre profil sera synchronisé avec Firebase.</span><button class="btn btn-primary" type="submit">Enregistrer mon profil</button></div>
               </form>
             </section>
           </section>
