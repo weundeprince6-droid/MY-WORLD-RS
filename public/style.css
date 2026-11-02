@@ -78,3 +78,9 @@ dialog{border:1px solid var(--border);border-radius:16px;background:var(--surfac
 .tasks-entete-label{flex:0 0 auto;font-size:10px;font-weight:800;letter-spacing:.08em;color:var(--primary);}
 #tasks-entete-texte{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text);}
 @media(max-width:760px){.tasks-entete{order:3;flex:1 1 100%;max-width:none;padding:7px 10px}.entete{flex-wrap:wrap}.tasks-entete-label{font-size:9px}#tasks-entete-texte{font-size:11px}}
+
+/* Contraste renforcé du bandeau À FAIRE dans l’en-tête */
+.tasks-entete{background:#ffffff!important;border:1px solid #cbd5e1!important;box-shadow:0 2px 8px rgba(15,23,42,.10)}
+.tasks-entete-label{color:#075b43!important;font-weight:900!important}
+#tasks-entete-texte{color:#172033!important;font-weight:700!important;opacity:1!important}
+@media(prefers-color-scheme:dark){.tasks-entete{background:#253244!important;border-color:#64748b!important}.tasks-entete-label{color:#86efac!important}#tasks-entete-texte{color:#ffffff!important}}
