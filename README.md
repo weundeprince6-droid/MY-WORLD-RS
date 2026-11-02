@@ -17,7 +17,7 @@ Un seul tableau de bord pour votre essentiel : **messages importants**, **agenda
 | Telegram | Votre bot Telegram, lu depuis la page (sans serveur) | Fonctionnel : voir `docs/reseaux-sociaux.md` |
 | WhatsApp, Facebook | Collection Firestore `social_inbox` | Affichage prêt, connecteurs à brancher (voir `docs/reseaux-sociaux.md`) |
 
-L'application tourne entièrement dans le navigateur : **aucun serveur, plan Firebase gratuit (Spark) suffisant**.
+L'interface est hébergée sur Firebase Hosting. La connexion persistante utilise Firebase Authentication et des fonctions serveur Firebase pour renouveler les autorisations Google. **Le déploiement des fonctions nécessite le plan Blaze (facturation activée)**.
 
 ## Chiffres clés affichés
 
@@ -39,12 +39,20 @@ Si un chiffre reste grisé avec un trait pointillé, votre compte n'a pas accès
 
 ## Mise en route
 
-1. **Connexion Google** : Console Firebase du projet `avec-la-sagesse` > Authentication > Méthode de connexion > activez **Google**.
-2. **APIs Google** : dans Google Cloud Console (projet `avec-la-sagesse`), activez **Gmail API**, **Google Calendar API**, **Google Drive API** et **Google Tasks API**.
+1. **Connexion Google** : Console Firebase du projet `my-world-rs` > Authentication > Méthode de connexion > activez **Google**. Ajoutez `my-world-rs.web.app` et `weundeprince6-droid.github.io` aux domaines autorisés.
+2. **APIs Google** : dans Google Cloud Console du projet associé à Firebase Auth (`my-world-rs`, numéro de projet attendu `90992521092`), activez **Gmail API**, **Google Calendar API**, **Google Drive API** et **Google Tasks API**.
 3. **Écran de consentement OAuth** : mode « Test », ajoutez votre adresse Gmail comme utilisateur test.
    Google affiche « application non vérifiée » : c'est normal pour un usage personnel. Acceptez les autorisations
    (Gmail, Agenda, Firestore, lecture des métadonnées Drive et gestion des tâches Google Tasks). Après l'ajout de Drive ou de Tasks, déconnectez-vous puis reconnectez-vous pour accorder les nouvelles autorisations.
-4. **Essai en local** : `npm run serve`, ouvrez l'adresse affichée (ajoutez `localhost` dans Authentication > Paramètres > Domaines autorisés).
+4. **OAuth serveur (une seule fois)** : créez un identifiant OAuth de type **Application Web** dans le même projet Google Cloud. Ajoutez comme URI de redirection autorisée : `https://us-central1-my-world-rs.cloudfunctions.net/googleOAuthCallback`. Ajoutez comme origines JavaScript autorisées `https://my-world-rs.web.app` et `https://weundeprince6-droid.github.io`. Conservez le Client ID et le Client Secret privés.
+5. Dans un terminal connecté au projet Firebase `my-world-rs`, enregistrez les trois secrets (Firebase demande leur valeur de manière interactive) :
+   `firebase functions:secrets:set GOOGLE_CLIENT_ID --project my-world-rs`
+   `firebase functions:secrets:set GOOGLE_CLIENT_SECRET --project my-world-rs`
+   `firebase functions:secrets:set GOOGLE_STATE_SECRET --project my-world-rs`
+   Pour générer le troisième secret : `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`.
+6. Activez la facturation Blaze sur `my-world-rs`, puis depuis la racine du dépôt exécutez `npm install -g firebase-tools`, `firebase login`, puis `firebase deploy --only functions --project my-world-rs`.
+7. Dans les règles Firestore du projet `my-world-rs`, ajoutez le bloc `googleOAuthTokens` de `firestore.rules.example` (refuse tout accès depuis le navigateur ; les fonctions serveur utilisent Admin SDK).
+8. **Essai en local** : `npm run serve`, ouvrez l'adresse affichée (ajoutez `localhost` dans Authentication > Paramètres > Domaines autorisés).
 5. Mettez en ligne (section suivante).
 
 ## Déployer sur Firebase
@@ -102,7 +110,7 @@ La page affiche un message rouge en haut qui dit quoi faire. Les cas fréquents 
 
 ## Limites connues
 
-- La session Google dure **1 heure** : au-delà, reconnectez-vous.
+- Firebase mémorise la connexion dans le navigateur. Le serveur conserve le jeton de renouvellement Google de manière privée et demande automatiquement un nouveau jeton d’accès quand l’ancien expire. Une première autorisation Google complète est nécessaire après le déploiement. Une déconnexion volontaire révoque cette autorisation.
 - Gmail limite le nombre de requêtes par minute : la page lit les messages 4 par 4, ne demande que les mails non lus, étoilés ou
   importants des 7 derniers jours, et réessaie une fois toute seule. En cas de quota dépassé, attendez une minute puis cliquez sur Actualiser.
 - Les messages ne sont **jamais envoyés automatiquement** : l'application crée des brouillons Gmail.
