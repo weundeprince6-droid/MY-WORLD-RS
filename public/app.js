@@ -32,6 +32,9 @@ let etat = { messages: [], agenda: { aujourdhui: [], aVenir: [] }, kpis: [], soc
 let drivePageToken = null;
 let driveRecherche = "";
 let driveCharge = false;
+let tasksTickerItems = [];
+let tasksTickerIndex = 0;
+let tasksTickerTimer = null;
 
 // Les boutons réagissent dès le départ, même si Firebase n'est pas encore chargé
 $("adresse-page").textContent = location.protocol === "file:"
@@ -71,7 +74,8 @@ sdkPret.catch(() => {});
 window.__appPret = true;
 
 function afficherSession(connecte, nom = "") {
-  if (connecte) demarrerSurveillanceSocial();
+  if (connecte) { demarrerSurveillanceSocial(); chargerTasks(); }
+  else { tasksTickerItems = []; actualiserTacheEntete(); if (tasksTickerTimer) clearInterval(tasksTickerTimer); tasksTickerTimer = null; }
   $("zone-connexion").hidden = connecte;
   $("tableau").hidden = !connecte;
   $("bouton-deconnexion").hidden = !connecte;
@@ -372,6 +376,22 @@ function dateTache(date) {
   const d = new Date(date);
   return Number.isNaN(d.getTime()) ? "" : new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", year: "numeric" }).format(d);
 }
+function actualiserTacheEntete() {
+  const zone = $("tasks-entete-texte");
+  if (!zone) return;
+  if (!tasksTickerItems.length) { zone.textContent = jetonGoogle ? "Aucune tâche à afficher" : "Connectez-vous pour voir vos tâches"; return; }
+  const tache = tasksTickerItems[tasksTickerIndex % tasksTickerItems.length];
+  zone.textContent = tache.title + (tache.list ? " · " + tache.list : "") + (tache.due ? " · " + dateTache(tache.due) : "");
+}
+function demarrerDefilementTasks() {
+  if (tasksTickerTimer) clearInterval(tasksTickerTimer);
+  tasksTickerIndex = 0;
+  actualiserTacheEntete();
+  tasksTickerTimer = setInterval(() => {
+    if (tasksTickerItems.length > 1) tasksTickerIndex = (tasksTickerIndex + 1) % tasksTickerItems.length;
+    actualiserTacheEntete();
+  }, 20000);
+}
 function urlListeTasks(id = "") {
   return TASKS_API + "/users/@me/lists" + (id ? "/" + encodeURIComponent(id) : "");
 }
@@ -402,6 +422,8 @@ async function chargerTasks() {
       }).join("") : '<li class="vide">Aucune tâche dans cette liste.</li>';
       return '<section class="tasks-groupe" data-list-id="' + echapper(liste.id) + '"><div class="card-heading"><div><h3>' + echapper(liste.title || "Liste sans titre") + '</h3><span class="meta">' + ouvertes + ' à faire · ' + taches.length + ' au total</span></div><div class="task-actions"><button type="button" class="btn btn-light" data-task-action="rename-list" data-list-id="' + echapper(liste.id) + '" data-title="' + echapper(liste.title || "") + '">Renommer</button><button type="button" class="btn btn-light task-delete" data-task-action="delete-list" data-list-id="' + echapper(liste.id) + '">Supprimer la liste</button></div></div><ul class="liste task-liste">' + lignes + '</ul><form class="task-ajout" data-task-form="add" data-list-id="' + echapper(liste.id) + '"><input name="title" required maxlength="1024" placeholder="Nouvelle tâche…" aria-label="Titre de la tâche"><input name="due" type="date" aria-label="Date d’échéance"><input name="notes" placeholder="Notes (facultatif)" aria-label="Notes"><button class="btn btn-primary" type="submit">Ajouter</button></form></section>';
     }).join("") : '<p class="vide">Aucune liste Google Tasks trouvée. Créez votre première liste ci-dessus.</p>';
+    tasksTickerItems = resultats.flatMap(({ liste, taches }) => taches.filter(t => t.status !== "completed").map(t => ({ title: t.title || "Tâche sans titre", list: liste.title || "", due: t.due || "" })));
+    demarrerDefilementTasks();
     const total = resultats.reduce((n, r) => n + r.taches.length, 0);
     statut.textContent = listes.length + " liste(s) chargée(s), " + total + " tâche(s). Les modifications sont synchronisées avec Google.";
     tasksCharge = true;
