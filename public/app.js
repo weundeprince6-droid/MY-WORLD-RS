@@ -26,6 +26,12 @@ const SCOPES = [
 ];
 
 let jetonGoogle = null;
+let jetonGoogleExpireA = 0;
+let utilisateurConnecte = null;
+let uidSessionTraitee = null;
+let connexionGoogleEnCours = false;
+let recuperationGoogleEnCours = null;
+const URL_FONCTIONS_GOOGLE = "https://us-central1-my-world-rs.cloudfunctions.net";
 let minuteurSocial = null; // lecture régulière de Telegram tant que la page est ouverte
 let fb = null; // composants Firebase, chargés après l'affichage de la page
 let etat = { messages: [], agenda: { aujourdhui: [], aVenir: [] }, kpis: [], social: [] };
@@ -42,8 +48,14 @@ $("adresse-page").textContent = location.protocol === "file:"
   : `Domaine de cette page : ${location.hostname} (il doit figurer dans Firebase > Authentication > Paramètres > Domaines autorisés).`;
 $("bouton-connexion").addEventListener("click", seConnecter);
 $("bouton-deconnexion").addEventListener("click", async () => {
+  try {
+    if (fb?.auth.currentUser) {
+      const idToken = await fb.auth.currentUser.getIdToken();
+      await fetch(URL_FONCTIONS_GOOGLE + "/googleRevoke", { method: "POST", headers: { Authorization: "Bearer " + idToken } });
+    }
+  } catch (e) { console.warn("Révocation Google non confirmée :", e); }
   try { if (fb) await fb.signOut(fb.auth); } catch { /* ignoré */ }
-  jetonGoogle = null;
+  jetonGoogle = null; jetonGoogleExpireA = 0; utilisateurConnecte = null; uidSessionTraitee = null;
   afficherSession(false);
 });
 $("bouton-actualiser").addEventListener("click", () => tout());
@@ -63,7 +75,18 @@ const sdkPret = (async () => {
   try {
     const [appM, authM] = await Promise.all([import(SDK + "firebase-app.js"), import(SDK + "firebase-auth.js")]);
     const app = appM.initializeApp(firebaseConfig);
-    fb = { ...authM, auth: authM.getAuth(app) };
+    const auth = authM.getAuth(app);
+    fb = { ...authM, auth };
+    await authM.setPersistence(auth, authM.browserLocalPersistence);
+    authM.onAuthStateChanged(auth, (user) => {
+      utilisateurConnecte = user || null;
+      if (!user) {
+        uidSessionTraitee = null; jetonGoogle = null; jetonGoogleExpireA = 0;
+        afficherSession(false);
+      } else if (!connexionGoogleEnCours) {
+        restaurerSessionGoogle(user).catch((e) => afficherErreur(e.message));
+      }
+    });
   } catch (e) {
     const erreur = new Error(e?.message || "chargement impossible");
     erreur.code = "sdk-load";
@@ -74,7 +97,7 @@ sdkPret.catch(() => {});
 window.__appPret = true;
 
 function afficherSession(connecte, nom = "") {
-  if (connecte) { demarrerSurveillanceSocial(); chargerTasks(); }
+  if (connecte) { demarrerSurveillanceSocial(); if (jetonGoogle) chargerTasks(); }
   else { tasksTickerItems = []; actualiserTacheEntete(); if (tasksTickerTimer) clearInterval(tasksTickerTimer); tasksTickerTimer = null; }
   $("zone-connexion").hidden = connecte;
   $("tableau").hidden = !connecte;
@@ -223,23 +246,84 @@ function expliquerErreur(e) {
   return aides[code] || `Connexion impossible (${code || e?.message || "erreur inconnue"}).`;
 }
 
+async function appelerFonctionGoogle(nom, idToken) {
+  const response = await fetch(URL_FONCTIONS_GOOGLE + "/" + nom, {
+    method: "POST",
+    headers: { Authorization: "Bearer " + idToken, "Content-Type": "application/json" },
+  });
+  let data = {};
+  try { data = await response.json(); } catch { /* réponse non JSON */ }
+  if (!response.ok) {
+    const error = new Error(data.error || "Service de connexion Google indisponible (" + response.status + ").");
+    error.status = response.status;
+    error.needsAuthorization = !!data.needsAuthorization;
+    throw error;
+  }
+  return data;
+}
+
+async function lancerAutorisationGoogle(user) {
+  const idToken = await user.getIdToken(true);
+  const data = await appelerFonctionGoogle("googleOAuthStart", idToken);
+  if (!data.authorizationUrl) throw new Error("Google n'a pas fourni le lien d'autorisation.");
+  window.location.assign(data.authorizationUrl);
+}
+
+async function obtenirJetonGoogle(force = false) {
+  if (!force && jetonGoogle && Date.now() < jetonGoogleExpireA - 60000) return jetonGoogle;
+  if (recuperationGoogleEnCours) return recuperationGoogleEnCours;
+  recuperationGoogleEnCours = (async () => {
+    const user = fb?.auth.currentUser;
+    if (!user) throw new Error("Votre session est fermée. Connectez-vous à nouveau.");
+    const data = await appelerFonctionGoogle("googleAccessToken", await user.getIdToken());
+    jetonGoogle = data.accessToken;
+    jetonGoogleExpireA = Date.now() + (Number(data.expiresIn) || 3600) * 1000;
+    return jetonGoogle;
+  })();
+  try { return await recuperationGoogleEnCours; }
+  finally { recuperationGoogleEnCours = null; }
+}
+
+async function restaurerSessionGoogle(user) {
+  if (connexionGoogleEnCours || uidSessionTraitee === user.uid) return;
+  uidSessionTraitee = user.uid;
+  afficherSession(true, user.displayName || user.email);
+  try {
+    await obtenirJetonGoogle(true);
+    chargerProfilGoogle(user);
+    await tout();
+    chargerTasks();
+    const params = new URLSearchParams(location.search);
+    if (params.has("google")) {
+      history.replaceState({}, document.title, location.pathname + location.hash);
+    }
+  } catch (e) {
+    uidSessionTraitee = null;
+    if (e.needsAuthorization || e.status === 409) {
+      afficherErreur("Une autorisation Google unique est nécessaire. Ouverture de la page de confirmation…");
+      await lancerAutorisationGoogle(user);
+      return;
+    }
+    throw new Error("Session mémorisée, mais accès aux services Google indisponible : " + e.message);
+  }
+}
+
 async function seConnecter() {
   afficherErreur("");
   const bouton = $("bouton-connexion");
   bouton.disabled = true;
   bouton.textContent = "Connexion en cours…";
+  connexionGoogleEnCours = true;
   try {
     await sdkPret;
+    await fb.setPersistence(fb.auth, fb.browserLocalPersistence);
     const fournisseur = new fb.GoogleAuthProvider();
-    SCOPES.forEach((s) => fournisseur.addScope(s));
     fournisseur.setCustomParameters({ prompt: "select_account" });
     const resultat = await fb.signInWithPopup(fb.auth, fournisseur);
-    jetonGoogle = fb.GoogleAuthProvider.credentialFromResult(resultat)?.accessToken || null;
-    if (!jetonGoogle) throw Object.assign(new Error("pas de jeton"), { code: "no-token" });
-    afficherSession(true, resultat.user.displayName || resultat.user.email);
-    chargerProfilGoogle(resultat.user);
-    await tout();
+    utilisateurConnecte = resultat.user;
+    await lancerAutorisationGoogle(resultat.user);
   } catch (e) {
+    connexionGoogleEnCours = false;
     if (e?.code !== "auth/cancelled-popup-request") afficherErreur(expliquerErreur(e));
   } finally {
     bouton.disabled = false;
@@ -271,17 +355,18 @@ async function google(url, options = {}) {
   }
 }
 
-async function googleUneFois(url, options = {}) {
-  if (!jetonGoogle) throw new Error("Session Google expirée : cliquez sur « Se reconnecter ».");
+async function googleUneFois(url, options = {}, nouvelEssai = true) {
+  await obtenirJetonGoogle();
   const r = await fetch(url, {
     ...options,
     headers: { Authorization: `Bearer ${jetonGoogle}`, "Content-Type": "application/json", ...(options.headers || {}) },
   });
-  if (r.status === 401) {
-    jetonGoogle = null;
-    afficherSession(false);
-    throw new Error("Session Google expirée (1 h). Reconnectez-vous.");
+  if (r.status === 401 && nouvelEssai) {
+    jetonGoogle = null; jetonGoogleExpireA = 0;
+    await obtenirJetonGoogle(true);
+    return googleUneFois(url, options, false);
   }
+  if (r.status === 401) throw new Error("Google a refusé la session. Une nouvelle autorisation est nécessaire.");
   if (!r.ok) {
     let detail = "";
     try {
