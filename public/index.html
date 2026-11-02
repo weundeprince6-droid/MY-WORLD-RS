@@ -50,6 +50,7 @@
             <button class="nav-item" role="tab" aria-selected="false" data-tab="agenda"><span class="nav-icon">▦</span><span>Agenda</span><span class="nav-arrow">›</span></button>
             <button class="nav-item" role="tab" aria-selected="false" data-tab="bases"><span class="nav-icon">▤</span><span>Mes bases</span><span class="nav-arrow">›</span></button>
             <button class="nav-item" role="tab" aria-selected="false" data-tab="social"><span class="nav-icon">◎</span><span>Réseaux sociaux</span><span class="nav-arrow">›</span></button>
+            <button class="nav-item" role="tab" aria-selected="false" data-tab="drive"><span class="nav-icon">▣</span><span>Google Drive</span><span class="nav-arrow">›</span></button>
             <button class="nav-item" role="tab" aria-selected="false" data-tab="profile"><span class="nav-icon">♙</span><span>Profil</span><span class="nav-arrow">›</span></button>
           </nav>
           <div class="sidebar-note"><span class="note-icon">✦</span><strong>Un espace, plusieurs univers.</strong><p>Vos informations essentielles réunies pour vous aider à garder le cap.</p></div>
@@ -104,6 +105,18 @@
             </section>
             <section class="carte"><ul id="liste-social" class="liste"></ul></section>
           </section>
+          <section class="tab-pane" id="pane-drive" role="tabpanel" data-pane="drive" hidden>
+            <div class="section-heading"><div><p class="eyebrow">VOS DOCUMENTS</p><h2>Google Drive</h2><p>Retrouvez et ouvrez vos fichiers et dossiers depuis My World RS.</p></div><span class="section-icon blue">▣</span></div>
+            <section class="carte drive-card">
+              <div class="drive-toolbar">
+                <input id="drive-recherche" type="search" placeholder="Rechercher un document ou dossier…" aria-label="Rechercher dans Google Drive">
+                <button class="btn btn-primary" id="drive-actualiser" type="button">Actualiser</button>
+              </div>
+              <p id="drive-statut" class="meta" role="status">Ouvrez cette rubrique pour charger vos fichiers Google Drive.</p>
+              <ul id="drive-fichiers" class="liste drive-list"></ul>
+              <button class="btn" id="drive-plus" type="button" hidden>Charger plus</button>
+            </section>
+          </section>
           <section class="tab-pane" id="pane-profile" role="tabpanel" data-pane="profile" hidden>
             <div class="section-heading"><div><p class="eyebrow">VOS INFORMATIONS</p><h2>Mon profil</h2><p>Complétez vos informations une seule fois. Elles seront synchronisées dans Firebase avec votre compte Google.</p></div><span class="section-icon blue">♙</span></div>
             <section class="carte profile-card">
@@ -135,7 +148,7 @@
       function ouvrirOnglet(nom) {
         document.querySelectorAll("[data-pane]").forEach(function (p) { var actif=p.dataset.pane===nom; p.hidden=!actif; p.classList.toggle("active",actif); });
         document.querySelectorAll("[data-tab]").forEach(function (b) { var actif=b.dataset.tab===nom; b.classList.toggle("active",actif); b.setAttribute("aria-selected",actif?"true":"false"); });
-        var titres={dashboard:"Tableau de bord",messages:"Messages",agenda:"Agenda",bases:"Mes bases",social:"Réseaux sociaux",profile:"Mon profil"}; document.title=(titres[nom]||"My World RS")+" — My World RS";
+        var titres={dashboard:"Tableau de bord",messages:"Messages",agenda:"Agenda",bases:"Mes bases",social:"Réseaux sociaux",drive:"Google Drive",profile:"Mon profil"}; document.title=(titres[nom]||"My World RS")+" — My World RS";
       }
       document.querySelectorAll("[data-tab]").forEach(function(b){b.addEventListener("click",function(){ouvrirOnglet(b.dataset.tab);});});
       document.querySelectorAll("[data-go]").forEach(function(b){b.addEventListener("click",function(){ouvrirOnglet(b.dataset.go);});});
