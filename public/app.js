@@ -21,6 +21,8 @@ const SCOPES = [
   "https://www.googleapis.com/auth/datastore",
   // Métadonnées des fichiers et dossiers Google Drive (lecture seule)
   "https://www.googleapis.com/auth/drive.metadata.readonly",
+  // Consultation des listes et tâches Google Tasks (lecture seule)
+  "https://www.googleapis.com/auth/tasks.readonly",
 ];
 
 let jetonGoogle = null;
@@ -358,6 +360,54 @@ $("drive-recherche")?.addEventListener("input", (event) => {
 });
 document.querySelector('[data-tab="drive"]')?.addEventListener("click", () => {
   if (!driveCharge) chargerDrive({ nouvelleRecherche: true });
+});
+
+
+// ---------- Google Tasks : consultation des listes et tâches ----------
+const TASKS_API = "https://tasks.googleapis.com/tasks/v1";
+let tasksCharge = false;
+function dateTache(date) {
+  if (!date) return "Sans échéance";
+  const d = new Date(date);
+  return Number.isNaN(d.getTime()) ? "" : new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", year: "numeric" }).format(d);
+}
+async function chargerTasks() {
+  if (!jetonGoogle) return;
+  const statut = $("tasks-statut");
+  const bouton = $("tasks-actualiser");
+  const conteneur = $("tasks-listes");
+  statut.textContent = "Chargement de Google Tasks…";
+  bouton.disabled = true;
+  try {
+    const reponseListes = await google(TASKS_API + "/users/@me/lists?maxResults=100");
+    const listes = reponseListes.items || [];
+    const resultats = await Promise.all(listes.map(async (liste) => {
+      const params = new URLSearchParams({ maxResults: "100", showCompleted: "true", showHidden: "true" });
+      const reponse = await google(TASKS_API + "/lists/" + encodeURIComponent(liste.id) + "/tasks?" + params.toString());
+      return { liste, taches: reponse.items || [] };
+    }));
+    conteneur.innerHTML = resultats.length ? resultats.map(({ liste, taches }) => {
+      const ouvertes = taches.filter((t) => t.status !== "completed").length;
+      const lignes = taches.length ? taches.map((t) => {
+        const terminee = t.status === "completed";
+        const detail = terminee ? "Terminée" : (t.due ? "Échéance : " + dateTache(t.due) : "À faire");
+        return '<li><div class="drive-file"><span class="drive-file-icon">' + (terminee ? "☑" : "□") + '</span><div class="drive-file-info"><strong' + (terminee ? ' class="task-complete"' : "") + '>' + echapper(t.title || "Tâche sans titre") + '</strong><span class="meta">' + echapper(detail) + (t.notes ? " · " + echapper(t.notes) : "") + '</span></div></div></li>';
+      }).join("") : '<li class="vide">Aucune tâche dans cette liste.</li>';
+      return '<section class="tasks-groupe"><div class="card-heading"><h3>' + echapper(liste.title || "Liste sans titre") + '</h3><span class="meta">' + ouvertes + ' à faire · ' + taches.length + ' au total</span></div><ul class="liste">' + lignes + '</ul></section>';
+    }).join("") : '<p class="vide">Aucune liste Google Tasks trouvée.</p>';
+    const total = resultats.reduce((n, r) => n + r.taches.length, 0);
+    statut.textContent = listes.length + " liste(s) chargée(s), " + total + " tâche(s) affichée(s).";
+    tasksCharge = true;
+  } catch (e) {
+    statut.textContent = "Impossible de lire Google Tasks : " + e.message;
+    conteneur.innerHTML = "";
+  } finally {
+    bouton.disabled = false;
+  }
+}
+$("tasks-actualiser")?.addEventListener("click", chargerTasks);
+document.querySelector('[data-tab="tasks"]')?.addEventListener("click", () => {
+  if (!tasksCharge) chargerTasks();
 });
 
 // ---------- Sources ----------
