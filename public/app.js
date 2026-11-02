@@ -288,15 +288,21 @@ async function restaurerSessionGoogle(user) {
   if (connexionGoogleEnCours || uidSessionTraitee === user.uid) return;
   uidSessionTraitee = user.uid;
   afficherSession(true, user.displayName || user.email);
+  const paramsRetour = new URLSearchParams(location.search);
+  if (paramsRetour.get("google") === "error" || paramsRetour.get("google") === "cancelled") {
+    const message = paramsRetour.get("message");
+    history.replaceState({}, document.title, location.pathname + location.hash);
+    afficherErreur(paramsRetour.get("google") === "cancelled"
+      ? "Autorisation Google annulée. Relancez la connexion pour réessayer."
+      : "Autorisation Google impossible : " + (message || "vérifiez la configuration OAuth."));
+    return;
+  }
   try {
     await obtenirJetonGoogle(true);
     chargerProfilGoogle(user);
     await tout();
     chargerTasks();
-    const params = new URLSearchParams(location.search);
-    if (params.has("google")) {
-      history.replaceState({}, document.title, location.pathname + location.hash);
-    }
+    if (paramsRetour.has("google")) history.replaceState({}, document.title, location.pathname + location.hash);
   } catch (e) {
     uidSessionTraitee = null;
     if (e.needsAuthorization || e.status === 409) {
