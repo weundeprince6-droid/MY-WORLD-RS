@@ -1,0 +1,40 @@
+# Déploie les Cloud Functions Firebase quand leur code change.
+# Configuration requise dans GitHub > Settings > Secrets and variables > Actions :
+# FIREBASE_SERVICE_ACCOUNT_MY_WORLD_RS = JSON d'un compte de service Google autorisé à déployer Firebase.
+name: Déployer les Cloud Functions Firebase
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "functions/**"
+      - "firebase.json"
+      - ".github/workflows/deploy-firebase-functions.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_MY_WORLD_RS }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Installer Firebase CLI
+        run: npm install --global firebase-tools
+
+      - name: Installer les dépendances des Functions
+        run: npm ci
+        working-directory: functions
+
+      - name: Déployer les Cloud Functions
+        run: firebase deploy --only functions --project my-world-rs --non-interactive
