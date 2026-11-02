@@ -69,6 +69,9 @@ function afficherSession(connecte, nom = "") {
 
 function expliquerErreur(e) {
   const code = e?.code || "";
+  if (window.self !== window.top && (code === "sdk-load" || code.startsWith("auth/"))) {
+    return "Cette page est affichée dans un aperçu intégré (par exemple dans Claude), où Google bloque la connexion. Ouvrez-la dans un vrai onglet du navigateur, avec une adresse https:// (par exemple votre site GitHub Pages ou Firebase).";
+  }
   const domaine = location.hostname || "ce domaine";
   const aides = {
     "sdk-load": "Les composants Firebase n'ont pas pu être chargés depuis www.gstatic.com. Vérifiez votre connexion internet, désactivez un bloqueur de publicités ou un VPN, puis rechargez la page.",

@@ -74,10 +74,19 @@ Si le nom `my-world-rs` est déjà pris, choisissez-en un autre (par exemple `my
 - **Alertes** : rendez-vous dans l'heure, messages très importants non lus, crédits en retard,
   réclamations et demandes à traiter, messages importants de vos réseaux.
 
+## Le plus simple pour tester : GitHub Pages (sans rien installer)
+
+1. GitHub > votre dépôt MY-WORLD-RS > Settings > Pages > **Source : GitHub Actions**.
+2. Onglet Actions > « Publier sur GitHub Pages » > Re-run (ou Run workflow). Au bout d'une minute, le site est sur
+   `https://weundeprince6-droid.github.io/MY-WORLD-RS/`.
+3. Console Firebase > Authentication > Paramètres > Domaines autorisés > ajoutez `weundeprince6-droid.github.io`.
+4. Ouvrez l'adresse dans un onglet normal (pas dans l'aperçu d'un chat).
+
 ## Si la connexion ne marche pas
 
 La page affiche un message rouge en haut qui dit quoi faire. Les cas fréquents :
 
+- **Aperçu intégré (dans un chat, un éditeur…)** : Google y bloque la connexion. Ouvrez la page dans un vrai onglet.
 - **Page ouverte comme un fichier (file://)** : ouvrez-la avec une adresse web (`npm run serve`, ou le site Firebase).
 - **Domaine non autorisé** : ajoutez-le dans Firebase > Authentication > Paramètres > Domaines autorisés.
 - **Connexion Google désactivée** : Firebase > Authentication > Méthode de connexion > Google.
