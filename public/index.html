@@ -119,9 +119,9 @@
             </section>
           </section>
           <section class="tab-pane" id="pane-tasks" role="tabpanel" data-pane="tasks" hidden>
-            <div class="section-heading"><div><p class="eyebrow">VOTRE ORGANISATION</p><h2>Google Tasks</h2><p>Consultez vos listes, vos tâches et leurs échéances.</p></div><span class="section-icon blue">☑</span></div>
+            <div class="section-heading"><div><p class="eyebrow">VOTRE ORGANISATION</p><h2>Google Tasks</h2><p>Créez et gérez vos listes, ajoutez des tâches, modifiez-les et cochez celles qui sont terminées.</p></div><span class="section-icon blue">☑</span></div>
             <section class="carte">
-              <div class="drive-toolbar"><span class="meta">Tâches Google en lecture seule</span><button class="btn btn-primary" id="tasks-actualiser" type="button">Actualiser</button></div>
+              <div class="tasks-toolbar"><form id="tasks-creer-liste" class="task-ajout task-ajout-liste"><input name="title" required maxlength="100" placeholder="Nom de la nouvelle liste…" aria-label="Nom de la nouvelle liste"><button class="btn btn-primary" type="submit">Créer une liste</button></form><button class="btn btn-light" id="tasks-actualiser" type="button">Actualiser</button></div>
               <p id="tasks-statut" class="meta" role="status">Ouvrez cette rubrique pour charger vos tâches.</p>
               <div id="tasks-listes" class="tasks-listes"></div>
             </section>
