@@ -10,6 +10,7 @@ Un seul tableau de bord pour votre essentiel : **messages importants**, **agenda
 | Messages importants | Gmail (lecture + brouillons) | Fonctionnel |
 | Agenda du jour et à venir | Google Agenda | Fonctionnel |
 | Documents et dossiers | Google Drive (lecture seule) | Fonctionnel après activation de l'API Drive |
+| Listes et tâches | Google Tasks (lecture seule) | Fonctionnel après activation de l'API Google Tasks |
 | Chiffres clés | Firebase **AVEC LA SAGESSE** et **ESE DB (WEB SERVICE)** | Fonctionnel (voir ci-dessous) |
 | Alertes et rappels | Calculées à partir des blocs ci-dessus | Fonctionnel |
 | Réponses automatiques | Brouillons Gmail à partir de modèles, **validés par vous** | Fonctionnel |
@@ -39,10 +40,10 @@ Si un chiffre reste grisé avec un trait pointillé, votre compte n'a pas accès
 ## Mise en route
 
 1. **Connexion Google** : Console Firebase du projet `avec-la-sagesse` > Authentication > Méthode de connexion > activez **Google**.
-2. **APIs Google** : dans Google Cloud Console (projet `avec-la-sagesse`), activez **Gmail API**, **Google Calendar API** et **Google Drive API**.
+2. **APIs Google** : dans Google Cloud Console (projet `avec-la-sagesse`), activez **Gmail API**, **Google Calendar API** et **Google Drive API** et **Google Tasks API**.
 3. **Écran de consentement OAuth** : mode « Test », ajoutez votre adresse Gmail comme utilisateur test.
    Google affiche « application non vérifiée » : c'est normal pour un usage personnel. Acceptez les autorisations
-   (Gmail, Agenda, Firestore et lecture des métadonnées Drive). Après l'ajout de Drive, déconnectez-vous puis reconnectez-vous pour accorder cette nouvelle autorisation.
+   (Gmail, Agenda, Firestore, lecture des métadonnées Drive et consultation des tâches Google Tasks). Après l'ajout de Drive, déconnectez-vous puis reconnectez-vous pour accorder cette nouvelle autorisation.
 4. **Essai en local** : `npm run serve`, ouvrez l'adresse affichée (ajoutez `localhost` dans Authentication > Paramètres > Domaines autorisés).
 5. Mettez en ligne (section suivante).
 
@@ -73,6 +74,7 @@ Si le nom `my-world-rs` est déjà pris, choisissez-en un autre (par exemple `my
 ## Comment « l'essentiel » est choisi
 
 - **Google Drive** : affiche les fichiers et dossiers du compte connecté, permet la recherche par nom et ouvre chaque élément dans Google Drive. L'application demande uniquement l'autorisation de lecture des métadonnées (`drive.metadata.readonly`) ; elle ne modifie ni ne supprime vos fichiers.
+- **Google Tasks** : affiche les listes et les tâches du compte connecté, avec leur état et leur échéance. L'application demande uniquement l'autorisation `tasks.readonly` ; elle ne crée, ne modifie ni ne supprime aucune tâche.
 - **Messages** : un message monte s'il est non lu, étoilé, marqué important par Gmail, s'il contient des mots comme
   *urgent, facture, échéance, crédit, retrait…*, ou s'il vient d'un contact VIP de `config.js`.
   Les promotions et notifications de réseaux sont écartées.
