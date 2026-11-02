@@ -84,3 +84,9 @@ dialog{border:1px solid var(--border);border-radius:16px;background:var(--surfac
 .tasks-entete-label{color:#075b43!important;font-weight:900!important}
 #tasks-entete-texte{color:#172033!important;font-weight:700!important;opacity:1!important}
 @media(prefers-color-scheme:dark){.tasks-entete{background:#253244!important;border-color:#64748b!important}.tasks-entete-label{color:#86efac!important}#tasks-entete-texte{color:#ffffff!important}}
+
+/* Bandeau À FAIRE : contraste fort, fond sombre permanent */
+.tasks-entete{background:#12372f!important;border:2px solid #28745f!important;box-shadow:0 3px 12px rgba(0,0,0,.22)!important;color:#ffffff!important;}
+.tasks-entete-label{color:#a7f3d0!important;font-size:11px!important;font-weight:900!important;}
+#tasks-entete-texte{color:#ffffff!important;font-size:14px!important;font-weight:800!important;text-shadow:0 1px 1px rgba(0,0,0,.35);}
+@media(max-width:760px){.tasks-entete{background:#12372f!important;}.tasks-entete-label{font-size:10px!important;}#tasks-entete-texte{font-size:13px!important;}}
