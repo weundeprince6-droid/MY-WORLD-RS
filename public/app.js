@@ -4,6 +4,9 @@ import {
   resumeDuJour, remplirModele, construireBrouillonBrut, expediteurLisible, enLots,
 } from "./core.js";
 import {
+  jetonValide, urlTelegram, expliquerErreurTelegram, extraireMessage, champsFirestore, idDocument, dernierUpdateId,
+} from "./telegram.js";
+import {
   corpsAgregation, lireAgregat, corpsListe, lireListe, decoderDocument,
   calculerCreditsAvec, MESURES_CREDITS_AVEC, calculerEse, MESURES_ESE, decoderChamps,
 } from "./firestore.js";
@@ -19,6 +22,7 @@ const SCOPES = [
 ];
 
 let jetonGoogle = null;
+let minuteurSocial = null; // lecture régulière de Telegram tant que la page est ouverte
 let fb = null; // composants Firebase, chargés après l'affichage de la page
 let etat = { messages: [], agenda: { aujourdhui: [], aVenir: [] }, kpis: [], social: [] };
 
@@ -60,6 +64,7 @@ sdkPret.catch(() => {});
 window.__appPret = true;
 
 function afficherSession(connecte, nom = "") {
+  if (connecte) demarrerSurveillanceSocial();
   $("zone-connexion").hidden = connecte;
   $("tableau").hidden = !connecte;
   $("bouton-deconnexion").hidden = !connecte;
@@ -480,7 +485,7 @@ function rendreSocial() {
   const noms = { telegram: "Telegram", whatsapp: "WhatsApp", facebook: "Facebook" };
   const el = $("liste-social");
   if (!etat.social.length) {
-    el.innerHTML = '<li class="vide">Aucun message reçu. Branchez Telegram, WhatsApp ou Facebook (voir docs/reseaux-sociaux.md).</li>';
+    el.innerHTML = '<li class="vide">Aucun message reçu. Connectez votre bot Telegram dans la carte ci-dessus (WhatsApp et Facebook : voir docs/reseaux-sociaux.md).</li>';
     return;
   }
   el.innerHTML = etat.social
@@ -506,7 +511,7 @@ function tout_rendre() {
 async function tout() {
   afficherErreur("");
   $("resume").textContent = "Chargement…";
-  const [gm, ag, kp, so] = await Promise.allSettled([chargerGmail(), chargerAgenda(), chargerKpis(), chargerSocial()]);
+  const [gm, ag, kp, so] = await Promise.allSettled([chargerGmail(), chargerAgenda(), chargerKpis(), chargerSocialComplet()]);
   const erreurs = [];
   if (gm.status === "fulfilled") etat.messages = gm.value; else erreurs.push(`Gmail : ${gm.reason.message}`);
   if (ag.status === "fulfilled") etat.agenda = ag.value; else erreurs.push(`Agenda : ${ag.reason.message}`);
@@ -552,3 +557,148 @@ async function creerBrouillon(i) {
     afficherErreur(`Brouillon non créé : ${e.message}`);
   }
 }
+
+// ---------- Telegram (bot personnel lu depuis le navigateur) ----------
+// Le jeton du bot reste dans ce navigateur (localStorage) : il n'est jamais envoyé sur GitHub ni écrit dans Firestore.
+const CLE_TG_JETON = "mwrs.telegram.jeton";
+const CLE_TG_OFFSET = "mwrs.telegram.offset";
+const CLE_TG_NOM = "mwrs.telegram.nom";
+const stockage = {
+  lire(cle) { try { return localStorage.getItem(cle) || ""; } catch { return ""; } },
+  ecrire(cle, valeur) { try { localStorage.setItem(cle, valeur); } catch { /* navigateur sans stockage */ } },
+  effacer(cle) { try { localStorage.removeItem(cle); } catch { /* ignoré */ } },
+};
+let statutTelegram = { erreur: "", derniere: null, nouveaux: 0 };
+
+function messageReseau(e) {
+  return e instanceof TypeError ? "Telegram est injoignable pour le moment (réseau)." : e.message;
+}
+
+async function appelTelegram(methode, params) {
+  const r = await fetch(urlTelegram(stockage.lire(CLE_TG_JETON), methode, params));
+  let j;
+  try { j = await r.json(); } catch { throw new Error("Réponse illisible de Telegram."); }
+  if (!j.ok) throw new Error(expliquerErreurTelegram(j));
+  return j.result;
+}
+
+// Lit les nouveaux messages du bot et les enregistre dans Firestore ; retourne leur nombre.
+// L'identifiant du document est stable : relire un message ne crée jamais de doublon.
+async function synchroniserTelegram() {
+  if (!stockage.lire(CLE_TG_JETON)) return 0;
+  const s = reglages.social;
+  const base = s && bases[s.base];
+  if (!base) throw new Error("Base des réseaux sociaux non configurée (reglages.social).");
+  let total = 0;
+  for (let tour = 0; tour < 5; tour++) {
+    const offset = Number(stockage.lire(CLE_TG_OFFSET)) || undefined;
+    const updates = await appelTelegram("getUpdates", {
+      offset, limit: 100, timeout: 0, allowed_updates: JSON.stringify(["message", "channel_post"]),
+    });
+    if (!updates.length) break;
+    const messages = updates.map((u) => extraireMessage(u, reglages.telegram?.motsImportants)).filter(Boolean);
+    await enLots(messages, 4, (m) =>
+      google(urlFirestore(base.projectId, `/${s.collection}/${idDocument(m)}`), {
+        method: "PATCH",
+        body: JSON.stringify({ fields: champsFirestore(m) }),
+        headers: { "x-goog-user-project": base.projectId },
+      }),
+    );
+    // On ne confirme à Telegram qu'après l'enregistrement : en cas d'échec, tout sera relu
+    stockage.ecrire(CLE_TG_OFFSET, String(dernierUpdateId(updates) + 1));
+    total += messages.length;
+    if (updates.length < 100) break;
+  }
+  return total;
+}
+
+async function chargerSocialComplet() {
+  try {
+    statutTelegram.nouveaux = await synchroniserTelegram();
+    statutTelegram.erreur = "";
+  } catch (e) {
+    statutTelegram.erreur = messageReseau(e);
+  }
+  statutTelegram.derniere = new Date();
+  majStatutTelegram();
+  return chargerSocial();
+}
+
+async function rafraichirSocial() {
+  if (!jetonGoogle) return;
+  etat.social = await chargerSocialComplet();
+  rendreSocial();
+  rendreAlertes();
+}
+
+function demarrerSurveillanceSocial() {
+  if (minuteurSocial) return;
+  minuteurSocial = setInterval(() => {
+    if (document.visibilityState === "visible" && stockage.lire(CLE_TG_JETON)) rafraichirSocial();
+  }, 60000);
+}
+
+function retourTelegram(texte, erreur = false) {
+  const el = $("telegram-retour");
+  el.textContent = texte;
+  el.classList.toggle("erreur", erreur);
+}
+
+function majStatutTelegram() {
+  const jeton = stockage.lire(CLE_TG_JETON);
+  const el = $("telegram-statut");
+  $("telegram-form").hidden = !!jeton;
+  $("telegram-retirer").hidden = !jeton;
+  el.classList.toggle("erreur-texte", !!(jeton && statutTelegram.erreur));
+  if (!jeton) {
+    el.textContent = "Non connecté. Créez votre bot (2 minutes) puis collez son jeton ci-dessous.";
+    return;
+  }
+  const nom = stockage.lire(CLE_TG_NOM);
+  const parties = [`Connecté${nom ? " au bot @" + nom : ""}`];
+  if (statutTelegram.derniere) parties.push(`dernière lecture à ${heure.format(statutTelegram.derniere)}`);
+  if (statutTelegram.nouveaux) parties.push(`${statutTelegram.nouveaux} nouveau(x) message(s)`);
+  el.textContent = parties.join(" · ") + (statutTelegram.erreur ? ` — ${statutTelegram.erreur}` : "");
+}
+
+async function connecterTelegram(saisie) {
+  const jeton = String(saisie || "").trim();
+  if (!jetonValide(jeton)) {
+    retourTelegram("Ce jeton n'a pas le bon format (exemple : 123456789:AAH…). Copiez-le en entier depuis @BotFather.", true);
+    return;
+  }
+  const bouton = $("telegram-connecter");
+  bouton.disabled = true;
+  retourTelegram("Vérification du jeton…");
+  try {
+    const r = await fetch(urlTelegram(jeton, "getMe"));
+    const j = await r.json();
+    if (!j.ok) throw new Error(expliquerErreurTelegram(j));
+    stockage.ecrire(CLE_TG_JETON, jeton);
+    stockage.ecrire(CLE_TG_NOM, j.result?.username || "");
+    stockage.effacer(CLE_TG_OFFSET);
+    $("telegram-jeton").value = "";
+    statutTelegram = { erreur: "", derniere: null, nouveaux: 0 };
+    retourTelegram(`Bot @${j.result?.username || ""} connecté. Écrivez-lui un message sur Telegram pour tester.`);
+    majStatutTelegram();
+    await rafraichirSocial();
+  } catch (e) {
+    retourTelegram(messageReseau(e), true);
+  } finally {
+    bouton.disabled = false;
+  }
+}
+
+function retirerTelegram() {
+  [CLE_TG_JETON, CLE_TG_OFFSET, CLE_TG_NOM].forEach((c) => stockage.effacer(c));
+  statutTelegram = { erreur: "", derniere: null, nouveaux: 0 };
+  majStatutTelegram();
+  retourTelegram("Bot retiré de ce navigateur. Les messages déjà enregistrés restent dans votre base.");
+}
+
+$("telegram-form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  connecterTelegram($("telegram-jeton").value);
+});
+$("telegram-retirer").addEventListener("click", retirerTelegram);
+majStatutTelegram();

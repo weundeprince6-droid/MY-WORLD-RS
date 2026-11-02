@@ -13,6 +13,7 @@ const sansExport = (code) => code.replace(/^export\s+/gm, "");
 const config = sansExport(lire("config.js"));
 const core = sansExport(lire("core.js"));
 const firestore = sansExport(lire("firestore.js"));
+const telegram = sansExport(lire("telegram.js")).replace(importsLocaux, "");
 let app = lire("app.js").replace(importsLocaux, "");
 
 // Les imports Firebase (CDN) restent en tête du script
@@ -29,6 +30,7 @@ const script = [
   "// ===== config.js =====", config,
   "// ===== core.js =====", core,
   "// ===== firestore.js =====", firestore,
+  "// ===== telegram.js =====", telegram,
   "// ===== app.js =====", app,
 ].join("\n");
 

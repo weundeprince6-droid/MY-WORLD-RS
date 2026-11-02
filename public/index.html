@@ -81,6 +81,27 @@
           </section>
           <section class="tab-pane" id="pane-social" role="tabpanel" data-pane="social" hidden>
             <div class="section-heading"><div><p class="eyebrow">COMMUNAUTÉ</p><h2>Réseaux sociaux</h2><p>Les messages de vos réseaux connectés.</p></div><span class="section-icon orange">◎</span></div>
+            <section class="carte" id="carte-telegram">
+              <h3>Telegram</h3>
+              <p id="telegram-statut" class="meta"></p>
+              <details class="aide-telegram">
+                <summary>Comment connecter mon bot Telegram (2 minutes)</summary>
+                <ol>
+                  <li>Sur Telegram, ouvrez la conversation avec <strong>@BotFather</strong> et envoyez <code>/newbot</code>.</li>
+                  <li>Choisissez un nom, puis un identifiant qui se termine par « bot » (exemple : <code>MonRS_bot</code>).</li>
+                  <li>BotFather vous donne un <strong>jeton</strong> (123456789:AAH…). Copiez-le et collez-le ci-dessous.</li>
+                  <li>Pour recevoir un message : ouvrez votre bot et écrivez-lui, ou <strong>transférez-lui</strong> un message reçu.</li>
+                  <li>Pour lire un groupe : ajoutez le bot au groupe, puis envoyez <code>/setprivacy</code> à @BotFather, choisissez votre bot et <strong>Disable</strong>.</li>
+                </ol>
+                <p class="meta">Le jeton reste uniquement dans ce navigateur. Telegram garde les messages non lus pendant 24 heures : ouvrez le tableau de bord au moins une fois par jour.</p>
+              </details>
+              <form id="telegram-form" class="form-ligne" autocomplete="off">
+                <input id="telegram-jeton" type="password" autocomplete="off" spellcheck="false" placeholder="Collez le jeton de votre bot" aria-label="Jeton du bot Telegram">
+                <button type="submit" id="telegram-connecter">Connecter</button>
+              </form>
+              <button type="button" id="telegram-retirer" hidden>Retirer le bot de ce navigateur</button>
+              <p id="telegram-retour" class="meta" role="status"></p>
+            </section>
             <section class="carte"><ul id="liste-social" class="liste"></ul></section>
           </section>
           <section class="tab-pane" id="pane-profile" role="tabpanel" data-pane="profile" hidden>

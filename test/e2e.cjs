@@ -25,6 +25,7 @@ export function onAuthStateChanged(){}`;
 
 async function scenario(nom, { mode = 'ok', sdkBloque = false, quotaGmail = false }, verifier) {
   const quota = { deja: false };
+  const etat = { patches: [], offsets: [], fuite: false };
   const b = await chromium.launch(); const ctx = await b.newContext(); const p = await ctx.newPage();
   const appels = [];
   await ctx.route('**/*', async (route) => {
@@ -32,6 +33,22 @@ async function scenario(nom, { mode = 'ok', sdkBloque = false, quotaGmail = fals
     if (u.startsWith('http://localhost')) return route.continue();
     if (m === 'OPTIONS') return route.fulfill({ status: 204, headers: CORS });
     if (u.includes('gstatic.com')) { if (sdkBloque) return route.abort(); return route.fulfill(js(u.includes('firebase-app') ? stubApp : stubAuth(mode))); }
+    if (u.includes('api.telegram.org')) {
+      if (u.includes('BADBAD')) return route.fulfill(json({ ok: false, error_code: 401, description: 'Unauthorized' }));
+      if (u.includes('/getMe')) return route.fulfill(json({ ok: true, result: { username: 'MonRS_bot' } }));
+      if (u.includes('/getUpdates')) {
+        const off = new URL(u).searchParams.get('offset'); etat.offsets.push(off);
+        if (off) return route.fulfill(json({ ok: true, result: [] }));
+        return route.fulfill(json({ ok: true, result: [
+          { update_id: 901, message: { message_id: 7, date: 1793000000, chat: { id: -100123, type: 'supergroup', title: 'Comité AVEC' }, from: { first_name: 'Marie' }, text: 'Urgent : crédit en retard' } },
+          { update_id: 902, message: { message_id: 2, date: 1793000100, chat: { id: 55, type: 'private' }, from: { first_name: 'Jean' }, text: 'Salut, bonne journée' } },
+          { update_id: 903, edited_message: { message_id: 2, chat: { id: 55 }, text: 'modifié' } },
+        ] }));
+      }
+    }
+    if (u.includes('123456789:AAH') || (route.request().postData() || '').includes('123456789:AAH')) etat.fuite = true;
+    if (m === 'PATCH' && u.includes('/social_inbox/')) { etat.patches.push({ id: decodeURIComponent(u.split('/social_inbox/')[1].split('?')[0]), body: JSON.parse(route.request().postData()) }); return route.fulfill(json({})); }
+    if (u.includes(':runQuery') && etat.patches.length) return route.fulfill(json(etat.patches.map((x) => ({ document: { name: 'x/social_inbox/' + x.id, fields: x.body.fields } }))));
     appels.push(m + ' ' + u.replace(/\?.*/, '').slice(0, 110));
     if (u.includes('gmail.googleapis.com') && u.includes('/messages?')) return route.fulfill(json({ messages: [{ id: 'm1' }, { id: 'm2' }] }));
     if (quotaGmail && u.includes('/messages/m1') && !quota.deja) { quota.deja = true; return route.fulfill({ status: 403, headers: { ...CORS, 'content-type': 'application/json' }, body: JSON.stringify({ error: { code: 403, message: "Quota exceeded for quota metric 'Total Query Cost' and limit 'Units per minute per user'" } }) }); }
@@ -49,7 +66,7 @@ async function scenario(nom, { mode = 'ok', sdkBloque = false, quotaGmail = fals
   });
   const logs = []; p.on('pageerror', e => logs.push('PAGEERROR ' + e.message));
   await p.goto('http://localhost:8765/', { waitUntil: 'load' }); await p.waitForTimeout(1500);
-  const r = await verifier(p, appels, logs);
+  const r = await verifier(p, appels, logs, etat);
   console.log((r.ok ? 'OK    ' : 'ECHEC ') + nom + (r.detail ? ' -> ' + r.detail : '') + (logs.length ? '  [' + logs.join(' | ') + ']' : ''));
   await b.close(); return r.ok;
 }
@@ -70,6 +87,42 @@ srv.listen(8765, async () => {
     await p.click('#bouton-connexion'); await p.waitForTimeout(6000);
     const msgs = await p.textContent('#liste-messages'); const erreur = (await p.textContent('#erreur')).trim();
     return { ok: msgs.includes('Marie Dupont') && erreur === '', detail: erreur ? 'erreur=' + erreur.slice(0, 100) : 'message récupéré au 2e essai' };
+  }));
+  res.push(await scenario('Telegram : bot connecté, messages lus et enregistrés sans doublon', {}, async (p, appels, logs, etat) => {
+    await p.click('#bouton-connexion'); await p.waitForTimeout(2500);
+    await p.click('[data-tab="social"]'); await p.waitForTimeout(300);
+    const avantForm = await p.isVisible('#telegram-form');
+    await p.fill('#telegram-jeton', '123456789:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw'); await p.click('#telegram-connecter'); await p.waitForTimeout(2500);
+    const statut = (await p.textContent('#telegram-statut')).trim(); const liste = await p.textContent('#liste-social');
+    const formCache = await p.isHidden('#telegram-form'); const apres1 = etat.patches.length;
+    await p.click('#bouton-actualiser'); await p.waitForTimeout(2500);
+    const html = await p.content();
+    const ids = etat.patches.map((x) => x.id).sort().join(',');
+    const ok = avantForm && statut.includes('@MonRS_bot') && statut.includes('Connecté') && formCache
+      && apres1 === 2 && etat.patches.length === 2 && ids === 'telegram--100123-7,telegram-55-2'
+      && etat.patches.find((x) => x.id === 'telegram--100123-7').body.fields.important.booleanValue === true
+      && etat.patches.find((x) => x.id === 'telegram-55-2').body.fields.important.booleanValue === false
+      && liste.includes('Marie') && liste.includes('Jean') && liste.includes('Telegram')
+      && etat.offsets[etat.offsets.length - 1] === '904' && !etat.fuite && !html.includes('AAHdqTcv');
+    return { ok, detail: ok ? 'enregistrés : ' + ids + ' | offsets : ' + etat.offsets.join(',') : JSON.stringify({ statut, apres1, total: etat.patches.length, ids, offsets: etat.offsets, fuite: etat.fuite, liste: liste.slice(0, 80) }) };
+  }));
+  res.push(await scenario('Telegram : jeton mal formé et jeton refusé', {}, async (p) => {
+    await p.click('#bouton-connexion'); await p.waitForTimeout(2000);
+    await p.click('[data-tab="social"]'); await p.waitForTimeout(300);
+    await p.fill('#telegram-jeton', 'pas-un-jeton'); await p.click('#telegram-connecter'); await p.waitForTimeout(400);
+    const t1 = (await p.textContent('#telegram-retour')).trim();
+    await p.fill('#telegram-jeton', '123456789:BADBADBADBADBADBADBADBADBADBADBAD0'); await p.click('#telegram-connecter'); await p.waitForTimeout(1200);
+    const t2 = (await p.textContent('#telegram-retour')).trim(); const formVisible = await p.isVisible('#telegram-form');
+    return { ok: t1.includes('bon format') && t2.includes('refuse ce jeton') && formVisible, detail: t1.slice(0, 40) + ' | ' + t2.slice(0, 50) };
+  }));
+  res.push(await scenario('Telegram : retirer le bot', {}, async (p) => {
+    await p.click('#bouton-connexion'); await p.waitForTimeout(2000);
+    await p.click('[data-tab="social"]'); await p.waitForTimeout(300);
+    await p.fill('#telegram-jeton', '123456789:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw'); await p.click('#telegram-connecter'); await p.waitForTimeout(2000);
+    await p.click('#telegram-retirer'); await p.waitForTimeout(300);
+    const stocke = await p.evaluate(() => localStorage.getItem('mwrs.telegram.jeton'));
+    const statut = (await p.textContent('#telegram-statut')).trim();
+    return { ok: stocke === null && statut.startsWith('Non connecté') && await p.isVisible('#telegram-form'), detail: statut.slice(0, 30) };
   }));
   res.push(await scenario('Domaine non autorisé : message clair', { mode: 'auth/unauthorized-domain' }, async (p) => {
     await p.click('#bouton-connexion'); await p.waitForTimeout(800);

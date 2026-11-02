@@ -12,7 +12,8 @@ Un seul tableau de bord pour votre essentiel : **messages importants**, **agenda
 | Chiffres clés | Firebase **AVEC LA SAGESSE** et **ESE DB (WEB SERVICE)** | Fonctionnel (voir ci-dessous) |
 | Alertes et rappels | Calculées à partir des blocs ci-dessus | Fonctionnel |
 | Réponses automatiques | Brouillons Gmail à partir de modèles, **validés par vous** | Fonctionnel |
-| Telegram, WhatsApp, Facebook | Collection Firestore `social_inbox` | Affichage prêt, connecteurs à brancher (voir `docs/reseaux-sociaux.md`) |
+| Telegram | Votre bot Telegram, lu depuis la page (sans serveur) | Fonctionnel : voir `docs/reseaux-sociaux.md` |
+| WhatsApp, Facebook | Collection Firestore `social_inbox` | Affichage prêt, connecteurs à brancher (voir `docs/reseaux-sociaux.md`) |
 
 L'application tourne entièrement dans le navigateur : **aucun serveur, plan Firebase gratuit (Spark) suffisant**.
 
@@ -102,6 +103,7 @@ La page affiche un message rouge en haut qui dit quoi faire. Les cas fréquents 
   importants des 7 derniers jours, et réessaie une fois toute seule. En cas de quota dépassé, attendez une minute puis cliquez sur Actualiser.
 - Les messages ne sont **jamais envoyés automatiquement** : l'application crée des brouillons Gmail.
 - WhatsApp personnel et Messenger personnel ne peuvent pas être lus par une API officielle.
+- Telegram : seuls les messages reçus par votre bot sont lus (transférez-lui une conversation pour la faire remonter), et seulement quand la page est ouverte.
 - Les chiffres d'AVEC reprennent les règles de l'application (reste = montant − remboursé, retard = échéance dépassée).
   Si ces règles changent dans AVEC, mettez à jour `calculerCreditsAvec` dans `public/firestore.js`.
 
@@ -114,7 +116,7 @@ npm test
 ## Structure
 
 ```
-public/        interface web (index.html, app.js, core.js, firestore.js, style.css, config.js)
+public/        interface web (index.html, app.js, core.js, firestore.js, telegram.js, style.css, config.js)
 docs/          guides (réseaux sociaux)
 test/          tests de la logique et de la configuration
 .github/       déploiement Firebase en un clic
