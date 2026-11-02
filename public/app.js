@@ -19,12 +19,14 @@ const SCOPES = [
   "https://www.googleapis.com/auth/calendar.readonly",
   // Lecture des bases Firestore avec les droits de VOTRE compte Google (propriétaire des projets)
   "https://www.googleapis.com/auth/datastore",
+  // Métadonnées des fichiers et dossiers Google Drive (lecture seule)
+  "https://www.googleapis.com/auth/drive.metadata.readonly",
 ];
 
 let jetonGoogle = null;
 let minuteurSocial = null; // lecture régulière de Telegram tant que la page est ouverte
 let fb = null; // composants Firebase, chargés après l'affichage de la page
-let etat = { messages: [], agenda: { aujourdhui: [], aVenir: [] }, kpis: [], social: [] };
+let etat = { messages: [], agenda: { aujourdhui: [], aVenir: [] }, kpis: [], social: [] };\nlet drivePageToken = null;\nlet driveRecherche = "";\nlet driveCharge = false;
 
 // Les boutons réagissent dès le départ, même si Firebase n'est pas encore chargé
 $("adresse-page").textContent = location.protocol === "file:"
@@ -296,6 +298,64 @@ async function googleUneFois(url, options = {}) {
   }
   return r.json();
 }
+
+// ---------- Google Drive : consultation des fichiers et dossiers ----------
+const DRIVE_API = "https://www.googleapis.com/drive/v3/files";
+function urlDrive(q, pageToken) {
+  const params = new URLSearchParams({
+    pageSize: "50",
+    orderBy: "folder,name",
+    fields: "nextPageToken,files(id,name,mimeType,modifiedTime,webViewLink,iconLink,size)",
+    q: q || "trashed = false",
+  });
+  if (pageToken) params.set("pageToken", pageToken);
+  return DRIVE_API + "?" + params.toString();
+}
+function afficherFichiersDrive(fichiers, ajouter = false) {
+  const liste = $("drive-fichiers");
+  const lignes = fichiers.map((f) => {
+    const dossier = f.mimeType === "application/vnd.google-apps.folder";
+    const icone = dossier ? "📁" : f.mimeType === "application/pdf" ? "📕" : f.mimeType.includes("spreadsheet") ? "📊" : f.mimeType.includes("document") ? "📄" : "📎";
+    const date = f.modifiedTime ? jourHeure.format(new Date(f.modifiedTime)) : "";
+    const lien = f.webViewLink || `https://drive.google.com/open?id=${encodeURIComponent(f.id)}`;
+    return `<li><div class="drive-file"><span class="drive-file-icon">${icone}</span><div class="drive-file-info"><strong>${echapper(f.name || "Sans nom")}</strong><span class="meta">${dossier ? "Dossier" : "Fichier"} · ${echapper(date)}</span></div><a class="btn btn-light" href="${echapper(lien)}" target="_blank" rel="noopener noreferrer">Ouvrir ↗</a></div></li>`;
+  }).join("");
+  if (!ajouter) liste.innerHTML = "";
+  liste.insertAdjacentHTML("beforeend", lignes);
+  if (!liste.children.length) liste.innerHTML = '<li class="vide">Aucun fichier trouvé.</li>';
+}
+async function chargerDrive({ nouvelleRecherche = false } = {}) {
+  if (!jetonGoogle) return;
+  if (nouvelleRecherche) drivePageToken = null;
+  const statut = $("drive-statut");
+  const bouton = $("drive-actualiser");
+  statut.textContent = "Chargement de Google Drive…";
+  bouton.disabled = true;
+  try {
+    let q = "trashed = false";
+    if (driveRecherche.trim()) q += " and name contains '" + driveRecherche.trim().replace(/\\/g, "\\\\").replace(/'/g, "\\'") + "'";
+    const resultat = await google(urlDrive(q, nouvelleRecherche ? null : drivePageToken));
+    afficherFichiersDrive(resultat.files || [], !nouvelleRecherche && Boolean(drivePageToken));
+    drivePageToken = resultat.nextPageToken || null;
+    $("drive-plus").hidden = !drivePageToken;
+    statut.textContent = `${$("drive-fichiers").querySelectorAll("li:not(.vide)").length} fichier(s) affiché(s). Les éléments s'ouvrent dans Google Drive.`;
+    driveCharge = true;
+  } catch (e) {
+    statut.textContent = "Impossible de lire Google Drive : " + e.message;
+    $("drive-fichiers").innerHTML = "";
+  } finally { bouton.disabled = false; }
+}
+$("drive-actualiser")?.addEventListener("click", () => chargerDrive({ nouvelleRecherche: true }));
+$("drive-plus")?.addEventListener("click", () => chargerDrive());
+let driveRechercheTimer = null;
+$("drive-recherche")?.addEventListener("input", (event) => {
+  driveRecherche = event.target.value;
+  clearTimeout(driveRechercheTimer);
+  driveRechercheTimer = setTimeout(() => chargerDrive({ nouvelleRecherche: true }), 350);
+});
+document.querySelector('[data-tab="drive"]')?.addEventListener("click", () => {
+  if (!driveCharge) chargerDrive({ nouvelleRecherche: true });
+});
 
 // ---------- Sources ----------
 async function chargerGmail() {
