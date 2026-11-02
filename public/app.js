@@ -67,6 +67,65 @@ function afficherSession(connecte, nom = "") {
   $("utilisateur").textContent = connecte ? nom : "";
 }
 
+// ---------- Profil personnel ----------
+// Le profil est conservé séparément pour chaque compte Google, sur ce navigateur.
+let utilisateurProfil = null;
+function cleProfil() {
+  return utilisateurProfil?.uid ? `my-world-rs-profil-${utilisateurProfil.uid}` : null;
+}
+function chargerProfilGoogle(user) {
+  utilisateurProfil = {
+    uid: user.uid,
+    nomGoogle: user.displayName || "",
+    email: user.email || "",
+    photo: user.photoURL || "",
+  };
+  const nomEl = $("profil-google-nom"), emailEl = $("profil-google-email"), avatar = $("profil-avatar");
+  if (nomEl) nomEl.textContent = utilisateurProfil.nomGoogle || "Compte Google";
+  if (emailEl) emailEl.textContent = utilisateurProfil.email;
+  if (avatar) {
+    avatar.textContent = (utilisateurProfil.nomGoogle || utilisateurProfil.email || "G").trim().charAt(0).toUpperCase();
+    if (utilisateurProfil.photo) avatar.innerHTML = `<img src="${echapper(utilisateurProfil.photo)}" alt="Photo Google">`;
+  }
+  const form = $("form-profil");
+  if (!form) return;
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem(cleProfil()) || "{}"); } catch { saved = {}; }
+  const parts = (utilisateurProfil.nomGoogle || "").trim().split(/\\s+/);
+  const defaults = {
+    nom: parts.length > 1 ? parts.slice(1).join(" ") : "",
+    postnom: "",
+    prenom: parts[0] || "",
+    naissance: "", sexe: "", telephone: "", adresse: "",
+  };
+  Object.entries({ ...defaults, ...saved }).forEach(([key, value]) => {
+    const field = form.elements.namedItem(key);
+    if (field && typeof value === "string") field.value = value;
+  });
+  $("profil-status").textContent = saved.enregistreLe
+    ? "Profil déjà enregistré — vous n'avez pas à le compléter à chaque connexion."
+    : "Informations à compléter (enregistrez-les une seule fois).";
+}
+$("form-profil")?.addEventListener("submit", (event) => {
+  event.preventDefault();
+  if (!utilisateurProfil?.uid) return;
+  const form = event.currentTarget;
+  const profil = {};
+  ["nom", "postnom", "prenom", "naissance", "sexe", "telephone", "adresse"].forEach((key) => {
+    profil[key] = form.elements.namedItem(key)?.value?.trim() || "";
+  });
+  profil.enregistreLe = new Date().toISOString();
+  try {
+    localStorage.setItem(cleProfil(), JSON.stringify(profil));
+    $("profil-status").textContent = "Profil enregistré. Il sera retrouvé automatiquement à vos prochaines connexions sur ce navigateur.";
+    $("confirmation").textContent = "Vos informations de profil ont été enregistrées.";
+    $("confirmation").hidden = false;
+    setTimeout(() => ($("confirmation").hidden = true), 5000);
+  } catch {
+    afficherErreur("Impossible d'enregistrer le profil dans ce navigateur. Vérifiez l'espace de stockage disponible ou les paramètres de confidentialité.");
+  }
+});
+
 function expliquerErreur(e) {
   const code = e?.code || "";
   if (window.self !== window.top && (code === "sdk-load" || code.startsWith("auth/"))) {
@@ -101,6 +160,7 @@ async function seConnecter() {
     jetonGoogle = fb.GoogleAuthProvider.credentialFromResult(resultat)?.accessToken || null;
     if (!jetonGoogle) throw Object.assign(new Error("pas de jeton"), { code: "no-token" });
     afficherSession(true, resultat.user.displayName || resultat.user.email);
+    chargerProfilGoogle(resultat.user);
     await tout();
   } catch (e) {
     if (e?.code !== "auth/cancelled-popup-request") afficherErreur(expliquerErreur(e));
