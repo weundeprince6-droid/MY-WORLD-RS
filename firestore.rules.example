@@ -8,6 +8,12 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Jetons OAuth Google : accès strictement réservé aux fonctions serveur (Admin SDK).
+    // Ajoutez ce bloc aux règles du projet Firebase my-world-rs.
+    match /googleOAuthTokens/{uid} {
+      allow read, write: if false;
+    }
+
     // Boîte de réception des réseaux sociaux : lecture réservée à votre compte Google.
     match /social_inbox/{doc} {
       allow read: if request.auth != null
