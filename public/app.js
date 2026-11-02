@@ -21,8 +21,8 @@ const SCOPES = [
   "https://www.googleapis.com/auth/datastore",
   // Métadonnées des fichiers et dossiers Google Drive (lecture seule)
   "https://www.googleapis.com/auth/drive.metadata.readonly",
-  // Consultation des listes et tâches Google Tasks (lecture seule)
-  "https://www.googleapis.com/auth/tasks.readonly",
+  // Gestion complète des listes et tâches Google Tasks
+  "https://www.googleapis.com/auth/tasks",
 ];
 
 let jetonGoogle = null;
@@ -301,6 +301,7 @@ async function googleUneFois(url, options = {}) {
     erreur.quota = quota;
     throw erreur;
   }
+  if (r.status === 204) return {};
   return r.json();
 }
 
@@ -363,13 +364,19 @@ document.querySelector('[data-tab="drive"]')?.addEventListener("click", () => {
 });
 
 
-// ---------- Google Tasks : consultation des listes et tâches ----------
+// ---------- Google Tasks : gestion complète des listes et tâches ----------
 const TASKS_API = "https://tasks.googleapis.com/tasks/v1";
 let tasksCharge = false;
 function dateTache(date) {
   if (!date) return "Sans échéance";
   const d = new Date(date);
   return Number.isNaN(d.getTime()) ? "" : new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", year: "numeric" }).format(d);
+}
+function urlListeTasks(id = "") {
+  return TASKS_API + "/users/@me/lists" + (id ? "/" + encodeURIComponent(id) : "");
+}
+function urlTacheTasks(listeId, tacheId = "") {
+  return TASKS_API + "/lists/" + encodeURIComponent(listeId) + "/tasks" + (tacheId ? "/" + encodeURIComponent(tacheId) : "");
 }
 async function chargerTasks() {
   if (!jetonGoogle) return;
@@ -379,11 +386,11 @@ async function chargerTasks() {
   statut.textContent = "Chargement de Google Tasks…";
   bouton.disabled = true;
   try {
-    const reponseListes = await google(TASKS_API + "/users/@me/lists?maxResults=100");
+    const reponseListes = await google(urlListeTasks() + "?maxResults=100");
     const listes = reponseListes.items || [];
     const resultats = await Promise.all(listes.map(async (liste) => {
       const params = new URLSearchParams({ maxResults: "100", showCompleted: "true", showHidden: "true" });
-      const reponse = await google(TASKS_API + "/lists/" + encodeURIComponent(liste.id) + "/tasks?" + params.toString());
+      const reponse = await google(urlTacheTasks(liste.id) + "?" + params.toString());
       return { liste, taches: reponse.items || [] };
     }));
     conteneur.innerHTML = resultats.length ? resultats.map(({ liste, taches }) => {
@@ -391,21 +398,109 @@ async function chargerTasks() {
       const lignes = taches.length ? taches.map((t) => {
         const terminee = t.status === "completed";
         const detail = terminee ? "Terminée" : (t.due ? "Échéance : " + dateTache(t.due) : "À faire");
-        return '<li><div class="drive-file"><span class="drive-file-icon">' + (terminee ? "☑" : "□") + '</span><div class="drive-file-info"><strong' + (terminee ? ' class="task-complete"' : "") + '>' + echapper(t.title || "Tâche sans titre") + '</strong><span class="meta">' + echapper(detail) + (t.notes ? " · " + echapper(t.notes) : "") + '</span></div></div></li>';
+        return '<li class="task-ligne"><div class="task-contenu"><label class="task-case"><input type="checkbox" data-task-action="toggle" data-list-id="' + echapper(liste.id) + '" data-task-id="' + echapper(t.id) + '"' + (terminee ? " checked" : "") + ' aria-label="Marquer comme ' + (terminee ? "à faire" : "terminée") + '"></label><div class="drive-file-info"><strong' + (terminee ? ' class="task-complete"' : "") + '>' + echapper(t.title || "Tâche sans titre") + '</strong><span class="meta">' + echapper(detail) + (t.notes ? " · " + echapper(t.notes) : "") + '</span></div></div><div class="task-actions"><button type="button" class="btn btn-light" data-task-action="edit" data-list-id="' + echapper(liste.id) + '" data-task-id="' + echapper(t.id) + '" data-title="' + echapper(t.title || "") + '" data-notes="' + echapper(t.notes || "") + '" data-due="' + echapper(t.due ? t.due.slice(0,10) : "") + '">Modifier</button><button type="button" class="btn btn-light task-delete" data-task-action="delete" data-list-id="' + echapper(liste.id) + '" data-task-id="' + echapper(t.id) + '">Supprimer</button></div></li>';
       }).join("") : '<li class="vide">Aucune tâche dans cette liste.</li>';
-      return '<section class="tasks-groupe"><div class="card-heading"><h3>' + echapper(liste.title || "Liste sans titre") + '</h3><span class="meta">' + ouvertes + ' à faire · ' + taches.length + ' au total</span></div><ul class="liste">' + lignes + '</ul></section>';
-    }).join("") : '<p class="vide">Aucune liste Google Tasks trouvée.</p>';
+      return '<section class="tasks-groupe" data-list-id="' + echapper(liste.id) + '"><div class="card-heading"><div><h3>' + echapper(liste.title || "Liste sans titre") + '</h3><span class="meta">' + ouvertes + ' à faire · ' + taches.length + ' au total</span></div><div class="task-actions"><button type="button" class="btn btn-light" data-task-action="rename-list" data-list-id="' + echapper(liste.id) + '" data-title="' + echapper(liste.title || "") + '">Renommer</button><button type="button" class="btn btn-light task-delete" data-task-action="delete-list" data-list-id="' + echapper(liste.id) + '">Supprimer la liste</button></div></div><ul class="liste task-liste">' + lignes + '</ul><form class="task-ajout" data-task-form="add" data-list-id="' + echapper(liste.id) + '"><input name="title" required maxlength="1024" placeholder="Nouvelle tâche…" aria-label="Titre de la tâche"><input name="due" type="date" aria-label="Date d’échéance"><input name="notes" placeholder="Notes (facultatif)" aria-label="Notes"><button class="btn btn-primary" type="submit">Ajouter</button></form></section>';
+    }).join("") : '<p class="vide">Aucune liste Google Tasks trouvée. Créez votre première liste ci-dessus.</p>';
     const total = resultats.reduce((n, r) => n + r.taches.length, 0);
-    statut.textContent = listes.length + " liste(s) chargée(s), " + total + " tâche(s) affichée(s).";
+    statut.textContent = listes.length + " liste(s) chargée(s), " + total + " tâche(s). Les modifications sont synchronisées avec Google.";
     tasksCharge = true;
   } catch (e) {
-    statut.textContent = "Impossible de lire Google Tasks : " + e.message;
+    statut.textContent = "Impossible de charger Google Tasks : " + e.message;
     conteneur.innerHTML = "";
-  } finally {
-    bouton.disabled = false;
+  } finally { bouton.disabled = false; }
+}
+function dateApiTasks(date) {
+  return date ? date + "T00:00:00.000Z" : null;
+}
+async function actionTasks(action, element) {
+  const listeId = element.dataset.listId;
+  const taskId = element.dataset.taskId;
+  if (action === "toggle") {
+    const terminee = element.checked;
+    await google(urlTacheTasks(listeId, taskId), {
+      method: "PATCH",
+      body: JSON.stringify(terminee
+        ? { status: "completed", completed: new Date().toISOString() }
+        : { status: "needsAction", completed: null }),
+    });
+  } else if (action === "edit") {
+    const titre = prompt("Titre de la tâche :", element.dataset.title || "");
+    if (titre === null) return;
+    if (!titre.trim()) { alert("Le titre ne peut pas être vide."); return; }
+    const notes = prompt("Notes de la tâche :", element.dataset.notes || "");
+    if (notes === null) return;
+    const due = prompt("Date d’échéance (AAAA-MM-JJ), laisser vide pour aucune :", element.dataset.due || "");
+    if (due === null) return;
+    await google(urlTacheTasks(listeId, taskId), {
+      method: "PATCH",
+      body: JSON.stringify({ title: titre.trim(), notes: notes.trim(), due: dateApiTasks(due.trim()) }),
+    });
+  } else if (action === "delete") {
+    if (!confirm("Supprimer définitivement cette tâche Google Tasks ?")) return;
+    await google(urlTacheTasks(listeId, taskId), { method: "DELETE" });
+  } else if (action === "rename-list") {
+    const titre = prompt("Nouveau nom de la liste :", element.dataset.title || "");
+    if (titre === null) return;
+    if (!titre.trim()) { alert("Le nom ne peut pas être vide."); return; }
+    await google(urlListeTasks(listeId), { method: "PATCH", body: JSON.stringify({ title: titre.trim() }) });
+  } else if (action === "delete-list") {
+    if (!confirm("Supprimer cette liste et toutes les tâches qu’elle contient ? Cette action est définitive.")) return;
+    await google(urlListeTasks(listeId), { method: "DELETE" });
   }
+  await chargerTasks();
 }
 $("tasks-actualiser")?.addEventListener("click", chargerTasks);
+$("tasks-listes")?.addEventListener("change", async (event) => {
+  const el = event.target.closest('[data-task-action="toggle"]');
+  if (!el) return;
+  try { await actionTasks("toggle", el); }
+  catch (e) { el.checked = !el.checked; afficherErreur("Modification de la tâche impossible : " + e.message); }
+});
+$("tasks-listes")?.addEventListener("click", async (event) => {
+  const el = event.target.closest("[data-task-action]");
+  if (!el || el.dataset.taskAction === "toggle") return;
+  try { await actionTasks(el.dataset.taskAction, el); }
+  catch (e) { afficherErreur("Action Google Tasks impossible : " + e.message); }
+});
+$("tasks-listes")?.addEventListener("submit", async (event) => {
+  const form = event.target.closest('[data-task-form="add"]');
+  if (!form) return;
+  event.preventDefault();
+  const data = new FormData(form);
+  const titre = String(data.get("title") || "").trim();
+  if (!titre) return;
+  const bouton = form.querySelector('button[type="submit"]');
+  bouton.disabled = true;
+  try {
+    const payload = { title: titre };
+    const notes = String(data.get("notes") || "").trim();
+    const due = String(data.get("due") || "");
+    if (notes) payload.notes = notes;
+    if (due) payload.due = dateApiTasks(due);
+    await google(urlTacheTasks(form.dataset.listId), { method: "POST", body: JSON.stringify(payload) });
+    await chargerTasks();
+  } catch (e) {
+    afficherErreur("Création de la tâche impossible : " + e.message);
+    bouton.disabled = false;
+  }
+});
+$("tasks-creer-liste")?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const champ = form.elements.namedItem("title");
+  const titre = champ.value.trim();
+  if (!titre) return;
+  const bouton = form.querySelector('button[type="submit"]');
+  bouton.disabled = true;
+  try {
+    await google(urlListeTasks(), { method: "POST", body: JSON.stringify({ title: titre }) });
+    champ.value = "";
+    await chargerTasks();
+  } catch (e) {
+    afficherErreur("Création de la liste impossible : " + e.message);
+  } finally { bouton.disabled = false; }
+});
 document.querySelector('[data-tab="tasks"]')?.addEventListener("click", () => {
   if (!tasksCharge) chargerTasks();
 });
