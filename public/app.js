@@ -5,7 +5,7 @@ import {
 } from "./core.js";
 import {
   corpsAgregation, lireAgregat, corpsListe, lireListe, decoderDocument,
-  calculerCreditsAvec, MESURES_CREDITS_AVEC, calculerEse, MESURES_ESE,
+  calculerCreditsAvec, MESURES_CREDITS_AVEC, calculerEse, MESURES_ESE, decoderChamps,
 } from "./firestore.js";
 
 const $ = (id) => document.getElementById(id);
@@ -67,13 +67,51 @@ function afficherSession(connecte, nom = "") {
   $("utilisateur").textContent = connecte ? nom : "";
 }
 
-// ---------- Profil personnel ----------
-// Le profil est conservé séparément pour chaque compte Google, sur ce navigateur.
+// ---------- Profil personnel : sauvegarde Firebase par compte Google ----------
 let utilisateurProfil = null;
 function cleProfil() {
   return utilisateurProfil?.uid ? `my-world-rs-profil-${utilisateurProfil.uid}` : null;
 }
-function chargerProfilGoogle(user) {
+function urlProfilFirestore(uid) {
+  return urlFirestore(firebaseConfig.projectId, `/users/${encodeURIComponent(uid)}/profile/main`);
+}
+function champsProfilFirestore(profil) {
+  const fields = {};
+  for (const key of ["nom", "postnom", "prenom", "naissance", "sexe", "telephone", "adresse", "enregistreLe"]) {
+    fields[key] = { stringValue: String(profil[key] || "") };
+  }
+  fields.emailGoogle = { stringValue: String(utilisateurProfil?.email || "") };
+  fields.nomGoogle = { stringValue: String(utilisateurProfil?.nomGoogle || "") };
+  return fields;
+}
+async function lireProfilCloud(uid) {
+  const r = await fetch(urlProfilFirestore(uid), {
+    headers: { Authorization: `Bearer ${jetonGoogle}`, "Content-Type": "application/json" },
+  });
+  if (r.status === 404) return null;
+  if (!r.ok) {
+    const detail = await r.text().catch(() => "");
+    throw new Error(`Firestore (${r.status}) : ${detail.slice(0, 180)}`);
+  }
+  const doc = await r.json();
+  return decoderChamps(doc.fields || {});
+}
+async function enregistrerProfilCloud(profil) {
+  const uid = utilisateurProfil?.uid;
+  if (!uid || !jetonGoogle) throw new Error("Connectez-vous à Google avant d'enregistrer.");
+  const url = urlProfilFirestore(uid) + "?updateMask.fieldPaths=nom&updateMask.fieldPaths=postnom&updateMask.fieldPaths=prenom&updateMask.fieldPaths=naissance&updateMask.fieldPaths=sexe&updateMask.fieldPaths=telephone&updateMask.fieldPaths=adresse&updateMask.fieldPaths=enregistreLe&updateMask.fieldPaths=emailGoogle&updateMask.fieldPaths=nomGoogle";
+  const r = await fetch(url, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${jetonGoogle}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ fields: champsProfilFirestore(profil) }),
+  });
+  if (!r.ok) {
+    const detail = await r.text().catch(() => "");
+    throw new Error(`Firestore (${r.status}) : ${detail.slice(0, 220)}`);
+  }
+  return r.json();
+}
+async function chargerProfilGoogle(user) {
   utilisateurProfil = {
     uid: user.uid,
     nomGoogle: user.displayName || "",
@@ -89,40 +127,63 @@ function chargerProfilGoogle(user) {
   }
   const form = $("form-profil");
   if (!form) return;
-  let saved = {};
-  try { saved = JSON.parse(localStorage.getItem(cleProfil()) || "{}"); } catch { saved = {}; }
-  const parts = (utilisateurProfil.nomGoogle || "").trim().split(/\\s+/);
+  let local = {};
+  try { local = JSON.parse(localStorage.getItem(cleProfil()) || "{}"); } catch { local = {}; }
+  const parts = (utilisateurProfil.nomGoogle || "").trim().split(/\s+/);
   const defaults = {
     nom: parts.length > 1 ? parts.slice(1).join(" ") : "",
-    postnom: "",
-    prenom: parts[0] || "",
+    postnom: "", prenom: parts[0] || "",
     naissance: "", sexe: "", telephone: "", adresse: "",
   };
+  let saved = local;
+  let cloudOk = false;
+  try {
+    const cloud = await lireProfilCloud(user.uid);
+    if (cloud && cloud.enregistreLe) {
+      saved = { ...local, ...cloud };
+      cloudOk = true;
+      try { localStorage.setItem(cleProfil(), JSON.stringify(saved)); } catch {}
+    }
+  } catch (e) {
+    console.warn("Profil Firebase non chargé, utilisation de la copie locale :", e);
+  }
   Object.entries({ ...defaults, ...saved }).forEach(([key, value]) => {
     const field = form.elements.namedItem(key);
     if (field && typeof value === "string") field.value = value;
   });
-  $("profil-status").textContent = saved.enregistreLe
-    ? "Profil déjà enregistré — vous n'avez pas à le compléter à chaque connexion."
-    : "Informations à compléter (enregistrez-les une seule fois).";
+  const status = $("profil-status");
+  if (status) {
+    status.textContent = cloudOk
+      ? "Profil synchronisé avec Firebase — disponible sur vos autres appareils."
+      : saved.enregistreLe
+        ? "Profil local retrouvé. La synchronisation Firebase sera vérifiée à l'enregistrement."
+        : "Complétez vos informations puis enregistrez-les dans Firebase.";
+  }
 }
-$("form-profil")?.addEventListener("submit", (event) => {
+$("form-profil")?.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (!utilisateurProfil?.uid) return;
   const form = event.currentTarget;
+  const bouton = form.querySelector('button[type="submit"]');
+  if (bouton) { bouton.disabled = true; bouton.textContent = "Synchronisation…"; }
   const profil = {};
   ["nom", "postnom", "prenom", "naissance", "sexe", "telephone", "adresse"].forEach((key) => {
     profil[key] = form.elements.namedItem(key)?.value?.trim() || "";
   });
   profil.enregistreLe = new Date().toISOString();
   try {
-    localStorage.setItem(cleProfil(), JSON.stringify(profil));
-    $("profil-status").textContent = "Profil enregistré. Il sera retrouvé automatiquement à vos prochaines connexions sur ce navigateur.";
-    $("confirmation").textContent = "Vos informations de profil ont été enregistrées.";
+    await enregistrerProfilCloud(profil);
+    try { localStorage.setItem(cleProfil(), JSON.stringify(profil)); } catch {}
+    $("profil-status").textContent = "Profil synchronisé avec Firebase. Vous le retrouverez avec ce compte Google sur vos autres appareils.";
+    $("confirmation").textContent = "Votre profil a été enregistré et synchronisé dans Firebase.";
     $("confirmation").hidden = false;
     setTimeout(() => ($("confirmation").hidden = true), 5000);
-  } catch {
-    afficherErreur("Impossible d'enregistrer le profil dans ce navigateur. Vérifiez l'espace de stockage disponible ou les paramètres de confidentialité.");
+  } catch (e) {
+    try { localStorage.setItem(cleProfil(), JSON.stringify(profil)); } catch {}
+    $("profil-status").textContent = "Copie locale enregistrée, mais Firebase n'a pas accepté la synchronisation.";
+    afficherErreur("Profil enregistré seulement sur cet appareil. Synchronisation Firebase impossible : " + e.message + ". Vérifiez l'accès Firestore du compte Google.");
+  } finally {
+    if (bouton) { bouton.disabled = false; bouton.textContent = "Enregistrer mon profil"; }
   }
 });
 
