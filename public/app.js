@@ -1,7 +1,7 @@
 // app.js — interface My World RS : connexion Google, lecture Gmail/Agenda/Firestore, rendu.
 import {
   messagesImportants, repartirAgenda, evaluerSeuil, construireAlertes,
-  resumeDuJour, remplirModele, construireBrouillonBrut, expediteurLisible,
+  resumeDuJour, remplirModele, construireBrouillonBrut, expediteurLisible, enLots,
 } from "./core.js";
 import {
   corpsAgregation, lireAgregat, corpsListe, lireListe, decoderDocument,
@@ -244,7 +244,18 @@ const heure = new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-dig
 const jourCourt = new Intl.DateTimeFormat("fr-FR", { weekday: "short", day: "numeric", month: "short" });
 const jourHeure = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
+// Appel Google avec un nouvel essai automatique si le quota est momentanément dépassé
 async function google(url, options = {}) {
+  try {
+    return await googleUneFois(url, options);
+  } catch (e) {
+    if (!e.quota) throw e;
+    await new Promise((ok) => setTimeout(ok, 3000));
+    return googleUneFois(url, options);
+  }
+}
+
+async function googleUneFois(url, options = {}) {
   if (!jetonGoogle) throw new Error("Session Google expirée : cliquez sur « Se reconnecter ».");
   const r = await fetch(url, {
     ...options,
@@ -272,7 +283,11 @@ async function google(url, options = {}) {
     } else if (r.status === 403 && projet) {
       conseil = ` → Votre compte Google n'a pas accès au projet « ${projet} » (ou Firestore y est désactivé).`;
     }
-    throw new Error(`Google a répondu ${r.status}${detail ? " : " + detail : ""}${conseil}`);
+    const quota = r.status === 429 || /quota exceeded|rate limit|userRateLimitExceeded/i.test(detail);
+    if (quota) conseil = " → Google limite temporairement les requêtes. Attendez une minute puis cliquez sur « Actualiser ».";
+    const erreur = new Error(`Google a répondu ${r.status}${detail ? " : " + detail : ""}${conseil}`);
+    erreur.quota = quota;
+    throw erreur;
   }
   return r.json();
 }
@@ -284,11 +299,10 @@ async function chargerGmail() {
     `https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=${g.maxMessages}&q=${encodeURIComponent(g.requete)}`,
   );
   const ids = (liste.messages || []).map((m) => m.id);
-  const complets = await Promise.all(
-    ids.map((id) =>
-      google(
-        `https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date`,
-      ),
+  // 4 lectures à la fois : Gmail limite le nombre de requêtes par minute
+  const complets = await enLots(ids, 4, (id) =>
+    google(
+      `https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date`,
     ),
   );
   return messagesImportants(complets, {

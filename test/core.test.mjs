@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import {
   scoreMessage, messagesImportants, repartirAgenda, evaluerSeuil, construireAlertes,
-  resumeDuJour, remplirModele, construireBrouillonBrut, expediteurLisible,
+  resumeDuJour, remplirModele, construireBrouillonBrut, expediteurLisible, enLots,
 } from "../public/core.js";
 
 const msg = (id, from, subject, labels = [], snippet = "") => ({
@@ -55,5 +55,15 @@ assert.ok(/^[A-Za-z0-9_-]+$/.test(brut));
 const decode = Buffer.from(brut.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf8");
 assert.ok(decode.startsWith("To: marie@ex.com\r\nSubject: =?UTF-8?B?"));
 assert.ok(decode.endsWith("Bonjour é"));
+
+// Exécution par lots : ordre conservé, jamais plus de 4 appels en même temps
+let actifs = 0, maxActifs = 0;
+const sortie = await enLots([1, 2, 3, 4, 5, 6, 7, 8, 9], 4, async (n) => {
+  actifs += 1; maxActifs = Math.max(maxActifs, actifs);
+  await new Promise((ok) => setTimeout(ok, 5));
+  actifs -= 1; return n * 10;
+});
+assert.deepEqual(sortie, [10, 20, 30, 40, 50, 60, 70, 80, 90]);
+assert.equal(maxActifs, 4);
 
 console.log("Tous les tests passent.");

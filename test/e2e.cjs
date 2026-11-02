@@ -23,7 +23,8 @@ export async function signInWithPopup(){ ${mode === 'ok' ? "return {user:{displa
 export async function signOut(){}
 export function onAuthStateChanged(){}`;
 
-async function scenario(nom, { mode = 'ok', sdkBloque = false }, verifier) {
+async function scenario(nom, { mode = 'ok', sdkBloque = false, quotaGmail = false }, verifier) {
+  const quota = { deja: false };
   const b = await chromium.launch(); const ctx = await b.newContext(); const p = await ctx.newPage();
   const appels = [];
   await ctx.route('**/*', async (route) => {
@@ -33,6 +34,7 @@ async function scenario(nom, { mode = 'ok', sdkBloque = false }, verifier) {
     if (u.includes('gstatic.com')) { if (sdkBloque) return route.abort(); return route.fulfill(js(u.includes('firebase-app') ? stubApp : stubAuth(mode))); }
     appels.push(m + ' ' + u.replace(/\?.*/, '').slice(0, 110));
     if (u.includes('gmail.googleapis.com') && u.includes('/messages?')) return route.fulfill(json({ messages: [{ id: 'm1' }, { id: 'm2' }] }));
+    if (quotaGmail && u.includes('/messages/m1') && !quota.deja) { quota.deja = true; return route.fulfill({ status: 403, headers: { ...CORS, 'content-type': 'application/json' }, body: JSON.stringify({ error: { code: 403, message: "Quota exceeded for quota metric 'Total Query Cost' and limit 'Units per minute per user'" } }) }); }
     if (u.includes('/messages/m1')) return route.fulfill(json({ id: 'm1', threadId: 't1', labelIds: ['UNREAD', 'IMPORTANT'], snippet: 'Merci de régler avant le 5', internalDate: String(Date.now()), payload: { headers: [{ name: 'From', value: 'Marie Dupont <marie@ex.com>' }, { name: 'Subject', value: 'Rappel facture urgente' }] } }));
     if (u.includes('/messages/m2')) return route.fulfill(json({ id: 'm2', threadId: 't2', labelIds: ['CATEGORY_PROMOTIONS'], snippet: 'promo', internalDate: '1', payload: { headers: [{ name: 'From', value: 'Shop <no-reply@shop.com>' }, { name: 'Subject', value: 'Promotion -50%' }] } }));
     if (u.includes('calendar/v3')) return route.fulfill(json({ items: [{ id: 'e1', summary: 'Réunion du comité', start: { dateTime: dans30.toISOString() }, end: { dateTime: new Date(dans30.getTime() + 3600000).toISOString() } }] }));
@@ -63,6 +65,11 @@ srv.listen(8765, async () => {
     const ok = visible && msgs.includes('Marie Dupont') && !msgs.includes('Promotion') && agenda.includes('Réunion du comité')
       && kpis.includes('AVEC LA SAGESSE') && kpis.includes('ESE DB') && kpis.includes('Ventes aujourd') && alertes.includes('crédit(s) en retard') && alertes.includes('Réunion du comité') && scopes.some(s => s.includes('datastore'));
     return { ok, detail: ok ? 'résumé : ' + resume.trim() + ' | appels Google : ' + appels.length : 'erreur=' + erreur + ' | msgs=' + msgs.slice(0, 80) + ' | kpis=' + kpis.slice(0, 120) };
+  }));
+  res.push(await scenario('Quota Gmail dépassé : nouvel essai automatique', { quotaGmail: true }, async (p) => {
+    await p.click('#bouton-connexion'); await p.waitForTimeout(6000);
+    const msgs = await p.textContent('#liste-messages'); const erreur = (await p.textContent('#erreur')).trim();
+    return { ok: msgs.includes('Marie Dupont') && erreur === '', detail: erreur ? 'erreur=' + erreur.slice(0, 100) : 'message récupéré au 2e essai' };
   }));
   res.push(await scenario('Domaine non autorisé : message clair', { mode: 'auth/unauthorized-domain' }, async (p) => {
     await p.click('#bouton-connexion'); await p.waitForTimeout(800);

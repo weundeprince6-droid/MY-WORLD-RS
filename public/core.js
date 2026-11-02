@@ -224,3 +224,12 @@ export function construireBrouillonBrut({ a, sujet, corps }) {
   ];
   return base64urlUtf8(lignes.join("\r\n"));
 }
+
+/** Exécute f sur chaque élément, `taille` à la fois (ordre conservé) : évite de dépasser les quotas de Google. */
+export async function enLots(elements, taille, f) {
+  const resultats = [];
+  for (let i = 0; i < elements.length; i += taille) {
+    resultats.push(...(await Promise.all(elements.slice(i, i + taille).map(f))));
+  }
+  return resultats;
+}

@@ -19,8 +19,8 @@ export const bases = {
 // 3) Réglages du tableau de bord
 export const reglages = {
   gmail: {
-    requete: "newer_than:7d -category:promotions -category:social",
-    maxMessages: 40,
+    requete: "newer_than:7d (is:unread OR is:starred OR is:important) -category:promotions -category:social",
+    maxMessages: 20,
     seuilImportance: 3,
     contactsVip: [], // ex. ["bureau@exemple.com"]
     motsImportants: undefined, // laissez vide pour la liste par défaut

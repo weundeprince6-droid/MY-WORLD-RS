@@ -98,6 +98,8 @@ La page affiche un message rouge en haut qui dit quoi faire. Les cas fréquents 
 ## Limites connues
 
 - La session Google dure **1 heure** : au-delà, reconnectez-vous.
+- Gmail limite le nombre de requêtes par minute : la page lit les messages 4 par 4, ne demande que les mails non lus, étoilés ou
+  importants des 7 derniers jours, et réessaie une fois toute seule. En cas de quota dépassé, attendez une minute puis cliquez sur Actualiser.
 - Les messages ne sont **jamais envoyés automatiquement** : l'application crée des brouillons Gmail.
 - WhatsApp personnel et Messenger personnel ne peuvent pas être lus par une API officielle.
 - Les chiffres d'AVEC reprennent les règles de l'application (reste = montant − remboursé, retard = échéance dépassée).
