@@ -48,3 +48,10 @@ dialog{border:1px solid var(--border);border-radius:16px;background:var(--surfac
 .drive-file-info .meta{font-size:11px}
 .drive-file>a{flex:none;text-decoration:none;font-size:12px}
 @media(max-width:520px){.drive-toolbar{align-items:stretch;flex-direction:column}.drive-toolbar .btn{width:100%}.drive-file{gap:8px}.drive-file>a{padding:7px}}
+
+
+.tasks-listes{display:grid;gap:16px}
+.tasks-groupe{border:1px solid var(--border);border-radius:12px;padding:14px}
+.tasks-groupe .card-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
+.tasks-groupe .card-heading h3{margin:0;font-size:15px}
+.task-complete{text-decoration:line-through;color:var(--muted)}
