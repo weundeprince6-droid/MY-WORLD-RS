@@ -1,38 +1,40 @@
-// Configuration de My World RS.
-// Ces identifiants Firebase ne sont pas secrets (ils sont déjà publics dans le dépôt AVEC-LA-SAGESSE) :
-// la protection vient de la connexion Google et des droits de VOTRE compte sur chaque projet.
+// Configuration Firebase indépendante de MY WORLD RS.
+// Les bases AVEC LA SAGESSE et ESE restent des sources de données distinctes du tableau de bord.
 
-// 1) Projet Firebase qui héberge le tableau de bord et gère la connexion Google
 export const firebaseConfig = {
-  apiKey: "AIzaSyD_gv8JSw8qeybIVC78Q1ZcorKZLy646RA",
-  authDomain: "avec-la-sagesse.firebaseapp.com",
-  projectId: "avec-la-sagesse",
-  appId: "1:760546829214:web:62f06f0ed3da99c77dac8f",
+  apiKey: "AIzaSyCmTqeg6EByQCns7HpVi9PV0EdVObRR4ck",
+  authDomain: "my-world-rs.firebaseapp.com",
+  projectId: "my-world-rs",
+  storageBucket: "my-world-rs.firebasestorage.app",
+  messagingSenderId: "90992521092",
+  appId: "1:90992521092:web:be60f591a332c114a5f7d1",
+  measurementId: "G-JM5GSRF838",
 };
 
-// 2) Bases de données à lire (une par projet Firebase)
+// Bases externes consultées par le tableau de bord.
+// Elles restent séparées : changer le Firebase principal ne les déplace pas.
 export const bases = {
   avec: { nom: "AVEC LA SAGESSE", projectId: "avec-la-sagesse" },
   ese: { nom: "ESE DB · WEB SERVICE", projectId: "ese-db-b63de" },
 };
 
-// 3) Réglages du tableau de bord
+// Réglages du tableau de bord
 export const reglages = {
   gmail: {
-    requete: "newer_than:7d (is:unread OR is:starred OR is:important) -category:promotions -category:social",
-    maxMessages: 20,
+    requete: "newer_than:7d -category:promotions -category:social",
+    maxMessages: 40,
     seuilImportance: 3,
-    contactsVip: [], // ex. ["bureau@exemple.com"]
-    motsImportants: undefined, // laissez vide pour la liste par défaut
+    contactsVip: [],
+    motsImportants: undefined,
   },
 
   agenda: { joursAVenir: 7 },
 
   // Chiffres clés.
-  //  op: "count" (nombre de documents), "sum" (somme d'un champ), "avec_credits" (calculs AVEC) ou "ese" (calculs ESE DB)
-//  masquerSiZero: true cache le chiffre quand il vaut 0 (utile pour la deuxième devise)
-  //  filtre: { champ, op: "EQUAL" | "NOT_EQUAL", valeur }
-  //  seuil: { min, max } ; messageAlerte : texte de l'alerte, {{valeur}} est remplacé
+  // op: "count", "sum", "avec_credits" ou "ese"
+  // masquerSiZero: true cache le chiffre quand il vaut 0
+  // filtre: { champ, op: "EQUAL" | "NOT_EQUAL", valeur }
+  // seuil: { min, max } ; messageAlerte : {{valeur}} est remplacé
   kpis: [
     // --- AVEC LA SAGESSE ---
     { base: "avec", label: "Membres", op: "count", collection: "members" },
@@ -60,7 +62,7 @@ export const reglages = {
       filtre: { champ: "status", valeur: "pending" },
     },
 
-    // --- ESE DB · WEB SERVICE (suivi des ventes) ---
+    // --- ESE DB · WEB SERVICE ---
     { base: "ese", label: "Ventes aujourd'hui", op: "ese", mesure: "ventes_jour_fc", unite: "FC" },
     { base: "ese", label: "Ventes aujourd'hui", op: "ese", mesure: "ventes_jour_usd", unite: "USD", masquerSiZero: true },
     { base: "ese", label: "Ventes du mois", op: "ese", mesure: "ventes_mois_fc", unite: "FC" },
@@ -77,19 +79,18 @@ export const reglages = {
     },
   ],
 
-  // Réseaux sociaux (Telegram, WhatsApp, Facebook) : collection alimentée par vos connecteurs
   social: { base: "avec", collection: "social_inbox", max: 15 },
 
   modeles: [
     {
       nom: "Accusé de réception",
       sujetPrefixe: "Re: ",
-      corps: "Bonjour {{nom}},\n\nJ'ai bien reçu votre message concernant « {{sujet}} ». Je reviens vers vous très bientôt.\n\nCordialement",
+      corps: "Bonjour {{nom}},\\n\\nJ'ai bien reçu votre message concernant « {{sujet}} ». Je reviens vers vous très bientôt.\\n\\nCordialement",
     },
     {
       nom: "Besoin de plus de temps",
       sujetPrefixe: "Re: ",
-      corps: "Bonjour {{nom}},\n\nMerci pour votre message. Je suis actuellement pris(e) et vous répondrai d'ici deux jours.\n\nCordialement",
+      corps: "Bonjour {{nom}},\\n\\nMerci pour votre message. Je suis actuellement pris(e) et vous répondrai d'ici deux jours.\\n\\nCordialement",
     },
   ],
 };
