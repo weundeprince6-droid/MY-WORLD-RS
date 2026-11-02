@@ -50,6 +50,7 @@
             <button class="nav-item" role="tab" aria-selected="false" data-tab="agenda"><span class="nav-icon">▦</span><span>Agenda</span><span class="nav-arrow">›</span></button>
             <button class="nav-item" role="tab" aria-selected="false" data-tab="bases"><span class="nav-icon">▤</span><span>Mes bases</span><span class="nav-arrow">›</span></button>
             <button class="nav-item" role="tab" aria-selected="false" data-tab="social"><span class="nav-icon">◎</span><span>Réseaux sociaux</span><span class="nav-arrow">›</span></button>
+            <button class="nav-item" role="tab" aria-selected="false" data-tab="profile"><span class="nav-icon">♙</span><span>Profil</span><span class="nav-arrow">›</span></button>
           </nav>
           <div class="sidebar-note"><span class="note-icon">✦</span><strong>Un espace, plusieurs univers.</strong><p>Vos informations essentielles réunies pour vous aider à garder le cap.</p></div>
           <div class="sidebar-footer"><span class="status-dot"></span> Espace connecté</div>
@@ -82,6 +83,24 @@
             <div class="section-heading"><div><p class="eyebrow">COMMUNAUTÉ</p><h2>Réseaux sociaux</h2><p>Les messages de vos réseaux connectés.</p></div><span class="section-icon orange">◎</span></div>
             <section class="carte"><ul id="liste-social" class="liste"></ul></section>
           </section>
+          <section class="tab-pane" id="pane-profile" role="tabpanel" data-pane="profile" hidden>
+            <div class="section-heading"><div><p class="eyebrow">VOS INFORMATIONS</p><h2>Mon profil</h2><p>Complétez vos informations une seule fois. Elles seront conservées sur cet appareil.</p></div><span class="section-icon blue">♙</span></div>
+            <section class="carte profile-card">
+              <div class="profile-google"><span class="profile-avatar" id="profil-avatar">G</span><div><strong id="profil-google-nom">Compte Google</strong><p id="profil-google-email" class="meta"></p><span class="profile-status" id="profil-status">Informations à compléter</span></div></div>
+              <form id="form-profil" class="profile-form">
+                <div class="profile-fields">
+                  <label>Nom<input name="nom" autocomplete="family-name" required></label>
+                  <label>Postnom<input name="postnom" autocomplete="additional-name"></label>
+                  <label>Prénom<input name="prenom" autocomplete="given-name" required></label>
+                  <label>Date de naissance<input name="naissance" type="date"></label>
+                  <label>Sexe<select name="sexe"><option value="">Choisir…</option><option value="F">Féminin</option><option value="M">Masculin</option><option value="autre">Autre / préfère ne pas préciser</option></select></label>
+                  <label>Téléphone<input name="telephone" type="tel" autocomplete="tel"></label>
+                  <label class="profile-wide">Adresse / ville<input name="adresse" autocomplete="street-address"></label>
+                </div>
+                <div class="profile-actions"><span class="meta">Votre profil est enregistré sur ce navigateur.</span><button class="btn btn-primary" type="submit">Enregistrer mon profil</button></div>
+              </form>
+            </section>
+          </section>
         </div>
       </div>
     </div>
@@ -95,7 +114,7 @@
       function ouvrirOnglet(nom) {
         document.querySelectorAll("[data-pane]").forEach(function (p) { var actif=p.dataset.pane===nom; p.hidden=!actif; p.classList.toggle("active",actif); });
         document.querySelectorAll("[data-tab]").forEach(function (b) { var actif=b.dataset.tab===nom; b.classList.toggle("active",actif); b.setAttribute("aria-selected",actif?"true":"false"); });
-        var titres={dashboard:"Tableau de bord",messages:"Messages",agenda:"Agenda",bases:"Mes bases",social:"Réseaux sociaux"}; document.title=(titres[nom]||"My World RS")+" — My World RS";
+        var titres={dashboard:"Tableau de bord",messages:"Messages",agenda:"Agenda",bases:"Mes bases",social:"Réseaux sociaux",profile:"Mon profil"}; document.title=(titres[nom]||"My World RS")+" — My World RS";
       }
       document.querySelectorAll("[data-tab]").forEach(function(b){b.addEventListener("click",function(){ouvrirOnglet(b.dataset.tab);});});
       document.querySelectorAll("[data-go]").forEach(function(b){b.addEventListener("click",function(){ouvrirOnglet(b.dataset.go);});});
