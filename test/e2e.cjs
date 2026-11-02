@@ -38,6 +38,9 @@ async function scenario(nom, { mode = 'ok', sdkBloque = false }, verifier) {
     if (u.includes('calendar/v3')) return route.fulfill(json({ items: [{ id: 'e1', summary: 'Réunion du comité', start: { dateTime: dans30.toISOString() }, end: { dateTime: new Date(dans30.getTime() + 3600000).toISOString() } }] }));
     if (u.includes(':runAggregationQuery')) return route.fulfill(json([{ result: { aggregateFields: { v: { integerValue: '7' } } } }]));
     if (u.includes(':runQuery')) return route.fulfill(json([]));
+    if (u.includes('/documents/days')) { const d = new Date(); const iso = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      return route.fulfill(json({ documents: [{ name: 'x/days/' + iso, fields: { items: { mapValue: { fields: { a: { mapValue: { fields: { k: { stringValue: 's' }, name: { stringValue: 'Riz' }, q: { integerValue: '3' }, p: { integerValue: '1000' }, c: { stringValue: 'FC' } } } } } } } } }] })); }
+    if (u.includes('/documents/cfg/main')) return route.fulfill(json({ name: 'x/cfg/main', fields: {} }));
     if (u.includes('/documents/members')) return route.fulfill(json({ documents: [
       { name: 'x/members/MBR-1', fields: { epargne: { doubleValue: 100 }, credits: { arrayValue: { values: [{ mapValue: { fields: { amount: { integerValue: '200' }, repaid: { integerValue: '50' }, dueDate: { stringValue: '2026-01-01' } } } }] } } } } ] }));
     return route.fulfill(json({}));
@@ -58,7 +61,7 @@ srv.listen(8765, async () => {
     const resume = await p.textContent('#resume');
     const scopes = await p.evaluate(() => window.__scopes);
     const ok = visible && msgs.includes('Marie Dupont') && !msgs.includes('Promotion') && agenda.includes('Réunion du comité')
-      && kpis.includes('AVEC LA SAGESSE') && kpis.includes('WEB SERVICES') && alertes.includes('crédit(s) en retard') && alertes.includes('Réunion du comité') && scopes.some(s => s.includes('datastore'));
+      && kpis.includes('AVEC LA SAGESSE') && kpis.includes('ESE DB') && kpis.includes('Ventes aujourd') && alertes.includes('crédit(s) en retard') && alertes.includes('Réunion du comité') && scopes.some(s => s.includes('datastore'));
     return { ok, detail: ok ? 'résumé : ' + resume.trim() + ' | appels Google : ' + appels.length : 'erreur=' + erreur + ' | msgs=' + msgs.slice(0, 80) + ' | kpis=' + kpis.slice(0, 120) };
   }));
   res.push(await scenario('Domaine non autorisé : message clair', { mode: 'auth/unauthorized-domain' }, async (p) => {

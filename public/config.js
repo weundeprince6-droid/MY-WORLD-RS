@@ -13,7 +13,7 @@ export const firebaseConfig = {
 // 2) Bases de données à lire (une par projet Firebase)
 export const bases = {
   avec: { nom: "AVEC LA SAGESSE", projectId: "avec-la-sagesse" },
-  webservices: { nom: "WEB SERVICES", projectId: "base-de-donnee-avec" },
+  ese: { nom: "ESE DB · WEB SERVICE", projectId: "ese-db-b63de" },
 };
 
 // 3) Réglages du tableau de bord
@@ -29,7 +29,8 @@ export const reglages = {
   agenda: { joursAVenir: 7 },
 
   // Chiffres clés.
-  //  op: "count" (nombre de documents), "sum" (somme d'un champ) ou "avec_credits" (calcul sur les crédits d'AVEC)
+  //  op: "count" (nombre de documents), "sum" (somme d'un champ), "avec_credits" (calculs AVEC) ou "ese" (calculs ESE DB)
+//  masquerSiZero: true cache le chiffre quand il vaut 0 (utile pour la deuxième devise)
   //  filtre: { champ, op: "EQUAL" | "NOT_EQUAL", valeur }
   //  seuil: { min, max } ; messageAlerte : texte de l'alerte, {{valeur}} est remplacé
   kpis: [
@@ -59,10 +60,21 @@ export const reglages = {
       filtre: { champ: "status", valeur: "pending" },
     },
 
-    // --- WEB SERVICES ---
-    { base: "webservices", label: "Membres", op: "count", collection: "members" },
-    { base: "webservices", label: "Épargne totale", op: "sum", collection: "members", champ: "epargne" },
-    { base: "webservices", label: "Crédit restant", op: "sum", collection: "members", champ: "creditRestant" },
+    // --- ESE DB · WEB SERVICE (suivi des ventes) ---
+    { base: "ese", label: "Ventes aujourd'hui", op: "ese", mesure: "ventes_jour_fc", unite: "FC" },
+    { base: "ese", label: "Ventes aujourd'hui", op: "ese", mesure: "ventes_jour_usd", unite: "USD", masquerSiZero: true },
+    { base: "ese", label: "Ventes du mois", op: "ese", mesure: "ventes_mois_fc", unite: "FC" },
+    { base: "ese", label: "Ventes du mois", op: "ese", mesure: "ventes_mois_usd", unite: "USD", masquerSiZero: true },
+    { base: "ese", label: "Dépenses du mois", op: "ese", mesure: "depenses_mois_fc", unite: "FC" },
+    { base: "ese", label: "Dépenses du mois", op: "ese", mesure: "depenses_mois_usd", unite: "USD", masquerSiZero: true },
+    { base: "ese", label: "Dettes à payer", op: "ese", mesure: "dettes_fc", unite: "FC" },
+    { base: "ese", label: "Dettes à payer", op: "ese", mesure: "dettes_usd", unite: "USD", masquerSiZero: true },
+    { base: "ese", label: "Crédits clients à recouvrer", op: "ese", mesure: "credits_clients_fc", unite: "FC" },
+    { base: "ese", label: "Crédits clients à recouvrer", op: "ese", mesure: "credits_clients_usd", unite: "USD", masquerSiZero: true },
+    {
+      base: "ese", label: "Produits sous le seuil d'alerte", op: "ese", mesure: "stock_bas",
+      seuil: { max: 0 }, messageAlerte: "{{valeur}} produit(s) en stock bas : à réapprovisionner",
+    },
   ],
 
   // Réseaux sociaux (Telegram, WhatsApp, Facebook) : collection alimentée par vos connecteurs

@@ -5,7 +5,7 @@ import {
 } from "./core.js";
 import {
   corpsAgregation, lireAgregat, corpsListe, lireListe, decoderDocument,
-  calculerCreditsAvec, MESURES_CREDITS_AVEC,
+  calculerCreditsAvec, MESURES_CREDITS_AVEC, calculerEse, MESURES_ESE,
 } from "./firestore.js";
 
 const $ = (id) => document.getElementById(id);
@@ -217,6 +217,21 @@ function tousLesDocuments(projectId, collectionId) {
   return cacheDocuments.get(cle);
 }
 
+// Date du jour dans le fuseau de l'ordinateur (AAAA-MM-JJ), comme le font les applications
+function aujourdhuiLocal() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+// Un document précis (ex. « cfg/main »), mis en cache le temps d'une actualisation
+function unDocument(projectId, chemin) {
+  const cle = `${projectId}/doc/${chemin}`;
+  if (!cacheDocuments.has(cle)) {
+    cacheDocuments.set(cle, firestore(projectId, `/${chemin}`).then(decoderDocument));
+  }
+  return cacheDocuments.get(cle);
+}
+
 async function valeurKpi(k) {
   const base = bases[k.base];
   if (!base) throw new Error(`Base inconnue : ${k.base}`);
@@ -224,7 +239,16 @@ async function valeurKpi(k) {
     const membres = await tousLesDocuments(base.projectId, "members");
     const mesure = MESURES_CREDITS_AVEC[k.mesure];
     if (!mesure) throw new Error(`Mesure inconnue : ${k.mesure}`);
-    return mesure(calculerCreditsAvec(membres, new Date().toISOString().slice(0, 10)));
+    return mesure(calculerCreditsAvec(membres, aujourdhuiLocal()));
+  }
+  if (k.op === "ese") {
+    const mesure = MESURES_ESE[k.mesure];
+    if (!mesure) throw new Error(`Mesure inconnue : ${k.mesure}`);
+    const [jours, cfg] = await Promise.all([
+      tousLesDocuments(base.projectId, "days"),
+      unDocument(base.projectId, "cfg/main").catch(() => ({})),
+    ]);
+    return mesure(calculerEse(jours, cfg, aujourdhuiLocal()));
   }
   const reponse = await firestore(base.projectId, ":runAggregationQuery", corpsAgregation(k));
   return lireAgregat(reponse);
@@ -300,7 +324,7 @@ function rendreKpis() {
     return;
   }
   const groupes = new Map();
-  for (const k of etat.kpis) {
+  for (const k of etat.kpis.filter((x) => !(x.masquerSiZero && x.valeur === 0))) {
     if (!groupes.has(k.base)) groupes.set(k.base, []);
     groupes.get(k.base).push(k);
   }

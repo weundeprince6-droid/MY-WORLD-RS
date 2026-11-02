@@ -112,3 +112,78 @@ export const MESURES_CREDITS_AVEC = {
   nb_retard: (r) => r.nbRetard,
   membres_avec_credit: (r) => r.membresAvecCredit,
 };
+
+// ---------- ESE DB (application « WEB SERVICE — Suivi des ventes », projet ese-db-b63de) ----------
+// Structure lue dans l'application :
+//  - collection « days » : un document par jour (identifiant AAAA-MM-JJ) avec « items » = { id: { k, ... } }
+//      k = "s" vente (name, q, p, c) ; k = "e" dépense (a, c, t) ; les autres types sont ignorés ici
+//  - document « cfg/main » : stock, debts, credits (chacun une table d'enregistrements avec « pay » = paiements)
+const nombre = (x) => Number(x) || 0;
+// ESE DB note la devise dans le champ « c » ("FC" par défaut, "USD" sinon)
+const deviseEse = (x) => (x && x.c === "USD" ? "USD" : "FC");
+const cleProduit = (s) => String(s || "").trim().toLowerCase();
+const payeTotal = (v) => Object.values((v && v.pay) || {}).reduce((t, p) => t + nombre(p && p.a), 0);
+
+export function calculerEse(jours, cfg, aujourdhuiISO) {
+  const r = {
+    venteJourFC: 0, venteJourUSD: 0, venteMoisFC: 0, venteMoisUSD: 0,
+    depMoisFC: 0, depMoisUSD: 0, detteFC: 0, detteUSD: 0, creditFC: 0, creditUSD: 0, stockBas: 0,
+  };
+  const mois = String(aujourdhuiISO).slice(0, 7);
+  const vendu = new Map();
+
+  for (const j of jours) {
+    for (const it of Object.values(j.items || {})) {
+      if (!it) continue;
+      const c = deviseEse(it);
+      if (it.k === "s") {
+        const montant = nombre(it.q) * nombre(it.p);
+        if (j.id === aujourdhuiISO) r[`venteJour${c}`] += montant;
+        if (String(j.id).startsWith(mois)) r[`venteMois${c}`] += montant;
+        const cle = cleProduit(it.name);
+        vendu.set(cle, (vendu.get(cle) || 0) + nombre(it.q));
+      } else if (it.k === "e" && String(j.id).startsWith(mois)) {
+        r[`depMois${c}`] += nombre(it.a);
+      }
+    }
+  }
+
+  const reste = (v) => Math.max(0, nombre(v.amt) - payeTotal(v));
+  for (const v of Object.values((cfg && cfg.debts) || {})) {
+    if (v) r[`dette${deviseEse(v)}`] += reste(v);
+  }
+  const creditParProduit = new Map();
+  for (const v of Object.values((cfg && cfg.credits) || {})) {
+    if (!v) continue;
+    r[`credit${deviseEse(v)}`] += reste(v);
+    if (v.pname) {
+      const cle = cleProduit(v.pname);
+      creditParProduit.set(cle, (creditParProduit.get(cle) || 0) + nombre(v.qty));
+    }
+  }
+  // Stock : niveau = départ + entrées − ventes − quantités données à crédit ; alerte si niveau <= seuil
+  for (const p of Object.values((cfg && cfg.stock) || {})) {
+    if (!p) continue;
+    const entrees = Object.values(p.ins || {}).reduce((t, e) => t + nombre(e && typeof e === "object" ? e.q : e), 0);
+    const cle = cleProduit(p.name);
+    const niveau = nombre(p.start) + entrees - (vendu.get(cle) || 0) - (creditParProduit.get(cle) || 0);
+    if (niveau <= nombre(p.min)) r.stockBas += 1;
+  }
+
+  for (const cle of Object.keys(r)) r[cle] = arrondi(r[cle]);
+  return r;
+}
+
+export const MESURES_ESE = {
+  ventes_jour_fc: (r) => r.venteJourFC,
+  ventes_jour_usd: (r) => r.venteJourUSD,
+  ventes_mois_fc: (r) => r.venteMoisFC,
+  ventes_mois_usd: (r) => r.venteMoisUSD,
+  depenses_mois_fc: (r) => r.depMoisFC,
+  depenses_mois_usd: (r) => r.depMoisUSD,
+  dettes_fc: (r) => r.detteFC,
+  dettes_usd: (r) => r.detteUSD,
+  credits_clients_fc: (r) => r.creditFC,
+  credits_clients_usd: (r) => r.creditUSD,
+  stock_bas: (r) => r.stockBas,
+};

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import {
   decoderValeur, decoderDocument, corpsAgregation, lireAgregat, corpsListe, lireListe,
-  calculerCreditsAvec, MESURES_CREDITS_AVEC,
+  calculerCreditsAvec, MESURES_CREDITS_AVEC, calculerEse, MESURES_ESE,
 } from "../public/firestore.js";
 import { construireAlertes } from "../public/core.js";
 import { bases, reglages } from "../public/config.js";
@@ -67,12 +67,14 @@ assert.match(al[0].source, /AVEC LA SAGESSE/);
 
 // Configuration livrée : cohérente
 assert.equal(bases.avec.projectId, "avec-la-sagesse");
-assert.equal(bases.webservices.projectId, "base-de-donnee-avec");
+assert.equal(bases.ese.projectId, "ese-db-b63de");
+assert.equal(bases.webservices, undefined);
 for (const k of reglages.kpis) {
   assert.ok(bases[k.base], `base inconnue pour « ${k.label} »`);
-  assert.ok(["count", "sum", "avec_credits"].includes(k.op), `op inconnue pour « ${k.label} »`);
+  assert.ok(["count", "sum", "avec_credits", "ese"].includes(k.op), `op inconnue pour « ${k.label} »`);
   if (k.op === "sum") assert.ok(k.champ, `champ manquant pour « ${k.label} »`);
   if (k.op === "avec_credits") assert.ok(MESURES_CREDITS_AVEC[k.mesure], `mesure inconnue pour « ${k.label} »`);
+  if (k.op === "ese") assert.ok(MESURES_ESE[k.mesure], `mesure inconnue pour « ${k.label} »`);
 }
 
 console.log("Tests Firestore et configuration : OK");
@@ -89,3 +91,45 @@ assert.equal(pannes.length, 2);
 assert.match(pannes[0].texte, /Membres, Épargne/);
 assert.match(pannes[0].texte, /403/);
 console.log("Pannes regroupées : OK");
+
+// ESE DB : ventes, dépenses, dettes, crédits clients, stock
+const jours = [
+  { id: "2026-11-02", items: {
+    a: { k: "s", name: "Riz", q: 3, p: 1000, c: "FC" },
+    b: { k: "s", name: "Savon", q: 2, p: 5, c: "USD" },
+    c: { k: "e", a: 500, c: "FC", t: "Transport" },
+    d: { k: "m", a: 99999, c: "FC" },
+  } },
+  { id: "2026-11-01", items: { e: { k: "s", name: "riz ", q: 10, p: 1000, c: "FC" }, f: { k: "e", a: 2, c: "USD" } } },
+  { id: "2026-10-30", items: { g: { k: "s", name: "Riz", q: 100, p: 1000, c: "FC" } } },
+];
+const cfg = {
+  debts: {
+    d1: { k: "a", who: "Marie", amt: 1000, c: "FC", pay: { p1: { a: 400 } } },
+    d2: { k: "l", who: "Bailleur", amt: 50, c: "USD", pay: {} },
+    d3: null,
+  },
+  credits: { c1: { who: "Jean", amt: 800, c: "FC", pname: "Savon", qty: 1, pay: { x: { a: 300 } } } },
+  stock: {
+    s1: { name: "Riz", start: 120, min: 5, ins: { i1: { q: 10 } } },     // 130 - 113 vendus = 17 : ok
+    s2: { name: "Savon", start: 5, min: 2, ins: {} },                    // 5 - 2 - 1 = 2 : sous le seuil
+    s3: { name: "Sucre", start: 4, min: 1, ins: { i2: 3 } },             // 7 : ok
+  },
+};
+const e = calculerEse(jours, cfg, "2026-11-02");
+assert.equal(e.venteJourFC, 3000);
+assert.equal(e.venteJourUSD, 10);
+assert.equal(e.venteMoisFC, 13000);   // 3000 + 10000 ; le 30 octobre est exclu
+assert.equal(e.venteMoisUSD, 10);
+assert.equal(e.depMoisFC, 500);
+assert.equal(e.depMoisUSD, 2);
+assert.equal(e.detteFC, 600);
+assert.equal(e.detteUSD, 50);
+assert.equal(e.creditFC, 500);
+assert.equal(e.creditUSD, 0);
+assert.equal(e.stockBas, 1);
+assert.equal(MESURES_ESE.stock_bas(e), 1);
+const vide = calculerEse([], {}, "2026-11-02");
+assert.equal(vide.stockBas, 0);
+assert.equal(vide.venteMoisFC, 0);
+console.log("ESE DB : OK");

@@ -9,7 +9,7 @@ Un seul tableau de bord pour votre essentiel : **messages importants**, **agenda
 |---|---|---|
 | Messages importants | Gmail (lecture + brouillons) | Fonctionnel |
 | Agenda du jour et à venir | Google Agenda | Fonctionnel |
-| Chiffres clés | Firebase **AVEC LA SAGESSE** et **WEB SERVICES** | Fonctionnel (voir ci-dessous) |
+| Chiffres clés | Firebase **AVEC LA SAGESSE** et **ESE DB (WEB SERVICE)** | Fonctionnel (voir ci-dessous) |
 | Alertes et rappels | Calculées à partir des blocs ci-dessus | Fonctionnel |
 | Réponses automatiques | Brouillons Gmail à partir de modèles, **validés par vous** | Fonctionnel |
 | Telegram, WhatsApp, Facebook | Collection Firestore `social_inbox` | Affichage prêt, connecteurs à brancher (voir `docs/reseaux-sociaux.md`) |
@@ -21,9 +21,11 @@ L'application tourne entièrement dans le navigateur : **aucun serveur, plan Fir
 **AVEC LA SAGESSE** (projet `avec-la-sagesse`) : membres, épargne totale (USD et FC), crédits en cours,
 reste à rembourser (USD et FC), crédits en retard, réclamations ouvertes, demandes en attente, inscriptions en attente.
 
-**WEB SERVICES** (projet `base-de-donnee-avec`) : membres, épargne totale, crédit restant.
+**ESE DB · WEB SERVICE** (projet `ese-db-b63de`, suivi des ventes) : ventes d'aujourd'hui et du mois, dépenses du mois,
+dettes à payer (salaires, loyers, dettes), crédits clients à recouvrer (FC et USD) et nombre de produits sous le seuil d'alerte du stock.
+La deuxième devise (USD) ne s'affiche que si elle n'est pas à zéro.
 
-Les alertes se déclenchent pour les crédits en retard, les réclamations ouvertes et les demandes en attente.
+Les alertes se déclenchent pour les crédits en retard, les réclamations ouvertes, les demandes en attente et les produits en stock bas.
 Pour ajouter ou retirer un chiffre, modifiez la liste `kpis` de `public/config.js`.
 
 ### Comment les bases sont lues
