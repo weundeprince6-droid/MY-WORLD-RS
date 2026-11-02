@@ -37,9 +37,10 @@ const script = [
 ].join("\n");
 
 let html = lire("index.html");
-html = html.replace('<link rel="stylesheet" href="style.css">', `<style>\n${lire("style.css")}\n</style>`);
-html = html.replace('<script type="module" src="app.js"></script>', () => `<script type="module">\n${script}\n</script>`);
-if (html.includes('src="app.js"') || html.includes('href="style.css"')) throw new Error("Remplacement incomplet");
+// Les adresses peuvent porter un paramètre de version (app.js?v=...)
+html = html.replace(/<link rel="stylesheet" href="style\.css[^"]*">/, () => `<style>\n${lire("style.css")}\n</style>`);
+html = html.replace(/<script type="module" src="app\.js[^"]*"><\/script>/, () => `<script type="module">\n${script}\n</script>`);
+if (/src="app\.js/.test(html) || /href="style\.css/.test(html)) throw new Error("Remplacement incomplet");
 
 mkdirSync(join(racine, "dist"), { recursive: true });
 const sortie = join(racine, "dist", "My-World-RS.html");

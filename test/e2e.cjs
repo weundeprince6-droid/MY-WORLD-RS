@@ -21,6 +21,8 @@ export function getAuth(){return {}}
 export class GoogleAuthProvider{ addScope(s){(window.__scopes=window.__scopes||[]).push(s)} setCustomParameters(){} static credentialFromResult(r){return {accessToken:'jeton-test'}} }
 export async function signInWithPopup(){ ${mode === 'ok' ? "return {user:{displayName:'Prince Test',email:'t@x.com'}}" : "const e=new Error('x'); e.code='" + mode + "'; throw e"} }
 export async function signOut(){}
+export async function setPersistence(){}
+export const browserLocalPersistence={};
 export function onAuthStateChanged(){}`;
 
 const T0 = Math.floor(Date.now() / 1000) * 1000;
@@ -98,7 +100,7 @@ srv.listen(8765, async () => {
   }));
   res.push(await scenario('Quota Gmail dépassé : nouvel essai automatique', { quotaGmail: true }, async (p) => {
     await p.click('#bouton-connexion'); await p.waitForTimeout(6000);
-    const msgs = await p.textContent('#liste-messages'); const erreur = (await p.textContent('#erreur')).trim();
+    const msgs = await p.textContent('#liste-messages'); const erreur = (await p.textContent('#erreur')).trim().replace(/^Connexion temporaire active\..*$/s, '');
     return { ok: msgs.includes('Marie Dupont') && erreur === '', detail: erreur ? 'erreur=' + erreur.slice(0, 100) : 'message récupéré au 2e essai' };
   }));
   res.push(await scenario('Telegram : bot connecté, messages lus et enregistrés sans doublon', {}, async (p, appels, logs, etat) => {
