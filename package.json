@@ -8,7 +8,8 @@
     "test": "node test/core.test.mjs && node test/firestore.test.mjs && node test/telegram.test.mjs",
     "build:html": "node scripts/build-html.mjs",
     "serve": "npx --yes serve public",
-    "deploy": "npx --yes firebase-tools deploy --only hosting"
+    "deploy": "npx --yes firebase-tools deploy --only hosting",
+    "deploy:functions": "firebase deploy --only functions --project my-world-rs"
   },
   "license": "UNLICENSED"
 }
