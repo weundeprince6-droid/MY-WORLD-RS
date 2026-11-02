@@ -44,7 +44,7 @@ Si un chiffre reste grisé avec un trait pointillé, votre compte n'a pas accès
 3. **Écran de consentement OAuth** : mode « Test », ajoutez votre adresse Gmail comme utilisateur test.
    Google affiche « application non vérifiée » : c'est normal pour un usage personnel. Acceptez les autorisations
    (Gmail, Agenda, Firestore, lecture des métadonnées Drive et gestion des tâches Google Tasks). Après l'ajout de Drive ou de Tasks, déconnectez-vous puis reconnectez-vous pour accorder les nouvelles autorisations.
-4. **OAuth serveur (une seule fois)** : créez un identifiant OAuth de type **Application Web** dans le même projet Google Cloud. Ajoutez comme URI de redirection autorisée : `https://us-central1-my-world-rs.cloudfunctions.net/googleOAuthCallback`. Ajoutez comme origines JavaScript autorisées `https://my-world-rs.web.app` et `https://weundeprince6-droid.github.io`. Conservez le Client ID et le Client Secret privés.
+4. **OAuth serveur (une seule fois)** : créez un identifiant OAuth de type **Application Web** dans le même projet Google Cloud. Ajoutez comme URI de redirection autorisée : `https://us-central1-my-world-rs.cloudfunctions.net/googleOAuthCallback`. Ajoutez comme origines JavaScript autorisées `https://my-world-rs.web.app` et `https://weundeprince6-droid.github.io`. Conservez le Client ID et le Client Secret privés : ne les envoyez jamais dans le chat, ne les mettez pas dans GitHub et ne les placez pas dans `public/config.js`.
 5. Dans un terminal connecté au projet Firebase `my-world-rs`, enregistrez les trois secrets (Firebase demande leur valeur de manière interactive) :
    `firebase functions:secrets:set GOOGLE_CLIENT_ID --project my-world-rs`
    `firebase functions:secrets:set GOOGLE_CLIENT_SECRET --project my-world-rs`
@@ -53,7 +53,7 @@ Si un chiffre reste grisé avec un trait pointillé, votre compte n'a pas accès
 6. Activez la facturation Blaze sur `my-world-rs`, puis depuis la racine du dépôt exécutez `npm install -g firebase-tools`, `firebase login`, puis `firebase deploy --only functions --project my-world-rs`.
 7. Dans les règles Firestore du projet `my-world-rs`, ajoutez le bloc `googleOAuthTokens` de `firestore.rules.example` (refuse tout accès depuis le navigateur ; les fonctions serveur utilisent Admin SDK).
 8. **Essai en local** : `npm run serve`, ouvrez l'adresse affichée (ajoutez `localhost` dans Authentication > Paramètres > Domaines autorisés).
-5. Mettez en ligne (section suivante).
+9. Mettez en ligne (section suivante).
 
 ## Déployer sur Firebase
 
