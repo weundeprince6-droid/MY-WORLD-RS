@@ -81,6 +81,9 @@ export const reglages = {
 
   social: { base: "avec", collection: "social_inbox", max: 15 },
 
+  // Facebook (Pages) : version de l'API Graph, nombre de conversations lues, jours relus à la première connexion
+  facebook: { versionApi: "v24.0", maxConversations: 10, joursInitiaux: 7, motsImportants: undefined },
+
   modeles: [
     {
       nom: "Accusé de réception",

@@ -105,6 +105,28 @@
               <button type="button" id="telegram-retirer" hidden>Retirer le bot de ce navigateur</button>
               <p id="telegram-retour" class="meta" role="status"></p>
             </section>
+            <section class="carte" id="carte-facebook">
+              <h3>Facebook (vos Pages)</h3>
+              <p id="facebook-statut" class="meta"></p>
+              <details class="aide-telegram">
+                <summary>Comment connecter mes Pages Facebook (10 minutes)</summary>
+                <ol>
+                  <li>Sur <strong>developers.facebook.com</strong>, connectez-vous puis <strong>Mes applications &gt; Créer une application</strong>. Vous en êtes automatiquement l'administrateur.</li>
+                  <li>Ajoutez à l'application le cas d'utilisation <strong>Messenger</strong> (pour obtenir la permission <code>pages_messaging</code>).</li>
+                  <li>Ouvrez <strong>Outils &gt; Graph API Explorer</strong> et choisissez votre application.</li>
+                  <li>Ajoutez les autorisations <code>pages_show_list</code>, <code>pages_read_engagement</code>, <code>pages_manage_metadata</code> et <code>pages_messaging</code>, puis <strong>Generate Access Token</strong> en sélectionnant vos Pages.</li>
+                  <li>Ce jeton dure environ 1 heure. Collez-le dans <strong>Outils &gt; Access Token Debugger</strong>, cliquez sur <strong>Extend Access Token</strong> et copiez le nouveau jeton (valable environ 60 jours).</li>
+                  <li>Collez-le ci-dessous.</li>
+                </ol>
+                <p class="meta">Seuls les messages reçus par vos <strong>Pages</strong> sont lus (jamais votre Messenger ou votre profil personnel). Vous devez administrer la Page. Le jeton reste uniquement dans ce navigateur.</p>
+              </details>
+              <form id="facebook-form" class="form-ligne" autocomplete="off">
+                <input id="facebook-jeton" type="password" autocomplete="off" spellcheck="false" placeholder="Collez le jeton d'accès Facebook" aria-label="Jeton d'accès Facebook">
+                <button type="submit" id="facebook-connecter">Connecter</button>
+              </form>
+              <button type="button" id="facebook-retirer" hidden>Retirer Facebook de ce navigateur</button>
+              <p id="facebook-retour" class="meta" role="status"></p>
+            </section>
             <section class="carte"><ul id="liste-social" class="liste"></ul></section>
           </section>
           <section class="tab-pane" id="pane-drive" role="tabpanel" data-pane="drive" hidden>

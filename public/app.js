@@ -4,6 +4,10 @@ import {
   resumeDuJour, remplirModele, construireBrouillonBrut, expediteurLisible, enLots,
 } from "./core.js";
 import {
+  jetonFacebookValide, urlGraph, expliquerErreurFacebook, choisirPages, extraireMessagesConversations,
+  dateLaPlusRecente, idDocumentFacebook, champsFirestoreFacebook, CHAMPS_CONVERSATIONS, VERSION_API_PAR_DEFAUT,
+} from "./facebook.js";
+import {
   jetonValide, urlTelegram, expliquerErreurTelegram, extraireMessage, champsFirestore, idDocument, dernierUpdateId,
 } from "./telegram.js";
 import {
@@ -821,7 +825,7 @@ function rendreSocial() {
   const noms = { telegram: "Telegram", whatsapp: "WhatsApp", facebook: "Facebook" };
   const el = $("liste-social");
   if (!etat.social.length) {
-    el.innerHTML = '<li class="vide">Aucun message reçu. Connectez votre bot Telegram dans la carte ci-dessus (WhatsApp et Facebook : voir docs/reseaux-sociaux.md).</li>';
+    el.innerHTML = '<li class="vide">Aucun message reçu. Connectez Telegram ou Facebook dans les cartes ci-dessus (WhatsApp : voir docs/reseaux-sociaux.md).</li>';
     return;
   }
   el.innerHTML = etat.social
@@ -906,8 +910,8 @@ const stockage = {
 };
 let statutTelegram = { erreur: "", derniere: null, nouveaux: 0 };
 
-function messageReseau(e) {
-  return e instanceof TypeError ? "Telegram est injoignable pour le moment (réseau)." : e.message;
+function messageReseau(e, nom = "Telegram") {
+  return e instanceof TypeError ? `${nom} est injoignable pour le moment (réseau).` : e.message;
 }
 
 async function appelTelegram(methode, params) {
@@ -948,7 +952,9 @@ async function synchroniserTelegram() {
   return total;
 }
 
-async function chargerSocialComplet() {
+// Lit Telegram puis Facebook, enregistre les nouveaux messages, puis retourne la liste à afficher.
+// `forcer` = false pour la lecture automatique : Facebook n'est alors relu que toutes les 3 minutes.
+async function chargerSocialComplet(forcer = true) {
   try {
     statutTelegram.nouveaux = await synchroniserTelegram();
     statutTelegram.erreur = "";
@@ -957,12 +963,22 @@ async function chargerSocialComplet() {
   }
   statutTelegram.derniere = new Date();
   majStatutTelegram();
+  if (stockage.lire(CLE_FB_JETON) && (forcer || Date.now() - statutFacebook.derniere >= 170000)) {
+    try {
+      statutFacebook.nouveaux = await synchroniserFacebook();
+      statutFacebook.erreur = "";
+    } catch (e) {
+      statutFacebook.erreur = messageReseau(e, "Facebook");
+    }
+    statutFacebook.derniere = Date.now();
+  }
+  majStatutFacebook();
   return chargerSocial();
 }
 
-async function rafraichirSocial() {
+async function rafraichirSocial(forcer = true) {
   if (!jetonGoogle) return;
-  etat.social = await chargerSocialComplet();
+  etat.social = await chargerSocialComplet(forcer);
   rendreSocial();
   rendreAlertes();
 }
@@ -970,7 +986,7 @@ async function rafraichirSocial() {
 function demarrerSurveillanceSocial() {
   if (minuteurSocial) return;
   minuteurSocial = setInterval(() => {
-    if (document.visibilityState === "visible" && stockage.lire(CLE_TG_JETON)) rafraichirSocial();
+    if (document.visibilityState === "visible" && (stockage.lire(CLE_TG_JETON) || stockage.lire(CLE_FB_JETON))) rafraichirSocial(false);
   }, 60000);
 }
 
@@ -1038,3 +1054,133 @@ $("telegram-form").addEventListener("submit", (e) => {
 });
 $("telegram-retirer").addEventListener("click", retirerTelegram);
 majStatutTelegram();
+
+// ---------- Facebook (Pages : messages Messenger) ----------
+// Le jeton reste dans ce navigateur (localStorage). Seules les Pages que vous administrez sont lues.
+const CLE_FB_JETON = "mwrs.facebook.jeton";
+const CLE_FB_DEPUIS = "mwrs.facebook.depuis"; // { idPage: date (ms) du dernier message déjà enregistré }
+const CLE_FB_PAGES = "mwrs.facebook.pages"; // noms des Pages (affichage seulement)
+let statutFacebook = { erreur: "", derniere: 0, nouveaux: 0 };
+
+async function graph(chemin, params, jeton) {
+  const version = reglages.facebook?.versionApi || VERSION_API_PAR_DEFAUT;
+  const r = await fetch(urlGraph(version, chemin, params, jeton));
+  let j;
+  try { j = await r.json(); } catch { throw new Error("Réponse illisible de Facebook."); }
+  if (j.error) throw new Error(expliquerErreurFacebook(j));
+  return j;
+}
+
+// Lit les nouveaux messages de chaque Page et les enregistre dans Firestore ; retourne leur nombre.
+// L'identifiant du document est stable : relire un message ne crée jamais de doublon.
+async function synchroniserFacebook() {
+  const jeton = stockage.lire(CLE_FB_JETON);
+  if (!jeton) return 0;
+  const s = reglages.social;
+  const base = s && bases[s.base];
+  if (!base) throw new Error("Base des réseaux sociaux non configurée (reglages.social).");
+  const fb = reglages.facebook || {};
+  const pages = choisirPages(await graph("/me/accounts", { fields: "id,name,access_token", limit: 25 }, jeton));
+  if (!pages.length) {
+    throw new Error("Aucune Page trouvée pour ce jeton (autorisation pages_show_list manquante, ou vous n'administrez aucune Page).");
+  }
+  stockage.ecrire(CLE_FB_PAGES, JSON.stringify(pages.map((p) => p.nom)));
+  let depuis = {};
+  try { depuis = JSON.parse(stockage.lire(CLE_FB_DEPUIS) || "{}"); } catch { depuis = {}; }
+  const premiere = Date.now() - (fb.joursInitiaux ?? 7) * 86400000;
+  let total = 0;
+  const erreurs = [];
+  for (const page of pages) {
+    try {
+      const conversations = await graph(
+        `/${page.id}/conversations`,
+        { platform: "messenger", limit: fb.maxConversations ?? 10, fields: CHAMPS_CONVERSATIONS },
+        page.jeton,
+      );
+      const depuisPage = depuis[page.id] ?? premiere;
+      const messages = extraireMessagesConversations(conversations, page, depuisPage, fb.motsImportants);
+      await enLots(messages, 4, (m) =>
+        google(urlFirestore(base.projectId, `/${s.collection}/${idDocumentFacebook(m)}`), {
+          method: "PATCH",
+          body: JSON.stringify({ fields: champsFirestoreFacebook(m) }),
+          headers: { "x-goog-user-project": base.projectId },
+        }),
+      );
+      // On ne mémorise la date qu'après l'enregistrement : en cas d'échec, tout sera relu
+      depuis[page.id] = dateLaPlusRecente(messages, depuisPage);
+      stockage.ecrire(CLE_FB_DEPUIS, JSON.stringify(depuis));
+      total += messages.length;
+    } catch (e) {
+      erreurs.push(`${page.nom} : ${messageReseau(e, "Facebook")}`);
+    }
+  }
+  if (erreurs.length) throw new Error(erreurs.join(" · "));
+  return total;
+}
+
+function retourFacebook(texte, erreur = false) {
+  const el = $("facebook-retour");
+  el.textContent = texte;
+  el.classList.toggle("erreur", erreur);
+}
+
+function majStatutFacebook() {
+  const jeton = stockage.lire(CLE_FB_JETON);
+  const el = $("facebook-statut");
+  $("facebook-form").hidden = !!jeton;
+  $("facebook-retirer").hidden = !jeton;
+  el.classList.toggle("erreur-texte", !!(jeton && statutFacebook.erreur));
+  if (!jeton) {
+    el.textContent = "Non connecté. Suivez les étapes ci-dessous pour obtenir un jeton.";
+    return;
+  }
+  let pages = [];
+  try { pages = JSON.parse(stockage.lire(CLE_FB_PAGES) || "[]"); } catch { pages = []; }
+  const parties = [`Connecté${pages.length ? " : " + pages.join(", ") : ""}`];
+  if (statutFacebook.derniere) parties.push(`dernière lecture à ${heure.format(new Date(statutFacebook.derniere))}`);
+  if (statutFacebook.nouveaux) parties.push(`${statutFacebook.nouveaux} nouveau(x) message(s)`);
+  el.textContent = parties.join(" · ") + (statutFacebook.erreur ? ` — ${statutFacebook.erreur}` : "");
+}
+
+async function connecterFacebook(saisie) {
+  const jeton = String(saisie || "").trim();
+  if (!jetonFacebookValide(jeton)) {
+    retourFacebook("Ce jeton n'a pas le bon format (c'est une longue suite de lettres et de chiffres, souvent commençant par EAA). Copiez-le en entier.", true);
+    return;
+  }
+  const bouton = $("facebook-connecter");
+  bouton.disabled = true;
+  retourFacebook("Vérification du jeton…");
+  try {
+    const pages = choisirPages(await graph("/me/accounts", { fields: "id,name,access_token", limit: 25 }, jeton));
+    if (!pages.length) {
+      throw new Error("Aucune Page trouvée : ajoutez l'autorisation pages_show_list et sélectionnez vos Pages en générant le jeton.");
+    }
+    stockage.ecrire(CLE_FB_JETON, jeton);
+    stockage.ecrire(CLE_FB_PAGES, JSON.stringify(pages.map((p) => p.nom)));
+    stockage.effacer(CLE_FB_DEPUIS);
+    $("facebook-jeton").value = "";
+    statutFacebook = { erreur: "", derniere: 0, nouveaux: 0 };
+    retourFacebook(`${pages.length} Page(s) connectée(s) : ${pages.map((p) => p.nom).join(", ")}.`);
+    majStatutFacebook();
+    await rafraichirSocial(true);
+  } catch (e) {
+    retourFacebook(messageReseau(e, "Facebook"), true);
+  } finally {
+    bouton.disabled = false;
+  }
+}
+
+function retirerFacebook() {
+  [CLE_FB_JETON, CLE_FB_DEPUIS, CLE_FB_PAGES].forEach((c) => stockage.effacer(c));
+  statutFacebook = { erreur: "", derniere: 0, nouveaux: 0 };
+  majStatutFacebook();
+  retourFacebook("Facebook retiré de ce navigateur. Les messages déjà enregistrés restent dans votre base.");
+}
+
+$("facebook-form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  connecterFacebook($("facebook-jeton").value);
+});
+$("facebook-retirer").addEventListener("click", retirerFacebook);
+majStatutFacebook();

@@ -23,6 +23,7 @@ export async function signInWithPopup(){ ${mode === 'ok' ? "return {user:{displa
 export async function signOut(){}
 export function onAuthStateChanged(){}`;
 
+const T0 = Math.floor(Date.now() / 1000) * 1000;
 async function scenario(nom, { mode = 'ok', sdkBloque = false, quotaGmail = false }, verifier) {
   const quota = { deja: false };
   const etat = { patches: [], offsets: [], fuite: false };
@@ -44,6 +45,18 @@ async function scenario(nom, { mode = 'ok', sdkBloque = false, quotaGmail = fals
           { update_id: 902, message: { message_id: 2, date: 1793000100, chat: { id: 55, type: 'private' }, from: { first_name: 'Jean' }, text: 'Salut, bonne journée' } },
           { update_id: 903, edited_message: { message_id: 2, chat: { id: 55 }, text: 'modifié' } },
         ] }));
+      }
+    }
+    if (u.includes('graph.facebook.com')) {
+      if (u.includes('MAUVAISJETON')) return route.fulfill(json({ error: { code: 190, message: 'Invalid OAuth access token.' } }));
+      if (u.includes('/me/accounts')) return route.fulfill(json({ data: [{ id: '111', name: 'Ma Boutique', access_token: 'PAGETOKEN' + 'x'.repeat(60) }] }));
+      if (u.includes('/111/conversations')) {
+        const t = (d) => new Date(T0 - d).toISOString().replace(/\.\d+Z$/, '+0000');
+        return route.fulfill(json({ data: [{ id: 't_1', messages: { data: [
+          { id: 'm_A', message: 'Urgent : ma commande est en retard', from: { id: '999', name: 'Paul' }, created_time: t(60000) },
+          { id: 'm_B', message: 'Merci, bien reçu', from: { id: '111', name: 'Ma Boutique' }, created_time: t(30000) },
+          { id: 'm_C', message: 'Bonjour', from: { id: '998', name: 'Sarah' }, created_time: t(120000) },
+        ] } }] }));
       }
     }
     if (u.includes('123456789:AAH') || (route.request().postData() || '').includes('123456789:AAH')) etat.fuite = true;
@@ -123,6 +136,39 @@ srv.listen(8765, async () => {
     const stocke = await p.evaluate(() => localStorage.getItem('mwrs.telegram.jeton'));
     const statut = (await p.textContent('#telegram-statut')).trim();
     return { ok: stocke === null && statut.startsWith('Non connecté') && await p.isVisible('#telegram-form'), detail: statut.slice(0, 30) };
+  }));
+  res.push(await scenario('Facebook : Page connectée, messages reçus enregistrés sans doublon', {}, async (p, appels, logs, etat) => {
+    await p.click('#bouton-connexion'); await p.waitForTimeout(2500);
+    await p.click('[data-tab="social"]'); await p.waitForTimeout(300);
+    await p.fill('#facebook-jeton', 'EAA' + 'B'.repeat(60)); await p.click('#facebook-connecter'); await p.waitForTimeout(2500);
+    const statut = (await p.textContent('#facebook-statut')).trim(); const liste = await p.textContent('#liste-social');
+    const formCache = await p.isHidden('#facebook-form'); const apres1 = etat.patches.length;
+    await p.click('#bouton-actualiser'); await p.waitForTimeout(2500);
+    const html = await p.content(); const ids = etat.patches.map((x) => x.id).sort().join(',');
+    const ok = statut.includes('Connecté') && formCache && apres1 === 2 && etat.patches.length === 2 && ids === 'facebook-m_A,facebook-m_C'
+      && etat.patches.find((x) => x.id === 'facebook-m_A').body.fields.important.booleanValue === true
+      && etat.patches.find((x) => x.id === 'facebook-m_C').body.fields.important.booleanValue === false
+      && liste.includes('Paul') && liste.includes('Sarah') && !liste.includes('Merci, bien reçu')
+      && !JSON.stringify(etat.patches).includes('EAAB') && !html.includes('EAABBBB');
+    return { ok, detail: ok ? 'enregistrés : ' + ids : JSON.stringify({ statut, apres1, total: etat.patches.length, ids, liste: liste.slice(0, 100) }) };
+  }));
+  res.push(await scenario('Facebook : jeton mal formé et jeton refusé (190)', {}, async (p) => {
+    await p.click('#bouton-connexion'); await p.waitForTimeout(2000);
+    await p.click('[data-tab="social"]'); await p.waitForTimeout(300);
+    await p.fill('#facebook-jeton', 'pas-un-jeton'); await p.click('#facebook-connecter'); await p.waitForTimeout(400);
+    const t1 = (await p.textContent('#facebook-retour')).trim();
+    await p.fill('#facebook-jeton', 'EAA' + 'MAUVAISJETON'.repeat(6)); await p.click('#facebook-connecter'); await p.waitForTimeout(1200);
+    const t2 = (await p.textContent('#facebook-retour')).trim(); const formVisible = await p.isVisible('#facebook-form');
+    return { ok: t1.includes('bon format') && t2.includes('refuse le jeton') && formVisible, detail: t1.slice(0, 40) + ' | ' + t2.slice(0, 50) };
+  }));
+  res.push(await scenario('Facebook : retirer la connexion', {}, async (p) => {
+    await p.click('#bouton-connexion'); await p.waitForTimeout(2000);
+    await p.click('[data-tab="social"]'); await p.waitForTimeout(300);
+    await p.fill('#facebook-jeton', 'EAA' + 'B'.repeat(60)); await p.click('#facebook-connecter'); await p.waitForTimeout(2000);
+    await p.click('#facebook-retirer'); await p.waitForTimeout(300);
+    const stocke = await p.evaluate(() => localStorage.getItem('mwrs.facebook.jeton'));
+    const statut = (await p.textContent('#facebook-statut')).trim();
+    return { ok: stocke === null && statut.startsWith('Non connecté') && await p.isVisible('#facebook-form'), detail: statut.slice(0, 30) };
   }));
   res.push(await scenario('Domaine non autorisé : message clair', { mode: 'auth/unauthorized-domain' }, async (p) => {
     await p.click('#bouton-connexion'); await p.waitForTimeout(800);

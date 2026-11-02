@@ -15,7 +15,8 @@ Un seul tableau de bord pour votre essentiel : **messages importants**, **agenda
 | Alertes et rappels | Calculées à partir des blocs ci-dessus | Fonctionnel |
 | Réponses automatiques | Brouillons Gmail à partir de modèles, **validés par vous** | Fonctionnel |
 | Telegram | Votre bot Telegram, lu depuis la page (sans serveur) | Fonctionnel : voir `docs/reseaux-sociaux.md` |
-| WhatsApp, Facebook | Collection Firestore `social_inbox` | Affichage prêt, connecteurs à brancher (voir `docs/reseaux-sociaux.md`) |
+| Facebook | Messenger de vos Pages, via un jeton collé dans la page | Fonctionnel (testé en simulation) : voir `docs/reseaux-sociaux.md` |
+| WhatsApp | Collection Firestore `social_inbox` | Connecteur à brancher (voir `docs/reseaux-sociaux.md`) |
 
 L'interface est hébergée sur Firebase Hosting. La connexion persistante utilise Firebase Authentication et des fonctions serveur Firebase pour renouveler les autorisations Google. **Le déploiement des fonctions nécessite le plan Blaze (facturation activée)**.
 
