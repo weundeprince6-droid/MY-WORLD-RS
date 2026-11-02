@@ -42,7 +42,7 @@ Si un chiffre reste grisé avec un trait pointillé, votre compte n'a pas accès
 2. **APIs Google** : dans Google Cloud Console (projet `avec-la-sagesse`), activez **Gmail API**, **Google Calendar API** et **Google Drive API**.
 3. **Écran de consentement OAuth** : mode « Test », ajoutez votre adresse Gmail comme utilisateur test.
    Google affiche « application non vérifiée » : c'est normal pour un usage personnel. Acceptez les autorisations
-   (Gmail, Agenda, Firestore).
+   (Gmail, Agenda, Firestore et lecture des métadonnées Drive). Après l'ajout de Drive, déconnectez-vous puis reconnectez-vous pour accorder cette nouvelle autorisation.
 4. **Essai en local** : `npm run serve`, ouvrez l'adresse affichée (ajoutez `localhost` dans Authentication > Paramètres > Domaines autorisés).
 5. Mettez en ligne (section suivante).
 
@@ -72,7 +72,8 @@ Si le nom `my-world-rs` est déjà pris, choisissez-en un autre (par exemple `my
 
 ## Comment « l'essentiel » est choisi
 
-- **Google Drive** : affiche les fichiers et dossiers du compte connecté, permet la recherche par nom et ouvre chaque élément dans Google Drive. L'application demande uniquement l'autorisation de lecture des métadonnées (`drive.metadata.readonly`) ; elle ne modifie ni ne supprime vos fichiers.\n- **Messages** : un message monte s'il est non lu, étoilé, marqué important par Gmail, s'il contient des mots comme
+- **Google Drive** : affiche les fichiers et dossiers du compte connecté, permet la recherche par nom et ouvre chaque élément dans Google Drive. L'application demande uniquement l'autorisation de lecture des métadonnées (`drive.metadata.readonly`) ; elle ne modifie ni ne supprime vos fichiers.
+- **Messages** : un message monte s'il est non lu, étoilé, marqué important par Gmail, s'il contient des mots comme
   *urgent, facture, échéance, crédit, retrait…*, ou s'il vient d'un contact VIP de `config.js`.
   Les promotions et notifications de réseaux sont écartées.
 - **Alertes** : rendez-vous dans l'heure, messages très importants non lus, crédits en retard,
