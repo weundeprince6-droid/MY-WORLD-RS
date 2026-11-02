@@ -136,7 +136,11 @@ async function google(url, options = {}) {
   }
   if (!r.ok) {
     let detail = "";
-    try { detail = (await r.json())?.error?.message || ""; } catch { /* réponse sans détail */ }
+    try {
+      const j = await r.json();
+      // Les requêtes Firestore (runQuery, runAggregationQuery) renvoient les erreurs dans un tableau
+      detail = (Array.isArray(j) ? j[0]?.error : j?.error)?.message || "";
+    } catch { /* réponse sans détail */ }
     detail = detail.replace(/\s+/g, " ").slice(0, 230);
     const projet = (url.match(/projects\/([^/]+)\//) || [])[1];
     let conseil = "";
