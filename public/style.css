@@ -37,3 +37,14 @@ dialog{border:1px solid var(--border);border-radius:16px;background:var(--surfac
 .aide-telegram ol{padding-left:20px;margin:8px 0}
 .aide-telegram code{background:var(--primary-soft);padding:1px 6px;border-radius:4px}
 #telegram-retour.erreur,#telegram-statut.erreur-texte{color:#c0392b}
+
+/* Google Drive */
+.drive-toolbar{display:flex;gap:10px;align-items:center;margin-bottom:12px}
+.drive-toolbar input{flex:1;min-width:0;padding:11px 13px;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);font:inherit}
+.drive-file{display:flex;align-items:center;gap:12px;min-width:0}
+.drive-file-icon{font-size:22px;flex:none}
+.drive-file-info{display:grid;gap:2px;min-width:0;flex:1}
+.drive-file-info strong{overflow-wrap:anywhere;font-size:13px}
+.drive-file-info .meta{font-size:11px}
+.drive-file>a{flex:none;text-decoration:none;font-size:12px}
+@media(max-width:520px){.drive-toolbar{align-items:stretch;flex-direction:column}.drive-toolbar .btn{width:100%}.drive-file{gap:8px}.drive-file>a{padding:7px}}
