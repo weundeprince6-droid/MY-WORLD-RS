@@ -134,7 +134,21 @@ async function google(url, options = {}) {
     afficherSession(false);
     throw new Error("Session Google expirée (1 h). Reconnectez-vous.");
   }
-  if (!r.ok) throw new Error(`Google a répondu ${r.status}`);
+  if (!r.ok) {
+    let detail = "";
+    try { detail = (await r.json())?.error?.message || ""; } catch { /* réponse sans détail */ }
+    detail = detail.replace(/\s+/g, " ").slice(0, 230);
+    const projet = (url.match(/projects\/([^/]+)\//) || [])[1];
+    let conseil = "";
+    if (/has not been used|is disabled|accessNotConfigured|SERVICE_DISABLED/i.test(detail)) {
+      conseil = " → Cette API n'est pas activée dans le projet Google : activez-la dans Google Cloud Console > API et services > Bibliothèque.";
+    } else if (r.status === 403 && /insufficient|scope/i.test(detail)) {
+      conseil = " → Autorisation refusée : déconnectez-vous, reconnectez-vous et cochez toutes les cases demandées par Google.";
+    } else if (r.status === 403 && projet) {
+      conseil = ` → Votre compte Google n'a pas accès au projet « ${projet} » (ou Firestore y est désactivé).`;
+    }
+    throw new Error(`Google a répondu ${r.status}${detail ? " : " + detail : ""}${conseil}`);
+  }
   return r.json();
 }
 

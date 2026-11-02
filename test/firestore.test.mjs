@@ -76,3 +76,16 @@ for (const k of reglages.kpis) {
 }
 
 console.log("Tests Firestore et configuration : OK");
+
+// Pannes regroupées : une alerte par base et par cause
+const pannes = construireAlertes({
+  kpis: [
+    { label: "Membres", base: "WEB SERVICES", erreur: "Google a répondu 403 : refusé" },
+    { label: "Épargne", base: "WEB SERVICES", erreur: "Google a répondu 403 : refusé" },
+    { label: "Autre", base: "AVEC", erreur: "Autre cause" },
+  ],
+});
+assert.equal(pannes.length, 2);
+assert.match(pannes[0].texte, /Membres, Épargne/);
+assert.match(pannes[0].texte, /403/);
+console.log("Pannes regroupées : OK");

@@ -154,7 +154,19 @@ export function construireAlertes({ messages = [], agenda = { aujourdhui: [], aV
     const personnalise = k.messageAlerte ? remplirModele(k.messageAlerte, { valeur: k.valeur }) : null;
     if (k.etat === "bas") alertes.push({ niveau: "moyenne", source: origine, texte: personnalise || `${k.label} est sous le seuil (${k.valeur})` });
     if (k.etat === "haut") alertes.push({ niveau: k.niveauAlerte || "moyenne", source: origine, texte: personnalise || `${k.label} dépasse le seuil (${k.valeur})` });
-    if (k.erreur) alertes.push({ niveau: "basse", source: origine, texte: `${k.label} : lecture impossible` });
+  }
+
+  // Une seule alerte par base et par cause, pour ne pas répéter la même panne
+  const pannes = new Map();
+  for (const k of kpis) {
+    if (!k.erreur) continue;
+    const origine = k.base ? `${k.base} · données` : "données";
+    const cle = `${origine}|${k.erreur}`;
+    if (!pannes.has(cle)) pannes.set(cle, { origine, erreur: String(k.erreur).slice(0, 260), labels: [] });
+    pannes.get(cle).labels.push(k.label);
+  }
+  for (const p of pannes.values()) {
+    alertes.push({ niveau: "basse", source: p.origine, texte: `Lecture impossible (${p.labels.join(", ")}) : ${p.erreur}` });
   }
 
   const socialImportant = social.filter((s) => s.important);
