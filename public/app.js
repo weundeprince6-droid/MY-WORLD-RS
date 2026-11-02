@@ -310,7 +310,8 @@ async function restaurerSessionGoogle(user) {
       await lancerAutorisationGoogle(user);
       return;
     }
-    throw new Error("Session mémorisée, mais accès aux services Google indisponible : " + e.message);
+    afficherSession(false);
+    throw new Error("La connexion mémorisée est restaurée, mais le serveur de renouvellement Google n’est pas encore opérationnel. Reconnectez-vous temporairement. " + e.message);
   }
 }
 
@@ -324,10 +325,24 @@ async function seConnecter() {
     await sdkPret;
     await fb.setPersistence(fb.auth, fb.browserLocalPersistence);
     const fournisseur = new fb.GoogleAuthProvider();
+    SCOPES.forEach((scope) => fournisseur.addScope(scope));
     fournisseur.setCustomParameters({ prompt: "select_account" });
     const resultat = await fb.signInWithPopup(fb.auth, fournisseur);
     utilisateurConnecte = resultat.user;
-    await lancerAutorisationGoogle(resultat.user);
+    const jetonTemporaire = fb.GoogleAuthProvider.credentialFromResult(resultat)?.accessToken || null;
+    try {
+      await lancerAutorisationGoogle(resultat.user);
+    } catch (erreurServeur) {
+      if (!jetonTemporaire) throw erreurServeur;
+      // Mode de secours : l'application reste utilisable pendant la configuration du serveur OAuth.
+      connexionGoogleEnCours = false;
+      jetonGoogle = jetonTemporaire;
+      jetonGoogleExpireA = Date.now() + 3500 * 1000;
+      afficherSession(true, resultat.user.displayName || resultat.user.email);
+      chargerProfilGoogle(resultat.user);
+      await tout();
+      afficherErreur("Connexion temporaire active. Le renouvellement automatique sera disponible après la configuration des fonctions Firebase. " + erreurServeur.message);
+    }
   } catch (e) {
     connexionGoogleEnCours = false;
     if (e?.code !== "auth/cancelled-popup-request") afficherErreur(expliquerErreur(e));
