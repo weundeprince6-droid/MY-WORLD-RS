@@ -26,7 +26,10 @@ const SCOPES = [
 let jetonGoogle = null;
 let minuteurSocial = null; // lecture régulière de Telegram tant que la page est ouverte
 let fb = null; // composants Firebase, chargés après l'affichage de la page
-let etat = { messages: [], agenda: { aujourdhui: [], aVenir: [] }, kpis: [], social: [] };\nlet drivePageToken = null;\nlet driveRecherche = "";\nlet driveCharge = false;
+let etat = { messages: [], agenda: { aujourdhui: [], aVenir: [] }, kpis: [], social: [] };
+let drivePageToken = null;
+let driveRecherche = "";
+let driveCharge = false;
 
 // Les boutons réagissent dès le départ, même si Firebase n'est pas encore chargé
 $("adresse-page").textContent = location.protocol === "file:"
