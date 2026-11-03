@@ -1537,45 +1537,106 @@ async function walletExporterPdf() {
       b[1].forEach(([name,num,pct])=>{txt(C.ink);doc.text(doc.splitTextToSize(String(name),boxW-19),x+2,yy);txt(C.green);doc.text(String(pct)+"%",x+boxW-2,yy,{align:"right"});yy+=7;});
     });y+=42;
 
-    // Les graphiques sont reconstruits temporairement avec une couleur de texte sombre
-    // afin que les légendes restent lisibles sur le fond blanc du PDF, même en thème sombre.
-    const bodyColorAvant=document.body.style.color;
-    let chart1Image=null, chart2Image=null;
-    try{
-      document.body.style.color="#26352e";
-      walletDrawChart(walletTransactions);
-      walletDrawNetChart(walletTransactions);
-      chart1Image=$("wallet-chart")?.toDataURL("image/png")||null;
-      chart2Image=$("wallet-net-chart")?.toDataURL("image/png")||null;
-    }finally{
-      document.body.style.color=bodyColorAvant;
-      walletDrawChart(walletFilteredTransactions());
-      walletDrawNetChart(walletFilteredTransactions());
-    }
-
-    // Page 2 : Graphiques, ristournes et catégories
+    // Graphiques dessinés en vecteurs dans le PDF (indépendants du thème clair/sombre de l’application).
     addPage();header("Analyse des mouvements","02");
     const chartCurrency=$("wallet-chart-currency")?.value||currencies[0]||"FC";
-    section("2","ENTRÉES ET SORTIES PAR MOIS","Devise du graphique : "+chartCurrency);
-    const chart1=$("wallet-chart");
-    if(chart1){try{doc.addImage(chart1.toDataURL("image/png"),"PNG",M,y,CW,65);y+=69;}catch(e){para("Graphique mensuel indisponible.");}}
-    section("3","ÉVOLUTION DU SOLDE NET","Variation mensuelle dans la devise sélectionnée");
-    const chart2=$("wallet-net-chart");
-    if(chart2){try{doc.addImage(chart2.toDataURL("image/png"),"PNG",M,y,CW,55);y+=59;}catch(e){para("Graphique du solde net indisponible.");}}
-    section("4","RISTOURNES ET REMBOURSEMENTS","Données de ristournes actuellement visibles dans l’application");
+    const months=[];
+    for(let i=5;i>=0;i--){
+      const d=new Date();d.setDate(1);d.setMonth(d.getMonth()-i);
+      months.push({key:d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"),
+        label:new Intl.DateTimeFormat("fr-FR",{month:"short"}).format(d).replace(".","")});
+    }
+    const monthly=months.map(m=>({...m,income:0,expense:0,net:0}));
+    tx.filter(t=>t.currency===chartCurrency&&t.kind!=="transfer").forEach(t=>{
+      const m=monthly.find(v=>v.key===String(t.date||"").slice(0,7));
+      if(!m)return;
+      const amount=Number(t.amount||0);
+      if(t.kind==="income"){m.income+=amount;m.net+=amount;}
+      else if(t.kind==="expense"){m.expense+=amount;m.net-=amount;}
+    });
+    const drawMonthlyPdfChart=(x,top,w,h)=>{
+      const plotL=x+14,plotR=x+w-4,plotT=top+7,plotB=top+h-13,plotH=plotB-plotT;
+      const max=Math.max(1,...monthly.flatMap(m=>[m.income,m.expense]));
+      doc.setFont("helvetica","normal");doc.setFontSize(7);txt(C.muted);
+      for(let k=0;k<=4;k++){
+        const yy=plotB-plotH*k/4;draw(C.line);doc.setLineWidth(.25);doc.line(plotL,yy,plotR,yy);
+        txt(C.muted);doc.text(money(max*k/4,chartCurrency),plotL-2,yy-1,{align:"right"});
+      }
+      const group=(plotR-plotL)/monthly.length, bw=Math.min(5.2,group*.25);
+      monthly.forEach((m,i)=>{
+        const cx=plotL+group*(i+.5), hi=m.income/max*plotH, he=m.expense/max*plotH;
+        fill(C.green);doc.rect(cx-bw-0.6,plotB-hi,bw,hi,"F");
+        fill(C.red);doc.rect(cx+0.6,plotB-he,bw,he,"F");
+        doc.setFontSize(7);txt(C.ink);doc.text(m.label,cx,plotB+5,{align:"center"});
+      });
+      fill(C.green);doc.rect(x+5,top+1,3,3,"F");doc.setFontSize(7);txt(C.ink);doc.text("Entrées",x+10,top+4);
+      fill(C.red);doc.rect(x+31,top+1,3,3,"F");txt(C.ink);doc.text("Sorties",x+36,top+4);
+    };
+    const drawNetPdfChart=(x,top,w,h)=>{
+      const plotL=x+14,plotR=x+w-4,plotT=top+8,plotB=top+h-13,plotH=plotB-plotT;
+      const max=Math.max(1,...monthly.map(m=>Math.abs(m.net))),step=(plotR-plotL)/Math.max(1,monthly.length-1);
+      const zero=plotT+plotH/2;
+      doc.setFont("helvetica","normal");doc.setFontSize(7);txt(C.muted);
+      for(let k=-2;k<=2;k++){
+        const yy=zero-k*plotH/4;draw(k===0?C.muted:C.line);doc.setLineWidth(k===0?.5:.25);doc.line(plotL,yy,plotR,yy);
+        if(k===2||k===-2)txt(C.muted);
+      }
+      let prev=null;
+      monthly.forEach((m,i)=>{
+        const px=plotL+i*step,py=zero-(m.net/max)*(plotH/2);
+        if(prev){draw(m.net>=0?C.green:C.red);doc.setLineWidth(1.1);doc.line(prev.x,prev.y,px,py);}
+        fill(m.net>=0?C.green:C.red);doc.circle(px,py,1.5,"F");
+        doc.setFontSize(7);txt(C.ink);doc.text(m.label,px,plotB+5,{align:"center"});
+        prev={x:px,y:py};
+      });
+      doc.setFontSize(7);txt(C.green);doc.text("Au-dessus de zéro : excédent",x+5,top+4);
+      txt(C.red);doc.text("En dessous : déficit",x+76,top+4);
+    };
+    section("2","ENTRÉES ET SORTIES PAR MOIS","Montants par mois · "+chartCurrency);
+    drawMonthlyPdfChart(M,y,CW,48);y+=52;
+    section("3","ÉVOLUTION DU SOLDE NET","Variation mensuelle · "+chartCurrency);
+    drawNetPdfChart(M,y,CW,45);y+=49;
+
+    section("4","RISTOURNES ET REMBOURSEMENTS","Données ESE DB");
     const rstatus=$("wallet-ristourne-status")?.textContent?.trim();
-    if(rstatus)para("État : "+rstatus,7.5,C.muted);
-    const rg=$("rist-groupes")?.innerText?.trim(), rc=$("rist-credits")?.innerText?.trim();
-    if(rg)para(rg,7.8,C.ink);if(rc)para(rc,8,C.green);
-    if(!rg&&!rc)para("Aucune donnée de ristourne disponible dans l’affichage actuel.",8,C.muted);
+    if(rstatus)para("Synchronisation : "+rstatus,7.2,C.muted);
+    const ristGroup=$("rist-groupes");
+    const ristCredits=$("rist-credits");
+    const ristGroupsText=ristGroup?.innerText?.trim();
+    if(ristGroupsText){
+      const items=[...ristGroup.querySelectorAll(".rist-groupe")];
+      if(items.length){
+        const rw=[49,45,45,45];
+        tableHeader(["Groupe / partenaire","Dépôts","Retraits","Solde"],rw);
+        items.forEach((el,i)=>{
+          const spans=[...el.querySelectorAll("span,b")];
+          const name=el.querySelector("strong")?.textContent?.trim()||"Groupe";
+          const vals=[name,...spans.map(v=>v.textContent.trim())].slice(0,4);
+          while(vals.length<4)vals.push("—");
+          const lines=vals.map((v,j)=>doc.splitTextToSize(v,rw[j]-3));
+          const rh=Math.max(7,...lines.map(l=>l.length*3.5+2));
+          if(y+rh>bottom){addPage();header("Ristournes et remboursements (suite)","02");tableHeader(["Groupe / partenaire","Dépôts","Retraits","Solde"],rw);}
+          if(i%2===0){fill(C.pale);doc.rect(M,y-2,CW,rh,"F");}
+          let xx=M+2;lines.forEach((l,j)=>{txt(j===3?C.green:C.ink);doc.text(l,xx,y);xx+=rw[j];});y+=rh;
+        });
+      }else para(ristGroupsText,7.4,C.ink);
+    }else para("Aucun mouvement de ristourne dans ESE DB pour le moment.",7.4,C.muted);
+    const creditText=ristCredits?.textContent?.trim();
+    if(creditText)para(creditText,7.4,C.green);
     section("5","RÉPARTITION DES DÉPENSES PAR CATÉGORIE");
-    const expenses=tx.filter(t=>t.kind==="expense");
-    const expByCat=Object.entries(expenses.reduce((o,t)=>{const c=t.category||"Non classé";o[c]=(o[c]||0)+Number(t.amount||0);return o;},{})).sort((a,b)=>b[1]-a[1]).slice(0,7);
+    const expenses=tx.filter(t=>t.kind==="expense"&&t.currency===chartCurrency);
+    const expByCat=Object.entries(expenses.reduce((o,t)=>{const c=t.category||"Non classé";o[c]=(o[c]||0)+Number(t.amount||0);return o;},{})).sort((a,b)=>b[1]-a[1]).slice(0,6);
     if(expByCat.length){
-      const max=expByCat[0][1]||1;let yy=y;
-      expByCat.forEach(([name,val],i)=>{const pct=val/max;doc.setFont("helvetica","normal");doc.setFontSize(7.5);txt(C.ink);doc.text(doc.splitTextToSize(name,58),M,yy+3);fill([C.green[0],Math.max(55,C.green[1]-i*5),Math.max(45,C.green[2]-i*2)]);doc.roundedRect(M+60,yy-1,90*pct,5,1,1,"F");txt(C.green);doc.text(money(val,expenses.find(t=>t.category===name)?.currency||chartCurrency),197,yy+3,{align:"right"});yy+=8;});y=yy+2;
-    }else para("Aucune dépense catégorisée pour cette période.");
-    
+      const max=expByCat[0][1]||1, colors=[C.blue,C.red,C.green,C.gold,[121,82,157],C.orange];
+      expByCat.forEach(([name,val],i)=>{
+        if(y+8>bottom)addPage();
+        doc.setFont("helvetica","normal");doc.setFontSize(7.4);txt(C.ink);
+        doc.text(doc.splitTextToSize(name,49),M,y+3);
+        fill(colors[i%colors.length]);doc.roundedRect(M+51,y-1,92*val/max,4.5,1,1,"F");
+        txt(C.ink);doc.text(money(val,chartCurrency),197,y+3,{align:"right"});y+=8;
+      });
+    }else para("Aucune dépense catégorisée dans cette devise.",7.4,C.muted);
+
     // Page 3 : historique exhaustif et bien lisible
     addPage();header("Historique détaillé de tous les mouvements","03");
     section("6","HISTORIQUE DÉTAILLÉ","Tous les comptes · Toutes les dates · Aucun filtre");
