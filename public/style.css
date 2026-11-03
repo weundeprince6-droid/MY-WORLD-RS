@@ -573,3 +573,11 @@ button.agenda-cal-jour{cursor:pointer}
 .nouveau-mail-form input:focus,.nouveau-mail-form textarea:focus{outline:2px solid rgba(8,122,75,.2);border-color:var(--primary)}
 .nouveau-mail-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 @media(max-width:600px){.messages-heading{align-items:flex-start;flex-direction:column}.nouveau-mail-form{padding:18px}.nouveau-mail-actions{align-items:stretch;flex-direction:column}.nouveau-mail-actions button{width:100%}}
+
+
+/* Boutons d'action de l'en-tête en icônes */
+.outils .btn-icon-header{width:39px;height:39px;min-width:39px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:12px;font-size:22px;line-height:1}
+.outils .btn-icon-header:hover{transform:translateY(-1px);background:var(--primary-soft);color:var(--primary)}
+.outils .btn-icon-header svg{display:block}
+.outils .btn-icon-header:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
+@media(max-width:520px){.outils .btn-icon-header{width:35px;height:35px;min-width:35px}}
