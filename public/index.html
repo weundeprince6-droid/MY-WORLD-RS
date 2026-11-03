@@ -176,15 +176,14 @@
             </section>
           </section>
           <section class="tab-pane" id="pane-wallet" role="tabpanel" data-pane="wallet" hidden>
-            <div class="wallet-hero">
-              <div class="wallet-hero-copy"><span class="wallet-chip">MY WORLD RS · FINANCES</span><h2>Mon Porte-Monnaie</h2><p>Une vue claire de vos finances personnelles et professionnelles, en USD et FC.</p><div class="wallet-hero-tags"><span>✦ Comptes séparés</span><span>↔ Transferts</span><span>▥ Statistiques</span></div></div>
-              <div class="wallet-hero-art" aria-hidden="true"><div class="wallet-coin">₣</div><div class="wallet-hero-card"><span>MON PORTE-MONNAIE</span><strong>USD <i>·</i> FC</strong><small>Suivi financier</small></div></div>
-            </div>
+            <div class="section-heading wallet-page-heading"><div><p class="eyebrow">GESTION FINANCIÈRE</p><h2>Mon Porte-Monnaie</h2><p>Suivez vos comptes, vos entrées, vos dépenses et vos transferts en USD et en FC.</p></div><span class="section-icon green">💰</span></div>
+            <div class="wallet-block-heading"><div><p class="eyebrow">SITUATION FINANCIÈRE</p><h3>Vue d'ensemble</h3><p>Un aperçu rapide de vos soldes et de votre activité.</p></div></div>
             <div class="wallet-summary" id="wallet-summary">
               <article class="wallet-total"><span>Solde personnel</span><strong id="wallet-personal-usd">0 USD</strong><b id="wallet-personal-fc">0 FC</b></article>
               <article class="wallet-total"><span>Solde professionnel</span><strong id="wallet-pro-usd">0 USD</strong><b id="wallet-pro-fc">0 FC</b></article>
               <article class="wallet-total wallet-total-accent"><span>Opérations enregistrées</span><strong id="wallet-count">0</strong><b id="wallet-month-total">Ce mois : —</b></article>
             </div>
+            <div class="wallet-block-heading"><div><p class="eyebrow">ACTIVITÉ ESE DB</p><h3>Suivi des ristournes</h3><p>Les indicateurs de ristourne seront affichés après raccordement à leur source.</p></div></div>
             <section class="wallet-ristourne">
               <div class="wallet-ristourne-head"><div><span class="wallet-chip wallet-chip-light">ESE DB · WEB SERVICE</span><h2>Finances de ristourne</h2><p>Un espace dédié au suivi des ristournes dans votre base ESE DB.</p></div><span class="wallet-ristourne-icon">↗</span></div>
               <div class="wallet-ristourne-metrics">
@@ -194,6 +193,7 @@
               </div>
               <div class="wallet-ristourne-foot"><span class="wallet-db-dot"></span><span id="wallet-ristourne-status">Zone réservée à la connexion des données de ristourne ESE DB. Les montants seront affichés après confirmation de leur structure dans la base.</span></div>
             </section>
+            <div class="wallet-block-heading"><div><p class="eyebrow">COMPTES & MOUVEMENTS</p><h3>Gérer mon argent</h3><p>Créez vos comptes, enregistrez les opérations et effectuez vos transferts.</p></div></div>
             <div class="wallet-columns">
               <section class="carte"><div class="card-heading"><div><p class="eyebrow">COMPTES</p><h2>Mes comptes</h2></div></div>
                 <form id="wallet-account-form" class="wallet-form">
@@ -238,7 +238,8 @@
                 </div>
               </section>
             </div>
-            <section class="carte"><div class="card-heading"><div><p class="eyebrow">TOUTES LES TRANSACTIONS</p><h2>Historique des opérations</h2></div><button id="wallet-export" class="btn btn-light" type="button">Exporter CSV</button></div>
+            <div class="wallet-block-heading"><div><p class="eyebrow">HISTORIQUE</p><h3>Suivi de mes opérations</h3><p>Retrouvez et filtrez toutes les transactions enregistrées.</p></div></div>
+            <section class="carte wallet-history-card"><div class="card-heading"><div><p class="eyebrow">TOUTES LES TRANSACTIONS</p><h2>Historique des opérations</h2></div><button id="wallet-export" class="btn btn-light" type="button">Exporter CSV</button></div>
               <div class="wallet-history-filters"><input id="wallet-search" type="search" placeholder="Rechercher une opération…" aria-label="Rechercher"><select id="wallet-history-account"><option value="all">Tous les comptes</option></select><select id="wallet-history-kind"><option value="all">Toutes les opérations</option><option value="income">Entrées</option><option value="expense">Sorties</option><option value="transfer">Transferts</option></select></div>
               <div class="wallet-history-wrap"><table class="wallet-history"><thead><tr><th>Date</th><th>Compte</th><th>Opération</th><th>Description</th><th>Montant</th></tr></thead><tbody id="wallet-history"><tr><td colspan="5" class="vide">Vos opérations apparaîtront ici.</td></tr></tbody></table></div>
             </section>
