@@ -924,19 +924,44 @@ function rendreMessages() {
   }
 }
 
-function rendreAgenda() {
-  const ligne = (e) => `<li><div class="ligne"><strong>${echapper(e.titre)}</strong>
-      <span class="meta">${e.toutLeJour ? "Journée entière" : heure.format(e.debut)}</span></div>
-      ${e.lieu ? `<div class="extrait">${echapper(e.lieu)}</div>` : ""}
-      <div class="actions"><button type="button" data-supprimer-evenement="${echapper(e.id)}">Supprimer</button></div></li>`;
-  const auj = etat.agenda.aujourdhui;
-  $("liste-agenda").innerHTML = auj.length ? auj.map(ligne).join("") : '<li class="vide">Aucun rendez-vous aujourd\'hui.</li>';
-  const suite = etat.agenda.aVenir.slice(0, 6);
-  $("liste-avenir").innerHTML = suite.length
-    ? suite.map((e) => `<li><div class="ligne"><strong>${echapper(e.titre)}</strong><span class="meta">${jourCourt.format(e.debut)}${e.toutLeJour ? "" : " · " + heure.format(e.debut)}</span></div><div class="actions"><button type="button" data-supprimer-evenement="${echapper(e.id)}">Supprimer</button></div></li>`).join("")
-    : '<li class="vide">Rien de prévu dans les prochains jours.</li>';
+let agendaMoisAffiche = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+function rendreCalendrierAgenda() {
+  const grille = $("agenda-calendrier");
+  if (!grille) return;
+  const annee = agendaMoisAffiche.getFullYear(), mois = agendaMoisAffiche.getMonth();
+  $("agenda-mois-titre").textContent = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" }).format(agendaMoisAffiche);
+  const premier = new Date(annee, mois, 1), decalage = (premier.getDay()+6)%7, nbJours = new Date(annee, mois+1, 0).getDate();
+  const selection = $("agenda-form").elements.date.value;
+  const auj = new Date(), keyAuj = [auj.getFullYear(),String(auj.getMonth()+1).padStart(2,"0"),String(auj.getDate()).padStart(2,"0")].join("-");
+  let html = ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"].map(n=>'<div class="agenda-cal-jour agenda-cal-entete">'+n+'</div>').join("");
+  for(let i=0;i<decalage;i++) html += '<div class="agenda-cal-jour agenda-cal-vide"></div>';
+  for(let d=1;d<=nbJours;d++){
+    const key=[annee,String(mois+1).padStart(2,"0"),String(d).padStart(2,"0")].join("-");
+    const cls=["agenda-cal-jour"];
+    if(key===keyAuj) cls.push("agenda-cal-aujourdhui");
+    if(key===selection) cls.push("agenda-cal-selection");
+    html += '<button type="button" class="'+cls.join(" ")+'" data-agenda-date="'+key+'">'+d+'</button>';
+  }
+  grille.innerHTML=html;
+  grille.querySelectorAll("[data-agenda-date]").forEach(btn=>btn.addEventListener("click",()=>{
+    $("agenda-form").elements.date.value=btn.dataset.agendaDate;
+    const d=new Date(btn.dataset.agendaDate+"T12:00:00");
+    agendaMoisAffiche=new Date(d.getFullYear(),d.getMonth(),1);
+    rendreCalendrierAgenda();
+  }));
 }
+$("agenda-mois-precedent").addEventListener("click",()=>{agendaMoisAffiche=new Date(agendaMoisAffiche.getFullYear(),agendaMoisAffiche.getMonth()-1,1);rendreCalendrierAgenda();});
+$("agenda-mois-suivant").addEventListener("click",()=>{agendaMoisAffiche=new Date(agendaMoisAffiche.getFullYear(),agendaMoisAffiche.getMonth()+1,1);rendreCalendrierAgenda();});
+$("agenda-form").elements.date.addEventListener("change",rendreCalendrierAgenda);
 
+function rendreAgenda() {
+  const ligne = (e) => '<li><div class="ligne"><strong>'+echapper(e.titre)+'</strong><span class="meta">'+(e.toutLeJour ? "Journée entière" : heure.format(e.debut))+'</span></div>'+(e.lieu ? '<div class="extrait">'+echapper(e.lieu)+'</div>' : '')+'<div class="actions"><button type="button" data-supprimer-evenement="'+echapper(e.id)+'">Supprimer</button></div></li>';
+  const auj = etat.agenda.aujourdhui.slice(0,2);
+  $("liste-agenda").innerHTML = auj.length ? auj.map(ligne).join("") : '<li class="vide">Aucun rendez-vous aujourd’hui.</li>';
+  const suite = etat.agenda.aVenir.slice(0,2);
+  $("liste-avenir").innerHTML = suite.length ? suite.map(e=>'<li><div class="ligne"><strong>'+echapper(e.titre)+'</strong><span class="meta">'+jourCourt.format(e.debut)+(e.toutLeJour ? "" : " · "+heure.format(e.debut))+'</span></div><div class="actions"><button type="button" data-supprimer-evenement="'+echapper(e.id)+'">Supprimer</button></div></li>').join("") : '<li class="vide">Rien de prévu dans les prochains jours.</li>';
+  rendreCalendrierAgenda();
+}
 // ---------- Agenda : ajouter et supprimer des rendez-vous ----------
 function retourAgenda(texte, erreur = false) {
   const el = $("agenda-retour");
