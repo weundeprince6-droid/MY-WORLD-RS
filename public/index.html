@@ -176,12 +176,24 @@
             </section>
           </section>
           <section class="tab-pane" id="pane-wallet" role="tabpanel" data-pane="wallet" hidden>
-            <div class="section-heading"><div><p class="eyebrow">GESTION FINANCIÈRE</p><h2>Mon Porte-Monnaie</h2><p>Suivez vos finances personnelles et professionnelles en USD et FC.</p></div><span class="section-icon green">💰</span></div>
+            <div class="wallet-hero">
+              <div class="wallet-hero-copy"><span class="wallet-chip">MY WORLD RS · FINANCES</span><h2>Mon Porte-Monnaie</h2><p>Une vue claire de vos finances personnelles et professionnelles, en USD et FC.</p><div class="wallet-hero-tags"><span>✦ Comptes séparés</span><span>↔ Transferts</span><span>▥ Statistiques</span></div></div>
+              <div class="wallet-hero-art" aria-hidden="true"><div class="wallet-coin">₣</div><div class="wallet-hero-card"><span>MON PORTE-MONNAIE</span><strong>USD <i>·</i> FC</strong><small>Suivi financier</small></div></div>
+            </div>
             <div class="wallet-summary" id="wallet-summary">
               <article class="wallet-total"><span>Solde personnel</span><strong id="wallet-personal-usd">0 USD</strong><b id="wallet-personal-fc">0 FC</b></article>
               <article class="wallet-total"><span>Solde professionnel</span><strong id="wallet-pro-usd">0 USD</strong><b id="wallet-pro-fc">0 FC</b></article>
               <article class="wallet-total wallet-total-accent"><span>Opérations enregistrées</span><strong id="wallet-count">0</strong><b id="wallet-month-total">Ce mois : —</b></article>
             </div>
+            <section class="wallet-ristourne">
+              <div class="wallet-ristourne-head"><div><span class="wallet-chip wallet-chip-light">ESE DB · WEB SERVICE</span><h2>Finances de ristourne</h2><p>Un espace dédié au suivi des ristournes dans votre base ESE DB.</p></div><span class="wallet-ristourne-icon">↗</span></div>
+              <div class="wallet-ristourne-metrics">
+                <article><span>Ristournes reçues</span><strong>— <small>FC / USD</small></strong></article>
+                <article><span>Ristournes distribuées</span><strong>— <small>FC / USD</small></strong></article>
+                <article><span>Solde des ristournes</span><strong>— <small>FC / USD</small></strong></article>
+              </div>
+              <div class="wallet-ristourne-foot"><span class="wallet-db-dot"></span><span id="wallet-ristourne-status">Zone réservée à la connexion des données de ristourne ESE DB. Les montants seront affichés après confirmation de leur structure dans la base.</span></div>
+            </section>
             <div class="wallet-columns">
               <section class="carte"><div class="card-heading"><div><p class="eyebrow">COMPTES</p><h2>Mes comptes</h2></div></div>
                 <form id="wallet-account-form" class="wallet-form">
