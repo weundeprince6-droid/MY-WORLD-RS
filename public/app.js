@@ -60,6 +60,7 @@ $("bouton-deconnexion").addEventListener("click", async () => {
   } catch (e) { console.warn("Révocation Google non confirmée :", e); }
   try { if (fb) await fb.signOut(fb.auth); } catch { /* ignoré */ }
   jetonGoogle = null; jetonGoogleExpireA = 0; utilisateurConnecte = null; uidSessionTraitee = null;
+  effacerJetonMemorise();
   afficherSession(false);
 });
 $("bouton-actualiser").addEventListener("click", () => tout());
@@ -273,15 +274,86 @@ async function lancerAutorisationGoogle(user) {
   window.location.assign(data.authorizationUrl);
 }
 
+// ---------- Mémoire du jeton Google (évite de se reconnecter à chaque ouverture) ----------
+const CLE_JETON_GOOGLE = "mwrs.google.jeton";
+function memoriserJetonGoogle(uid, jeton, expireA) {
+  try { localStorage.setItem(CLE_JETON_GOOGLE, JSON.stringify({ uid, jeton, expireA })); } catch { /* stockage indisponible */ }
+}
+function lireJetonMemorise(uid) {
+  try {
+    const m = JSON.parse(localStorage.getItem(CLE_JETON_GOOGLE) || "null");
+    if (m && m.uid === uid && m.jeton && Date.now() < m.expireA - 60000) return m;
+  } catch { /* contenu illisible */ }
+  return null;
+}
+function effacerJetonMemorise() {
+  try { localStorage.removeItem(CLE_JETON_GOOGLE); } catch { /* stockage indisponible */ }
+}
+
+// Renouvellement silencieux via Google Identity Services : sans fenêtre si vous êtes connecté à Google
+// et avez déjà accepté les autorisations. Demande reglages.googleClientId (voir docs/connexion-persistante.md).
+let chargementGis = null;
+function chargerGis() {
+  if (window.google?.accounts?.oauth2) return Promise.resolve();
+  if (!chargementGis) {
+    chargementGis = new Promise((ok, ko) => {
+      const el = document.createElement("script");
+      el.src = "https://accounts.google.com/gsi/client";
+      el.onload = ok;
+      el.onerror = () => { chargementGis = null; ko(new Error("Google Identity Services n'a pas pu être chargé.")); };
+      document.head.appendChild(el);
+    });
+  }
+  return chargementGis;
+}
+async function renouvelerJetonSilencieux(email) {
+  const clientId = reglages.googleClientId;
+  if (!clientId) throw new Error("googleClientId non configuré.");
+  await chargerGis();
+  return new Promise((ok, ko) => {
+    const minuteur = setTimeout(() => ko(new Error("Renouvellement silencieux trop long.")), 15000);
+    const client = window.google.accounts.oauth2.initTokenClient({
+      client_id: clientId,
+      scope: SCOPES.join(" "),
+      prompt: "",
+      login_hint: email || undefined,
+      callback: (r) => { clearTimeout(minuteur); r?.access_token ? ok(r) : ko(new Error(r?.error || "Renouvellement refusé.")); },
+      error_callback: (e) => { clearTimeout(minuteur); ko(new Error(e?.type || "Renouvellement impossible.")); },
+    });
+    client.requestAccessToken();
+  });
+}
+
 async function obtenirJetonGoogle(force = false) {
   if (!force && jetonGoogle && Date.now() < jetonGoogleExpireA - 60000) return jetonGoogle;
   if (recuperationGoogleEnCours) return recuperationGoogleEnCours;
   recuperationGoogleEnCours = (async () => {
     const user = fb?.auth.currentUser;
     if (!user) throw new Error("Votre session est fermée. Connectez-vous à nouveau.");
+    // 1) jeton gardé par ce navigateur, encore valable
+    const memorise = lireJetonMemorise(user.uid);
+    if (memorise) {
+      jetonGoogle = memorise.jeton;
+      jetonGoogleExpireA = memorise.expireA;
+      return jetonGoogle;
+    }
+    // 2) renouvellement silencieux (si configuré)
+    if (reglages.googleClientId) {
+      try {
+        const r = await renouvelerJetonSilencieux(user.email);
+        jetonGoogle = r.access_token;
+        jetonGoogleExpireA = Date.now() + (Number(r.expires_in) || 3600) * 1000;
+        memoriserJetonGoogle(user.uid, jetonGoogle, jetonGoogleExpireA);
+        return jetonGoogle;
+      } catch (e) {
+        console.info("Renouvellement silencieux impossible :", e?.message);
+      }
+    }
+    // 3) serveur de renouvellement (fonctions Firebase), s'il est déployé
     const data = await appelerFonctionGoogle("googleAccessToken", await user.getIdToken());
     jetonGoogle = data.accessToken;
     jetonGoogleExpireA = Date.now() + (Number(data.expiresIn) || 3600) * 1000;
+    memoriserJetonGoogle(user.uid, jetonGoogle, jetonGoogleExpireA);
     return jetonGoogle;
   })();
   try { return await recuperationGoogleEnCours; }
@@ -302,7 +374,7 @@ async function restaurerSessionGoogle(user) {
     return;
   }
   try {
-    await obtenirJetonGoogle(true);
+    await obtenirJetonGoogle();
     chargerProfilGoogle(user);
     await tout();
     chargerTasks();
@@ -315,7 +387,8 @@ async function restaurerSessionGoogle(user) {
       return;
     }
     afficherSession(false);
-    throw new Error("La connexion mémorisée est restaurée, mais le serveur de renouvellement Google n’est pas encore opérationnel. Reconnectez-vous temporairement. " + e.message);
+    console.info("Session Google non renouvelée :", e?.message);
+    throw new Error("Votre accès Google a expiré (il dure 1 heure). Cliquez sur « Se connecter avec Google » : une seule fois suffit.");
   }
 }
 
@@ -342,6 +415,7 @@ async function seConnecter() {
       connexionGoogleEnCours = false;
       jetonGoogle = jetonTemporaire;
       jetonGoogleExpireA = Date.now() + 3500 * 1000;
+      memoriserJetonGoogle(resultat.user.uid, jetonGoogle, jetonGoogleExpireA);
       afficherSession(true, resultat.user.displayName || resultat.user.email);
       chargerProfilGoogle(resultat.user);
       await tout();
@@ -398,7 +472,7 @@ async function googleUneFois(url, options = {}, nouvelEssai = true) {
     headers: { Authorization: `Bearer ${jetonGoogle}`, "Content-Type": "application/json", ...(options.headers || {}) },
   });
   if (r.status === 401 && nouvelEssai) {
-    jetonGoogle = null; jetonGoogleExpireA = 0;
+    jetonGoogle = null; jetonGoogleExpireA = 0; effacerJetonMemorise();
     await obtenirJetonGoogle(true);
     return googleUneFois(url, options, false);
   }

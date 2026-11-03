@@ -17,13 +17,13 @@ const json = (o) => ({ status: 200, headers: { ...CORS, 'content-type': 'applica
 const aujourdhui = new Date(); const dans30 = new Date(Date.now() + 30 * 60000);
 const stubApp = 'export function initializeApp(c){return {c}}';
 const stubAuth = (mode) => `
-export function getAuth(){return {}}
+export function getAuth(){return { get currentUser(){ return window.__u || null } }}
 export class GoogleAuthProvider{ addScope(s){(window.__scopes=window.__scopes||[]).push(s)} setCustomParameters(){} static credentialFromResult(r){return {accessToken:'jeton-test'}} }
-export async function signInWithPopup(){ ${mode === 'ok' ? "return {user:{displayName:'Prince Test',email:'t@x.com'}}" : "const e=new Error('x'); e.code='" + mode + "'; throw e"} }
+export async function signInWithPopup(){ ${mode === 'ok' ? "window.__u={uid:'u1',displayName:'Prince Test',email:'t@x.com'}; localStorage.setItem('__stubuser','1'); return {user:window.__u}" : "const e=new Error('x'); e.code='" + mode + "'; throw e"} }
 export async function signOut(){}
 export async function setPersistence(){}
 export const browserLocalPersistence={};
-export function onAuthStateChanged(){}`;
+export function onAuthStateChanged(a, cb){ if (localStorage.getItem('__stubuser')) { window.__u={uid:'u1',displayName:'Prince Test',email:'t@x.com',getIdToken:async()=>'id'}; setTimeout(()=>cb(window.__u),0) } }`;
 
 const T0 = Math.floor(Date.now() / 1000) * 1000;
 async function scenario(nom, { mode = 'ok', sdkBloque = false, quotaGmail = false }, verifier) {
@@ -49,6 +49,7 @@ async function scenario(nom, { mode = 'ok', sdkBloque = false, quotaGmail = fals
         ] }));
       }
     }
+    if (u.includes('cloudfunctions.net')) return route.fulfill({ status: 404, headers: { ...CORS, 'content-type': 'application/json' }, body: JSON.stringify({ error: 'Fonction non déployée' }) });
     if (u.includes('graph.facebook.com')) {
       if (u.includes('MAUVAISJETON')) return route.fulfill(json({ error: { code: 190, message: 'Invalid OAuth access token.' } }));
       if (u.includes('/me/accounts')) return route.fulfill(json({ data: [{ id: '111', name: 'Ma Boutique', access_token: 'PAGETOKEN' + 'x'.repeat(60) }] }));
@@ -171,6 +172,20 @@ srv.listen(8765, async () => {
     const stocke = await p.evaluate(() => localStorage.getItem('mwrs.facebook.jeton'));
     const statut = (await p.textContent('#facebook-statut')).trim();
     return { ok: stocke === null && statut.startsWith('Non connecté') && await p.isVisible('#facebook-form'), detail: statut.slice(0, 30) };
+  }));
+  res.push(await scenario('Rechargement de la page : toujours connecté sans nouvelle connexion', {}, async (p) => {
+    await p.click('#bouton-connexion'); await p.waitForTimeout(2500);
+    await p.reload(); await p.waitForTimeout(3500);
+    const tableau = await p.isVisible('#tableau'); const bouton = await p.isVisible('#bouton-connexion');
+    const msgs = await p.textContent('#liste-messages'); const erreur = (await p.textContent('#erreur')).trim();
+    return { ok: tableau && !bouton && msgs.includes('Marie Dupont'), detail: JSON.stringify({ tableau, bouton, erreur: erreur.slice(0, 80) }) };
+  }));
+  res.push(await scenario('Jeton expiré : message clair et connexion en un clic', {}, async (p) => {
+    await p.click('#bouton-connexion'); await p.waitForTimeout(2500);
+    await p.evaluate(() => { const m = JSON.parse(localStorage.getItem('mwrs.google.jeton')); m.expireA = Date.now() - 1000; localStorage.setItem('mwrs.google.jeton', JSON.stringify(m)); });
+    await p.reload(); await p.waitForTimeout(3500);
+    const bouton = await p.isVisible('#bouton-connexion'); const erreur = (await p.textContent('#erreur')).trim();
+    return { ok: bouton && erreur.includes('Se connecter avec Google') && !erreur.includes('Failed'), detail: JSON.stringify({ bouton, erreur: erreur.slice(0, 160) }) };
   }));
   res.push(await scenario('Domaine non autorisé : message clair', { mode: 'auth/unauthorized-domain' }, async (p) => {
     await p.click('#bouton-connexion'); await p.waitForTimeout(800);

@@ -20,6 +20,10 @@ export const bases = {
 
 // Réglages du tableau de bord
 export const reglages = {
+  // Identifiant client OAuth (type « Application Web ») : active le renouvellement silencieux de l'accès Google,
+  // pour ne plus se reconnecter toutes les heures. Voir docs/connexion-persistante.md. Laissez vide sinon.
+  googleClientId: "",
+
   gmail: {
     requete: "in:inbox newer_than:14d -category:promotions -category:social",
     maxMessages: 40,
