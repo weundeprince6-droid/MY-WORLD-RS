@@ -1060,7 +1060,7 @@ let walletTransactions = [];
 let walletLoaded = false;
 const walletMoney = (n, currency) => new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 2 }).format(Number(n || 0)) + " " + currency;
 const walletId = () => (crypto.randomUUID ? crypto.randomUUID() : "w" + Date.now().toString(36) + Math.random().toString(36).slice(2));
-const walletPath = (uid, collection, id = "") => \`/users/\${encodeURIComponent(uid)}/\${collection}\${id ? "/" + encodeURIComponent(id) : ""}\`;
+const walletPath = (uid, collection, id = "") => `/users/${encodeURIComponent(uid)}/${collection}${id ? "/" + encodeURIComponent(id) : ""}`;
 const walletFields = (obj) => ({ fields: Object.fromEntries(Object.entries(obj).map(([k,v]) => [k, typeof v === "number" ? { doubleValue: v } : typeof v === "boolean" ? { booleanValue: v } : { stringValue: String(v ?? "") }])) });
 async function walletReadCollection(collection) {
   const uid = fb?.auth.currentUser?.uid;
@@ -1068,7 +1068,7 @@ async function walletReadCollection(collection) {
   const docs = [];
   let page = "";
   do {
-    const url = urlFirestore(firebaseConfig.projectId, walletPath(uid, collection)) + \`?pageSize=300\${page ? "&pageToken=" + encodeURIComponent(page) : ""}\`;
+    const url = urlFirestore(firebaseConfig.projectId, walletPath(uid, collection)) + `?pageSize=300${page ? "&pageToken=" + encodeURIComponent(page) : ""}`;
     const res = await google(url);
     (res.documents || []).forEach(d => docs.push(decoderChamps(d.fields || {}).id ? decoderChamps(d.fields || {}) : { ...decoderChamps(d.fields || {}), id: d.name.split("/").pop() }));
     page = res.nextPageToken || "";
@@ -1123,8 +1123,8 @@ function walletRender() {
   const monthTx = walletTransactions.filter(t => String(t.date||"").startsWith(monthKey) && t.kind !== "transfer");
   const monthNet = currency => monthTx.filter(t=>t.currency===currency).reduce((s,t)=>s+(t.kind==="income"?1:-1)*Number(t.amount||0),0);
   $("wallet-month-total").textContent = "Ce mois : " + walletMoney(monthNet("USD"),"USD") + " · " + walletMoney(monthNet("FC"),"FC");
-  $("wallet-accounts").innerHTML = walletAccounts.length ? walletAccounts.map(a => \`<article class="wallet-account"><div><strong>\${echapper(a.name)}</strong><small>\${a.type==="personal"?"Personnel":"Professionnel"} · \${echapper(a.currency)}</small></div><b>\${walletMoney(a.balance,a.currency)}</b></article>\`).join("") : '<p class="vide">Aucun compte. Créez votre premier compte.</p>';
-  const options = walletAccounts.map(a=>\`<option value="\${echapper(a.id)}">\${echapper(a.name)} — \${a.currency} (\${a.type==="personal"?"Personnel":"Pro"})</option>\`).join("");
+  $("wallet-accounts").innerHTML = walletAccounts.length ? walletAccounts.map(a => `<article class="wallet-account"><div><strong>${echapper(a.name)}</strong><small>${a.type==="personal"?"Personnel":"Professionnel"} · ${echapper(a.currency)}</small></div><b>${walletMoney(a.balance,a.currency)}</b></article>`).join("") : '<p class="vide">Aucun compte. Créez votre premier compte.</p>';
+  const options = walletAccounts.map(a=>`<option value="${echapper(a.id)}">${echapper(a.name)} — ${a.currency} (${a.type==="personal"?"Personnel":"Pro"})</option>`).join("");
   ["wallet-op-account","wallet-transfer-from","wallet-transfer-to"].forEach(id => { const el=$(id); if(el){const old=el.value;el.innerHTML=options || '<option value="">Créez d’abord un compte</option>';if(walletAccounts.some(a=>a.id===old))el.value=old;} });
   const filter=$("wallet-history-account"), old=filter.value;
   filter.innerHTML='<option value="all">Tous les comptes</option>'+options;
@@ -1134,7 +1134,7 @@ function walletRender() {
   const currencyTx=tx.filter(t=>t.currency===selectedCurrency&&t.kind!=="transfer");
   const income=currencyTx.filter(t=>t.kind==="income").reduce((s,t)=>s+Number(t.amount||0),0);
   const expense=currencyTx.filter(t=>t.kind==="expense").reduce((s,t)=>s+Number(t.amount||0),0);
-  $("wallet-statistics").innerHTML=\`<div class="wallet-stat"><span>Entrées · \${selectedCurrency}</span><strong>\${walletMoney(income,selectedCurrency)}</strong></div><div class="wallet-stat"><span>Sorties · \${selectedCurrency}</span><strong>\${walletMoney(expense,selectedCurrency)}</strong></div><div class="wallet-stat"><span>Solde net · \${selectedCurrency}</span><strong>\${walletMoney(income-expense,selectedCurrency)}</strong></div>\`;
+  $("wallet-statistics").innerHTML=`<div class="wallet-stat"><span>Entrées · ${selectedCurrency}</span><strong>${walletMoney(income,selectedCurrency)}</strong></div><div class="wallet-stat"><span>Sorties · ${selectedCurrency}</span><strong>${walletMoney(expense,selectedCurrency)}</strong></div><div class="wallet-stat"><span>Solde net · ${selectedCurrency}</span><strong>${walletMoney(income-expense,selectedCurrency)}</strong></div>`;
   walletDrawChart(tx);
   walletDrawNetChart(tx);
   walletRenderHistory();
@@ -1177,7 +1177,7 @@ function walletRenderHistory() {
     const label=t.kind==="income"?"Entrée":t.kind==="expense"?"Sortie":"Transfert";
     const amount=(t.kind==="expense"?"−":t.kind==="income"?"+":"↔")+walletMoney(t.amount,t.currency||"");
     const desc=[t.category,t.description].filter(Boolean).map(echapper).join(" · ")||"—";
-    return \`<tr><td>\${echapper(t.date||"")}</td><td>\${echapper(t.accountName||walletAccountName(t.accountId))}</td><td><span class="wallet-kind \${t.kind}">\${label}</span></td><td>\${desc}</td><td class="wallet-amount">\${amount}</td></tr>\`;
+    return `<tr><td>${echapper(t.date||"")}</td><td>${echapper(t.accountName||walletAccountName(t.accountId))}</td><td><span class="wallet-kind ${t.kind}">${label}</span></td><td>${desc}</td><td class="wallet-amount">${amount}</td></tr>`;
   }).join(""):'<tr><td colspan="5" class="vide">Aucune opération ne correspond à votre recherche.</td></tr>';
 }
 function walletSetDateDefaults() {
