@@ -1053,6 +1053,160 @@ async function tout() {
   tout_rendre();
 }
 
+// ---------- Mon Porte-Monnaie : données privées par utilisateur Firebase ----------
+let walletAccounts = [];
+let walletTransactions = [];
+let walletLoaded = false;
+const walletMoney = (n, currency) => new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 2 }).format(Number(n || 0)) + " " + currency;
+const walletId = () => (crypto.randomUUID ? crypto.randomUUID() : "w" + Date.now().toString(36) + Math.random().toString(36).slice(2));
+const walletPath = (uid, collection, id = "") => \`/users/\${encodeURIComponent(uid)}/\${collection}\${id ? "/" + encodeURIComponent(id) : ""}\`;
+const walletFields = (obj) => ({ fields: Object.fromEntries(Object.entries(obj).map(([k,v]) => [k, typeof v === "number" ? { doubleValue: v } : typeof v === "boolean" ? { booleanValue: v } : { stringValue: String(v ?? "") }])) });
+async function walletReadCollection(collection) {
+  const uid = fb?.auth.currentUser?.uid;
+  if (!uid) throw new Error("Votre session My World RS n'est pas connectée.");
+  const docs = [];
+  let page = "";
+  do {
+    const url = urlFirestore(firebaseConfig.projectId, walletPath(uid, collection)) + \`?pageSize=300\${page ? "&pageToken=" + encodeURIComponent(page) : ""}\`;
+    const res = await google(url);
+    (res.documents || []).forEach(d => docs.push(decoderChamps(d.fields || {}).id ? decoderChamps(d.fields || {}) : { ...decoderChamps(d.fields || {}), id: d.name.split("/").pop() }));
+    page = res.nextPageToken || "";
+  } while (page);
+  return docs;
+}
+async function walletCreate(collection, id, obj) {
+  const uid = fb?.auth.currentUser?.uid;
+  if (!uid) throw new Error("Connectez-vous à votre compte Google.");
+  const url = urlFirestore(firebaseConfig.projectId, walletPath(uid, collection)) + "?documentId=" + encodeURIComponent(id);
+  return google(url, { method: "POST", body: JSON.stringify(walletFields(obj)) });
+}
+async function walletPatchAccount(account, delta) {
+  const uid = fb?.auth.currentUser?.uid;
+  const url = urlFirestore(firebaseConfig.projectId, walletPath(uid, "walletAccounts", account.id)) + "?updateMask.fieldPaths=balance";
+  return google(url, { method: "PATCH", body: JSON.stringify(walletFields({ balance: Number(account.balance || 0) + delta })) });
+}
+async function chargerWallet(force = false) {
+  if (!fb?.auth.currentUser || !jetonGoogle) return;
+  if (walletLoaded && !force) { walletRender(); return; }
+  const status = $("wallet-status");
+  if (status) status.textContent = "Chargement des comptes et opérations…";
+  try {
+    const [accounts, transactions] = await Promise.all([walletReadCollection("walletAccounts"), walletReadCollection("walletTransactions")]);
+    walletAccounts = accounts.map(a => ({ ...a, id: a.id, balance: Number(a.balance || 0) })).sort((a,b) => String(a.createdAt).localeCompare(String(b.createdAt)));
+    walletTransactions = transactions.map(t => ({ ...t, id: t.id, amount: Number(t.amount || 0), targetAmount: Number(t.targetAmount || 0) })).sort((a,b) => String(b.date || "").localeCompare(String(a.date || "")));
+    walletLoaded = true;
+    walletRender();
+    if (status) status.textContent = "Données synchronisées avec votre Firebase My World RS. Elles sont séparées des bases AVEC LA SAGESSE et ESE DB.";
+  } catch (e) {
+    if (status) status.textContent = "Chargement impossible : " + e.message + " — vérifiez les autorisations Firestore de votre compte.";
+  }
+}
+function walletAccountName(id) { return walletAccounts.find(a => a.id === id)?.name || "Compte supprimé"; }
+function walletFilteredTransactions() {
+  const period = $("wallet-period")?.value || "month", type = $("wallet-type-filter")?.value || "all";
+  const now = new Date(), start = period === "month" ? new Date(now.getFullYear(),now.getMonth(),1) : period === "year" ? new Date(now.getFullYear(),0,1) : null;
+  return walletTransactions.filter(t => {
+    const a = walletAccounts.find(x => x.id === t.accountId);
+    return (!start || String(t.date || "") >= start.toISOString().slice(0,10)) && (type === "all" || a?.type === type);
+  });
+}
+function walletRender() {
+  if (!$("wallet-accounts")) return;
+  const sum = (type,currency) => walletAccounts.filter(a => a.type === type && a.currency === currency).reduce((s,a)=>s+Number(a.balance||0),0);
+  $("wallet-personal-usd").textContent = walletMoney(sum("personal","USD"),"USD");
+  $("wallet-personal-fc").textContent = walletMoney(sum("personal","FC"),"FC");
+  $("wallet-pro-usd").textContent = walletMoney(sum("professional","USD"),"USD");
+  $("wallet-pro-fc").textContent = walletMoney(sum("professional","FC"),"FC");
+  $("wallet-count").textContent = String(walletTransactions.length);
+  const monthTx = walletFilteredTransactions().filter(t => t.kind !== "transfer");
+  const monthSum = monthTx.reduce((s,t)=>s+(t.kind==="income"?Number(t.amount||0):-Number(t.amount||0)),0);
+  $("wallet-month-total").textContent = "Net du mois : " + walletMoney(monthSum,"(devises mélangées)");
+  $("wallet-accounts").innerHTML = walletAccounts.length ? walletAccounts.map(a => \`<article class="wallet-account"><div><strong>\${echapper(a.name)}</strong><small>\${a.type==="personal"?"Personnel":"Professionnel"} · \${echapper(a.currency)}</small></div><b>\${walletMoney(a.balance,a.currency)}</b></article>\`).join("") : '<p class="vide">Aucun compte. Créez votre premier compte.</p>';
+  const options = walletAccounts.map(a=>\`<option value="\${echapper(a.id)}">\${echapper(a.name)} — \${a.currency} (\${a.type==="personal"?"Personnel":"Pro"})</option>\`).join("");
+  ["wallet-op-account","wallet-transfer-from","wallet-transfer-to"].forEach(id => { const el=$(id); if(el){const old=el.value;el.innerHTML=options || '<option value="">Créez d’abord un compte</option>';if(walletAccounts.some(a=>a.id===old))el.value=old;} });
+  const filter=$("wallet-history-account"), old=filter.value;
+  filter.innerHTML='<option value="all">Tous les comptes</option>'+options;
+  if(walletAccounts.some(a=>a.id===old))filter.value=old;
+  const tx=walletFilteredTransactions();
+  const income=tx.filter(t=>t.kind==="income").reduce((s,t)=>s+t.amount,0);
+  const expense=tx.filter(t=>t.kind==="expense").reduce((s,t)=>s+t.amount,0);
+  $("wallet-statistics").innerHTML=\`<div class="wallet-stat"><span>Entrées (montants nominaux)</span><strong>\${walletMoney(income,"")}</strong></div><div class="wallet-stat"><span>Sorties (montants nominaux)</span><strong>\${walletMoney(expense,"")}</strong></div><div class="wallet-stat"><span>Solde net des opérations</span><strong>\${walletMoney(income-expense,"")}</strong></div>\`;
+  walletDrawChart(tx);
+  walletRenderHistory();
+}
+function walletDrawChart(tx) {
+  const canvas=$("wallet-chart"); if(!canvas)return;
+  const ctx=canvas.getContext("2d"), w=canvas.width, h=canvas.height;
+  ctx.clearRect(0,0,w,h);
+  const months=[];
+  for(let i=5;i>=0;i--){const d=new Date();d.setDate(1);d.setMonth(d.getMonth()-i);months.push({key:d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"),label:new Intl.DateTimeFormat("fr-FR",{month:"short"}).format(d)});}
+  const vals=months.map(m=>({ ...m, income:0, expense:0 }));
+  tx.forEach(t=>{const m=vals.find(v=>v.key===String(t.date||"").slice(0,7));if(m&&t.kind==="income")m.income+=t.amount;if(m&&t.kind==="expense")m.expense+=t.amount;});
+  const max=Math.max(1,...vals.flatMap(v=>[v.income,v.expense])), base=h-35, top=15, plotH=base-top, groupW=(w-40)/vals.length, barW=Math.min(24,groupW*.28);
+  ctx.font="12px sans-serif";ctx.textAlign="center";
+  vals.forEach((v,i)=>{const x=30+i*groupW+groupW/2;const hi=v.income/max*plotH, he=v.expense/max*plotH;ctx.fillStyle="#087a4b";ctx.fillRect(x-barW-2,base-hi,barW,hi);ctx.fillStyle="#1759a6";ctx.fillRect(x+2,base-he,barW,he);ctx.fillStyle=getComputedStyle(document.body).color;ctx.fillText(v.label,x,h-12);});
+  ctx.textAlign="left";ctx.fillStyle="#087a4b";ctx.fillRect(12,8,9,9);ctx.fillStyle=getComputedStyle(document.body).color;ctx.fillText("Entrées",25,17);ctx.fillStyle="#1759a6";ctx.fillRect(90,8,9,9);ctx.fillStyle=getComputedStyle(document.body).color;ctx.fillText("Sorties",103,17);
+}
+function walletRenderHistory() {
+  const search=($("wallet-search").value||"").toLowerCase(), account=$("wallet-history-account").value, kind=$("wallet-history-kind").value;
+  const rows=walletTransactions.filter(t=>(account==="all"||t.accountId===account)&&(kind==="all"||t.kind===kind)&&[t.description,t.category,t.kind,t.accountName].join(" ").toLowerCase().includes(search));
+  $("wallet-history").innerHTML=rows.length?rows.map(t=>{
+    const label=t.kind==="income"?"Entrée":t.kind==="expense"?"Sortie":"Transfert";
+    const amount=(t.kind==="expense"?"−":t.kind==="income"?"+":"↔")+walletMoney(t.amount,t.currency||"");
+    const desc=[t.category,t.description].filter(Boolean).map(echapper).join(" · ")||"—";
+    return \`<tr><td>\${echapper(t.date||"")}</td><td>\${echapper(t.accountName||walletAccountName(t.accountId))}</td><td><span class="wallet-kind \${t.kind}">\${label}</span></td><td>\${desc}</td><td class="wallet-amount">\${amount}</td></tr>\`;
+  }).join(""):'<tr><td colspan="5" class="vide">Aucune opération ne correspond à votre recherche.</td></tr>';
+}
+function walletSetDateDefaults() {
+  const d=new Date().toISOString().slice(0,10);
+  ["wallet-operation-form","wallet-transfer-form"].forEach(id=>{const f=$(id);if(f&&!f.elements.namedItem("date").value)f.elements.namedItem("date").value=d;});
+}
+$("wallet-account-form")?.addEventListener("submit",async e=>{
+  e.preventDefault();const f=e.currentTarget,btn=f.querySelector("button[type=submit]");btn.disabled=true;
+  try{
+    const name=f.elements.namedItem("name").value.trim(),type=f.elements.namedItem("type").value,currency=f.elements.namedItem("currency").value,id=walletId();
+    const account={name,type,currency,balance:0,createdAt:new Date().toISOString()};
+    await walletCreate("walletAccounts",id,account);walletAccounts.push({...account,id});f.reset();walletRender();$("wallet-status").textContent="Compte créé et synchronisé.";
+  }catch(err){$("wallet-status").textContent="Erreur de création : "+err.message;}
+  finally{btn.disabled=false;}
+});
+$("wallet-operation-form")?.addEventListener("submit",async e=>{
+  e.preventDefault();const f=e.currentTarget,btn=f.querySelector("button[type=submit]");btn.disabled=true;
+  try{
+    const account=walletAccounts.find(a=>a.id===f.elements.namedItem("account").value);if(!account)throw new Error("Sélectionnez un compte.");
+    const amount=Number(f.elements.namedItem("amount").value);if(!(amount>0))throw new Error("Le montant doit être supérieur à zéro.");
+    const kind=f.elements.namedItem("kind").value,id=walletId(),date=f.elements.namedItem("date").value;
+    const tx={kind,accountId:account.id,accountName:account.name,accountType:account.type,currency:account.currency,amount,category:f.elements.namedItem("category").value.trim(),description:f.elements.namedItem("description").value.trim(),date,createdAt:new Date().toISOString()};
+    await walletCreate("walletTransactions",id,tx);await walletPatchAccount(account,kind==="income"?amount:-amount);account.balance+=kind==="income"?amount:-amount;walletTransactions.unshift({...tx,id});f.reset();walletSetDateDefaults();walletRender();$("wallet-status").textContent="Opération enregistrée.";
+  }catch(err){$("wallet-status").textContent="Erreur : "+err.message;}
+  finally{btn.disabled=false;}
+});
+$("wallet-transfer-form")?.addEventListener("submit",async e=>{
+  e.preventDefault();const f=e.currentTarget,btn=f.querySelector("button[type=submit]");btn.disabled=true;
+  try{
+    const from=walletAccounts.find(a=>a.id===f.elements.namedItem("from").value),to=walletAccounts.find(a=>a.id===f.elements.namedItem("to").value);
+    if(!from||!to||from.id===to.id)throw new Error("Choisissez deux comptes différents.");
+    const amount=Number(f.elements.namedItem("amount").value),rate=Number(f.elements.namedItem("rate").value||1);if(!(amount>0))throw new Error("Montant invalide.");
+    if(from.currency!==to.currency&&!(rate>0))throw new Error("Saisissez un taux de change positif.");
+    if(from.balance<amount)throw new Error("Solde insuffisant dans le compte de départ.");
+    const received=from.currency===to.currency?amount:amount*rate,date=f.elements.namedItem("date").value,transferId=walletId(),description=f.elements.namedItem("description").value.trim();
+    const txOut={kind:"transfer",transferId,accountId:from.id,accountName:from.name,accountType:from.type,currency:from.currency,amount,description:"Vers "+to.name+(description?" · "+description:""),date,createdAt:new Date().toISOString(),direction:"out",targetAccountId:to.id,targetAccountName:to.name,targetAmount:received,targetCurrency:to.currency};
+    const txIn={...txOut,id:undefined,accountId:to.id,accountName:to.name,accountType:to.type,currency:to.currency,amount:received,description:"Depuis "+from.name+(description?" · "+description:""),direction:"in",targetAccountId:from.id,targetAccountName:from.name,targetAmount:amount,targetCurrency:from.currency};
+    const outId=walletId(),inId=walletId();await walletCreate("walletTransactions",outId,txOut);await walletCreate("walletTransactions",inId,txIn);
+    await walletPatchAccount(from,-amount);await walletPatchAccount(to,received);from.balance-=amount;to.balance+=received;
+    walletTransactions.unshift({...txOut,id:outId},{...txIn,id:inId});f.reset();walletSetDateDefaults();walletRender();$("wallet-status").textContent="Transfert enregistré entre les deux comptes.";
+  }catch(err){$("wallet-status").textContent="Transfert non terminé : "+err.message+" (vérifiez l'historique avant de réessayer).";}
+  finally{btn.disabled=false;}
+});
+["wallet-period","wallet-type-filter"].forEach(id=>$(id)?.addEventListener("change",walletRender));
+["wallet-search","wallet-history-account","wallet-history-kind"].forEach(id=>$(id)?.addEventListener(id==="wallet-search"?"input":"change",walletRenderHistory));
+$("wallet-export")?.addEventListener("click",()=>{
+  const rows=[["Date","Compte","Type","Devise","Montant","Catégorie","Description"],...walletTransactions.map(t=>[t.date,t.accountName,t.kind,t.currency,t.amount,t.category,t.description])];
+  const csv=rows.map(r=>r.map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(";")).join("\r\n");
+  const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="mon-porte-monnaie.csv";a.click();URL.revokeObjectURL(url);
+});
+walletSetDateDefaults();
+//
 // ---------- Brouillons de réponse ----------
 let messageCible = null;
 function ouvrirModeles(index) {
