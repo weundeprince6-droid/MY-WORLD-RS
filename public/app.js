@@ -216,6 +216,7 @@ async function chargerProfilGoogle(user) {
         ? "Profil local retrouvé. La synchronisation Firebase sera vérifiée à l'enregistrement."
         : "Complétez vos informations puis enregistrez-les dans Firebase.";
   }
+  afficherAnniversaireAgenda();
 }
 $("form-profil")?.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -947,10 +948,11 @@ function rendreCalendrierAgenda() {
   for(let i=0;i<decalage;i++) html += '<div class="agenda-cal-jour agenda-cal-vide"></div>';
   for(let d=1;d<=nbJours;d++){
     const key=[annee,String(mois+1).padStart(2,"0"),String(d).padStart(2,"0")].join("-");
-    const cls=["agenda-cal-jour"];
+    const naissance=obtenirDateNaissanceProfil();
+    if(naissance && key.slice(5)===naissance.slice(5)) cls.push("agenda-cal-anniversaire");
     if(key===keyAuj) cls.push("agenda-cal-aujourdhui");
     if(key===selection) cls.push("agenda-cal-selection");
-    html += '<button type="button" class="'+cls.join(" ")+'" data-agenda-date="'+key+'">'+d+'</button>';
+    html += '<button type="button" class="'+cls.join(" ")+'" data-agenda-date="'+key+'"'+(naissance&&key.slice(5)===naissance.slice(5)?' title="Anniversaire 🎂"':'')+'>'+d+'</button>';
   }
   grille.innerHTML=html;
   grille.querySelectorAll("[data-agenda-date]").forEach(btn=>btn.addEventListener("click",()=>{
@@ -963,6 +965,46 @@ function rendreCalendrierAgenda() {
 $("agenda-mois-precedent").addEventListener("click",()=>{agendaMoisAffiche=new Date(agendaMoisAffiche.getFullYear(),agendaMoisAffiche.getMonth()-1,1);rendreCalendrierAgenda();});
 $("agenda-mois-suivant").addEventListener("click",()=>{agendaMoisAffiche=new Date(agendaMoisAffiche.getFullYear(),agendaMoisAffiche.getMonth()+1,1);rendreCalendrierAgenda();});
 $("agenda-form").elements.date.addEventListener("change",rendreCalendrierAgenda);
+
+
+// ---------- Anniversaire personnel : date du profil + compte à rebours ----------
+function obtenirDateNaissanceProfil(){
+  let profil={};
+  try{profil=JSON.parse(localStorage.getItem(cleProfil())||"{}");}catch{}
+  const date=profil.naissance||$("form-profil")?.elements.namedItem("naissance")?.value||"";
+  return /^\d{4}-\d{2}-\d{2}$/.test(date)?date:"";
+}
+function dateAnniversairePourAnnee(naissance,annee){
+  const mois=Number(naissance.slice(5,7)),jour=Number(naissance.slice(8,10));
+  // Pour une naissance le 29 février, célébration le 28 février les années non bissextiles.
+  if(mois===2&&jour===29&&new Date(annee,1,29).getDate()!==29)return new Date(annee,1,28);
+  return new Date(annee,mois-1,jour);
+}
+function afficherAnniversaireAgenda(){
+  const box=$("agenda-anniversaire");
+  if(!box)return;
+  const naissance=obtenirDateNaissanceProfil();
+  const dateEl=$("agenda-anniversaire-date"), compteEl=$("agenda-anniversaire-compte"), detailEl=$("agenda-anniversaire-detail");
+  if(!naissance){
+    box.hidden=false;
+    if(dateEl)dateEl.textContent="Date de naissance non renseignée";
+    if(compteEl)compteEl.textContent="—";
+    if(detailEl)detailEl.textContent="Ajoutez votre date de naissance dans l’onglet Profil pour afficher votre anniversaire.";
+    return;
+  }
+  const [anneeN,moisN,jourN]=naissance.split("-").map(Number);
+  const today=new Date();today.setHours(0,0,0,0);
+  let prochain=dateAnniversairePourAnnee(naissance,today.getFullYear());
+  if(prochain<today)prochain=dateAnniversairePourAnnee(naissance,today.getFullYear()+1);
+  const days=Math.round((prochain-today)/86400000);
+  const dateTexte=new Intl.DateTimeFormat("fr-FR",{day:"numeric",month:"long"}).format(new Date(2000,moisN-1,jourN));
+  const prochainTexte=new Intl.DateTimeFormat("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"}).format(prochain);
+  const age=prochain.getFullYear()-anneeN;
+  box.hidden=false;
+  if(dateEl)dateEl.textContent="🎂 "+dateTexte;
+  if(compteEl)compteEl.textContent=days===0?"C’est aujourd’hui !":days===1?"Demain !":days+" jours";
+  if(detailEl)detailEl.textContent=days===0?"Joyeux anniversaire !": "Prochain anniversaire : "+prochainTexte+" · Vous aurez "+age+" ans.";
+}
 
 function rendreAgenda() {
   const ligne = (e) => '<li><div class="ligne"><strong>'+echapper(e.titre)+'</strong><span class="meta">'+(e.toutLeJour ? "Journée entière" : heure.format(e.debut))+'</span></div>'+(e.lieu ? '<div class="extrait">'+echapper(e.lieu)+'</div>' : '')+'<div class="actions"><button type="button" data-supprimer-evenement="'+echapper(e.id)+'">Supprimer</button></div></li>';
