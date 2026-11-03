@@ -174,6 +174,58 @@ export function calculerEse(jours, cfg, aujourdhuiISO) {
   return r;
 }
 
+/**
+ * Ristournes ESE DB : dépôts et retraits par groupe (éléments k:"r" des jours), crédits de ristourne (cfg.ristLoans)
+ * et groupes (cfg.ristGroups). Comme dans l'application ESE : solde = dépôts − intérêts dus − retraits, par devise.
+ * Aucune conversion de devise : le FC et l'USD restent séparés.
+ */
+export function calculerRistourne(jours, cfg) {
+  const vide = () => ({ FC: 0, USD: 0 });
+  const total = { depots: vide(), retraits: vide(), interets: vide(), solde: vide(), emprunte: vide(), rembourse: vide(), reste: vide() };
+  const groupes = new Map();
+  const groupe = (id) => {
+    const cle = id || "";
+    if (!groupes.has(cle)) groupes.set(cle, { id: cle, depots: vide(), retraits: vide(), interets: vide(), solde: vide(), reste: vide() });
+    return groupes.get(cle);
+  };
+  let mouvements = 0;
+  for (const j of jours || []) {
+    for (const it of Object.values((j && j.items) || {})) {
+      if (!it || it.k !== "r") continue;
+      mouvements += 1;
+      const c = deviseEse(it);
+      const g = groupe(it.g);
+      const cible = it.type === "out" ? "retraits" : "depots";
+      g[cible][c] += nombre(it.a);
+      total[cible][c] += nombre(it.a);
+    }
+  }
+  let credits = 0;
+  for (const v of Object.values((cfg && cfg.ristLoans) || {})) {
+    if (!v) continue;
+    const c = deviseEse(v);
+    const g = groupe(v.g);
+    const principal = v.principal != null ? nombre(v.principal) : nombre(v.amount);
+    const interet = (principal * nombre(v.rate)) / 100;
+    const paye = payeTotal(v);
+    const reste = Math.max(0, nombre(v.amount) - paye);
+    g.interets[c] += interet; total.interets[c] += interet;
+    total.emprunte[c] += nombre(v.amount); total.rembourse[c] += paye;
+    if (reste > 0) { g.reste[c] += reste; total.reste[c] += reste; credits += 1; }
+  }
+  const noms = (cfg && cfg.ristGroups) || {};
+  const sortie = [];
+  for (const g of groupes.values()) {
+    for (const c of ["FC", "USD"]) g.solde[c] = g.depots[c] - g.interets[c] - g.retraits[c];
+    sortie.push({ ...g, nom: g.id ? (noms[g.id] && noms[g.id].name) || "Groupe supprimé" : "Général" });
+  }
+  for (const c of ["FC", "USD"]) total.solde[c] = total.depots[c] - total.interets[c] - total.retraits[c];
+  sortie.sort((a, b) => a.nom.localeCompare(b.nom, "fr"));
+  const arrondiPaire = (o) => ({ FC: arrondi(o.FC), USD: arrondi(o.USD) });
+  const net = (o) => { for (const k of Object.keys(o)) if (o[k] && typeof o[k] === "object") o[k] = arrondiPaire(o[k]); return o; };
+  return { total: net(total), groupes: sortie.map(net), mouvements, credits, nbGroupes: Object.keys(noms).length };
+}
+
 export const MESURES_ESE = {
   ventes_jour_fc: (r) => r.venteJourFC,
   ventes_jour_usd: (r) => r.venteJourUSD,

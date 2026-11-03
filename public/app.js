@@ -12,7 +12,7 @@ import {
 } from "./telegram.js";
 import {
   corpsAgregation, lireAgregat, corpsListe, lireListe, decoderDocument,
-  calculerCreditsAvec, MESURES_CREDITS_AVEC, calculerEse, MESURES_ESE, decoderChamps,
+  calculerCreditsAvec, MESURES_CREDITS_AVEC, calculerEse, MESURES_ESE, calculerRistourne, decoderChamps,
 } from "./firestore.js";
 
 const $ = (id) => document.getElementById(id);
@@ -1052,6 +1052,7 @@ async function tout() {
   if (so.status === "fulfilled") etat.social = so.value;
   if (erreurs.length) afficherErreur(erreurs.join(" · "));
   tout_rendre();
+  chargerRistourne();
 }
 
 // ---------- Mon Porte-Monnaie : données privées par utilisateur Firebase ----------
@@ -1086,7 +1087,51 @@ async function walletPatchAccount(account, delta) {
   const url = urlFirestore(firebaseConfig.projectId, walletPath(uid, "walletAccounts", account.id)) + "?updateMask.fieldPaths=balance";
   return google(url, { method: "PATCH", body: JSON.stringify(walletFields({ balance: Number(account.balance || 0) + delta })) });
 }
+// ---------- Ristournes ESE DB (dans Mon Porte-Monnaie) ----------
+const formatMontantDevise = (n, devise) => `${Number(n || 0).toLocaleString("fr-FR", { maximumFractionDigits: 2 })} ${devise}`;
+function rendreRistourne(r) {
+  const met = (id, v) => { const el = $(id); if (el) el.textContent = v; };
+  for (const [cle, prefixe] of [["depots", "depots"], ["retraits", "retraits"], ["solde", "solde"]]) {
+    met(`rist-${prefixe}-fc`, formatMontantDevise(r.total[cle].FC, "FC"));
+    met(`rist-${prefixe}-usd`, formatMontantDevise(r.total[cle].USD, "USD"));
+  }
+  const zone = $("rist-groupes");
+  if (zone) {
+    zone.innerHTML = r.groupes.length
+      ? r.groupes.map((g) => `<div class="rist-groupe"><strong>${echapper(g.nom)}</strong>
+          <span>Dépôts ${echapper(formatMontantDevise(g.depots.FC, "FC"))}${g.depots.USD ? " · " + echapper(formatMontantDevise(g.depots.USD, "USD")) : ""}</span>
+          <span>Retraits ${echapper(formatMontantDevise(g.retraits.FC, "FC"))}${g.retraits.USD ? " · " + echapper(formatMontantDevise(g.retraits.USD, "USD")) : ""}</span>
+          <b class="${g.solde.FC < 0 || g.solde.USD < 0 ? "neg" : ""}">Solde ${echapper(formatMontantDevise(g.solde.FC, "FC"))}${g.solde.USD ? " · " + echapper(formatMontantDevise(g.solde.USD, "USD")) : ""}</b></div>`).join("")
+      : '<p class="vide">Aucun mouvement de ristourne dans ESE DB pour le moment.</p>';
+  }
+  const cr = $("rist-credits");
+  if (cr) {
+    cr.textContent = r.credits
+      ? `${r.credits} crédit(s) de ristourne en cours · reste à rembourser : ${formatMontantDevise(r.total.reste.FC, "FC")}${r.total.reste.USD ? " · " + formatMontantDevise(r.total.reste.USD, "USD") : ""} · intérêts dus déjà déduits du solde : ${formatMontantDevise(r.total.interets.FC, "FC")}${r.total.interets.USD ? " · " + formatMontantDevise(r.total.interets.USD, "USD") : ""}.`
+      : "Aucun crédit de ristourne en cours.";
+  }
+}
+async function chargerRistourne(force = false) {
+  const statut = $("wallet-ristourne-status");
+  const base = bases.ese;
+  if (!base || !jetonGoogle) return;
+  if (force) { cacheDocuments.delete(`${base.projectId}/days`); cacheDocuments.delete(`${base.projectId}/doc/cfg/main`); }
+  try {
+    if (statut) statut.textContent = "Synchronisation avec ESE DB…";
+    const [jours, cfg] = await Promise.all([
+      tousLesDocuments(base.projectId, "days"),
+      unDocument(base.projectId, "cfg/main").catch(() => ({})),
+    ]);
+    const r = calculerRistourne(jours, cfg);
+    rendreRistourne(r);
+    if (statut) statut.textContent = `Synchronisé avec ESE DB à ${heure.format(new Date())} · ${r.mouvements} mouvement(s) de ristourne lus.`;
+  } catch (e) {
+    if (statut) statut.textContent = "Synchronisation ESE DB impossible : " + e.message;
+  }
+}
+
 async function chargerWallet(force = false) {
+  chargerRistourne();
   if (!fb?.auth.currentUser || !jetonGoogle) return;
   if (walletLoaded && !force) { walletRender(); return; }
   const status = $("wallet-status");

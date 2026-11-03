@@ -524,3 +524,12 @@ input::placeholder{color:var(--muted)!important;opacity:1}
  #pane-wallet .wallet-block-heading{margin-top:20px}
  #pane-wallet .wallet-columns>.carte,#pane-wallet .wallet-history-card{padding:16px}
 }
+
+/* Ristournes ESE DB */
+.wallet-ristourne-metrics article b{display:block;margin-top:2px;font-size:15px;color:var(--text);font-weight:700}
+.wallet-ristourne-metrics article.rist-solde{border-color:var(--primary)}
+.rist-groupes{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin:0 0 12px}
+.rist-groupe{display:grid;gap:3px;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:var(--surface);font-size:12px;color:var(--muted)}
+.rist-groupe strong{color:var(--text);font-size:14px}.rist-groupe b{color:var(--primary);font-size:13px}.rist-groupe b.neg{color:#e35c55}
+.rist-credits{margin:0 0 12px}
+@media(max-width:760px){.wallet-ristourne-metrics{grid-template-columns:1fr}}

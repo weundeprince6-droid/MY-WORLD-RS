@@ -76,8 +76,8 @@ async function scenario(nom, { mode = 'ok', sdkBloque = false, quotaGmail = fals
     if (u.includes(':runAggregationQuery')) return route.fulfill(json([{ result: { aggregateFields: { v: { integerValue: '7' } } } }]));
     if (u.includes(':runQuery')) return route.fulfill(json([]));
     if (u.includes('/documents/days')) { const d = new Date(); const iso = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-      return route.fulfill(json({ documents: [{ name: 'x/days/' + iso, fields: { items: { mapValue: { fields: { a: { mapValue: { fields: { k: { stringValue: 's' }, name: { stringValue: 'Riz' }, q: { integerValue: '3' }, p: { integerValue: '1000' }, c: { stringValue: 'FC' } } } } } } } } }] })); }
-    if (u.includes('/documents/cfg/main')) return route.fulfill(json({ name: 'x/cfg/main', fields: {} }));
+      return route.fulfill(json({ documents: [{ name: 'x/days/' + iso, fields: { items: { mapValue: { fields: { a: { mapValue: { fields: { k: { stringValue: 's' }, name: { stringValue: 'Riz' }, q: { integerValue: '3' }, p: { integerValue: '1000' }, c: { stringValue: 'FC' } } } }, r1: { mapValue: { fields: { k: { stringValue: 'r' }, type: { stringValue: 'in' }, a: { integerValue: '10000' }, c: { stringValue: 'FC' }, g: { stringValue: 'g1' } } } }, r2: { mapValue: { fields: { k: { stringValue: 'r' }, type: { stringValue: 'out' }, a: { integerValue: '2500' }, c: { stringValue: 'FC' }, g: { stringValue: 'g1' } } } } } } } } }] })); }
+    if (u.includes('/documents/cfg/main')) return route.fulfill(json({ name: 'x/cfg/main', fields: { ristGroups: { mapValue: { fields: { g1: { mapValue: { fields: { name: { stringValue: 'Famille' } } } } } } } } }));
     if (u.includes('/documents/members')) return route.fulfill(json({ documents: [
       { name: 'x/members/MBR-1', fields: { epargne: { doubleValue: 100 }, credits: { arrayValue: { values: [{ mapValue: { fields: { amount: { integerValue: '200' }, repaid: { integerValue: '50' }, dueDate: { stringValue: '2026-01-01' } } } }] } } } } ] }));
     return route.fulfill(json({}));
@@ -202,6 +202,14 @@ srv.listen(8765, async () => {
     await p.click('[data-supprimer-evenement]'); await p.waitForTimeout(1200);
     const ok = retour.includes('ajouté') && ev && ev.summary === 'Réunion AVEC' && ev.start.dateTime === '2026-11-05T14:00:00' && ev.end.dateTime === '2026-11-05T15:30:00' && ev.location === 'Bureau' && etat.supprime === 'e1';
     return { ok, detail: JSON.stringify({ retour, supprime: etat.supprime, debut: ev && ev.start.dateTime }) };
+  }));
+  res.push(await scenario('Porte-Monnaie : ristournes ESE DB synchronisées', {}, async (p) => {
+    await p.click('#bouton-connexion'); await p.waitForTimeout(3000);
+    await p.click('[data-tab="wallet"]'); await p.waitForTimeout(800);
+    const depots = (await p.textContent('#rist-depots-fc')).replace(/\s/g, ' '); const retraits = (await p.textContent('#rist-retraits-fc')).replace(/\s/g, ' ');
+    const solde = (await p.textContent('#rist-solde-fc')).replace(/\s/g, ' '); const groupes = await p.textContent('#rist-groupes'); const statut = (await p.textContent('#wallet-ristourne-status')).trim();
+    const ok = /10\s?000 FC/.test(depots) && /2\s?500 FC/.test(retraits) && /7\s?500 FC/.test(solde) && groupes.includes('Famille') && statut.startsWith('Synchronisé');
+    return { ok, detail: JSON.stringify({ depots, retraits, solde, statut: statut.slice(0, 70) }) };
   }));
   res.push(await scenario('Domaine non autorisé : message clair', { mode: 'auth/unauthorized-domain' }, async (p) => {
     await p.click('#bouton-connexion'); await p.waitForTimeout(800);

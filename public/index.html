@@ -185,13 +185,15 @@
             </div>
             <div class="wallet-block-heading"><div><p class="eyebrow">ACTIVITÉ ESE DB</p><h3>Suivi des ristournes</h3><p>Les indicateurs de ristourne seront affichés après raccordement à leur source.</p></div></div>
             <section class="wallet-ristourne">
-              <div class="wallet-ristourne-head"><div><span class="wallet-chip wallet-chip-light">ESE DB · WEB SERVICE</span><h2>Finances de ristourne</h2><p>Un espace dédié au suivi des ristournes dans votre base ESE DB.</p></div><span class="wallet-ristourne-icon">↗</span></div>
+              <div class="wallet-ristourne-head"><div><span class="wallet-chip wallet-chip-light">ESE DB · WEB SERVICE</span><h2>Finances de ristourne</h2><p>Dépôts, retraits et soldes lus en direct dans votre base ESE DB.</p></div><span class="wallet-ristourne-icon">↗</span></div>
               <div class="wallet-ristourne-metrics">
-                <article><span>Ristournes reçues</span><strong>— <small>FC / USD</small></strong></article>
-                <article><span>Ristournes distribuées</span><strong>— <small>FC / USD</small></strong></article>
-                <article><span>Solde des ristournes</span><strong>— <small>FC / USD</small></strong></article>
+                <article><span>Ristournes reçues (dépôts)</span><strong id="rist-depots-fc">—</strong><b id="rist-depots-usd">—</b></article>
+                <article><span>Ristournes distribuées (retraits)</span><strong id="rist-retraits-fc">—</strong><b id="rist-retraits-usd">—</b></article>
+                <article class="rist-solde"><span>Solde des ristournes</span><strong id="rist-solde-fc">—</strong><b id="rist-solde-usd">—</b></article>
               </div>
-              <div class="wallet-ristourne-foot"><span class="wallet-db-dot"></span><span id="wallet-ristourne-status">Zone réservée à la connexion des données de ristourne ESE DB. Les montants seront affichés après confirmation de leur structure dans la base.</span></div>
+              <div id="rist-groupes" class="rist-groupes"></div>
+              <p id="rist-credits" class="meta rist-credits"></p>
+              <div class="wallet-ristourne-foot"><span class="wallet-db-dot"></span><span id="wallet-ristourne-status">Synchronisation avec ESE DB en attente…</span></div>
             </section>
             <div class="wallet-block-heading"><div><p class="eyebrow">COMPTES & MOUVEMENTS</p><h3>Gérer mon argent</h3><p>Créez vos comptes, enregistrez les opérations et effectuez vos transferts.</p></div></div>
             <div class="wallet-columns">

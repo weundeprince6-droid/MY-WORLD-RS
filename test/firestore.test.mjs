@@ -133,3 +133,43 @@ const vide = calculerEse([], {}, "2026-11-02");
 assert.equal(vide.stockBas, 0);
 assert.equal(vide.venteMoisFC, 0);
 console.log("ESE DB : OK");
+
+// Ristournes ESE DB
+{
+  const { calculerRistourne } = await import("../public/firestore.js");
+  const jours = [
+    { id: "2026-11-02", items: {
+      a: { k: "r", type: "in", a: 10000, c: "FC", g: "g1" },
+      b: { k: "r", type: "in", a: 20, c: "USD", g: "g1" },
+      c: { k: "r", type: "out", a: 2000, c: "FC", g: "g1" },
+      d: { k: "r", type: "in", a: 500, c: "FC" },
+      e: { k: "s", name: "Riz", q: 1, p: 100, c: "FC" },
+    } },
+    { id: "2026-10-01", items: { f: { k: "r", type: "in", a: 5000, c: "FC", g: "g2" } } },
+  ];
+  const cfg = {
+    ristGroups: { g1: { name: "Famille" }, g2: { name: "Amis" } },
+    ristLoans: {
+      l1: { g: "g1", amount: 3000, principal: 3000, c: "FC", rate: 10, pay: { p1: { a: 1000 } } },
+      l2: { g: "g2", amount: 100, c: "USD", rate: 0, pay: { p2: { a: 100 } } },
+      l3: null,
+    },
+  };
+  const r = calculerRistourne(jours, cfg);
+  assert.equal(r.mouvements, 5);
+  assert.equal(r.total.depots.FC, 15500);
+  assert.equal(r.total.depots.USD, 20);
+  assert.equal(r.total.retraits.FC, 2000);
+  assert.equal(r.total.interets.FC, 300);
+  assert.equal(r.total.solde.FC, 15500 - 300 - 2000);
+  assert.equal(r.total.reste.FC, 2000);
+  assert.equal(r.credits, 1);
+  const noms = r.groupes.map((g) => g.nom);
+  assert.deepEqual(noms, ["Amis", "Famille", "Général"]);
+  assert.equal(r.groupes.find((g) => g.nom === "Famille").solde.FC, 10000 - 300 - 2000);
+  assert.equal(r.groupes.find((g) => g.nom === "Général").solde.FC, 500);
+  const vide = calculerRistourne([], {});
+  assert.equal(vide.total.solde.FC, 0);
+  assert.equal(vide.groupes.length, 0);
+  console.log("Ristournes ESE DB : OK");
+}
