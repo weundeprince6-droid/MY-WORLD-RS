@@ -1537,6 +1537,22 @@ async function walletExporterPdf() {
       b[1].forEach(([name,num,pct])=>{txt(C.ink);doc.text(doc.splitTextToSize(String(name),boxW-19),x+2,yy);txt(C.green);doc.text(String(pct)+"%",x+boxW-2,yy,{align:"right"});yy+=7;});
     });y+=42;
 
+    // Les graphiques sont reconstruits temporairement avec une couleur de texte sombre
+    // afin que les légendes restent lisibles sur le fond blanc du PDF, même en thème sombre.
+    const bodyColorAvant=document.body.style.color;
+    let chart1Image=null, chart2Image=null;
+    try{
+      document.body.style.color="#26352e";
+      walletDrawChart(walletTransactions);
+      walletDrawNetChart(walletTransactions);
+      chart1Image=$("wallet-chart")?.toDataURL("image/png")||null;
+      chart2Image=$("wallet-net-chart")?.toDataURL("image/png")||null;
+    }finally{
+      document.body.style.color=bodyColorAvant;
+      walletDrawChart(walletFilteredTransactions());
+      walletDrawNetChart(walletFilteredTransactions());
+    }
+
     // Page 2 : Graphiques, ristournes et catégories
     addPage();header("Analyse des mouvements","02");
     const chartCurrency=$("wallet-chart-currency")?.value||currencies[0]||"FC";
