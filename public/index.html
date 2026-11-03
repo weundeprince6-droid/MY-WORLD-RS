@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>My World RS</title>
   <meta name="description" content="Votre espace personnel : messages, agenda, bases de données et alertes.">
-  <link rel="stylesheet" href="style.css?v=20261103-8">
+  <link rel="stylesheet" href="style.css?v=20261103-9">
 </head>
 <body>
   <header class="entete">
@@ -70,16 +70,16 @@
               <article class="dashboard-metric"><span class="metric-icon">◎</span><div><span class="metric-label">Messages sociaux</span><strong id="dash-social">—</strong><small id="dash-social-note">Telegram · Facebook</small></div><button class="metric-link" data-go="social" aria-label="Ouvrir les réseaux sociaux">↗</button></article>
               <article class="dashboard-metric"><span class="metric-icon">☑</span><div><span class="metric-label">Tâches à faire</span><strong id="dash-tasks">—</strong><small id="dash-tasks-note">Google Tasks</small></div><button class="metric-link" data-go="tasks" aria-label="Ouvrir les tâches">↗</button></article>
             </div>
-            <div class="dashboard-detail-grid">
-              <section class="carte dashboard-detail"><div class="card-heading"><div><p class="eyebrow">FINANCES & ACTIVITÉS</p><h2>Chiffres essentiels</h2></div><button class="text-link" data-go="bases">Tout voir →</button></div><div id="dashboard-kpis" class="dashboard-kpi-list"><p class="vide">Les indicateurs apparaîtront après actualisation.</p></div></section>
-              <section class="carte dashboard-detail"><div class="card-heading"><div><p class="eyebrow">ORGANISATION</p><h2>Prochains rendez-vous</h2></div><button class="text-link" data-go="agenda">Agenda →</button></div><ul id="dashboard-agenda" class="liste"><li class="vide">Chargement de l'agenda…</li></ul></section>
-              <section class="carte dashboard-detail"><div class="card-heading"><div><p class="eyebrow">COMMUNICATION</p><h2>Dernières nouvelles</h2></div><button class="text-link" data-go="messages">Gmail →</button></div><ul id="dashboard-activity" class="liste"><li class="vide">Chargement des messages…</li></ul></section>
-            </div>
             <div class="dashboard-grid">
               <article class="feature-card feature-green"><div class="feature-icon">✉</div><div><span class="feature-label">COMMUNICATION</span><h3>Messages importants</h3><p>Consultez vos messages prioritaires et préparez vos réponses.</p><button class="text-link" data-go="messages">Voir les messages <span>→</span></button></div></article>
               <article class="feature-card feature-blue"><div class="feature-icon">▦</div><div><span class="feature-label">ORGANISATION</span><h3>Votre agenda</h3><p>Gardez un œil sur les rendez-vous du jour et à venir.</p><button class="text-link" data-go="agenda">Consulter l'agenda <span>→</span></button></div></article>
               <article class="feature-card feature-purple"><div class="feature-icon">▤</div><div><span class="feature-label">ACTIVITÉS</span><h3>Chiffres clés</h3><p>Suivez les indicateurs de vos bases de données.</p><button class="text-link" data-go="bases">Voir les indicateurs <span>→</span></button></div></article>
               <article class="feature-card feature-orange"><div class="feature-icon">◎</div><div><span class="feature-label">COMMUNAUTÉ</span><h3>Réseaux sociaux</h3><p>Retrouvez ici les messages de vos réseaux connectés.</p><button class="text-link" data-go="social">Voir les réseaux <span>→</span></button></div></article>
+            </div>
+            <div class="dashboard-detail-grid">
+              <section class="carte dashboard-detail"><div class="card-heading"><div><p class="eyebrow">FINANCES & ACTIVITÉS</p><h2>Chiffres essentiels</h2></div><button class="text-link" data-go="bases">Tout voir →</button></div><div id="dashboard-kpis" class="dashboard-kpi-list"><p class="vide">Les indicateurs apparaîtront après actualisation.</p></div></section>
+              <section class="carte dashboard-detail"><div class="card-heading"><div><p class="eyebrow">ORGANISATION</p><h2>Prochains rendez-vous</h2></div><button class="text-link" data-go="agenda">Agenda →</button></div><ul id="dashboard-agenda" class="liste"><li class="vide">Chargement de l'agenda…</li></ul></section>
+              <section class="carte dashboard-detail"><div class="card-heading"><div><p class="eyebrow">COMMUNICATION</p><h2>Dernières nouvelles</h2></div><button class="text-link" data-go="messages">Gmail →</button></div><ul id="dashboard-activity" class="liste"><li class="vide">Chargement des messages…</li></ul></section>
             </div>
             <section class="carte dashboard-alerts"><div class="card-heading"><div><p class="eyebrow">À NE PAS MANQUER</p><h2>Alertes et rappels</h2></div><span class="heading-icon">⚑</span></div><ul id="liste-alertes" class="liste alertes"></ul></section>
           </section>
@@ -290,6 +290,6 @@
       setTimeout(function(){if(!window.__appPret)montrer("L'application n'a pas démarré. Vérifiez votre connexion internet (les composants Firebase se chargent depuis Google), désactivez un éventuel bloqueur de publicités, puis rechargez. Appuyez sur F12 > Console pour voir le détail.");},6000);
     })();
   </script>
-  <script type="module" src="app.js?v=20261103-8"></script>
+  <script type="module" src="app.js?v=20261103-9"></script>
 </body>
 </html>
