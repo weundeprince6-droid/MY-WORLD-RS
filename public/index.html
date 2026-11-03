@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>My World RS</title>
   <meta name="description" content="Votre espace personnel : messages, agenda, bases de données et alertes.">
-  <link rel="stylesheet" href="style.css?v=20261103-17">
+  <link rel="stylesheet" href="style.css?v=20261103-18">
 </head>
 <body>
   <header class="entete">
@@ -243,7 +243,7 @@
               </section>
             </div>
             <div class="wallet-block-heading"><div><p class="eyebrow">HISTORIQUE</p><h3>Suivi de mes opérations</h3><p>Retrouvez et filtrez toutes les transactions enregistrées.</p></div></div>
-            <section class="carte wallet-history-card"><div class="card-heading"><div><p class="eyebrow">TOUTES LES TRANSACTIONS</p><h2>Historique des opérations</h2></div><button id="wallet-export" class="btn btn-light" type="button">Exporter CSV</button></div>
+            <section class="carte wallet-history-card"><div class="card-heading"><div><p class="eyebrow">TOUTES LES TRANSACTIONS</p><h2>Historique des opérations</h2></div><div class="wallet-export-actions"><button id="wallet-export-pdf" class="btn btn-primary" type="button">↓ Télécharger le rapport PDF</button><button id="wallet-export" class="btn btn-light" type="button">Exporter CSV</button></div></div>
               <div class="wallet-history-filters"><input id="wallet-search" type="search" placeholder="Rechercher une opération…" aria-label="Rechercher"><select id="wallet-history-account"><option value="all">Tous les comptes</option></select><select id="wallet-history-kind"><option value="all">Toutes les opérations</option><option value="income">Entrées</option><option value="expense">Sorties</option><option value="transfer">Transferts</option></select></div>
               <div class="wallet-history-wrap"><table class="wallet-history"><thead><tr><th>Date</th><th>Compte</th><th>Opération</th><th>Description</th><th>Montant</th><th></th></tr></thead><tbody id="wallet-history"><tr><td colspan="6" class="vide">Vos opérations apparaîtront ici.</td></tr></tbody></table></div>
             </section>
