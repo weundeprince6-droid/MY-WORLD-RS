@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>My World RS</title>
   <meta name="description" content="Votre espace personnel : messages, agenda, bases de données et alertes.">
-  <link rel="stylesheet" href="style.css?v=20261103-21">
+  <link rel="stylesheet" href="style.css?v=20261103-22">
 </head>
 <body>
   <header class="entete">
@@ -93,6 +93,7 @@
           <section class="tab-pane" id="pane-agenda" role="tabpanel" data-pane="agenda" hidden>
             <div class="section-heading"><div><p class="eyebrow">ORGANISATION</p><h2>Mon agenda</h2><p>Vos rendez-vous d'aujourd'hui et les prochaines dates.</p></div><span class="section-icon blue">▦</span></div>
             <div class="agenda-grid"><section class="carte"><div class="card-heading"><h2>Aujourd'hui</h2><span class="heading-icon">☀</span></div><ul id="liste-agenda" class="liste"></ul></section><section class="carte"><div class="card-heading"><h2>À venir</h2><span class="heading-icon">↗</span></div><ul id="liste-avenir" class="liste"></ul></section></div>
+            <div class="agenda-cal-anniversaire-wrap">
             <section class="carte agenda-calendrier"><div class="card-heading"><div><p class="eyebrow">VUE MENSUELLE</p><h2>Calendrier</h2></div><div class="agenda-cal-nav"><button type="button" id="agenda-mois-precedent" aria-label="Mois précédent">‹</button><strong id="agenda-mois-titre"></strong><button type="button" id="agenda-mois-suivant" aria-label="Mois suivant">›</button></div></div><div class="agenda-cal-grille" id="agenda-calendrier" aria-label="Calendrier mensuel"></div><p class="meta">Clique sur une date pour la choisir dans le formulaire.</p></section><section class="carte agenda-anniversaire" id="agenda-anniversaire" aria-live="polite">
               <div class="agenda-anniversaire-icon" aria-hidden="true">🎂</div>
               <div class="agenda-anniversaire-contenu">
@@ -102,6 +103,7 @@
                 <p class="meta" id="agenda-anniversaire-detail"></p>
               </div>
             </section>
+            </div>
             
             <section class="carte"><div class="card-heading"><h2>Ajouter un rendez-vous</h2><span class="heading-icon">＋</span></div>
               <form id="agenda-form" class="agenda-form">
