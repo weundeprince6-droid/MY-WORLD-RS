@@ -1419,133 +1419,175 @@ async function walletExporterPdf() {
     if(!walletLoaded) await chargerWallet(true);
     const JsPDF=await walletChargerJsPdf();
     const doc=new JsPDF({orientation:"portrait",unit:"mm",format:"a4"});
-    const W=210, H=297, margin=14, contentW=182, bottom=278;
-    const colors={green:[22,101,78],deep:[17,64,53],mint:[232,243,238],pale:[247,249,248],ink:[37,48,57],muted:[95,109,119],line:[218,228,223],white:[255,255,255],accent:[213,237,226],orange:[183,106,40],red:[166,65,65]};
-    let y=14;
-    const transactions=[...walletTransactions].sort((a,b)=>String(b.date||"").localeCompare(String(a.date||""))||String(b.createdAt||"").localeCompare(String(a.createdAt||"")));
-    const currencies=[...new Set([...walletAccounts.map(a=>a.currency),...transactions.map(t=>t.currency)].filter(Boolean))];
-    const total=(currency,kind)=>transactions.filter(t=>t.currency===currency&&t.kind===kind).reduce((sum,t)=>sum+Number(t.amount||0),0);
+    const W=210, H=297, M=13, CW=184, bottom=279;
+    const C={dark:[0,78,57],green:[0,111,78],gold:[197,148,55],mint:[232,243,237],pale:[247,249,247],ink:[30,43,38],muted:[92,108,101],line:[211,222,216],white:[255,255,255],red:[195,58,53],blue:[37,99,166],orange:[214,139,38]};
+    let y=14, pageNo=0;
+    const tx=[...walletTransactions].sort((a,b)=>String(b.date||"").localeCompare(String(a.date||""))||String(b.createdAt||"").localeCompare(String(a.createdAt||"")));
+    const currencies=[...new Set([...walletAccounts.map(a=>a.currency),...tx.map(t=>t.currency)].filter(Boolean))];
+    const sumTx=(currency,kind)=>tx.filter(t=>t.currency===currency&&t.kind===kind).reduce((s,t)=>s+Number(t.amount||0),0);
     const money=(n,c)=>walletMoney(n,c);
-    const setText=(color=colors.ink)=>doc.setTextColor(...color);
-    const setFill=(color)=>doc.setFillColor(...color);
-    const setDraw=(color)=>doc.setDrawColor(...color);
-    const ensure=(height=12)=>{
-      if(y+height>bottom){doc.addPage();y=14;return true;}
-      return false;
+    const txt=(c=C.ink)=>doc.setTextColor(...c), fill=(c)=>doc.setFillColor(...c), draw=(c)=>doc.setDrawColor(...c);
+    const fmtDate=(d)=>d?new Intl.DateTimeFormat("fr-FR",{dateStyle:"medium"}).format(new Date(d+"T12:00:00")):"—";
+    const periodDates=tx.map(t=>String(t.date||"")).filter(Boolean).sort();
+    const datePeriod=periodDates.length?fmtDate(periodDates[0])+" au "+fmtDate(periodDates[periodDates.length-1]):"Aucun mouvement enregistré";
+    const dateNow=new Intl.DateTimeFormat("fr-FR",{dateStyle:"long",timeStyle:"short"}).format(new Date());
+    const user=utilisateurConnecte?.displayName||utilisateurConnecte?.email||"Utilisateur My World RS";
+    const addPage=()=>{doc.addPage();pageNo++;y=14;};
+    const section=(n,title,sub="")=>{
+      if(y+15>bottom)addPage();
+      fill(C.mint);doc.roundedRect(M,y,CW,sub?13:10,2,2,"F");fill(C.green);doc.roundedRect(M,y,2.5,sub?13:10,1,1,"F");
+      doc.setFont("helvetica","bold");doc.setFontSize(10.5);txt(C.dark);doc.text((n?String(n)+"  ":"")+title,M+6,y+6.8);
+      if(sub){doc.setFont("helvetica","normal");doc.setFontSize(7.5);txt(C.muted);doc.text(doc.splitTextToSize(sub,CW-10),M+6,y+10.7);}
+      y+=sub?17:13;
     };
-    const section=(title,subtitle="")=>{
-      ensure(subtitle?17:12);
-      setFill(colors.mint);doc.roundedRect(margin,y,contentW,subtitle?13:10,2,2,"F");
-      setFill(colors.green);doc.rect(margin,y,2.2,subtitle?13:10,"F");
-      doc.setFont("helvetica","bold");doc.setFontSize(11);setText(colors.deep);
-      doc.text(title,margin+6,y+6.8);
-      if(subtitle){doc.setFont("helvetica","normal");doc.setFontSize(7.8);setText(colors.muted);doc.text(subtitle,margin+6,y+10.8);}
-      y+=subtitle?17:14;
+    const para=(value,size=8.5,color=C.ink,x=M,width=CW)=>{
+      const lines=doc.splitTextToSize(String(value||"—"),width);const h=lines.length*(size*.47+1.15)+2;
+      if(y+h>bottom)addPage();
+      doc.setFont("helvetica","normal");doc.setFontSize(size);txt(color);doc.text(lines,x,y);y+=h;
     };
-    const paragraph=(value,x=margin,width=contentW,size=9,color=colors.ink)=>{
-      const str=String(value||"—").trim()||"—";
-      doc.setFont("helvetica","normal");doc.setFontSize(size);setText(color);
-      const lines=doc.splitTextToSize(str,width);
-      const lineH=size*0.48+1.2;
-      ensure(lines.length*lineH+2);
-      doc.text(lines,x,y);
-      y+=lines.length*lineH+2;
+    const drawFooter=()=>{
+      const n=doc.getNumberOfPages();
+      for(let p=2;p<=n;p++){doc.setPage(p);draw(C.line);doc.line(M,285,197,285);doc.setFont("helvetica","normal");doc.setFontSize(7);txt(C.muted);doc.text("MY WORLD RS · RAPPORT FINANCIER",M,290);doc.text("Page "+(p-1),197,290,{align:"right"});}
     };
-    const card=(x,yy,w,h,label,value)=>{
-      setFill(colors.pale);doc.roundedRect(x,yy,w,h,2.5,2.5,"F");
-      doc.setFont("helvetica","normal");doc.setFontSize(8);setText(colors.muted);doc.text(label,x+4,yy+6);
-      doc.setFont("helvetica","bold");doc.setFontSize(10);setText(colors.green);
-      const lines=doc.splitTextToSize(String(value),w-8);doc.text(lines,x+4,yy+12);
+    const header=(title,subtitle)=>{
+      fill(C.dark);doc.rect(0,0,W,31,"F");fill(C.gold);doc.rect(0,31,W,1.2,"F");
+      doc.setFont("helvetica","bold");doc.setFontSize(8);txt([206,231,218]);doc.text("MY WORLD RS  /  FINANCES PERSONNELLES",M,9);
+      doc.setFontSize(17);txt(C.white);doc.text(title,M,20);
+      doc.setFont("helvetica","normal");doc.setFontSize(7.8);txt([220,238,228]);doc.text(subtitle,197,20,{align:"right"});
+      y=39;
     };
-    const tableHead=(labels,widths)=>{
-      ensure(12);setFill(colors.deep);doc.roundedRect(margin,y,contentW,9,1.5,1.5,"F");
-      doc.setFont("helvetica","bold");doc.setFontSize(7.7);setText(colors.white);
-      let x=margin+2;labels.forEach((label,i)=>{doc.text(label,x,y+6);x+=widths[i];});y+=11;
+    const tableHeader=(labels,widths)=>{
+      if(y+11>bottom)addPage();
+      fill(C.dark);doc.roundedRect(M,y,CW,8.5,1,1,"F");doc.setFont("helvetica","bold");doc.setFontSize(7);txt(C.white);
+      let x=M+2;labels.forEach((v,i)=>{doc.text(v,x,y+5.7);x+=widths[i];});y+=10;
     };
-    const drawPageTitle=()=>{
-      setFill(colors.deep);doc.rect(0,0,W,39,"F");
-      setFill(colors.green);doc.rect(0,36,W,3,"F");
-      doc.setFont("helvetica","bold");doc.setFontSize(9);setText(colors.accent);
-      doc.text("MY WORLD RS  /  FINANCES PERSONNELLES",margin,11);
-      doc.setFontSize(20);setText(colors.white);doc.text("Rapport du porte-monnaie",margin,23);
-      doc.setFont("helvetica","normal");doc.setFontSize(8.5);setText(colors.accent);
-      const dateRapport=new Intl.DateTimeFormat("fr-FR",{dateStyle:"long",timeStyle:"short"}).format(new Date());
-      doc.text("Édité le "+dateRapport,margin,31);
-      y=47;
+    const kpi=(x,yy,w,label,value,color=C.green)=>{
+      fill(C.pale);draw(C.line);doc.roundedRect(x,yy,w,23,2,2,"FD");
+      doc.setFont("helvetica","bold");doc.setFontSize(6.8);txt(C.muted);doc.text(label.toUpperCase(),x+3,yy+6);
+      doc.setFontSize(9.5);txt(color);doc.text(doc.splitTextToSize(String(value),w-6),x+3,yy+14);
     };
-    drawPageTitle();
+    const drawCover=()=>{
+      pageNo=1;
+      fill(C.white);doc.rect(0,0,W,H,"F");
+      // Bandeau et courbes décoratives
+      fill(C.dark);doc.rect(0,185,W,112,"F");
+      fill(C.green);doc.setFillColor(0,104,74);doc.ellipse(40,190,105,23,"F");
+      fill(C.gold);doc.ellipse(110,188,120,10,"F");
+      fill(C.dark);doc.ellipse(100,194,120,13,"F");
+      draw(C.gold);doc.setLineWidth(1);doc.line(18,164,192,164);
+      // Logo stylisé, sans image externe
+      draw(C.green);doc.setLineWidth(1.5);doc.circle(105,39,16,"S");
+      fill(C.green);doc.rect(97,43,4,8,"F");doc.rect(103,37,4,14,"F");doc.rect(109,32,4,19,"F");
+      draw(C.gold);doc.circle(116,29,5,"S");doc.setFont("helvetica","bold");doc.setFontSize(7);txt(C.gold);doc.text("$",116,31.5,{align:"center"});
+      doc.setFont("helvetica","bold");doc.setFontSize(22);txt(C.dark);doc.text("MY WORLD RS",105,68,{align:"center"});
+      doc.setFont("helvetica","normal");doc.setFontSize(9);txt(C.muted);doc.text("Maîtrisez vos finances, construisez votre avenir",105,77,{align:"center"});
+      fill(C.gold);doc.circle(105,91,1.6,"F");draw(C.gold);doc.line(48,91,96,91);doc.line(114,91,162,91);
+      doc.setFont("helvetica","bold");doc.setFontSize(23);txt(C.dark);doc.text("RAPPORT DÉTAILLÉ",105,111,{align:"center"});
+      doc.setFontSize(13);txt(C.ink);doc.text("HISTORIQUE DES MOUVEMENTS",105,122,{align:"center"});doc.text("DE TOUS LES COMPTES",105,131,{align:"center"});
+      doc.setFontSize(11);txt(C.gold);doc.text("ANALYSE COMPLÈTE DE VOS FINANCES",105,145,{align:"center"});
+      // Illustration finance
+      draw(C.gold);doc.setLineWidth(1.2);doc.circle(105,177,25,"S");draw(C.green);doc.setLineWidth(2.5);doc.line(91,188,100,178);doc.line(100,178,108,183);doc.line(108,183,120,166);doc.line(116,166,120,166);doc.line(120,166,120,171);
+      fill(C.green);doc.rect(91,181,5,10,"F");doc.rect(100,175,5,16,"F");doc.rect(109,171,5,20,"F");
+      fill(C.gold);doc.ellipse(121,187,6,2,"F");doc.rect(115,181,12,6,"F");doc.ellipse(121,181,6,2,"F");
+      doc.setFont("helvetica","normal");doc.setFontSize(9);txt(C.white);
+      doc.text("Utilisateur",27,222);doc.setFont("helvetica","bold");doc.text(String(user).slice(0,60),27,229);
+      doc.setFont("helvetica","normal");doc.text("Période du rapport",27,242);doc.setFont("helvetica","bold");doc.text(datePeriod,27,249);
+      doc.setFont("helvetica","normal");doc.text("Date de génération",27,262);doc.setFont("helvetica","bold");doc.text(dateNow,27,269);
+      doc.setFont("helvetica","italic");doc.setFontSize(8.5);txt([226,241,232]);doc.text("Une vision claire pour de meilleures décisions",105,285,{align:"center"});
+    };
+    drawCover();
 
-    // Synthèse - la rubrique suit immédiatement le titre, sans page de couverture séparée.
-    section("Synthèse générale","Tous les comptes et tous les mouvements enregistrés");
-    const kpis=[["Comptes",String(walletAccounts.length)],["Mouvements",String(transactions.length)],
-      ["Entrées",currencies.map(c=>money(total(c,"income"),c)).join(" | ")||"0"],
-      ["Sorties",currencies.map(c=>money(total(c,"expense"),c)).join(" | ")||"0"]];
-    const gap=6, cardW=(contentW-gap)/2, cardH=20, kpiStart=y;
-    kpis.forEach((item,i)=>card(margin+(i%2)*(cardW+gap),kpiStart+Math.floor(i/2)*(cardH+4),cardW,cardH,item[0],item[1]));
-    y+=2*(cardH+4)+2;
-
-    section("Soldes par compte");
-    if(!walletAccounts.length) paragraph("Aucun compte n’est actuellement enregistré.");
-    walletAccounts.forEach((account,i)=>{
-      const name=String(account.name||"Compte")+"  ·  "+(account.type==="personal"?"Personnel":"Professionnel");
-      const amount=money(account.balance,account.currency);
-      const h=10;ensure(h);
-      if(i%2===0){setFill(colors.pale);doc.rect(margin,y-4,contentW,h,"F");}
-      doc.setFont("helvetica","normal");doc.setFontSize(8.8);setText(colors.ink);
-      doc.text(doc.splitTextToSize(name,115),margin+3,y+1);
-      doc.setFont("helvetica","bold");doc.setFontSize(9.2);setText(colors.green);
-      doc.text(doc.splitTextToSize(amount,58),196,y+1,{align:"right"});
-      y+=h;
+    // Page 1 : Synthèse générale et répartition des comptes
+    addPage();header("Synthèse générale","01");
+    section("1","INDICATEURS CLÉS","Vue globale du porte-monnaie");
+    const balancesByCurrency=currencies.map(c=>({currency:c,balance:walletAccounts.filter(a=>a.currency===c).reduce((s,a)=>s+Number(a.balance||0),0)}));
+    const currencyText=balancesByCurrency.map(x=>money(x.balance,x.currency)).join(" · ")||"—";
+    const incomeText=currencies.map(c=>money(sumTx(c,"income"),c)).join(" · ")||"0";
+    const expenseText=currencies.map(c=>money(sumTx(c,"expense"),c)).join(" · ")||"0";
+    const kw=43.5,g=3.5,ky=y;
+    kpi(M,ky,kw,"Soldes actuels",currencyText,C.green);
+    kpi(M+kw+g,ky,kw,"Total entrées",incomeText,C.green);
+    kpi(M+2*(kw+g),ky,kw,"Total sorties",expenseText,C.red);
+    kpi(M+3*(kw+g),ky,kw,"Mouvements",String(tx.length),C.blue);y+=28;
+    section("","RÉPARTITION PAR COMPTE (SOLDE ACTUEL)");
+    const aw=[76,65,43];tableHeader(["Compte","Solde actuel","Devise / type"],aw);
+    walletAccounts.forEach((a,i)=>{
+      const vals=[String(a.name||"Compte"),money(a.balance,a.currency),String(a.currency||"")+" · "+(a.type==="personal"?"Personnel":"Professionnel")];
+      doc.setFont("helvetica","normal");doc.setFontSize(7.6);const lines=vals.map((v,j)=>doc.splitTextToSize(v,aw[j]-4));const rh=Math.max(7.5,...lines.map(l=>l.length*3.7+2));
+      if(y+rh>bottom){addPage();header("Synthèse générale (suite)","01");tableHeader(["Compte","Solde actuel","Devise / type"],aw);}
+      if(i%2===0){fill(C.pale);doc.rect(M,y-2,CW,rh,"F");}
+      let x=M+2;lines.forEach((l,j)=>{txt(j===1?C.green:C.ink);doc.text(l,x,y);x+=aw[j];});y+=rh;
     });
-    y+=3;
+    if(!walletAccounts.length)para("Aucun compte n’est encore enregistré.");
+    y+=4;
+    section("","RÉPARTITION DES MOUVEMENTS");
+    const countBy=(fn)=>tx.filter(fn).length;
+    const incomeCount=countBy(t=>t.kind==="income"), expenseCount=countBy(t=>t.kind==="expense"), transferCount=countBy(t=>t.kind==="transfer");
+    const sumCount=incomeCount+expenseCount+transferCount||1;
+    const breakdown=[
+      ["PAR TYPE",[["Entrées",incomeCount,Math.round(incomeCount/sumCount*100)],["Sorties",expenseCount,Math.round(expenseCount/sumCount*100)],["Transferts",transferCount,Math.round(transferCount/sumCount*100)]]],
+      ["PAR MOYEN DE PAIEMENT",Object.entries(tx.reduce((o,t)=>{const p=t.paymentMethod||t.payment||t.method||"Non précisé";o[p]=(o[p]||0)+1;return o;},{})).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([k,v])=>[k,v,Math.round(v/tx.length*100)])],
+      ["PAR CATÉGORIE",Object.entries(tx.reduce((o,t)=>{const p=t.category||"Non classé";o[p]=(o[p]||0)+1;return o;},{})).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([k,v])=>[k,v,Math.round(v/tx.length*100)])]
+    ];
+    const boxW=(CW-8)/3;
+    breakdown.forEach((b,i)=>{
+      const x=M+i*(boxW+4);fill(C.pale);draw(C.line);doc.roundedRect(x,y,boxW,38,2,2,"FD");
+      doc.setFont("helvetica","bold");doc.setFontSize(6.3);txt(C.dark);doc.text(doc.splitTextToSize(b[0],boxW-4),x+2,y+5);
+      let yy=y+11;doc.setFont("helvetica","normal");doc.setFontSize(6.5);
+      b[1].forEach(([name,num,pct])=>{txt(C.ink);doc.text(doc.splitTextToSize(String(name),boxW-19),x+2,yy);txt(C.green);doc.text(String(pct)+"%",x+boxW-2,yy,{align:"right"});yy+=7;});
+    });y+=42;
 
-    section("Ristournes et remboursements","Informations de ristournes visibles dans l’application");
-    const ristStatus=$("wallet-ristourne-status")?.textContent?.trim();
-    if(ristStatus) paragraph("Synchronisation : "+ristStatus,margin,contentW,8.3,colors.muted);
-    const ristGroup=$("rist-groupes"), ristCredits=$("rist-credits");
-    const ristGroupText=ristGroup?.innerText?.trim();
-    const ristCreditsText=ristCredits?.innerText?.trim();
-    if(ristGroupText) paragraph(ristGroupText,margin,contentW,8.8,colors.ink);
-    if(ristCreditsText) paragraph(ristCreditsText,margin,contentW,8.8,colors.green);
-    if(!ristGroupText&&!ristCreditsText) paragraph("Aucun détail de ristourne n’est actuellement affiché.");
-
-    // Graphiques : intégrés dans le flux, pas de page dédiée automatique.
-    for(const [title,id] of [["Entrées et sorties par mois","wallet-chart"],["Évolution du solde net","wallet-net-chart"]]){
-      const canvas=$(id);
-      if(canvas){
-        section(title);
-        ensure(72);
-        try{doc.addImage(canvas.toDataURL("image/png"),"PNG",margin,y,contentW,66);y+=70;}
-        catch(e){paragraph("Graphique indisponible.",margin,contentW,8,colors.muted);}
-      }
-    }
-
-    section("Historique complet des mouvements","Tous les comptes · Toutes les dates · Sans filtre");
-    const labels=["Date","Compte","Type","Détail / catégorie","Montant"];
-    const widths=[23,35,25,65,34];
-    tableHead(labels,widths);
-    transactions.forEach((t,i)=>{
+    // Page 2 : Graphiques, ristournes et catégories
+    addPage();header("Analyse des mouvements","02");
+    const chartCurrency=$("wallet-chart-currency")?.value||currencies[0]||"FC";
+    section("2","ENTRÉES ET SORTIES PAR MOIS","Devise du graphique : "+chartCurrency);
+    const chart1=$("wallet-chart");
+    if(chart1){try{doc.addImage(chart1.toDataURL("image/png"),"PNG",M,y,CW,65);y+=69;}catch(e){para("Graphique mensuel indisponible.");}}
+    section("3","ÉVOLUTION DU SOLDE NET","Variation mensuelle dans la devise sélectionnée");
+    const chart2=$("wallet-net-chart");
+    if(chart2){try{doc.addImage(chart2.toDataURL("image/png"),"PNG",M,y,CW,55);y+=59;}catch(e){para("Graphique du solde net indisponible.");}}
+    section("4","RISTOURNES ET REMBOURSEMENTS","Données de ristournes actuellement visibles dans l’application");
+    const rstatus=$("wallet-ristourne-status")?.textContent?.trim();
+    if(rstatus)para("État : "+rstatus,7.5,C.muted);
+    const rg=$("rist-groupes")?.innerText?.trim(), rc=$("rist-credits")?.innerText?.trim();
+    if(rg)para(rg,7.8,C.ink);if(rc)para(rc,8,C.green);
+    if(!rg&&!rc)para("Aucune donnée de ristourne disponible dans l’affichage actuel.",8,C.muted);
+    section("5","RÉPARTITION DES DÉPENSES PAR CATÉGORIE");
+    const expenses=tx.filter(t=>t.kind==="expense");
+    const expByCat=Object.entries(expenses.reduce((o,t)=>{const c=t.category||"Non classé";o[c]=(o[c]||0)+Number(t.amount||0);return o;},{})).sort((a,b)=>b[1]-a[1]).slice(0,7);
+    if(expByCat.length){
+      const max=expByCat[0][1]||1;let yy=y;
+      expByCat.forEach(([name,val],i)=>{const pct=val/max;doc.setFont("helvetica","normal");doc.setFontSize(7.5);txt(C.ink);doc.text(doc.splitTextToSize(name,58),M,yy+3);fill([C.green[0],Math.max(55,C.green[1]-i*5),Math.max(45,C.green[2]-i*2)]);doc.roundedRect(M+60,yy-1,90*pct,5,1,1,"F");txt(C.green);doc.text(money(val,expenses.find(t=>t.category===name)?.currency||chartCurrency),197,yy+3,{align:"right"});yy+=8;});y=yy+2;
+    }else para("Aucune dépense catégorisée pour cette période.");
+    
+    // Page 3 : historique exhaustif et bien lisible
+    addPage();header("Historique détaillé de tous les mouvements","03");
+    section("6","HISTORIQUE DÉTAILLÉ","Tous les comptes · Toutes les dates · Aucun filtre");
+    const labels=["Date","Compte","Type","Description / catégorie","Montant"];
+    const widths=[25,37,24,63,35];
+    const head=()=>tableHeader(labels,widths);head();
+    tx.forEach((t,i)=>{
       const kind=t.kind==="income"?"Entrée":t.kind==="expense"?"Sortie":(t.direction==="in"?"Transfert reçu":"Transfert envoyé");
-      const detail=[t.category,t.description].filter(Boolean).join(" · ")||"—";
+      const detail=[t.description,t.category].filter(Boolean).join(" · ")||"—";
       const amount=(t.kind==="expense"?"−":t.kind==="income"?"+":t.direction==="in"?"+":"−")+money(t.amount,t.currency||"");
       const values=[String(t.date||"—"),String(t.accountName||walletAccountName(t.accountId)),kind,detail,amount];
-      doc.setFont("helvetica","normal");doc.setFontSize(7.6);
-      const lines=values.map((v,j)=>doc.splitTextToSize(v,widths[j]-4));
-      const rowH=Math.max(8,Math.max(...lines.map(a=>a.length))*3.8+2);
-      if(y+rowH>bottom){doc.addPage();y=14;section("Historique des mouvements (suite)");tableHead(labels,widths);}
-      if(i%2===0){setFill(colors.pale);doc.rect(margin,y-3,contentW,rowH,"F");}
-      let x=margin+2;
-      lines.forEach((line,j)=>{
-        setText(j===4?(t.kind==="expense"?colors.red:colors.green):colors.ink);
-        doc.text(line,x,y);x+=widths[j];
-      });
-      y+=rowH;
+      doc.setFont("helvetica","normal");doc.setFontSize(7.2);const lines=values.map((v,j)=>doc.splitTextToSize(v,widths[j]-4));const rh=Math.max(7.5,...lines.map(l=>l.length*3.5+2));
+      if(y+rh>bottom){addPage();header("Historique détaillé (suite)","03");section("","SUITE DE L’HISTORIQUE");head();}
+      if(i%2===0){fill(C.pale);doc.rect(M,y-2,CW,rh,"F");}
+      let x=M+2;lines.forEach((l,j)=>{txt(j===4?(t.kind==="expense"?C.red:C.green):C.ink);doc.text(l,x,y);x+=widths[j];});y+=rh;
     });
-    if(!transactions.length) paragraph("Aucun mouvement enregistré à ce jour.");
-    walletPdfPied(doc);
-    const stamp=new Date().toISOString().slice(0,10);
-    doc.save("My-World-RS_Rapport-Porte-monnaie_"+stamp+".pdf");
-    if(status)status.textContent="Rapport PDF téléchargé : "+transactions.length+" mouvement(s), tous comptes confondus.";
+    if(!tx.length)para("Aucun mouvement enregistré à ce jour.");
+    // Légende et note finale
+    if(y+28>bottom){addPage();header("Informations du rapport","04");}
+    fill(C.pale);draw(C.line);doc.roundedRect(M,y,CW,23,2,2,"FD");
+    doc.setFont("helvetica","bold");doc.setFontSize(8);txt(C.dark);doc.text("INFORMATIONS IMPORTANTES",M+4,y+6);
+    doc.setFont("helvetica","normal");doc.setFontSize(7.2);txt(C.muted);
+    doc.text("• Rapport généré automatiquement par My World RS.",M+4,y+11);
+    doc.text("• Les montants sont présentés dans leur devise d’origine.",M+4,y+16);
+    doc.text("• Période couverte : "+datePeriod,M+4,y+21);
+    drawFooter();
+    doc.save("My-World-RS_Rapport-Porte-monnaie_"+new Date().toISOString().slice(0,10)+".pdf");
+    if(status)status.textContent="Rapport PDF téléchargé : "+tx.length+" mouvement(s), tous comptes confondus.";
   }catch(e){if(status)status.textContent="Export PDF impossible : "+e.message;}
   finally{if(btn){btn.disabled=false;btn.textContent=btn.dataset.ancienTexte||"Télécharger le rapport PDF";}}
 }$("wallet-export-pdf")?.addEventListener("click",walletExporterPdf);
