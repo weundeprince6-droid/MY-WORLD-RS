@@ -937,8 +937,49 @@ function rendreAlertes() {
   $("resume").textContent = resumeDuJour({ messages: etat.messages, agenda: etat.agenda, alertes });
 }
 
+
+
+// ---------- Résumé synthétique du tableau de bord ----------
+function rendreDashboard() {
+  const el = (id) => $(id);
+  if (!el("dash-messages")) return;
+  el("dash-messages").textContent = etat.messages.length.toLocaleString("fr-FR");
+  el("dash-messages-note").textContent = etat.messages.length ? "À consulter en priorité" : "Aucun message important";
+  el("dash-agenda").textContent = etat.agenda.aujourdhui.length.toLocaleString("fr-FR");
+  el("dash-agenda-note").textContent = etat.agenda.aVenir.length + " rendez-vous à venir";
+  const kpisOk = etat.kpis.filter(k => !k.erreur && k.valeur !== "—");
+  el("dash-kpis").textContent = kpisOk.length.toLocaleString("fr-FR");
+  el("dash-kpis-note").textContent = etat.kpis.some(k => k.erreur) ? "Certaines données sont indisponibles" : "AVEC LA SAGESSE · ESE DB";
+  el("dash-social").textContent = etat.social.length.toLocaleString("fr-FR");
+  el("dash-social-note").textContent = etat.social.length ? "Messages enregistrés" : "Aucun nouveau message";
+  el("dash-tasks").textContent = tasksCharge ? tasksTickerItems.length.toLocaleString("fr-FR") : "—";
+  el("dash-tasks-note").textContent = tasksCharge ? "Tâches non terminées" : "Ouvrez Google Tasks pour charger";
+
+  const kpis = kpisOk.filter(k => !(k.masquerSiZero && k.valeur === 0)).slice(0, 6);
+  el("dashboard-kpis").innerHTML = kpis.length ? kpis.map(k =>
+    '<div class="dashboard-kpi-row"><div><strong>' + echapper(k.label) + '</strong><span>' + echapper(k.base || "Données") + '</span></div><b>' +
+    echapper(typeof k.valeur === "number" ? k.valeur.toLocaleString("fr-FR") : k.valeur) + ' <small>' + echapper(k.unite || "") + '</small></b></div>'
+  ).join("") : '<p class="vide">Aucun indicateur disponible pour le moment.</p>';
+
+  const prochains = etat.agenda.aVenir.slice(0, 5);
+  el("dashboard-agenda").innerHTML = prochains.length ? prochains.map(e =>
+    '<li><div class="ligne"><strong>' + echapper(e.titre) + '</strong><span class="meta">' + jourCourt.format(e.debut) + (e.toutLeJour ? "" : " · " + heure.format(e.debut)) + '</span></div>' +
+    (e.lieu ? '<div class="extrait">' + echapper(e.lieu) + '</div>' : '') + '</li>'
+  ).join("") : '<li class="vide">Aucun rendez-vous à venir.</li>';
+
+  const mails = etat.recents.slice(0, 3);
+  const social = etat.social.slice(0, 2);
+  const activites = [
+    ...mails.map(m => ({ type:"Gmail", nom:m.de, texte:m.sujet, date:m.date })),
+    ...social.map(s => ({ type:s.source || "Réseau social", nom:s.de, texte:s.texte, date:s.date })),
+  ].sort((a,b) => (b.date?.getTime?.() || 0) - (a.date?.getTime?.() || 0)).slice(0,5);
+  el("dashboard-activity").innerHTML = activites.length ? activites.map(a =>
+    '<li><div class="ligne"><strong>' + echapper(a.nom || "Message") + '</strong><span class="meta">' + echapper(a.type) + '</span></div><div class="extrait">' + echapper(a.texte || "Sans objet") + '</div></li>'
+  ).join("") : '<li class="vide">Aucun message récent à afficher.</li>';
+}
+
 function tout_rendre() {
-  rendreMessages(); rendreAgenda(); rendreKpis(); rendreSocial(); rendreAlertes();
+  rendreMessages(); rendreAgenda(); rendreKpis(); rendreSocial(); rendreAlertes(); rendreDashboard();
   $("derniere-maj").textContent = `Mis à jour à ${heure.format(new Date())}`;
 }
 
