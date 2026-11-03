@@ -85,7 +85,7 @@
             <section class="carte dashboard-alerts"><div class="card-heading"><div><p class="eyebrow">À NE PAS MANQUER</p><h2>Alertes et rappels</h2></div><span class="heading-icon">⚑</span></div><ul id="liste-alertes" class="liste alertes"></ul></section>
           </section>
           <section class="tab-pane" id="pane-messages" role="tabpanel" data-pane="messages" hidden>
-            <div class="section-heading"><div><p class="eyebrow">COMMUNICATION</p><h2>Messages importants</h2><p>Les messages qui méritent votre attention.</p></div><span class="section-icon green">✉</span></div>
+            <div class="section-heading messages-heading"><div><p class="eyebrow">COMMUNICATION</p><h2>Messages importants</h2><p>Les messages qui méritent votre attention.</p></div><button id="nouveau-mail" class="btn btn-primary" type="button">✉ Nouveau mail</button></div>
             <section class="carte"><ul id="liste-messages" class="liste"></ul></section>
             <div class="section-heading"><div><p class="eyebrow">BOÎTE DE RÉCEPTION</p><h2>Derniers e-mails</h2><p>Vos messages Gmail récents, importants ou non.</p></div></div>
             <section class="carte"><ul id="liste-recents" class="liste"></ul></section>
@@ -271,7 +271,8 @@
       </div>
     </div>
   </main>
-  <dialog id="modeles">
+<dialog id="nouveau-mail-dialog"><form id="nouveau-mail-form" class="nouveau-mail-form"><div class="nouveau-mail-head"><div><p class="eyebrow">GMAIL</p><h2>Nouveau mail</h2><p class="meta">Le message sera enregistré dans vos brouillons Gmail.</p></div><button type="button" id="nouveau-mail-fermer" class="btn btn-quiet" aria-label="Fermer">✕</button></div><label>Destinataire<input name="a" type="email" required maxlength="320" placeholder="adresse@example.com" autocomplete="email"></label><label>Objet<input name="sujet" type="text" required maxlength="500" placeholder="Objet du mail"></label><label>Message<textarea name="corps" required rows="9" maxlength="30000" placeholder="Écrivez votre message…"></textarea></label><div class="nouveau-mail-actions"><span id="nouveau-mail-statut" class="meta" role="status"></span><button id="nouveau-mail-creer" class="btn btn-primary" type="submit">Créer le brouillon Gmail</button></div></form></dialog>
+    <dialog id="modeles">
     <h2 id="modeles-titre">Répondre</h2><p class="meta">Un brouillon sera créé dans Gmail. Rien n'est envoyé sans votre validation.</p>
     <div id="modeles-liste" class="modeles"></div><button id="modeles-fermer" class="btn btn-quiet">Annuler</button>
   </dialog>
