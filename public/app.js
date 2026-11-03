@@ -110,7 +110,17 @@ function afficherSession(connecte, nom = "") {
   $("tableau").hidden = !connecte;
   $("bouton-deconnexion").hidden = !connecte;
   $("bouton-actualiser").hidden = !connecte;
-  $("utilisateur").textContent = connecte ? nom : "";
+  const utilisateurEl = $("utilisateur");
+  if (utilisateurEl) {
+    if (connecte && utilisateurConnecte?.photoURL) {
+      utilisateurEl.innerHTML = `<img class="entete-avatar" src="${echapper(utilisateurConnecte.photoURL)}" alt="Photo de profil">`;
+      const nomEl = document.createElement("span");
+      nomEl.textContent = nom || utilisateurConnecte.displayName || utilisateurConnecte.email || "";
+      utilisateurEl.appendChild(nomEl);
+    } else {
+      utilisateurEl.textContent = connecte ? nom : "";
+    }
+  }
   if ($("direct")) $("direct").hidden = !connecte;
 }
 
