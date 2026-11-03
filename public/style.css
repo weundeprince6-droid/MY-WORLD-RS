@@ -581,3 +581,5 @@ button.agenda-cal-jour{cursor:pointer}
 .outils .btn-icon-header svg{display:block}
 .outils .btn-icon-header:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
 @media(max-width:520px){.outils .btn-icon-header{width:35px;height:35px;min-width:35px}}
+
+.wallet-export-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.wallet-export-actions .btn{white-space:nowrap}@media(max-width:600px){.wallet-export-actions{width:100%}.wallet-export-actions .btn{flex:1}}
