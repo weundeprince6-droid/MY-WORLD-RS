@@ -1133,12 +1133,15 @@ function walletRender() {
   const expense=tx.filter(t=>t.kind==="expense").reduce((s,t)=>s+t.amount,0);
   $("wallet-statistics").innerHTML=\`<div class="wallet-stat"><span>Entrées (montants nominaux)</span><strong>\${walletMoney(income,"")}</strong></div><div class="wallet-stat"><span>Sorties (montants nominaux)</span><strong>\${walletMoney(expense,"")}</strong></div><div class="wallet-stat"><span>Solde net des opérations</span><strong>\${walletMoney(income-expense,"")}</strong></div>\`;
   walletDrawChart(tx);
+  walletDrawNetChart(tx);
   walletRenderHistory();
 }
 function walletDrawChart(tx) {
   const canvas=$("wallet-chart"); if(!canvas)return;
   const ctx=canvas.getContext("2d"), w=canvas.width, h=canvas.height;
   ctx.clearRect(0,0,w,h);
+  const currency=$("wallet-chart-currency")?.value || "USD";
+  tx=tx.filter(t => t.currency===currency && t.kind!=="transfer");
   const months=[];
   for(let i=5;i>=0;i--){const d=new Date();d.setDate(1);d.setMonth(d.getMonth()-i);months.push({key:d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"),label:new Intl.DateTimeFormat("fr-FR",{month:"short"}).format(d)});}
   const vals=months.map(m=>({ ...m, income:0, expense:0 }));
@@ -1147,6 +1150,22 @@ function walletDrawChart(tx) {
   ctx.font="12px sans-serif";ctx.textAlign="center";
   vals.forEach((v,i)=>{const x=30+i*groupW+groupW/2;const hi=v.income/max*plotH, he=v.expense/max*plotH;ctx.fillStyle="#087a4b";ctx.fillRect(x-barW-2,base-hi,barW,hi);ctx.fillStyle="#1759a6";ctx.fillRect(x+2,base-he,barW,he);ctx.fillStyle=getComputedStyle(document.body).color;ctx.fillText(v.label,x,h-12);});
   ctx.textAlign="left";ctx.fillStyle="#087a4b";ctx.fillRect(12,8,9,9);ctx.fillStyle=getComputedStyle(document.body).color;ctx.fillText("Entrées",25,17);ctx.fillStyle="#1759a6";ctx.fillRect(90,8,9,9);ctx.fillStyle=getComputedStyle(document.body).color;ctx.fillText("Sorties",103,17);
+}
+function walletDrawNetChart(tx) {
+  const canvas=$("wallet-net-chart"); if(!canvas)return;
+  const ctx=canvas.getContext("2d"),w=canvas.width,h=canvas.height;
+  ctx.clearRect(0,0,w,h);
+  const currency=$("wallet-chart-currency")?.value || "USD";
+  tx=tx.filter(t=>t.currency===currency&&t.kind!=="transfer");
+  const months=[];
+  for(let i=5;i>=0;i--){const d=new Date();d.setDate(1);d.setMonth(d.getMonth()-i);months.push({key:d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"),label:new Intl.DateTimeFormat("fr-FR",{month:"short"}).format(d)});}
+  const vals=months.map(m=>({...m,net:0}));
+  tx.forEach(t=>{const m=vals.find(v=>v.key===String(t.date||"").slice(0,7));if(m)m.net+=(t.kind==="income"?1:-1)*Number(t.amount||0);});
+  const max=Math.max(1,...vals.map(v=>Math.abs(v.net))),zero=h/2,scale=(h-64)/2/max,step=(w-70)/vals.length;
+  ctx.strokeStyle=getComputedStyle(document.body).color;ctx.globalAlpha=.2;ctx.beginPath();ctx.moveTo(30,zero);ctx.lineTo(w-20,zero);ctx.stroke();ctx.globalAlpha=1;
+  ctx.font="12px sans-serif";ctx.textAlign="center";
+  vals.forEach((v,i)=>{const x=35+i*step+step/2,y=zero-v.net*scale;ctx.strokeStyle=v.net>=0?"#087a4b":"#c65348";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x,zero);ctx.lineTo(x,y);ctx.stroke();ctx.fillStyle=v.net>=0?"#087a4b":"#c65348";ctx.beginPath();ctx.arc(x,y,5,0,Math.PI*2);ctx.fill();ctx.fillStyle=getComputedStyle(document.body).color;ctx.fillText(v.label,x,h-12);});
+  ctx.textAlign="left";ctx.fillStyle=getComputedStyle(document.body).color;ctx.fillText("Excédent au-dessus de zéro · déficit en dessous",12,17);
 }
 function walletRenderHistory() {
   const search=($("wallet-search").value||"").toLowerCase(), account=$("wallet-history-account").value, kind=$("wallet-history-kind").value;
@@ -1199,7 +1218,7 @@ $("wallet-transfer-form")?.addEventListener("submit",async e=>{
   }catch(err){$("wallet-status").textContent="Transfert non terminé : "+err.message+" (vérifiez l'historique avant de réessayer).";}
   finally{btn.disabled=false;}
 });
-["wallet-period","wallet-type-filter"].forEach(id=>$(id)?.addEventListener("change",walletRender));
+["wallet-period","wallet-type-filter","wallet-chart-currency"].forEach(id=>$(id)?.addEventListener("change",walletRender));
 ["wallet-search","wallet-history-account","wallet-history-kind"].forEach(id=>$(id)?.addEventListener(id==="wallet-search"?"input":"change",walletRenderHistory));
 $("wallet-export")?.addEventListener("click",()=>{
   const rows=[["Date","Compte","Type","Devise","Montant","Catégorie","Description"],...walletTransactions.map(t=>[t.date,t.accountName,t.kind,t.currency,t.amount,t.category,t.description])];
