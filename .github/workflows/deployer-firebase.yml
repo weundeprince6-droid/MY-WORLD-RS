@@ -3,6 +3,12 @@
 name: Déployer sur Firebase
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - "public/**"
+      - "firebase.json"
+      - ".github/workflows/deployer-firebase.yml"
   workflow_dispatch:
 
 jobs:
