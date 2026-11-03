@@ -542,3 +542,16 @@ input::placeholder{color:var(--muted)!important;opacity:1}
 .wallet-actions{text-align:right;white-space:nowrap}
 .wallet-delete{border:1px solid var(--border);background:transparent;color:#e35c55;border-radius:8px;padding:4px 9px;font:inherit;font-size:11px;font-weight:700;cursor:pointer}
 .wallet-delete:hover{background:rgba(227,92,85,.12);border-color:#e35c55}
+
+/* Calendrier mensuel de l'agenda */
+.agenda-cal-nav{display:flex;align-items:center;gap:10px}
+.agenda-cal-nav button{width:32px;height:32px;border:1px solid var(--border);border-radius:9px;background:var(--surface);color:var(--text);font-size:20px;cursor:pointer}
+.agenda-cal-nav strong{text-transform:capitalize;min-width:130px;text-align:center;font-size:14px}
+.agenda-cal-grille{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;margin:12px 0}
+.agenda-cal-jour{min-height:38px;display:flex;align-items:center;justify-content:center;border:1px solid transparent;border-radius:9px;background:var(--surface);color:var(--text);font:inherit;font-size:13px}
+button.agenda-cal-jour{cursor:pointer}
+.agenda-cal-entete{min-height:26px;color:var(--muted);font-size:11px;font-weight:700}
+.agenda-cal-vide{background:transparent}
+.agenda-cal-aujourdhui{border-color:var(--primary);font-weight:800}
+.agenda-cal-selection{background:var(--primary)!important;color:#fff!important;border-color:var(--primary)!important}
+@media(max-width:430px){.agenda-cal-grille{gap:3px}.agenda-cal-jour{min-height:34px;font-size:12px}.agenda-cal-nav{gap:5px}.agenda-cal-nav strong{min-width:105px;font-size:12px}}
