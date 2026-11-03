@@ -38,7 +38,7 @@ let recuperationGoogleEnCours = null;
 const URL_FONCTIONS_GOOGLE = "https://us-central1-my-world-rs.cloudfunctions.net";
 let minuteurSocial = null; // lecture régulière de Telegram tant que la page est ouverte
 let fb = null; // composants Firebase, chargés après l'affichage de la page
-let etat = { messages: [], agenda: { aujourdhui: [], aVenir: [] }, kpis: [], social: [] };
+let etat = { messages: [], recents: [], agenda: { aujourdhui: [], aVenir: [] }, kpis: [], social: [] };
 let drivePageToken = null;
 let driveRecherche = "";
 let driveCharge = false;
@@ -661,9 +661,12 @@ async function chargerGmail() {
       `https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date`,
     ),
   );
-  return messagesImportants(complets, {
-    seuil: g.seuilImportance, contactsVip: g.contactsVip, motsImportants: g.motsImportants,
-  });
+  const options = { contactsVip: g.contactsVip, motsImportants: g.motsImportants };
+  return {
+    importants: messagesImportants(complets, { ...options, seuil: g.seuilImportance }),
+    // Boîte de réception : tous les messages récents, du plus récent au plus ancien
+    recents: messagesImportants(complets, { ...options, seuil: -100, max: 100 }).sort((a, b) => b.date - a.date),
+  };
 }
 
 async function chargerAgenda() {
@@ -776,25 +779,31 @@ async function chargerSocial() {
 }
 
 // ---------- Rendu ----------
-function rendreMessages() {
-  const el = $("liste-messages");
-  if (!etat.messages.length) {
-    el.innerHTML = '<li class="vide">Rien d\'important pour le moment.</li>';
-    return;
-  }
-  el.innerHTML = etat.messages
-    .map(
-      (m, i) => `<li class="${m.nonLu ? "non-lu" : ""}">
+function ligneMessage(m, i, avecBrouillon) {
+  return `<li class="${m.nonLu ? "non-lu" : ""}">
         <div class="ligne"><strong>${echapper(m.de)}</strong><span class="meta">${m.date ? jourHeure.format(new Date(m.date)) : ""}</span></div>
         <div>${echapper(m.sujet)}</div>
         <div class="extrait">${echapper(m.extrait)}</div>
         <div class="actions">
           <a href="https://mail.google.com/mail/u/0/#inbox/${m.threadId}" target="_blank" rel="noopener">Ouvrir</a>
-          <button data-brouillon="${i}">Brouillon de réponse</button>
-        </div></li>`,
-    )
-    .join("");
-  el.querySelectorAll("[data-brouillon]").forEach((b) => b.addEventListener("click", () => ouvrirModeles(Number(b.dataset.brouillon))));
+          ${avecBrouillon ? `<button data-brouillon="${i}">Brouillon de réponse</button>` : ""}
+        </div></li>`;
+}
+
+function rendreMessages() {
+  const el = $("liste-messages");
+  if (!etat.messages.length) {
+    el.innerHTML = '<li class="vide">Rien d\'important pour le moment.</li>';
+  } else {
+    el.innerHTML = etat.messages.map((m, i) => ligneMessage(m, i, true)).join("");
+    el.querySelectorAll("[data-brouillon]").forEach((b) => b.addEventListener("click", () => ouvrirModeles(Number(b.dataset.brouillon))));
+  }
+  const rec = $("liste-recents");
+  if (rec) {
+    rec.innerHTML = etat.recents.length
+      ? etat.recents.map((m, i) => ligneMessage(m, i, false)).join("")
+      : '<li class="vide">Aucun message récent dans la boîte de réception.</li>';
+  }
 }
 
 function rendreAgenda() {
@@ -864,7 +873,7 @@ async function tout() {
   $("resume").textContent = "Chargement…";
   const [gm, ag, kp, so] = await Promise.allSettled([chargerGmail(), chargerAgenda(), chargerKpis(), chargerSocialComplet()]);
   const erreurs = [];
-  if (gm.status === "fulfilled") etat.messages = gm.value; else erreurs.push(`Gmail : ${gm.reason.message}`);
+  if (gm.status === "fulfilled") { etat.messages = gm.value.importants; etat.recents = gm.value.recents; } else erreurs.push(`Gmail : ${gm.reason.message}`);
   if (ag.status === "fulfilled") etat.agenda = ag.value; else erreurs.push(`Agenda : ${ag.reason.message}`);
   if (kp.status === "fulfilled") etat.kpis = kp.value; else erreurs.push(`Données : ${kp.reason.message}`);
   if (so.status === "fulfilled") etat.social = so.value;

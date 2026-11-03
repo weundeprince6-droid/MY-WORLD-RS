@@ -21,7 +21,7 @@ export const bases = {
 // Réglages du tableau de bord
 export const reglages = {
   gmail: {
-    requete: "newer_than:7d -category:promotions -category:social",
+    requete: "in:inbox newer_than:14d -category:promotions -category:social",
     maxMessages: 40,
     seuilImportance: 3,
     contactsVip: [],
