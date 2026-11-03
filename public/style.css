@@ -494,3 +494,33 @@ input::placeholder{color:var(--muted)!important;opacity:1}
  #pane-wallet .wallet-chart-currency{align-items:flex-start;flex-direction:column}
  #pane-wallet .wallet-history-filters{flex-direction:column}
 }
+
+
+/* Organisation du portefeuille sur le modèle du tableau de bord */
+#pane-wallet .wallet-page-heading{margin:0 0 22px;align-items:center}
+#pane-wallet .wallet-page-heading h2{font-size:clamp(25px,3vw,32px);letter-spacing:-.035em}
+#pane-wallet .wallet-page-heading>div>p:last-child{max-width:620px}
+#pane-wallet .wallet-block-heading{display:flex;align-items:flex-end;justify-content:space-between;margin:24px 0 12px}
+#pane-wallet .wallet-block-heading .eyebrow{margin:0 0 5px}
+#pane-wallet .wallet-block-heading h3{margin:0;font-size:18px;letter-spacing:-.025em;color:var(--text)}
+#pane-wallet .wallet-block-heading p:last-child{margin:5px 0 0;font-size:12px;color:var(--muted)}
+#pane-wallet .wallet-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:0}
+#pane-wallet .wallet-total{min-height:128px;padding:19px 20px;border-radius:15px;box-shadow:var(--shadow);border:1px solid var(--border)}
+#pane-wallet .wallet-total:before{height:3px;width:30px}
+#pane-wallet .wallet-ristourne{margin:0;border-radius:16px;box-shadow:none}
+#pane-wallet .wallet-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start;margin:0}
+#pane-wallet .wallet-columns>.carte{min-width:0;padding:20px;border-radius:15px;box-shadow:var(--shadow)}
+#pane-wallet .wallet-columns>.wallet-stat-card{grid-column:1/-1}
+#pane-wallet .wallet-history-card{padding:20px;border-radius:15px;box-shadow:var(--shadow)}
+#pane-wallet .wallet-history-card .card-heading{align-items:center}
+#pane-wallet .wallet-status{margin-top:14px}
+@media(max-width:850px){
+ #pane-wallet .wallet-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #pane-wallet .wallet-columns{grid-template-columns:1fr}
+ #pane-wallet .wallet-columns>.wallet-stat-card{grid-column:auto}
+}
+@media(max-width:560px){
+ #pane-wallet .wallet-summary{grid-template-columns:1fr}
+ #pane-wallet .wallet-block-heading{margin-top:20px}
+ #pane-wallet .wallet-columns>.carte,#pane-wallet .wallet-history-card{padding:16px}
+}
