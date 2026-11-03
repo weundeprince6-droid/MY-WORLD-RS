@@ -583,3 +583,17 @@ button.agenda-cal-jour{cursor:pointer}
 @media(max-width:520px){.outils .btn-icon-header{width:35px;height:35px;min-width:35px}}
 
 .wallet-export-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.wallet-export-actions .btn{white-space:nowrap}@media(max-width:600px){.wallet-export-actions{width:100%}.wallet-export-actions .btn{flex:1}}
+
+/* Carte anniversaire et repère dans le calendrier */
+.agenda-anniversaire{display:flex;align-items:center;gap:18px;overflow:hidden;position:relative;border:1px solid #d8e9df;background:linear-gradient(115deg,#edf8f1,#fff 72%);color:#174b36}
+.agenda-anniversaire:before{content:"";position:absolute;right:-30px;top:-45px;width:150px;height:150px;border-radius:50%;background:#d8efe1;opacity:.55}
+.agenda-anniversaire-icon{width:64px;height:64px;flex:0 0 64px;display:grid;place-items:center;border-radius:18px;background:#d9eee2;font-size:32px;position:relative}
+.agenda-anniversaire-contenu{position:relative;min-width:0}
+.agenda-anniversaire-contenu .eyebrow{margin:0 0 4px;color:#28724e;font-size:11px;font-weight:800;letter-spacing:.08em}
+.agenda-anniversaire-contenu h2{margin:0;font-size:18px;color:#174b36}
+.agenda-anniversaire-compte{margin:4px 0;font-size:22px;font-weight:800;color:#08794d}
+.agenda-anniversaire-contenu .meta{margin:3px 0 0}
+.agenda-cal-anniversaire{position:relative;border-color:#d6a23b!important;font-weight:800;background:#fff8e8!important;color:#80520a!important}
+.agenda-cal-anniversaire:after{content:"🎂";position:absolute;right:1px;bottom:0;font-size:9px;line-height:10px}
+.agenda-cal-anniversaire.agenda-cal-selection{background:var(--primary)!important;color:#fff!important}
+@media(max-width:430px){.agenda-anniversaire{gap:12px;padding:14px}.agenda-anniversaire-icon{width:48px;height:48px;flex-basis:48px;font-size:25px}.agenda-anniversaire-compte{font-size:19px}}
