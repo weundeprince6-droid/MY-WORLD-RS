@@ -555,3 +555,7 @@ button.agenda-cal-jour{cursor:pointer}
 .agenda-cal-aujourdhui{border-color:var(--primary);font-weight:800}
 .agenda-cal-selection{background:var(--primary)!important;color:#fff!important;border-color:var(--primary)!important}
 @media(max-width:430px){.agenda-cal-grille{gap:3px}.agenda-cal-jour{min-height:34px;font-size:12px}.agenda-cal-nav{gap:5px}.agenda-cal-nav strong{min-width:105px;font-size:12px}}
+
+/* Photo du compte Google dans l'en-tête */
+#utilisateur{display:flex;align-items:center;gap:9px;font-weight:600}
+.entete-avatar{width:34px;height:34px;display:block;object-fit:cover;border-radius:50%;border:2px solid var(--border);box-shadow:0 1px 4px #0001}
