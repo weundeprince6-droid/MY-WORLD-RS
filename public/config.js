@@ -22,7 +22,7 @@ export const bases = {
 export const reglages = {
   // Identifiant client OAuth (type « Application Web ») : active le renouvellement silencieux de l'accès Google,
   // pour ne plus se reconnecter toutes les heures. Voir docs/connexion-persistante.md. Laissez vide sinon.
-  googleClientId: "",
+  googleClientId: "90992521092-1geeefc7snhnih846f9gsub5g8jddcht.apps.googleusercontent.com",
 
   gmail: {
     requete: "in:inbox newer_than:14d -category:promotions -category:social",
