@@ -70,6 +70,8 @@ async function scenario(nom, { mode = 'ok', sdkBloque = false, quotaGmail = fals
     if (quotaGmail && u.includes('/messages/m1') && !quota.deja) { quota.deja = true; return route.fulfill({ status: 403, headers: { ...CORS, 'content-type': 'application/json' }, body: JSON.stringify({ error: { code: 403, message: "Quota exceeded for quota metric 'Total Query Cost' and limit 'Units per minute per user'" } }) }); }
     if (u.includes('/messages/m1')) return route.fulfill(json({ id: 'm1', threadId: 't1', labelIds: ['UNREAD', 'IMPORTANT'], snippet: 'Merci de régler avant le 5', internalDate: String(Date.now()), payload: { headers: [{ name: 'From', value: 'Marie Dupont <marie@ex.com>' }, { name: 'Subject', value: 'Rappel facture urgente' }] } }));
     if (u.includes('/messages/m2')) return route.fulfill(json({ id: 'm2', threadId: 't2', labelIds: ['CATEGORY_PROMOTIONS'], snippet: 'promo', internalDate: '1', payload: { headers: [{ name: 'From', value: 'Shop <no-reply@shop.com>' }, { name: 'Subject', value: 'Promotion -50%' }] } }));
+    if (u.includes('calendar/v3') && m === 'POST') { etat.evenements = etat.evenements || []; etat.evenements.push(JSON.parse(route.request().postData())); return route.fulfill(json({ id: 'nouveau1' })); }
+    if (u.includes('calendar/v3') && m === 'DELETE') { etat.supprime = decodeURIComponent(u.split('/events/')[1]); return route.fulfill({ status: 204, headers: CORS }); }
     if (u.includes('calendar/v3')) return route.fulfill(json({ items: [{ id: 'e1', summary: 'Réunion du comité', start: { dateTime: dans30.toISOString() }, end: { dateTime: new Date(dans30.getTime() + 3600000).toISOString() } }] }));
     if (u.includes(':runAggregationQuery')) return route.fulfill(json([{ result: { aggregateFields: { v: { integerValue: '7' } } } }]));
     if (u.includes(':runQuery')) return route.fulfill(json([]));
@@ -186,6 +188,20 @@ srv.listen(8765, async () => {
     await p.reload(); await p.waitForTimeout(3500);
     const bouton = await p.isVisible('#bouton-connexion'); const erreur = (await p.textContent('#erreur')).trim();
     return { ok: bouton && erreur.includes('Se connecter avec Google') && !erreur.includes('Failed'), detail: JSON.stringify({ bouton, erreur: erreur.slice(0, 160) }) };
+  }));
+  res.push(await scenario('Agenda : ajouter puis supprimer un rendez-vous', {}, async (p, appels, logs, etat) => {
+    p.on('dialog', (d) => d.accept());
+    await p.click('#bouton-connexion'); await p.waitForTimeout(2500);
+    await p.click('[data-tab="agenda"]'); await p.waitForTimeout(300);
+    await p.click('#agenda-ajouter'); await p.waitForTimeout(200);
+    const vide = (await p.textContent('#agenda-retour')).trim();
+    await p.fill('#agenda-form [name=titre]', 'Réunion AVEC'); await p.fill('#agenda-form [name=date]', '2026-11-05');
+    await p.fill('#agenda-form [name=debut]', '14:00'); await p.fill('#agenda-form [name=fin]', '15:30'); await p.fill('#agenda-form [name=lieu]', 'Bureau');
+    await p.click('#agenda-ajouter'); await p.waitForTimeout(1500);
+    const retour = (await p.textContent('#agenda-retour')).trim(); const ev = (etat.evenements || [])[0];
+    await p.click('[data-supprimer-evenement]'); await p.waitForTimeout(1200);
+    const ok = retour.includes('ajouté') && ev && ev.summary === 'Réunion AVEC' && ev.start.dateTime === '2026-11-05T14:00:00' && ev.end.dateTime === '2026-11-05T15:30:00' && ev.location === 'Bureau' && etat.supprime === 'e1';
+    return { ok, detail: JSON.stringify({ retour, supprime: etat.supprime, debut: ev && ev.start.dateTime }) };
   }));
   res.push(await scenario('Domaine non autorisé : message clair', { mode: 'auth/unauthorized-domain' }, async (p) => {
     await p.click('#bouton-connexion'); await p.waitForTimeout(800);

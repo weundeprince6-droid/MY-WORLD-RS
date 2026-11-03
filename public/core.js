@@ -102,6 +102,39 @@ export function normaliserEvenement(ev) {
   };
 }
 
+/**
+ * Corps d'un événement Google Agenda à partir du formulaire.
+ * saisie: { titre, date "AAAA-MM-JJ", debut "HH:MM", fin "HH:MM", toutLeJour, lieu, description }
+ * Lève une Error au message lisible si la saisie est incomplète ou incohérente.
+ */
+export function corpsEvenement(saisie, fuseau = "UTC") {
+  const titre = String(saisie.titre || "").trim();
+  if (!titre) throw new Error("Donnez un titre au rendez-vous.");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(saisie.date || "")) throw new Error("Choisissez la date du rendez-vous.");
+  const corps = { summary: titre };
+  if (saisie.lieu && String(saisie.lieu).trim()) corps.location = String(saisie.lieu).trim();
+  if (saisie.description && String(saisie.description).trim()) corps.description = String(saisie.description).trim();
+  if (saisie.toutLeJour) {
+    const suivant = new Date(`${saisie.date}T12:00:00Z`);
+    suivant.setUTCDate(suivant.getUTCDate() + 1);
+    corps.start = { date: saisie.date };
+    corps.end = { date: suivant.toISOString().slice(0, 10) };
+    return corps;
+  }
+  const heureOk = (h) => /^\d{2}:\d{2}$/.test(h || "");
+  if (!heureOk(saisie.debut)) throw new Error("Indiquez l'heure de début.");
+  const fin = heureOk(saisie.fin) ? saisie.fin : null;
+  if (fin && fin <= saisie.debut) throw new Error("L'heure de fin doit être après l'heure de début.");
+  let finTexte = fin;
+  if (!finTexte) { // durée par défaut : 1 heure
+    const [h, m] = saisie.debut.split(":").map(Number);
+    finTexte = `${String(Math.min(h + 1, 23)).padStart(2, "0")}:${String(h + 1 > 23 ? 59 : m).padStart(2, "0")}`;
+  }
+  corps.start = { dateTime: `${saisie.date}T${saisie.debut}:00`, timeZone: fuseau };
+  corps.end = { dateTime: `${saisie.date}T${finTexte}:00`, timeZone: fuseau };
+  return corps;
+}
+
 /** Sépare les événements en « aujourd'hui » et « à venir » (dans la fenêtre fournie). */
 export function repartirAgenda(evenements, maintenant = new Date()) {
   const liste = evenements.map(normaliserEvenement).sort((a, b) => a.debut - b.debut);

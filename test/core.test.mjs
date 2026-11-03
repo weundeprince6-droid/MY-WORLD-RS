@@ -67,3 +67,24 @@ assert.deepEqual(sortie, [10, 20, 30, 40, 50, 60, 70, 80, 90]);
 assert.equal(maxActifs, 4);
 
 console.log("Tous les tests passent.");
+
+// Corps d'un événement Google Agenda
+{
+  const { corpsEvenement } = await import("../public/core.js");
+  const e = corpsEvenement({ titre: " Réunion ", date: "2026-11-05", debut: "14:00", fin: "15:30", lieu: "Bureau", description: "" }, "Africa/Lubumbashi");
+  assert.equal(e.summary, "Réunion");
+  assert.equal(e.start.dateTime, "2026-11-05T14:00:00");
+  assert.equal(e.end.dateTime, "2026-11-05T15:30:00");
+  assert.equal(e.start.timeZone, "Africa/Lubumbashi");
+  assert.equal(e.location, "Bureau");
+  assert.equal(e.description, undefined);
+  assert.equal(corpsEvenement({ titre: "x", date: "2026-11-05", debut: "09:15" }).end.dateTime, "2026-11-05T10:15:00");
+  const j = corpsEvenement({ titre: "Férié", date: "2026-12-31", toutLeJour: true });
+  assert.deepEqual(j.start, { date: "2026-12-31" });
+  assert.deepEqual(j.end, { date: "2027-01-01" });
+  assert.throws(() => corpsEvenement({ titre: "", date: "2026-11-05", debut: "09:00" }), /titre/);
+  assert.throws(() => corpsEvenement({ titre: "a", date: "", debut: "09:00" }), /date/);
+  assert.throws(() => corpsEvenement({ titre: "a", date: "2026-11-05" }), /début/);
+  assert.throws(() => corpsEvenement({ titre: "a", date: "2026-11-05", debut: "10:00", fin: "09:00" }), /après/);
+  console.log("Corps d'événement Agenda : OK");
+}

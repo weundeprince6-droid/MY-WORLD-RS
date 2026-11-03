@@ -1,6 +1,6 @@
 // app.js — interface My World RS : connexion Google, lecture Gmail/Agenda/Firestore, rendu.
 import {
-  messagesImportants, repartirAgenda, evaluerSeuil, construireAlertes,
+  messagesImportants, repartirAgenda, corpsEvenement, evaluerSeuil, construireAlertes,
   resumeDuJour, remplirModele, construireBrouillonBrut, expediteurLisible, enLots,
 } from "./core.js";
 import {
@@ -21,6 +21,8 @@ const SCOPES = [
   "https://www.googleapis.com/auth/gmail.readonly",
   "https://www.googleapis.com/auth/gmail.compose",
   "https://www.googleapis.com/auth/calendar.readonly",
+  // Ajout et suppression de rendez-vous depuis l'onglet Agenda
+  "https://www.googleapis.com/auth/calendar.events",
   // Lecture des bases Firestore avec les droits de VOTRE compte Google (propriétaire des projets)
   "https://www.googleapis.com/auth/datastore",
   // Métadonnées des fichiers et dossiers Google Drive (lecture seule)
@@ -884,14 +886,68 @@ function rendreMessages() {
 function rendreAgenda() {
   const ligne = (e) => `<li><div class="ligne"><strong>${echapper(e.titre)}</strong>
       <span class="meta">${e.toutLeJour ? "Journée entière" : heure.format(e.debut)}</span></div>
-      ${e.lieu ? `<div class="extrait">${echapper(e.lieu)}</div>` : ""}</li>`;
+      ${e.lieu ? `<div class="extrait">${echapper(e.lieu)}</div>` : ""}
+      <div class="actions"><button type="button" data-supprimer-evenement="${echapper(e.id)}">Supprimer</button></div></li>`;
   const auj = etat.agenda.aujourdhui;
   $("liste-agenda").innerHTML = auj.length ? auj.map(ligne).join("") : '<li class="vide">Aucun rendez-vous aujourd\'hui.</li>';
   const suite = etat.agenda.aVenir.slice(0, 6);
   $("liste-avenir").innerHTML = suite.length
-    ? suite.map((e) => `<li><div class="ligne"><strong>${echapper(e.titre)}</strong><span class="meta">${jourCourt.format(e.debut)}${e.toutLeJour ? "" : " · " + heure.format(e.debut)}</span></div></li>`).join("")
+    ? suite.map((e) => `<li><div class="ligne"><strong>${echapper(e.titre)}</strong><span class="meta">${jourCourt.format(e.debut)}${e.toutLeJour ? "" : " · " + heure.format(e.debut)}</span></div><div class="actions"><button type="button" data-supprimer-evenement="${echapper(e.id)}">Supprimer</button></div></li>`).join("")
     : '<li class="vide">Rien de prévu dans les prochains jours.</li>';
 }
+
+// ---------- Agenda : ajouter et supprimer des rendez-vous ----------
+function retourAgenda(texte, erreur = false) {
+  const el = $("agenda-retour");
+  el.textContent = texte;
+  el.classList.toggle("erreur", erreur);
+}
+function expliquerErreurAgenda(e) {
+  if (/insufficient|permission|scope|403/i.test(e?.message || "")) {
+    effacerJetonMemorise();
+    return "Google n'a pas encore l'autorisation de modifier votre agenda. Cliquez sur « Déconnexion », puis « Se connecter avec Google » et acceptez l'autorisation Agenda.";
+  }
+  return e?.message || "Impossible de modifier l'agenda.";
+}
+$("agenda-toutlejour").addEventListener("change", (ev) => {
+  $("agenda-heures").hidden = ev.target.checked;
+});
+$("agenda-form").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const f = ev.target;
+  const bouton = $("agenda-ajouter");
+  try {
+    const corps = corpsEvenement({
+      titre: f.titre.value, date: f.date.value, debut: f.debut.value, fin: f.fin.value,
+      toutLeJour: f.toutlejour.checked, lieu: f.lieu.value, description: f.description.value,
+    }, Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC");
+    bouton.disabled = true;
+    retourAgenda("Ajout en cours…");
+    await google("https://www.googleapis.com/calendar/v3/calendars/primary/events", { method: "POST", body: JSON.stringify(corps) });
+    f.reset();
+    $("agenda-heures").hidden = false;
+    retourAgenda("Rendez-vous ajouté à Google Agenda.");
+    etat.agenda = await chargerAgenda();
+    tout_rendre();
+  } catch (e) {
+    retourAgenda(expliquerErreurAgenda(e), true);
+  } finally {
+    bouton.disabled = false;
+  }
+});
+document.addEventListener("click", async (ev) => {
+  const b = ev.target.closest?.("[data-supprimer-evenement]");
+  if (!b) return;
+  if (!confirm("Supprimer ce rendez-vous de Google Agenda ?")) return;
+  try {
+    await google(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${encodeURIComponent(b.dataset.supprimerEvenement)}`, { method: "DELETE" });
+    retourAgenda("Rendez-vous supprimé.");
+    etat.agenda = await chargerAgenda();
+    tout_rendre();
+  } catch (e) {
+    retourAgenda(expliquerErreurAgenda(e), true);
+  }
+});
 
 function rendreKpis() {
   if (!etat.kpis.length) {

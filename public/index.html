@@ -90,6 +90,17 @@
           </section>
           <section class="tab-pane" id="pane-agenda" role="tabpanel" data-pane="agenda" hidden>
             <div class="section-heading"><div><p class="eyebrow">ORGANISATION</p><h2>Mon agenda</h2><p>Vos rendez-vous d'aujourd'hui et les prochaines dates.</p></div><span class="section-icon blue">▦</span></div>
+            <section class="carte"><div class="card-heading"><h2>Ajouter un rendez-vous</h2><span class="heading-icon">＋</span></div>
+              <form id="agenda-form" class="agenda-form">
+                <input name="titre" required maxlength="150" placeholder="Titre du rendez-vous" aria-label="Titre">
+                <input name="date" type="date" required aria-label="Date">
+                <label class="agenda-case"><input id="agenda-toutlejour" name="toutlejour" type="checkbox"> Toute la journée</label>
+                <div id="agenda-heures" class="agenda-heures"><label>Début <input name="debut" type="time" aria-label="Heure de début"></label><label>Fin <input name="fin" type="time" aria-label="Heure de fin"></label></div>
+                <input name="lieu" maxlength="200" placeholder="Lieu (facultatif)" aria-label="Lieu">
+                <input name="description" maxlength="500" placeholder="Note (facultatif)" aria-label="Note">
+                <button id="agenda-ajouter" class="btn btn-primary" type="submit">Ajouter à Google Agenda</button>
+              </form>
+              <p id="agenda-retour" class="meta" role="status"></p></section>
             <div class="agenda-grid"><section class="carte"><div class="card-heading"><h2>Aujourd'hui</h2><span class="heading-icon">☀</span></div><ul id="liste-agenda" class="liste"></ul></section><section class="carte"><div class="card-heading"><h2>À venir</h2><span class="heading-icon">↗</span></div><ul id="liste-avenir" class="liste"></ul></section></div>
           </section>
           <section class="tab-pane" id="pane-bases" role="tabpanel" data-pane="bases" hidden>
@@ -208,6 +219,6 @@
       setTimeout(function(){if(!window.__appPret)montrer("L'application n'a pas démarré. Vérifiez votre connexion internet (les composants Firebase se chargent depuis Google), désactivez un éventuel bloqueur de publicités, puis rechargez. Appuyez sur F12 > Console pour voir le détail.");},6000);
     })();
   </script>
-  <script type="module" src="app.js?v=20261103-3"></script>
+  <script type="module" src="app.js?v=20261103-4"></script>
 </body>
 </html>
