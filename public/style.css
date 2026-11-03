@@ -597,3 +597,15 @@ button.agenda-cal-jour{cursor:pointer}
 .agenda-cal-anniversaire:after{content:"🎂";position:absolute;right:1px;bottom:0;font-size:9px;line-height:10px}
 .agenda-cal-anniversaire.agenda-cal-selection{background:var(--primary)!important;color:#fff!important}
 @media(max-width:430px){.agenda-anniversaire{gap:7px;padding:7px 9px!important}.agenda-anniversaire-icon{width:25px;height:25px;flex-basis:25px;font-size:14px}.agenda-anniversaire-contenuto{gap:5px}.agenda-anniversaire-contenuto .meta{font-size:9px}}
+
+/* Calendrier et rappel anniversaire côte à côte */
+.agenda-cal-anniversaire-wrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(205px,255px);gap:14px;align-items:stretch;margin:0 0 14px}
+.agenda-cal-anniversaire-wrap>.agenda-calendrier{min-width:0;margin:0!important}
+.agenda-cal-anniversaire-wrap>.agenda-anniversaire{align-self:center;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:10px;margin:0!important;padding:16px!important;min-height:145px;border-radius:14px!important}
+.agenda-cal-anniversaire-wrap .agenda-anniversaire-icon{width:36px;height:36px;flex-basis:36px;font-size:20px}
+.agenda-cal-anniversaire-wrap .agenda-anniversaire-contenu{display:block}
+.agenda-cal-anniversaire-wrap .agenda-anniversaire-contenu .eyebrow{margin-bottom:5px}
+.agenda-cal-anniversaire-wrap .agenda-anniversaire-contenu h2{font-size:14px}
+.agenda-cal-anniversaire-wrap .agenda-anniversaire-compte{font-size:18px;margin:5px 0}
+.agenda-cal-anniversaire-wrap .agenda-anniversaire-contenu .meta{font-size:10px}
+@media(max-width:760px){.agenda-cal-anniversaire-wrap{grid-template-columns:minmax(0,1fr)}.agenda-cal-anniversaire-wrap>.agenda-anniversaire{flex-direction:row;align-items:center;min-height:0;padding:10px 12px!important}.agenda-cal-anniversaire-wrap .agenda-anniversaire-contenu{display:flex;flex-wrap:wrap;align-items:center;gap:6px}.agenda-cal-anniversaire-wrap .agenda-anniversaire-contenu .meta{flex-basis:100%}}
