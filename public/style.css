@@ -171,3 +171,55 @@ input::placeholder{color:var(--muted)!important;opacity:1}
   .bandeau.erreur{background:#3a1b18;color:#ffb4ab;border-color:#6e3028}
 }
 
+
+
+/* Identité visuelle MY WORLD RS : noir, bleu et vert */
+:root{
+  --bg:#f5f7fa;
+  --surface:#ffffff;
+  --text:#111827;
+  --muted:#526174;
+  --border:#d8e1eb;
+  --primary:#1759a6;       /* bleu principal */
+  --primary-dark:#10447f;
+  --primary-soft:#e7f0fc;
+  --green:#087a4b;         /* vert de validation */
+  --blue:#1759a6;
+  --purple:#1759a6;        /* remplacer les accents violets par le bleu */
+  --orange:#087a4b;        /* remplacer les accents orange par le vert */
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    color-scheme:dark;
+    --bg:#080d14;          /* noir */
+    --surface:#111a26;
+    --text:#f3f6fb;
+    --muted:#b2c0d0;
+    --border:#2c3b4d;
+    --primary:#70adff;
+    --primary-dark:#3988e8;
+    --primary-soft:#172d46;
+    --green:#54d69a;
+    --blue:#70adff;
+    --purple:#70adff;
+    --orange:#54d69a;
+    --shadow:0 8px 24px rgba(0,0,0,.3);
+  }
+}
+/* Logo aux trois couleurs */
+.logo{background:linear-gradient(135deg,#111827 0%,#1759a6 55%,#087a4b 100%)}
+/* Uniformiser les anciennes cartes violettes/oranges avec le bleu et le vert */
+.section-icon.green,.feature-green .feature-icon{background:#e3f4eb;color:#087a4b}
+.section-icon.blue,.feature-blue .feature-icon{background:#e7f0fc;color:#1759a6}
+.section-icon.purple,.feature-purple .feature-icon{background:#e7f0fc;color:#1759a6}
+.section-icon.orange,.feature-orange .feature-icon{background:#e3f4eb;color:#087a4b}
+@media(prefers-color-scheme:dark){
+  .section-icon.green,.feature-green .feature-icon{background:#15372b;color:#54d69a}
+  .section-icon.blue,.feature-blue .feature-icon,
+  .section-icon.purple,.feature-purple .feature-icon{background:#172d46;color:#70adff}
+  .section-icon.orange,.feature-orange .feature-icon{background:#15372b;color:#54d69a}
+}
+/* Le bandeau des tâches suit lui aussi le thème du navigateur */
+.tasks-entete{background:var(--surface)!important;border:1px solid var(--border)!important}
+.tasks-entete-label{color:var(--green)!important}
+#tasks-entete-texte{color:var(--text)!important;text-shadow:none!important}
