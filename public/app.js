@@ -232,6 +232,8 @@ $("form-profil")?.addEventListener("submit", async (event) => {
   try {
     await enregistrerProfilCloud(profil);
     try { localStorage.setItem(cleProfil(), JSON.stringify(profil)); } catch {}
+    afficherAnniversaireAgenda();
+    rendreCalendrierAgenda();
     $("profil-status").textContent = "Profil synchronisé avec Firebase. Vous le retrouverez avec ce compte Google sur vos autres appareils.";
     $("confirmation").textContent = "Votre profil a été enregistré et synchronisé dans Firebase.";
     $("confirmation").hidden = false;
