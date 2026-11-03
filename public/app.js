@@ -379,6 +379,7 @@ async function restaurerSessionGoogle(user) {
     await obtenirJetonGoogle();
     chargerProfilGoogle(user);
     await tout();
+    await chargerWallet(true);
     chargerTasks();
     if (paramsRetour.has("google")) history.replaceState({}, document.title, location.pathname + location.hash);
   } catch (e) {
@@ -1186,8 +1187,8 @@ $("wallet-transfer-form")?.addEventListener("submit",async e=>{
   try{
     const from=walletAccounts.find(a=>a.id===f.elements.namedItem("from").value),to=walletAccounts.find(a=>a.id===f.elements.namedItem("to").value);
     if(!from||!to||from.id===to.id)throw new Error("Choisissez deux comptes différents.");
-    const amount=Number(f.elements.namedItem("amount").value),rate=Number(f.elements.namedItem("rate").value||1);if(!(amount>0))throw new Error("Montant invalide.");
-    if(from.currency!==to.currency&&!(rate>0))throw new Error("Saisissez un taux de change positif.");
+    const amount=Number(f.elements.namedItem("amount").value),rateText=f.elements.namedItem("rate").value.trim(),rate=Number(rateText);if(!(amount>0))throw new Error("Montant invalide.");
+    if(from.currency!==to.currency&&(!rateText||!(rate>0)))throw new Error("Saisissez le taux de change (montant reçu = montant envoyé × taux).");
     if(from.balance<amount)throw new Error("Solde insuffisant dans le compte de départ.");
     const received=from.currency===to.currency?amount:amount*rate,date=f.elements.namedItem("date").value,transferId=walletId(),description=f.elements.namedItem("description").value.trim();
     const txOut={kind:"transfer",transferId,accountId:from.id,accountName:from.name,accountType:from.type,currency:from.currency,amount,description:"Vers "+to.name+(description?" · "+description:""),date,createdAt:new Date().toISOString(),direction:"out",targetAccountId:to.id,targetAccountName:to.name,targetAmount:received,targetCurrency:to.currency};
