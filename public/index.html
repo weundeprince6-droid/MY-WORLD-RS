@@ -93,6 +93,7 @@
           <section class="tab-pane" id="pane-agenda" role="tabpanel" data-pane="agenda" hidden>
             <div class="section-heading"><div><p class="eyebrow">ORGANISATION</p><h2>Mon agenda</h2><p>Vos rendez-vous d'aujourd'hui et les prochaines dates.</p></div><span class="section-icon blue">▦</span></div>
             <div class="agenda-grid"><section class="carte"><div class="card-heading"><h2>Aujourd'hui</h2><span class="heading-icon">☀</span></div><ul id="liste-agenda" class="liste"></ul></section><section class="carte"><div class="card-heading"><h2>À venir</h2><span class="heading-icon">↗</span></div><ul id="liste-avenir" class="liste"></ul></section></div>
+            <section class="carte agenda-calendrier"><div class="card-heading"><div><p class="eyebrow">VUE MENSUELLE</p><h2>Calendrier</h2></div><div class="agenda-cal-nav"><button type="button" id="agenda-mois-precedent" aria-label="Mois précédent">‹</button><strong id="agenda-mois-titre"></strong><button type="button" id="agenda-mois-suivant" aria-label="Mois suivant">›</button></div></div><div class="agenda-cal-grille" id="agenda-calendrier" aria-label="Calendrier mensuel"></div><p class="meta">Clique sur une date pour la choisir dans le formulaire.</p></section>
             <section class="carte"><div class="card-heading"><h2>Ajouter un rendez-vous</h2><span class="heading-icon">＋</span></div>
               <form id="agenda-form" class="agenda-form">
                 <input name="titre" required maxlength="150" placeholder="Titre du rendez-vous" aria-label="Titre">
@@ -293,6 +294,6 @@
       setTimeout(function(){if(!window.__appPret)montrer("L'application n'a pas démarré. Vérifiez votre connexion internet (les composants Firebase se chargent depuis Google), désactivez un éventuel bloqueur de publicités, puis rechargez. Appuyez sur F12 > Console pour voir le détail.");},6000);
     })();
   </script>
-  <script type="module" src="app.js?v=20261103-13"></script>
+  <script type="module" src="app.js?v=20261103-14"></script>
 </body>
 </html>
