@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>My World RS</title>
   <meta name="description" content="Votre espace personnel : messages, agenda, bases de données et alertes.">
-  <link rel="stylesheet" href="style.css?v=20261103-10">
+  <link rel="stylesheet" href="style.css?v=20261103-11">
 </head>
 <body>
   <header class="entete">
@@ -15,6 +15,7 @@
     </a>
     <div id="tasks-entete" class="tasks-entete" aria-live="polite" aria-label="Tâches Google"><span class="tasks-entete-label">À FAIRE</span><span id="tasks-entete-texte">Vos tâches apparaîtront ici</span></div>
     <div class="outils">
+      <button id="direct" class="direct" type="button" hidden title="Actualisation automatique : cliquez pour arrêter ou reprendre">● En direct</button>
       <span id="utilisateur" class="meta"></span>
       <button id="bouton-actualiser" class="btn btn-light" hidden>↻ Actualiser</button>
       <button id="bouton-deconnexion" class="btn btn-quiet" hidden>Déconnexion</button>
@@ -292,6 +293,6 @@
       setTimeout(function(){if(!window.__appPret)montrer("L'application n'a pas démarré. Vérifiez votre connexion internet (les composants Firebase se chargent depuis Google), désactivez un éventuel bloqueur de publicités, puis rechargez. Appuyez sur F12 > Console pour voir le détail.");},6000);
     })();
   </script>
-  <script type="module" src="app.js?v=20261103-11"></script>
+  <script type="module" src="app.js?v=20261103-12"></script>
 </body>
 </html>

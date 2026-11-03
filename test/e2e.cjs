@@ -75,8 +75,10 @@ async function scenario(nom, { mode = 'ok', sdkBloque = false, quotaGmail = fals
     if (u.includes('calendar/v3')) return route.fulfill(json({ items: [{ id: 'e1', summary: 'Réunion du comité', start: { dateTime: dans30.toISOString() }, end: { dateTime: new Date(dans30.getTime() + 3600000).toISOString() } }] }));
     if (u.includes(':runAggregationQuery')) return route.fulfill(json([{ result: { aggregateFields: { v: { integerValue: '7' } } } }]));
     if (u.includes(':runQuery')) return route.fulfill(json([]));
-    if (u.includes('/documents/days')) { const d = new Date(); const iso = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-      return route.fulfill(json({ documents: [{ name: 'x/days/' + iso, fields: { items: { mapValue: { fields: { a: { mapValue: { fields: { k: { stringValue: 's' }, name: { stringValue: 'Riz' }, q: { integerValue: '3' }, p: { integerValue: '1000' }, c: { stringValue: 'FC' } } } }, r1: { mapValue: { fields: { k: { stringValue: 'r' }, type: { stringValue: 'in' }, a: { integerValue: '10000' }, c: { stringValue: 'FC' }, g: { stringValue: 'g1' } } } }, r2: { mapValue: { fields: { k: { stringValue: 'r' }, type: { stringValue: 'out' }, a: { integerValue: '2500' }, c: { stringValue: 'FC' }, g: { stringValue: 'g1' } } } } } } } } }] })); }
+    if (u.includes('/documents/days')) { etat.lecturesJours = (etat.lecturesJours || 0) + (/\/documents\/days\/\d{4}/.test(u) ? 1 : 0);
+     if (/\/documents\/days\/\d{4}/.test(u)) { const d0 = new Date(); const iso0 = d0.getFullYear() + '-' + String(d0.getMonth() + 1).padStart(2, '0') + '-' + String(d0.getDate()).padStart(2, '0'); return route.fulfill(json({ name: 'x/days/' + iso0, fields: { items: { mapValue: { fields: { a: { mapValue: { fields: { k: { stringValue: 's' }, name: { stringValue: 'Riz' }, q: { integerValue: String(etat.qteRiz || 3) }, p: { integerValue: '1000' }, c: { stringValue: 'FC' } } } }, r1: { mapValue: { fields: { k: { stringValue: 'r' }, type: { stringValue: 'in' }, a: { integerValue: '10000' }, c: { stringValue: 'FC' }, g: { stringValue: 'g1' } } } }, r2: { mapValue: { fields: { k: { stringValue: 'r' }, type: { stringValue: 'out' }, a: { integerValue: '2500' }, c: { stringValue: 'FC' }, g: { stringValue: 'g1' } } } } } } } } })); }
+    const d = new Date(); const iso = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      return route.fulfill(json({ documents: [{ name: 'x/days/' + iso, fields: { items: { mapValue: { fields: { a: { mapValue: { fields: { k: { stringValue: 's' }, name: { stringValue: 'Riz' }, q: { integerValue: String(etat.qteRiz || 3) }, p: { integerValue: '1000' }, c: { stringValue: 'FC' } } } }, r1: { mapValue: { fields: { k: { stringValue: 'r' }, type: { stringValue: 'in' }, a: { integerValue: '10000' }, c: { stringValue: 'FC' }, g: { stringValue: 'g1' } } } }, r2: { mapValue: { fields: { k: { stringValue: 'r' }, type: { stringValue: 'out' }, a: { integerValue: '2500' }, c: { stringValue: 'FC' }, g: { stringValue: 'g1' } } } } } } } } }] })); }
     if (u.includes('/documents/cfg/main')) return route.fulfill(json({ name: 'x/cfg/main', fields: { ristGroups: { mapValue: { fields: { g1: { mapValue: { fields: { name: { stringValue: 'Famille' } } } } } } } } }));
     if (u.includes('/documents/members')) return route.fulfill(json({ documents: [
       { name: 'x/members/MBR-1', fields: { epargne: { doubleValue: 100 }, credits: { arrayValue: { values: [{ mapValue: { fields: { amount: { integerValue: '200' }, repaid: { integerValue: '50' }, dueDate: { stringValue: '2026-01-01' } } } }] } } } } ] }));
@@ -210,6 +212,18 @@ srv.listen(8765, async () => {
     const solde = (await p.textContent('#rist-solde-fc')).replace(/\s/g, ' '); const groupes = await p.textContent('#rist-groupes'); const statut = (await p.textContent('#wallet-ristourne-status')).trim();
     const ok = /10\s?000 FC/.test(depots) && /2\s?500 FC/.test(retraits) && /7\s?500 FC/.test(solde) && groupes.includes('Famille') && statut.startsWith('Synchronisé');
     return { ok, detail: JSON.stringify({ depots, retraits, solde, statut: statut.slice(0, 70) }) };
+  }));
+  res.push(await scenario('Actualisation automatique : ESE DB se met à jour seule, sans toucher à la page', {}, async (p, appels, logs, etat) => {
+    await p.click('#bouton-connexion'); await p.waitForTimeout(3000);
+    await p.click('[data-tab="bases"]'); await p.waitForTimeout(500);
+    const avant = (await p.textContent('#grille-kpis')).replace(/\s/g, ' ');
+    etat.qteRiz = 9; // un nouveau client achète : 9 × 1000 = 9 000 FC dans la base
+    await p.waitForTimeout(6000);
+    const apres = (await p.textContent('#grille-kpis')).replace(/\s/g, ' ');
+    const voyant = (await p.textContent('#direct')).trim();
+    const lectures = etat.lecturesJours || 0;
+    const ok = /3\s?000/.test(avant) && /9\s?000/.test(apres) && voyant.includes('En direct') && lectures >= 2 && lectures <= 6;
+    return { ok, detail: JSON.stringify({ avantA: avant.slice(avant.indexOf('Ventes'), avant.indexOf('Ventes') + 40), apresA: apres.slice(apres.indexOf('Ventes'), apres.indexOf('Ventes') + 40), voyant, lectures }) };
   }));
   res.push(await scenario('Domaine non autorisé : message clair', { mode: 'auth/unauthorized-domain' }, async (p) => {
     await p.click('#bouton-connexion'); await p.waitForTimeout(800);

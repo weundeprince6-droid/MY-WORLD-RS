@@ -111,6 +111,7 @@ function afficherSession(connecte, nom = "") {
   $("bouton-deconnexion").hidden = !connecte;
   $("bouton-actualiser").hidden = !connecte;
   $("utilisateur").textContent = connecte ? nom : "";
+  if ($("direct")) $("direct").hidden = !connecte;
 }
 
 // ---------- Profil personnel : sauvegarde Firebase par compte Google ----------
@@ -804,6 +805,46 @@ function unDocument(projectId, chemin) {
   return cacheDocuments.get(cle);
 }
 
+// ESE DB : lecture économe pour l'actualisation automatique (le quota gratuit Firestore est de 50 000 lectures par jour).
+// Tous les jours sont lus en entier au chargement puis toutes les 10 minutes ; entre-temps, seul le document du jour est relu.
+const magasinJoursEse = new Map(); // projectId -> { docs: Map, complet: ms, memo }
+async function lireJoursEse(projectId) {
+  let m = magasinJoursEse.get(projectId);
+  if (!m) { m = { docs: new Map(), complet: 0, memo: null, cfg: null }; magasinJoursEse.set(projectId, m); }
+  if (m.memo && Date.now() - m.memo.t < 1500) return m.memo.p;
+  const p = (async () => {
+    if (!m.docs.size || Date.now() - m.complet > 600000) {
+      cacheDocuments.delete(`${projectId}/days`);
+      const docs = await tousLesDocuments(projectId, "days");
+      m.docs = new Map(docs.map((d) => [d.id, d]));
+      m.complet = Date.now();
+    } else {
+      const iso = aujourdhuiLocal();
+      try {
+        const d = decoderDocument(await firestore(projectId, `/days/${iso}`));
+        m.docs.set(d.id || iso, d);
+      } catch (e) {
+        if (!/404|NOT_FOUND|not found/i.test(e.message || "")) throw e; // pas encore de vente aujourd'hui
+      }
+    }
+    return [...m.docs.values()];
+  })();
+  m.memo = { t: Date.now(), p };
+  p.catch(() => { if (m.memo && m.memo.p === p) m.memo = null; });
+  return p;
+}
+// cfg/main change rarement : relu au plus toutes les 10 secondes
+function lireCfgEse(projectId) {
+  let m = magasinJoursEse.get(projectId);
+  if (!m) { m = { docs: new Map(), complet: 0, memo: null, cfg: null }; magasinJoursEse.set(projectId, m); }
+  if (!m.cfg || Date.now() - m.cfg.t > 10000) {
+    const p = firestore(projectId, "/cfg/main").then(decoderDocument).catch(() => ({}));
+    m.cfg = { t: Date.now(), p };
+  }
+  return m.cfg.p;
+}
+function oublierCachesEse() { magasinJoursEse.forEach((m) => { m.complet = 0; m.memo = null; m.cfg = null; }); }
+
 async function valeurKpi(k) {
   const base = bases[k.base];
   if (!base) throw new Error(`Base inconnue : ${k.base}`);
@@ -816,20 +857,18 @@ async function valeurKpi(k) {
   if (k.op === "ese") {
     const mesure = MESURES_ESE[k.mesure];
     if (!mesure) throw new Error(`Mesure inconnue : ${k.mesure}`);
-    const [jours, cfg] = await Promise.all([
-      tousLesDocuments(base.projectId, "days"),
-      unDocument(base.projectId, "cfg/main").catch(() => ({})),
-    ]);
+    const [jours, cfg] = await Promise.all([lireJoursEse(base.projectId), lireCfgEse(base.projectId)]);
     return mesure(calculerEse(jours, cfg, aujourdhuiLocal()));
   }
   const reponse = await firestore(base.projectId, ":runAggregationQuery", corpsAgregation(k));
   return lireAgregat(reponse);
 }
 
-async function chargerKpis() {
-  cacheDocuments = new Map();
+async function chargerKpis(filtre = null) {
+  if (!filtre) cacheDocuments = new Map();
   return Promise.all(
-    reglages.kpis.map(async (k) => {
+    reglages.kpis.map(async (k, i) => {
+      if (filtre && !filtre(k) && etat.kpis[i]) return etat.kpis[i]; // indicateur non concerné : valeur conservée
       const base = bases[k.base]?.nom || "";
       try {
         const valeur = await valeurKpi(k);
@@ -1042,6 +1081,7 @@ function tout_rendre() {
 }
 
 async function tout() {
+  oublierCachesEse();
   afficherErreur("");
   $("resume").textContent = "Chargement…";
   const [gm, ag, kp, so] = await Promise.allSettled([chargerGmail(), chargerAgenda(), chargerKpis(), chargerSocialComplet()]);
@@ -1111,22 +1151,20 @@ function rendreRistourne(r) {
       : "Aucun crédit de ristourne en cours.";
   }
 }
-async function chargerRistourne(force = false) {
+async function chargerRistourne(force = false, silencieux = false) {
   const statut = $("wallet-ristourne-status");
   const base = bases.ese;
   if (!base || !jetonGoogle) return;
-  if (force) { cacheDocuments.delete(`${base.projectId}/days`); cacheDocuments.delete(`${base.projectId}/doc/cfg/main`); }
+  if (force) oublierCachesEse();
   try {
-    if (statut) statut.textContent = "Synchronisation avec ESE DB…";
-    const [jours, cfg] = await Promise.all([
-      tousLesDocuments(base.projectId, "days"),
-      unDocument(base.projectId, "cfg/main").catch(() => ({})),
-    ]);
+    if (statut && !silencieux) statut.textContent = "Synchronisation avec ESE DB…";
+    const [jours, cfg] = await Promise.all([lireJoursEse(base.projectId), lireCfgEse(base.projectId)]);
     const r = calculerRistourne(jours, cfg);
     rendreRistourne(r);
     if (statut) statut.textContent = `Synchronisé avec ESE DB à ${heure.format(new Date())} · ${r.mouvements} mouvement(s) de ristourne lus.`;
   } catch (e) {
     if (statut) statut.textContent = "Synchronisation ESE DB impossible : " + e.message;
+    if (silencieux) throw e;
   }
 }
 
@@ -1368,9 +1406,11 @@ async function synchroniserTelegram() {
 
 // Lit Telegram puis Facebook, enregistre les nouveaux messages, puis retourne la liste à afficher.
 // `forcer` = false pour la lecture automatique : Facebook n'est alors relu que toutes les 3 minutes.
-async function chargerSocialComplet(forcer = true) {
+async function chargerSocialComplet(forcer = true, seulementSiNouveau = false) {
+  let recus = 0;
   try {
     statutTelegram.nouveaux = await synchroniserTelegram();
+    recus += statutTelegram.nouveaux || 0;
     statutTelegram.erreur = "";
   } catch (e) {
     statutTelegram.erreur = messageReseau(e);
@@ -1380,6 +1420,7 @@ async function chargerSocialComplet(forcer = true) {
   if (stockage.lire(CLE_FB_JETON) && (forcer || Date.now() - statutFacebook.derniere >= 170000)) {
     try {
       statutFacebook.nouveaux = await synchroniserFacebook();
+      recus += statutFacebook.nouveaux || 0;
       statutFacebook.erreur = "";
     } catch (e) {
       statutFacebook.erreur = messageReseau(e, "Facebook");
@@ -1387,6 +1428,8 @@ async function chargerSocialComplet(forcer = true) {
     statutFacebook.derniere = Date.now();
   }
   majStatutFacebook();
+  // Lecture automatique : on ne relit la liste (donc des documents facturés) que s'il y a du nouveau
+  if (seulementSiNouveau && !recus) return null;
   return chargerSocial();
 }
 
@@ -1397,11 +1440,111 @@ async function rafraichirSocial(forcer = true) {
   rendreAlertes();
 }
 
+// ---------- Actualisation automatique, silencieuse ----------
+// ESE DB et ristournes : toutes les 2 secondes. Réseaux sociaux : 8 s. Indicateurs AVEC : 30 s.
+// Gmail et Agenda : 60 s (Google limite le nombre de lectures par minute).
+// Rien ne tourne quand l'onglet est caché ; après 5 minutes sans activité, le rythme est divisé par 15.
+const planif = { minuteur: null, dernier: {}, enCours: {}, pauseJusqua: 0, echecs: 0, derniereActivite: Date.now(), sig: {}, desactive: false };
+const signature = (o) => { try { return JSON.stringify(o); } catch { return String(Math.random()); } };
+
+function afficherDirect(etatDirect, detail = "") {
+  const el = $("direct");
+  if (!el) return;
+  el.dataset.etat = etatDirect;
+  const heureTexte = new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }).format(new Date());
+  el.textContent = etatDirect === "ok" ? `● En direct · ${heureTexte}`
+    : etatDirect === "pause" ? `Ⅱ En pause${detail ? " · " + detail : ""}`
+    : etatDirect === "off" ? "○ Actualisation arrêtée" : "● Reconnexion…";
+}
+
+function gererErreurAuto(e) {
+  planif.echecs += 1;
+  const message = String(e?.message || "");
+  const auth = /session|expir|autoris|401|connectez/i.test(message);
+  const quota = e?.quota || /quota|429|limite/i.test(message);
+  const attente = quota ? 120000 : auth ? 120000 : Math.min(60000, 2000 * 2 ** Math.min(planif.echecs, 5));
+  planif.pauseJusqua = Date.now() + attente;
+  afficherDirect("pause", quota ? "limite Google atteinte" : auth ? "reconnexion nécessaire" : "nouvel essai bientôt");
+  console.info("Actualisation automatique suspendue :", message);
+}
+
+async function majEseSilencieuse() {
+  const kpis = await chargerKpis((k) => k.op === "ese");
+  const sig = signature(kpis.filter((k) => k.op === "ese"));
+  const change = sig !== planif.sig.ese;
+  planif.sig.ese = sig;
+  etat.kpis = kpis;
+  if (change) { rendreKpis(); rendreAlertes(); rendreDashboard(); }
+  await chargerRistourne(false, true);
+}
+async function majAvecSilencieuse() {
+  const kpis = await chargerKpis((k) => k.op !== "ese");
+  const sig = signature(kpis.filter((k) => k.op !== "ese"));
+  const change = sig !== planif.sig.avec;
+  planif.sig.avec = sig;
+  etat.kpis = kpis;
+  if (change) { rendreKpis(); rendreAlertes(); rendreDashboard(); }
+}
+async function majSocialSilencieuse() {
+  const listeRecente = Date.now() - (planif.derniereListeSociale || 0) < 60000;
+  const social = await chargerSocialComplet(false, listeRecente);
+  if (!social) return;
+  planif.derniereListeSociale = Date.now();
+  const sig = signature(social);
+  if (sig === planif.sig.social) return;
+  planif.sig.social = sig;
+  etat.social = social;
+  rendreSocial(); rendreAlertes(); rendreDashboard();
+}
+async function majGoogleSilencieuse() {
+  const [gm, ag] = await Promise.all([chargerGmail(), chargerAgenda()]);
+  const sig = signature([gm, ag]);
+  if (sig === planif.sig.google) return;
+  planif.sig.google = sig;
+  etat.messages = gm.importants; etat.recents = gm.recents; etat.agenda = ag;
+  rendreMessages(); rendreAgenda(); rendreAlertes(); rendreDashboard();
+}
+
+function tickAuto() {
+  if (planif.desactive) return;
+  if (document.hidden || !jetonGoogle || !fb?.auth.currentUser) return;
+  const maintenant = Date.now();
+  if (maintenant < planif.pauseJusqua) return;
+  if (planif.enCours.tout) return;
+  const inactif = maintenant - planif.derniereActivite > 300000;
+  const facteur = inactif ? 15 : 1;
+  const echu = (cle, ms) => !planif.enCours[cle] && maintenant - (planif.dernier[cle] || 0) >= ms * facteur;
+  const lancer = (cle, f) => {
+    planif.dernier[cle] = maintenant;
+    planif.enCours[cle] = true;
+    f().then(() => { planif.echecs = 0; afficherDirect("ok"); }).catch(gererErreurAuto).finally(() => { planif.enCours[cle] = false; });
+  };
+  // Pas de lecture automatique tant que le premier chargement n'est pas terminé
+  if (!etat.kpis.length) return;
+  if (echu("ese", 2000)) lancer("ese", majEseSilencieuse);
+  if (echu("avec", 30000)) lancer("avec", majAvecSilencieuse);
+  if (echu("social", 8000) && (stockage.lire(CLE_TG_JETON) || stockage.lire(CLE_FB_JETON))) lancer("social", majSocialSilencieuse);
+  if (echu("google", 60000)) lancer("google", majGoogleSilencieuse);
+}
+
 function demarrerSurveillanceSocial() {
-  if (minuteurSocial) return;
-  minuteurSocial = setInterval(() => {
-    if (document.visibilityState === "visible" && (stockage.lire(CLE_TG_JETON) || stockage.lire(CLE_FB_JETON))) rafraichirSocial(false);
-  }, 60000);
+  if (planif.minuteur) return;
+  try { planif.desactive = localStorage.getItem("mwrs.auto.off") === "1"; } catch { /* stockage indisponible */ }
+  const activite = () => { planif.derniereActivite = Date.now(); };
+  ["pointerdown", "keydown", "touchstart", "scroll"].forEach((ev) => window.addEventListener(ev, activite, { passive: true }));
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) { activite(); planif.pauseJusqua = 0; } });
+  const bouton = $("direct");
+  if (bouton) {
+    bouton.hidden = false;
+    afficherDirect(planif.desactive ? "off" : "ok");
+    bouton.addEventListener("click", () => {
+      planif.desactive = !planif.desactive;
+      try { localStorage.setItem("mwrs.auto.off", planif.desactive ? "1" : "0"); } catch { /* stockage indisponible */ }
+      planif.pauseJusqua = 0;
+      afficherDirect(planif.desactive ? "off" : "ok");
+    });
+  }
+  planif.minuteur = setInterval(tickAuto, 1000);
 }
 
 function retourTelegram(texte, erreur = false) {
