@@ -559,3 +559,17 @@ button.agenda-cal-jour{cursor:pointer}
 /* Photo du compte Google dans l'en-tête */
 #utilisateur{display:flex;align-items:center;gap:9px;font-weight:600}
 .entete-avatar{width:34px;height:34px;display:block;object-fit:cover;border-radius:50%;border:2px solid var(--border);box-shadow:0 1px 4px #0001}
+
+
+/* Nouveau mail Gmail */
+.messages-heading{align-items:center;gap:16px}
+#nouveau-mail-dialog{width:min(620px,calc(100% - 28px));max-width:620px;padding:0;border:1px solid var(--border);border-radius:18px;background:var(--surface);color:var(--text);box-shadow:0 24px 80px #0003}
+#nouveau-mail-dialog::backdrop{background:rgba(10,20,30,.48);backdrop-filter:blur(3px)}
+.nouveau-mail-form{display:grid;gap:15px;padding:24px}
+.nouveau-mail-head{display:flex;align-items:flex-start;justify-content:space-between;gap:15px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.nouveau-mail-head h2{margin:5px 0;font-size:23px}
+.nouveau-mail-form label{display:grid;gap:7px;font-size:12px;font-weight:700}
+.nouveau-mail-form input,.nouveau-mail-form textarea{width:100%;box-sizing:border-box;padding:11px 13px;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);font:inherit;font-size:14px;resize:vertical}
+.nouveau-mail-form input:focus,.nouveau-mail-form textarea:focus{outline:2px solid rgba(8,122,75,.2);border-color:var(--primary)}
+.nouveau-mail-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+@media(max-width:600px){.messages-heading{align-items:flex-start;flex-direction:column}.nouveau-mail-form{padding:18px}.nouveau-mail-actions{align-items:stretch;flex-direction:column}.nouveau-mail-actions button{width:100%}}
