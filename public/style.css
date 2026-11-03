@@ -399,3 +399,12 @@ input::placeholder{color:var(--muted)!important;opacity:1}
  .wallet-ristourne-metrics article{display:flex;align-items:center;justify-content:space-between}
 }
 @media(max-width:480px){.wallet-hero-art{display:none}.wallet-hero{min-height:auto}.wallet-hero h2{font-size:27px}.wallet-ristourne-head{gap:8px}}
+
+/* Graphiques financiers : panneaux adaptatifs et lecture par devise */
+.wallet-chart-currency{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin:14px 0 10px;color:var(--muted);font-size:12px;font-weight:700}
+.wallet-chart-currency select{max-width:240px;padding:8px 10px;border:1px solid var(--border);border-radius:9px;background:var(--bg);color:var(--text);font:inherit}
+.wallet-chart-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:10px}
+.wallet-chart-panel{min-width:0;padding:13px;border:1px solid var(--border);border-radius:13px;background:var(--surface)}
+.wallet-chart-panel h3{margin:0 0 8px;font-size:13px;color:var(--text)}
+.wallet-chart-panel .wallet-chart-wrap{margin-top:0}
+@media(max-width:760px){.wallet-chart-grid{grid-template-columns:1fr}.wallet-chart-currency{justify-content:space-between}}
