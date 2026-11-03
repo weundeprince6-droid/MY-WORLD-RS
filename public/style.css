@@ -538,3 +538,7 @@ input::placeholder{color:var(--muted)!important;opacity:1}
 .direct{border:1px solid var(--border);background:transparent;color:var(--primary);border-radius:999px;padding:5px 11px;font:inherit;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap}
 .direct[data-etat="pause"]{color:#e2a13c}.direct[data-etat="off"]{color:var(--muted)}
 @media(max-width:760px){.direct{font-size:10px;padding:4px 8px}}
+
+.wallet-actions{text-align:right;white-space:nowrap}
+.wallet-delete{border:1px solid var(--border);background:transparent;color:#e35c55;border-radius:8px;padding:4px 9px;font:inherit;font-size:11px;font-weight:700;cursor:pointer}
+.wallet-delete:hover{background:rgba(227,92,85,.12);border-color:#e35c55}

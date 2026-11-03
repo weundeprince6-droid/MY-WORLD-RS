@@ -75,6 +75,14 @@ async function scenario(nom, { mode = 'ok', sdkBloque = false, quotaGmail = fals
     if (u.includes('calendar/v3')) return route.fulfill(json({ items: [{ id: 'e1', summary: 'Réunion du comité', start: { dateTime: dans30.toISOString() }, end: { dateTime: new Date(dans30.getTime() + 3600000).toISOString() } }] }));
     if (u.includes(':runAggregationQuery')) return route.fulfill(json([{ result: { aggregateFields: { v: { integerValue: '7' } } } }]));
     if (u.includes(':runQuery')) return route.fulfill(json([]));
+    if (u.includes('/walletTransactions') || u.includes('/walletAccounts')) {
+      etat.wallet = etat.wallet || { supprimes: [], patchs: [] };
+      if (m === 'DELETE') { etat.wallet.supprimes.push(decodeURIComponent(u.split('/walletTransactions/')[1] || '')); return route.fulfill(json({})); }
+      if (m === 'PATCH') { etat.wallet.patchs.push(JSON.parse(route.request().postData())); return route.fulfill(json({})); }
+      const S = (v) => ({ stringValue: v });
+      if (u.includes('/walletAccounts')) return route.fulfill(json({ documents: [{ name: 'x/walletAccounts/a1', fields: { name: S('Caisse'), type: S('personal'), currency: S('USD'), balance: { doubleValue: 70 }, createdAt: S('2026-11-01') } }] }));
+      return route.fulfill(json({ documents: [{ name: 'x/walletTransactions/t1', fields: { kind: S('expense'), accountId: S('a1'), accountName: S('Caisse'), currency: S('USD'), amount: { doubleValue: 30 }, date: S('2026-11-03'), description: S('Transport') } }] }));
+    }
     if (u.includes('/documents/days')) { etat.lecturesJours = (etat.lecturesJours || 0) + (/\/documents\/days\/\d{4}/.test(u) ? 1 : 0);
      if (/\/documents\/days\/\d{4}/.test(u)) { const d0 = new Date(); const iso0 = d0.getFullYear() + '-' + String(d0.getMonth() + 1).padStart(2, '0') + '-' + String(d0.getDate()).padStart(2, '0'); return route.fulfill(json({ name: 'x/days/' + iso0, fields: { items: { mapValue: { fields: { a: { mapValue: { fields: { k: { stringValue: 's' }, name: { stringValue: 'Riz' }, q: { integerValue: String(etat.qteRiz || 3) }, p: { integerValue: '1000' }, c: { stringValue: 'FC' } } } }, r1: { mapValue: { fields: { k: { stringValue: 'r' }, type: { stringValue: 'in' }, a: { integerValue: '10000' }, c: { stringValue: 'FC' }, g: { stringValue: 'g1' } } } }, r2: { mapValue: { fields: { k: { stringValue: 'r' }, type: { stringValue: 'out' }, a: { integerValue: '2500' }, c: { stringValue: 'FC' }, g: { stringValue: 'g1' } } } } } } } } })); }
     const d = new Date(); const iso = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
@@ -224,6 +232,17 @@ srv.listen(8765, async () => {
     const lectures = etat.lecturesJours || 0;
     const ok = /3\s?000/.test(avant) && /9\s?000/.test(apres) && voyant.includes('En direct') && lectures >= 2 && lectures <= 6;
     return { ok, detail: JSON.stringify({ avantA: avant.slice(avant.indexOf('Ventes'), avant.indexOf('Ventes') + 40), apresA: apres.slice(apres.indexOf('Ventes'), apres.indexOf('Ventes') + 40), voyant, lectures }) };
+  }));
+  res.push(await scenario('Porte-Monnaie : supprimer un mouvement corrige le solde', {}, async (p, appels, logs, etat) => {
+    p.on('dialog', (d) => d.accept());
+    await p.click('#bouton-connexion'); await p.waitForTimeout(3000);
+    await p.click('[data-tab="wallet"]'); await p.waitForTimeout(1200);
+    const avant = await p.textContent('#wallet-history');
+    await p.click('[data-wallet-supprimer]'); await p.waitForTimeout(1500);
+    const apres = await p.textContent('#wallet-history'); const statut = (await p.textContent('#wallet-status')).trim();
+    const patch = etat.wallet && etat.wallet.patchs[0]; const solde = patch && patch.fields.balance.doubleValue;
+    const ok = avant.includes('Transport') && !apres.includes('Transport') && etat.wallet.supprimes[0] === 't1' && solde === 100 && statut.includes('supprimé');
+    return { ok, detail: JSON.stringify({ supprimes: etat.wallet && etat.wallet.supprimes, solde, statut: statut.slice(0, 60) }) };
   }));
   res.push(await scenario('Domaine non autorisé : message clair', { mode: 'auth/unauthorized-domain' }, async (p) => {
     await p.click('#bouton-connexion'); await p.waitForTimeout(800);

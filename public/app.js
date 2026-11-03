@@ -423,6 +423,7 @@ async function seConnecter() {
       afficherSession(true, resultat.user.displayName || resultat.user.email);
       chargerProfilGoogle(resultat.user);
       await tout();
+      chargerWallet(true);
       // Situation attendue tant que les fonctions Firebase ne sont pas déployées : simple information, pas une erreur
       console.info("Renouvellement automatique indisponible :", erreurServeur?.message);
       afficherInfo("Connexion active pour environ 1 heure. Pour rester connecté plus longtemps, il faudra déployer les fonctions Firebase (voir la documentation).");
@@ -1260,8 +1261,8 @@ function walletRenderHistory() {
     const label=t.kind==="income"?"Entrée":t.kind==="expense"?"Sortie":"Transfert";
     const amount=(t.kind==="expense"?"−":t.kind==="income"?"+":"↔")+walletMoney(t.amount,t.currency||"");
     const desc=[t.category,t.description].filter(Boolean).map(echapper).join(" · ")||"—";
-    return `<tr><td>${echapper(t.date||"")}</td><td>${echapper(t.accountName||walletAccountName(t.accountId))}</td><td><span class="wallet-kind ${t.kind}">${label}</span></td><td>${desc}</td><td class="wallet-amount">${amount}</td></tr>`;
-  }).join(""):'<tr><td colspan="5" class="vide">Aucune opération ne correspond à votre recherche.</td></tr>';
+    return `<tr><td>${echapper(t.date||"")}</td><td>${echapper(t.accountName||walletAccountName(t.accountId))}</td><td><span class="wallet-kind ${t.kind}">${label}</span></td><td>${desc}</td><td class="wallet-amount">${amount}</td><td class="wallet-actions"><button type="button" class="wallet-delete" data-wallet-supprimer="${echapper(t.id)}" title="Supprimer ce mouvement" aria-label="Supprimer ce mouvement">🗑 Supprimer</button></td></tr>`;
+  }).join(""):'<tr><td colspan="6" class="vide">Aucune opération ne correspond à votre recherche.</td></tr>';
 }
 function walletSetDateDefaults() {
   const d=new Date().toISOString().slice(0,10);
@@ -1303,6 +1304,54 @@ $("wallet-transfer-form")?.addEventListener("submit",async e=>{
     walletTransactions.unshift({...txOut,id:outId},{...txIn,id:inId});f.reset();walletSetDateDefaults();walletRender();$("wallet-status").textContent="Transfert enregistré entre les deux comptes.";
   }catch(err){$("wallet-status").textContent="Transfert non terminé : "+err.message+" (vérifiez l'historique avant de réessayer).";}
   finally{btn.disabled=false;}
+});
+// ---------- Suppression d'un mouvement d'argent ----------
+async function walletDeleteDoc(collection, id) {
+  const uid = fb?.auth.currentUser?.uid;
+  if (!uid) throw new Error("Connectez-vous à votre compte Google.");
+  return google(urlFirestore(firebaseConfig.projectId, walletPath(uid, collection, id)), { method: "DELETE" });
+}
+// Effet d'un mouvement sur le solde de son compte (à inverser lors de la suppression)
+function walletEffet(tx) {
+  const montant = Number(tx.amount || 0);
+  if (tx.kind === "income") return montant;
+  if (tx.kind === "expense") return -montant;
+  return tx.direction === "in" ? montant : -montant; // transfert : sortie (−) ou entrée (+)
+}
+async function supprimerMouvementWallet(id) {
+  const tx = walletTransactions.find((x) => x.id === id);
+  if (!tx) return;
+  // Un transfert est enregistré en deux lignes (départ et arrivée) : elles partent ensemble
+  const lot = tx.kind === "transfer" && tx.transferId ? walletTransactions.filter((x) => x.transferId === tx.transferId) : [tx];
+  const resume = tx.kind === "transfer"
+    ? "ce transfert (départ et arrivée seront annulés)"
+    : `cette ${tx.kind === "income" ? "entrée" : "sortie"} de ${walletMoney(tx.amount, tx.currency || "")}`;
+  if (!confirm(`Supprimer ${resume} ?\nLe solde du compte sera corrigé automatiquement.`)) return;
+  const status = $("wallet-status");
+  try {
+    if (status) status.textContent = "Suppression en cours…";
+    for (const ligne of lot) {
+      await walletDeleteDoc("walletTransactions", ligne.id);
+      walletTransactions = walletTransactions.filter((x) => x.id !== ligne.id);
+      const compte = walletAccounts.find((a) => a.id === ligne.accountId);
+      if (compte) {
+        const effet = walletEffet(ligne);
+        await walletPatchAccount(compte, -effet);
+        compte.balance = Number(compte.balance || 0) - effet;
+      }
+    }
+    walletRender();
+    if (status) status.textContent = lot.length > 1 ? "Transfert supprimé, soldes corrigés." : "Mouvement supprimé, solde corrigé.";
+  } catch (e) {
+    walletRender();
+    if (status) status.textContent = "Suppression non terminée : " + e.message + " — cliquez sur « Actualiser » pour revérifier vos soldes.";
+  }
+}
+// À l'ouverture de l'onglet, on charge les comptes et opérations s'ils ne le sont pas encore
+document.querySelector('[data-tab="wallet"]')?.addEventListener("click", () => { chargerWallet(false); });
+$("wallet-history")?.addEventListener("click", (ev) => {
+  const b = ev.target.closest?.("[data-wallet-supprimer]");
+  if (b) supprimerMouvementWallet(b.dataset.walletSupprimer);
 });
 ["wallet-period","wallet-type-filter","wallet-chart-currency"].forEach(id=>$(id)?.addEventListener("change",walletRender));
 ["wallet-search","wallet-history-account","wallet-history-kind"].forEach(id=>$(id)?.addEventListener(id==="wallet-search"?"input":"change",walletRenderHistory));
