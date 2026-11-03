@@ -622,6 +622,7 @@ async function chargerTasks() {
     const total = resultats.reduce((n, r) => n + r.taches.length, 0);
     statut.textContent = listes.length + " liste(s) chargée(s), " + total + " tâche(s). Les modifications sont synchronisées avec Google.";
     tasksCharge = true;
+    rendreDashboard();
   } catch (e) {
     statut.textContent = "Impossible de charger Google Tasks : " + e.message;
     conteneur.innerHTML = "";
