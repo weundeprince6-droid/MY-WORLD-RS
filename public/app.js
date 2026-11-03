@@ -1397,6 +1397,43 @@ $("wallet-export")?.addEventListener("click",()=>{
 });
 walletSetDateDefaults();
 //
+// ---------- Nouveau mail Gmail ----------
+const nouveauMailDialog = $("nouveau-mail-dialog");
+$("nouveau-mail").addEventListener("click", () => {
+  $("nouveau-mail-form").reset();
+  $("nouveau-mail-statut").textContent = "";
+  nouveauMailDialog.showModal();
+});
+$("nouveau-mail-fermer").addEventListener("click", () => nouveauMailDialog.close());
+$("nouveau-mail-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const donnees = new FormData(form);
+  const a = String(donnees.get("a") || "").trim();
+  const sujet = String(donnees.get("sujet") || "").trim();
+  const corps = String(donnees.get("corps") || "").trim();
+  const bouton = $("nouveau-mail-creer");
+  bouton.disabled = true;
+  $("nouveau-mail-statut").textContent = "Création du brouillon…";
+  try {
+    const raw = construireBrouillonBrut({ a, sujet, corps });
+    await google("https://gmail.googleapis.com/gmail/v1/users/me/drafts", {
+      method: "POST",
+      body: JSON.stringify({ message: { raw } }),
+    });
+    nouveauMailDialog.close();
+    afficherErreur("");
+    $("confirmation").textContent = "Brouillon créé dans Gmail. Vous pouvez le relire et l’envoyer depuis Gmail.";
+    $("confirmation").hidden = false;
+    setTimeout(() => ($("confirmation").hidden = true), 8000);
+  } catch (e) {
+    $("nouveau-mail-statut").textContent = "";
+    afficherErreur(`Brouillon non créé : ${e.message}`);
+  } finally {
+    bouton.disabled = false;
+  }
+});
+
 // ---------- Brouillons de réponse ----------
 let messageCible = null;
 function ouvrirModeles(index) {
