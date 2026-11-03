@@ -1409,7 +1409,7 @@ function walletPdfTexte(doc, texte, x, y, maxWidth, options={}) {
 }
 function walletPdfPied(doc) {
   const n=doc.getNumberOfPages();
-  for(let i=2;i<=n;i++){doc.setPage(i);doc.setDrawColor(220,226,234);doc.line(14,284,196,284);doc.setFont("helvetica","normal");doc.setFontSize(8);doc.setTextColor(110,120,135);doc.text("MY WORLD RS · Rapport confidentiel du porte-monnaie",14,290);doc.text("Page "+i+" / "+n,196,290,{align:"right"});}
+  for(let i=2;i<=n;i++){doc.setPage(i);doc.setDrawColor(218,228,223);doc.line(14,284,196,284);doc.setFont("helvetica","normal");doc.setFontSize(8);doc.setTextColor(75,91,84);doc.text("MY WORLD RS · Rapport confidentiel du porte-monnaie",14,290);doc.text("Page "+i+" / "+n,196,290,{align:"right"});}
 }
 async function walletExporterPdf() {
   const btn=$("wallet-export-pdf"), status=$("wallet-status");
@@ -1419,90 +1419,136 @@ async function walletExporterPdf() {
     if(!walletLoaded) await chargerWallet(true);
     const JsPDF=await walletChargerJsPdf();
     const doc=new JsPDF({orientation:"portrait",unit:"mm",format:"a4"});
-    const W=210, margin=14;
-    // Police Unicode intégrée pour les accents, apostrophes et caractères français.
-    doc.setFont("helvetica","normal");
-    const dateRapport=new Intl.DateTimeFormat("fr-FR",{dateStyle:"long",timeStyle:"short"}).format(new Date());
-    const nomUtilisateur=utilisateurConnecte?.displayName||utilisateurConnecte?.email||"Utilisateur My World RS";
+    const W=210, H=297, margin=14, contentW=182, bottom=278;
+    const colors={green:[22,101,78],deep:[17,64,53],mint:[232,243,238],pale:[247,249,248],ink:[37,48,57],muted:[95,109,119],line:[218,228,223],white:[255,255,255],accent:[213,237,226],orange:[183,106,40],red:[166,65,65]};
+    let y=14;
     const transactions=[...walletTransactions].sort((a,b)=>String(b.date||"").localeCompare(String(a.date||""))||String(b.createdAt||"").localeCompare(String(a.createdAt||"")));
     const currencies=[...new Set([...walletAccounts.map(a=>a.currency),...transactions.map(t=>t.currency)].filter(Boolean))];
-    const total=(currency,kind)=>transactions.filter(t=>t.currency===currency&&t.kind===kind).reduce((s,t)=>s+Number(t.amount||0),0);
+    const total=(currency,kind)=>transactions.filter(t=>t.currency===currency&&t.kind===kind).reduce((sum,t)=>sum+Number(t.amount||0),0);
     const money=(n,c)=>walletMoney(n,c);
-    const drawHeader=(kicker,title,subtitle)=>{doc.setFillColor(20,91,71);doc.rect(0,0,W,34,"F");doc.setTextColor(255,255,255);doc.setFont("helvetica","bold");doc.setFontSize(9);doc.text(kicker,margin,10);doc.setFontSize(18);doc.text(title,margin,21);doc.setFont("helvetica","normal");doc.setFontSize(8.5);doc.text(doc.splitTextToSize(subtitle,180),margin,29);doc.setTextColor(30,40,55);};
-    // Couverture
-    doc.setFillColor(13,48,42);doc.rect(0,0,W,297,"F");
-    doc.setFillColor(24,111,83);doc.circle(184,35,48,"F");doc.setFillColor(35,133,102);doc.circle(18,270,68,"F");
-    doc.setDrawColor(118,203,170);doc.setLineWidth(.6);doc.roundedRect(15,18,180,260,5,5,"S");
-    doc.setFillColor(255,255,255);doc.roundedRect(24,29,25,25,5,5,"F");
-    doc.setTextColor(20,91,71);doc.setFont("helvetica","bold");doc.setFontSize(14);doc.text("MW",36.5,45,{align:"center"});
-    doc.setTextColor(177,226,207);doc.setFontSize(9);doc.text("MY WORLD RS  /  FINANCES PERSONNELLES",26,72);
-    doc.setTextColor(255,255,255);doc.setFontSize(26);doc.text("Rapport détaillé",26,96);doc.text("du porte-monnaie",26,107);
-    doc.setDrawColor(118,203,170);doc.line(26,118,95,118);
-    doc.setFontSize(11);doc.setFont("helvetica","normal");doc.text("Historique complet des mouvements",26,131);doc.text("de tous vos comptes",26,139);
-    doc.setFillColor(255,255,255);doc.roundedRect(26,164,158,46,4,4,"F");
-    doc.setTextColor(20,91,71);doc.setFont("helvetica","bold");doc.setFontSize(10);doc.text("ÉDITION DU RAPPORT",34,177);
-    doc.setFont("helvetica","normal");doc.setFontSize(9);doc.text(doc.splitTextToSize(dateRapport,145),34,187);doc.text(doc.splitTextToSize(nomUtilisateur,145),34,198);
-    doc.setTextColor(190,224,211);doc.setFontSize(8);doc.text("Document privé · Généré depuis My World RS",26,258);
-    doc.setFont("helvetica","bold");doc.setFontSize(9);doc.text("CONFIDENTIEL",26,268);
-    // Synthèse
-    doc.addPage();drawHeader("My World RS · Finance","Vue d’ensemble","Synthèse globale de tous les comptes et mouvements");
-    let y=46;
-    doc.setFont("helvetica","bold");doc.setFontSize(12);doc.text("Indicateurs clés",margin,y);y+=8;
-    const kpis=[["Comptes",String(walletAccounts.length)],["Mouvements",String(transactions.length)],["Entrées",currencies.map(c=>money(total(c,"income"),c)).join(" | ")||"0"],["Sorties",currencies.map(c=>money(total(c,"expense"),c)).join(" | ")||"0"]];
-    const cardW=87;
-    kpis.forEach((k,i)=>{const x=margin+(i%2)*(cardW+8), yy=y+Math.floor(i/2)*25;doc.setFillColor(242,247,245);doc.roundedRect(x,yy,cardW,20,3,3,"F");doc.setTextColor(100,115,125);doc.setFont("helvetica","normal");doc.setFontSize(8);doc.text(k[0],x+5,yy+6);doc.setTextColor(20,91,71);doc.setFont("helvetica","bold");doc.setFontSize(10);doc.text(doc.splitTextToSize(k[1],cardW-10),x+5,yy+13);});
-    y+=58;doc.setTextColor(30,40,55);doc.setFont("helvetica","bold");doc.setFontSize(12);doc.text("Soldes actuels par compte",margin,y);y+=8;
-    walletAccounts.forEach((a,i)=>{const name=String(a.name||"Compte");const nameLines=doc.splitTextToSize(name+" · "+(a.type==="personal"?"Personnel":"Professionnel"),105);const rowH=Math.max(10,nameLines.length*4+3);if(y+rowH>276){doc.addPage();drawHeader("My World RS · Finance","Comptes","Soldes actuels par compte");y=46;}
-      if(i%2===0){doc.setFillColor(246,249,247);doc.rect(margin,y-4,182,rowH,"F");}
-      doc.setFont("helvetica","normal");doc.setFontSize(9);doc.setTextColor(35,45,55);doc.text(nameLines,margin+2,y);
-      doc.setFont("helvetica","bold");doc.text(doc.splitTextToSize(money(a.balance,a.currency),65),194,y,{align:"right"});y+=rowH;
+    const setText=(color=colors.ink)=>doc.setTextColor(...color);
+    const setFill=(color)=>doc.setFillColor(...color);
+    const setDraw=(color)=>doc.setDrawColor(...color);
+    const ensure=(height=12)=>{
+      if(y+height>bottom){doc.addPage();y=14;return true;}
+      return false;
+    };
+    const section=(title,subtitle="")=>{
+      ensure(subtitle?17:12);
+      setFill(colors.mint);doc.roundedRect(margin,y,contentW,subtitle?13:10,2,2,"F");
+      setFill(colors.green);doc.rect(margin,y,2.2,subtitle?13:10,"F");
+      doc.setFont("helvetica","bold");doc.setFontSize(11);setText(colors.deep);
+      doc.text(title,margin+6,y+6.8);
+      if(subtitle){doc.setFont("helvetica","normal");doc.setFontSize(7.8);setText(colors.muted);doc.text(subtitle,margin+6,y+10.8);}
+      y+=subtitle?17:14;
+    };
+    const paragraph=(value,x=margin,width=contentW,size=9,color=colors.ink)=>{
+      const str=String(value||"—").trim()||"—";
+      doc.setFont("helvetica","normal");doc.setFontSize(size);setText(color);
+      const lines=doc.splitTextToSize(str,width);
+      const lineH=size*0.48+1.2;
+      ensure(lines.length*lineH+2);
+      doc.text(lines,x,y);
+      y+=lines.length*lineH+2;
+    };
+    const card=(x,yy,w,h,label,value)=>{
+      setFill(colors.pale);doc.roundedRect(x,yy,w,h,2.5,2.5,"F");
+      doc.setFont("helvetica","normal");doc.setFontSize(8);setText(colors.muted);doc.text(label,x+4,yy+6);
+      doc.setFont("helvetica","bold");doc.setFontSize(10);setText(colors.green);
+      const lines=doc.splitTextToSize(String(value),w-8);doc.text(lines,x+4,yy+12);
+    };
+    const tableHead=(labels,widths)=>{
+      ensure(12);setFill(colors.deep);doc.roundedRect(margin,y,contentW,9,1.5,1.5,"F");
+      doc.setFont("helvetica","bold");doc.setFontSize(7.7);setText(colors.white);
+      let x=margin+2;labels.forEach((label,i)=>{doc.text(label,x,y+6);x+=widths[i];});y+=11;
+    };
+    const drawPageTitle=()=>{
+      setFill(colors.deep);doc.rect(0,0,W,39,"F");
+      setFill(colors.green);doc.rect(0,36,W,3,"F");
+      doc.setFont("helvetica","bold");doc.setFontSize(9);setText(colors.accent);
+      doc.text("MY WORLD RS  /  FINANCES PERSONNELLES",margin,11);
+      doc.setFontSize(20);setText(colors.white);doc.text("Rapport du porte-monnaie",margin,23);
+      doc.setFont("helvetica","normal");doc.setFontSize(8.5);setText(colors.accent);
+      const dateRapport=new Intl.DateTimeFormat("fr-FR",{dateStyle:"long",timeStyle:"short"}).format(new Date());
+      doc.text("Édité le "+dateRapport,margin,31);
+      y=47;
+    };
+    drawPageTitle();
+
+    // Synthèse - la rubrique suit immédiatement le titre, sans page de couverture séparée.
+    section("Synthèse générale","Tous les comptes et tous les mouvements enregistrés");
+    const kpis=[["Comptes",String(walletAccounts.length)],["Mouvements",String(transactions.length)],
+      ["Entrées",currencies.map(c=>money(total(c,"income"),c)).join(" | ")||"0"],
+      ["Sorties",currencies.map(c=>money(total(c,"expense"),c)).join(" | ")||"0"]];
+    const gap=6, cardW=(contentW-gap)/2, cardH=20, kpiStart=y;
+    kpis.forEach((item,i)=>card(margin+(i%2)*(cardW+gap),kpiStart+Math.floor(i/2)*(cardH+4),cardW,cardH,item[0],item[1]));
+    y+=2*(cardH+4)+2;
+
+    section("Soldes par compte");
+    if(!walletAccounts.length) paragraph("Aucun compte n’est actuellement enregistré.");
+    walletAccounts.forEach((account,i)=>{
+      const name=String(account.name||"Compte")+"  ·  "+(account.type==="personal"?"Personnel":"Professionnel");
+      const amount=money(account.balance,account.currency);
+      const h=10;ensure(h);
+      if(i%2===0){setFill(colors.pale);doc.rect(margin,y-4,contentW,h,"F");}
+      doc.setFont("helvetica","normal");doc.setFontSize(8.8);setText(colors.ink);
+      doc.text(doc.splitTextToSize(name,115),margin+3,y+1);
+      doc.setFont("helvetica","bold");doc.setFontSize(9.2);setText(colors.green);
+      doc.text(doc.splitTextToSize(amount,58),196,y+1,{align:"right"});
+      y+=h;
     });
-    if(!walletAccounts.length){doc.setFont("helvetica","normal");doc.setFontSize(9);doc.text("Aucun compte n’est actuellement enregistré.",margin,y);}
-    // Ristournes / cashback: rapport dédié et explicite. Le résumé est tiré des données affichées dans la section ristournes.
-    doc.addPage();drawHeader("My World RS · Ristournes","Ristournes & remboursements","Section dédiée aux ristournes liées à vos comptes");
-    let ry=48;
-    const ristStatus=$("wallet-ristourne-status")?.textContent?.trim()||"État non disponible";
-    doc.setFont("helvetica","bold");doc.setFontSize(11);doc.text("État de la synchronisation",margin,ry);ry+=7;
-    doc.setFont("helvetica","normal");doc.setFontSize(9);ry=walletPdfTexte(doc,ristStatus,margin,ry,180)+8;
+    y+=3;
+
+    section("Ristournes et remboursements","Informations de ristournes visibles dans l’application");
+    const ristStatus=$("wallet-ristourne-status")?.textContent?.trim();
+    if(ristStatus) paragraph("Synchronisation : "+ristStatus,margin,contentW,8.3,colors.muted);
     const ristGroup=$("rist-groupes"), ristCredits=$("rist-credits");
-    const sections=[["Détail des ristournes",ristGroup?.innerText?.trim()],["Crédits et total des ristournes",ristCredits?.innerText?.trim()]];
-    sections.forEach(([title,content])=>{if(ry>265){doc.addPage();drawHeader("My World RS · Ristournes","Détails des ristournes","Suite de la section ristournes");ry=46;}
-      doc.setFont("helvetica","bold");doc.setFontSize(11);doc.text(title,margin,ry);ry+=7;
-      doc.setFont("helvetica","normal");doc.setFontSize(9);
-      ry=walletPdfTexte(doc,content||"Aucune donnée de ristourne disponible dans l’affichage actuel.",margin,ry,180)+10;
-    });
-    // Graphiques sur pages dédiées avec une taille suffisante
-    const chartImgs=[["Entrées et sorties par mois","wallet-chart"],["Évolution du solde net mensuel","wallet-net-chart"]];
-    for(const [titre,id] of chartImgs){const canvas=$(id);if(canvas){doc.addPage();drawHeader("My World RS · Analyse",titre,"Graphique de synthèse des opérations du porte-monnaie");doc.setFont("helvetica","normal");doc.setFontSize(9);doc.text("Devise : "+($("wallet-chart-currency")?.value||"USD"),margin,46);try{doc.addImage(canvas.toDataURL("image/png"),"PNG",margin,55,182,105);}catch(e){doc.text("Graphique non disponible.",margin,60);}}}
-    // Historique complet : police plus lisible, lignes calculées, saut de page contrôlé.
-    doc.addPage();drawHeader("My World RS · Historique","Tous les mouvements","Historique complet — tous comptes et toutes dates");
-    let py=45;
-    const headers=["Date","Compte","Type","Détail / catégorie","Montant"];
-    const widths=[24,38,25,62,33];
-    const drawTableHeader=()=>{doc.setFillColor(20,91,71);doc.rect(margin,py,182,10,"F");doc.setTextColor(255,255,255);doc.setFont("helvetica","bold");doc.setFontSize(8);let x=margin+2;headers.forEach((v,i)=>{doc.text(v,x,py+6.5);x+=widths[i];});py+=13;doc.setTextColor(35,45,55);};
-    drawTableHeader();
+    const ristGroupText=ristGroup?.innerText?.trim();
+    const ristCreditsText=ristCredits?.innerText?.trim();
+    if(ristGroupText) paragraph(ristGroupText,margin,contentW,8.8,colors.ink);
+    if(ristCreditsText) paragraph(ristCreditsText,margin,contentW,8.8,colors.green);
+    if(!ristGroupText&&!ristCreditsText) paragraph("Aucun détail de ristourne n’est actuellement affiché.");
+
+    // Graphiques : intégrés dans le flux, pas de page dédiée automatique.
+    for(const [title,id] of [["Entrées et sorties par mois","wallet-chart"],["Évolution du solde net","wallet-net-chart"]]){
+      const canvas=$(id);
+      if(canvas){
+        section(title);
+        ensure(72);
+        try{doc.addImage(canvas.toDataURL("image/png"),"PNG",margin,y,contentW,66);y+=70;}
+        catch(e){paragraph("Graphique indisponible.",margin,contentW,8,colors.muted);}
+      }
+    }
+
+    section("Historique complet des mouvements","Tous les comptes · Toutes les dates · Sans filtre");
+    const labels=["Date","Compte","Type","Détail / catégorie","Montant"];
+    const widths=[23,35,25,65,34];
+    tableHead(labels,widths);
     transactions.forEach((t,i)=>{
-      const label=t.kind==="income"?"Entrée":t.kind==="expense"?"Sortie":(t.direction==="in"?"Transfert reçu":"Transfert envoyé");
+      const kind=t.kind==="income"?"Entrée":t.kind==="expense"?"Sortie":(t.direction==="in"?"Transfert reçu":"Transfert envoyé");
       const detail=[t.category,t.description].filter(Boolean).join(" · ")||"—";
       const amount=(t.kind==="expense"?"−":t.kind==="income"?"+":t.direction==="in"?"+":"−")+money(t.amount,t.currency||"");
-      const cells=[String(t.date||"—"),String(t.accountName||walletAccountName(t.accountId)),label,detail,amount];
-      doc.setFont("helvetica","normal");doc.setFontSize(8.5);
-      const wrapped=cells.map((v,j)=>doc.splitTextToSize(v,widths[j]-4));
-      const rowH=Math.max(10,...wrapped.map(lines=>lines.length*4.2+3));
-      if(py+rowH>277){doc.addPage();drawHeader("My World RS · Historique","Tous les mouvements","Suite de l’historique complet");py=45;drawTableHeader();}
-      if(i%2===0){doc.setFillColor(244,248,246);doc.rect(margin,py-3,182,rowH,"F");}
-      let x=margin+2;wrapped.forEach((lines,j)=>{doc.text(lines,x,py);x+=widths[j];});
-      py+=rowH;
+      const values=[String(t.date||"—"),String(t.accountName||walletAccountName(t.accountId)),kind,detail,amount];
+      doc.setFont("helvetica","normal");doc.setFontSize(7.6);
+      const lines=values.map((v,j)=>doc.splitTextToSize(v,widths[j]-4));
+      const rowH=Math.max(8,Math.max(...lines.map(a=>a.length))*3.8+2);
+      if(y+rowH>bottom){doc.addPage();y=14;section("Historique des mouvements (suite)");tableHead(labels,widths);}
+      if(i%2===0){setFill(colors.pale);doc.rect(margin,y-3,contentW,rowH,"F");}
+      let x=margin+2;
+      lines.forEach((line,j)=>{
+        setText(j===4?(t.kind==="expense"?colors.red:colors.green):colors.ink);
+        doc.text(line,x,y);x+=widths[j];
+      });
+      y+=rowH;
     });
-    if(!transactions.length){doc.setFont("helvetica","normal");doc.setFontSize(10);doc.text("Aucun mouvement enregistré à ce jour.",margin,py);}
+    if(!transactions.length) paragraph("Aucun mouvement enregistré à ce jour.");
     walletPdfPied(doc);
     const stamp=new Date().toISOString().slice(0,10);
     doc.save("My-World-RS_Rapport-Porte-monnaie_"+stamp+".pdf");
     if(status)status.textContent="Rapport PDF téléchargé : "+transactions.length+" mouvement(s), tous comptes confondus.";
   }catch(e){if(status)status.textContent="Export PDF impossible : "+e.message;}
   finally{if(btn){btn.disabled=false;btn.textContent=btn.dataset.ancienTexte||"Télécharger le rapport PDF";}}
-}
-$("wallet-export-pdf")?.addEventListener("click",walletExporterPdf);
+}$("wallet-export-pdf")?.addEventListener("click",walletExporterPdf);
 
 $("wallet-export")?.addEventListener("click",()=>{
   const rows=[["Date","Compte","Type","Devise","Montant","Catégorie","Description"],...walletTransactions.map(t=>[t.date,t.accountName,t.kind,t.currency,t.amount,t.category,t.description])];
