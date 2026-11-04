@@ -2029,10 +2029,9 @@ function repondreAuMail() {
   const f = $("nouveau-mail-form").elements;
   f.a.value = destinataire;
   f.sujet.value = /^(re|réf?)\s*:/i.test(m.sujet) ? m.sujet : "Re : " + m.sujet;
-  const date = m.date ? new Date(m.date).toLocaleString("fr-FR") : "";
-  f.corps.value = `\n\nLe ${date}, ${m.de} a écrit :\n` + String(m.corps || "").split("\n").map((l) => "> " + l).join("\n");
+  f.corps.value = ""; // zone vide : le message d'origine n'est pas recopié
   nouveauMailDialog.showModal();
-  f.corps.focus(); f.corps.setSelectionRange(0, 0);
+  f.corps.focus();
 }
 $("mail-lecture-repondre").addEventListener("click", repondreAuMail);
 async function lireMail(id) {

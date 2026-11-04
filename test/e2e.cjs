@@ -290,11 +290,11 @@ srv.listen(8765, async () => {
     await p.click('#mail-lecture-repondre'); await p.waitForTimeout(500);
     const dest = await p.inputValue('#nouveau-mail-form [name=a]'); const sujet = await p.inputValue('#nouveau-mail-form [name=sujet]'); const corps = await p.inputValue('#nouveau-mail-form [name=corps]');
     const titre = (await p.textContent('#nouveau-mail-titre')).trim();
-    await p.fill('#nouveau-mail-form [name=corps]', 'Merci, bien reçu.\n' + corps);
+    await p.fill('#nouveau-mail-form [name=corps]', 'Merci, bien reçu.');
     await p.click('#nouveau-mail-envoyer'); await p.waitForTimeout(1500);
     const envoi = (etat.mails || []).find((x) => x.url.includes('/messages/send'));
     const brut = envoi ? Buffer.from(envoi.corps.raw.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8') : '';
-    return { ok: titre === 'Répondre' && dest.includes('@') && /^Re/.test(sujet) && corps.includes('a écrit') && envoi && !!envoi.corps.threadId && brut.includes('Merci, bien reçu.'), detail: JSON.stringify({ titre, dest, sujet, threadId: envoi && envoi.corps.threadId }) };
+    return { ok: titre === 'Répondre' && dest.includes('@') && /^Re/.test(sujet) && corps === '' && envoi && !!envoi.corps.threadId && brut.includes('Merci, bien reçu.'), detail: JSON.stringify({ titre, dest, sujet, threadId: envoi && envoi.corps.threadId }) };
   }));
   res.push(await scenario('Agenda : ajouter puis supprimer un rendez-vous', {}, async (p, appels, logs, etat) => {
     p.on('dialog', (d) => d.accept());
