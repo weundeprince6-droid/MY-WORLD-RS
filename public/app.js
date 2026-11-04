@@ -403,10 +403,103 @@ async function obtenirJetonGoogle(force = false) {
   finally { recuperationGoogleEnCours = null; }
 }
 
+const UID_SESSION_CHARGEE = new Set();
+let minuterieVerrouillage = null;
+let derniereActivite = Date.now();
+let pinGateEnCours = null;
+const DELAI_VERROUILLAGE = 10 * 60 * 1000;
+const CLE_PIN_PREFIXE = "mwrs.pin.v1.";
+
+function emailAutorise(user) {
+  const autorise = String(config?.reglages?.allowedGoogleEmail || "").trim().toLowerCase();
+  return !!autorise && String(user?.email || "").trim().toLowerCase() === autorise;
+}
+function clePin(uid) { return CLE_PIN_PREFIXE + uid; }
+async function hacherPin(pin, sel) {
+  const enc = new TextEncoder();
+  const materiel = await crypto.subtle.importKey("raw", enc.encode(pin), "PBKDF2", false, ["deriveBits"]);
+  const bits = await crypto.subtle.deriveBits({name:"PBKDF2", salt:enc.encode(sel), iterations:150000, hash:"SHA-256"}, materiel, 256);
+  return Array.from(new Uint8Array(bits), b=>b.toString(16).padStart(2,"0")).join("");
+}
+function verrouillerApplication() {
+  if (!utilisateurConnecte) return;
+  if (minuterieVerrouillage) clearTimeout(minuterieVerrouillage);
+  minuterieVerrouillage = null;
+  $("tableau").hidden = true;
+  $("zone-connexion").hidden = true;
+  $("pin-gate").hidden = false;
+  $("pin-gate-titre").textContent = "Session verrouillée";
+  $("pin-gate-description").textContent = "Entrez votre PIN pour reprendre votre session My World RS.";
+  $("pin-confirmation-wrap").hidden = true;
+  $("pin-gate-form").dataset.mode = "unlock";
+  $("pin-gate-input").value = "";
+  $("pin-gate-input").focus();
+}
+function programmerVerrouillage() {
+  if (minuterieVerrouillage) clearTimeout(minuterieVerrouillage);
+  minuterieVerrouillage = setTimeout(verrouillerApplication, DELAI_VERROUILLAGE);
+}
+function activerSurveillanceInactivite() {
+  const activite = () => {
+    if ($("pin-gate").hidden && utilisateurConnecte) {
+      derniereActivite = Date.now();
+      programmerVerrouillage();
+    }
+  };
+  ["pointerdown","keydown","touchstart","mousemove","scroll"].forEach(ev=>document.addEventListener(ev,activite,{passive:true}));
+}
+activerSurveillanceInactivite();
+
+async function demanderPin(user) {
+  if (pinGateEnCours) return pinGateEnCours;
+  pinGateEnCours = new Promise((resolve,reject)=>{
+    const gate=$("pin-gate"),form=$("pin-gate-form"),input=$("pin-gate-input"),confirm=$("pin-confirmation");
+    const cle=clePin(user.uid);
+    let sauvegarde=null;
+    try{sauvegarde=JSON.parse(localStorage.getItem(cle)||"null");}catch{}
+    const mode=sauvegarde?.hash?"unlock":"create";
+    form.dataset.mode=mode;
+    gate.hidden=false;
+    $("tableau").hidden=true;$("zone-connexion").hidden=true;
+    $("pin-gate-titre").textContent=mode==="create"?"Créer votre PIN de sécurité":"Déverrouiller My World RS";
+    $("pin-gate-description").textContent=mode==="create"?"Choisissez un PIN numérique de 6 chiffres. Il sera demandé à chaque nouvelle connexion ou après 10 minutes d’inactivité.":"Saisissez votre PIN de 6 chiffres pour accéder à votre espace.";
+    $("pin-confirmation-wrap").hidden=mode!=="create";
+    $("pin-gate-erreur").textContent="";
+    input.value="";confirm.value="";
+    input.focus();
+    form.onsubmit=async event=>{
+      event.preventDefault();
+      const pin=input.value.trim();
+      if(!/^\d{6}$/.test(pin)){ $("pin-gate-erreur").textContent="Le PIN doit contenir exactement 6 chiffres.";return;}
+      try{
+        if(mode==="create"){
+          if(confirm.value.trim()!==pin){$("pin-gate-erreur").textContent="Les deux PIN ne correspondent pas.";return;}
+          const sel=crypto.randomUUID();
+          const hash=await hacherPin(pin,sel);
+          localStorage.setItem(cle,JSON.stringify({sel,hash,createdAt:new Date().toISOString()}));
+        }else{
+          if(!sauvegarde?.sel||!sauvegarde?.hash||await hacherPin(pin,sauvegarde.sel)!==sauvegarde.hash){
+            $("pin-gate-erreur").textContent="PIN incorrect. Réessayez.";input.value="";return;
+          }
+        }
+        gate.hidden=true;
+        programmerVerrouillage();
+        resolve(true);
+      }catch(err){$("pin-gate-erreur").textContent="Impossible de vérifier le PIN dans ce navigateur. Utilisez un navigateur récent et HTTPS.";reject(err);}
+    };
+  }).finally(()=>{pinGateEnCours=null;});
+  return pinGateEnCours;
+}
+
 async function restaurerSessionGoogle(user) {
   if (connexionGoogleEnCours || uidSessionTraitee === user.uid) return;
   uidSessionTraitee = user.uid;
-  afficherSession(true, user.displayName || user.email);
+  if (!emailAutorise(user)) {
+    afficherErreur("Compte Google non autorisé. Utilisez le compte Google configuré pour MY WORLD RS.");
+    try { await fb.signOut(fb.auth); } catch {}
+    uidSessionTraitee=null;
+    return;
+  }
   const paramsRetour = new URLSearchParams(location.search);
   if (paramsRetour.get("google") === "error" || paramsRetour.get("google") === "cancelled") {
     const message = paramsRetour.get("message");
@@ -417,11 +510,18 @@ async function restaurerSessionGoogle(user) {
     return;
   }
   try {
+    await demanderPin(user);
+    if (UID_SESSION_CHARGEE.has(user.uid)) {
+      afficherSession(true, user.displayName || user.email);
+      return;
+    }
     await obtenirJetonGoogle();
+    afficherSession(true, user.displayName || user.email);
     chargerProfilGoogle(user);
     await tout();
     await chargerWallet(true);
     chargerTasks();
+    UID_SESSION_CHARGEE.add(user.uid);
     if (paramsRetour.has("google")) history.replaceState({}, document.title, location.pathname + location.hash);
   } catch (e) {
     uidSessionTraitee = null;
@@ -450,6 +550,11 @@ async function seConnecter() {
     fournisseur.setCustomParameters({ prompt: "select_account" });
     const resultat = await fb.signInWithPopup(fb.auth, fournisseur);
     utilisateurConnecte = resultat.user;
+    if (!emailAutorise(resultat.user)) {
+      afficherErreur("Compte Google non autorisé. Utilisez le compte Google configuré pour MY WORLD RS.");
+      await fb.signOut(fb.auth);
+      return;
+    }
     const jetonTemporaire = fb.GoogleAuthProvider.credentialFromResult(resultat)?.accessToken || null;
     try {
       await lancerAutorisationGoogle(resultat.user);
@@ -460,10 +565,13 @@ async function seConnecter() {
       jetonGoogle = jetonTemporaire;
       jetonGoogleExpireA = Date.now() + 3500 * 1000;
       memoriserJetonGoogle(resultat.user.uid, jetonGoogle, jetonGoogleExpireA);
+      uidSessionTraitee = resultat.user.uid;
+      await demanderPin(resultat.user);
       afficherSession(true, resultat.user.displayName || resultat.user.email);
       chargerProfilGoogle(resultat.user);
       await tout();
-      chargerWallet(true);
+      await chargerWallet(true);
+      UID_SESSION_CHARGEE.add(resultat.user.uid);
       // Situation attendue tant que les fonctions Firebase ne sont pas déployées : simple information, pas une erreur
       console.info("Renouvellement automatique indisponible :", erreurServeur?.message);
       afficherInfo("Connexion active pour environ 1 heure. Pour rester connecté plus longtemps, il faudra déployer les fonctions Firebase (voir la documentation).");
