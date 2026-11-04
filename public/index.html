@@ -6,7 +6,7 @@
   <title>My World RS</title>
   <meta name="description" content="Votre espace personnel : messages, agenda, bases de données et alertes.">
   <script>try{const t=localStorage.getItem("mwrs.theme");document.documentElement.dataset.theme=(t==="light"||t==="dark")?t:(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");}catch{document.documentElement.dataset.theme="light";}</script>
-  <link rel="stylesheet" href="style.css?v=20261104-33">
+  <link rel="stylesheet" href="style.css?v=20261104-34">
 </head>
 <body>
   <header class="entete">
@@ -305,6 +305,23 @@
       </div>
     </div>
   </main>
+  <section id="pin-gate" class="pin-gate" hidden aria-modal="true" role="dialog" aria-labelledby="pin-gate-titre">
+    <form id="pin-gate-form" class="pin-gate-card" autocomplete="off">
+      <div class="pin-gate-logo" aria-hidden="true">MW</div>
+      <p class="eyebrow">MY WORLD RS · SÉCURITÉ</p>
+      <h2 id="pin-gate-titre">Sécuriser votre espace</h2>
+      <p id="pin-gate-description">Créez votre PIN de sécurité pour continuer.</p>
+      <label for="pin-gate-input">PIN à 6 chiffres</label>
+      <input id="pin-gate-input" type="password" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" autocomplete="new-password" required>
+      <div id="pin-confirmation-wrap">
+        <label for="pin-confirmation">Confirmer le PIN</label>
+        <input id="pin-confirmation" type="password" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" autocomplete="new-password">
+      </div>
+      <p id="pin-gate-erreur" class="pin-gate-error" role="alert"></p>
+      <button class="btn btn-primary" type="submit">Valider et ouvrir mon espace</button>
+      <p class="pin-gate-note">Verrouillage automatique après 10 minutes d’inactivité.</p>
+    </form>
+  </section>
 <dialog id="nouveau-mail-dialog"><form id="nouveau-mail-form" class="nouveau-mail-form"><div class="nouveau-mail-head"><div><p class="eyebrow">GMAIL</p><h2>Nouveau mail</h2><p class="meta">Le message sera enregistré dans vos brouillons Gmail.</p></div><button type="button" id="nouveau-mail-fermer" class="btn btn-quiet" aria-label="Fermer">✕</button></div><label>Destinataire<input name="a" type="email" required maxlength="320" placeholder="adresse@example.com" autocomplete="email"></label><label>Objet<input name="sujet" type="text" required maxlength="500" placeholder="Objet du mail"></label><label>Message<textarea name="corps" required rows="9" maxlength="30000" placeholder="Écrivez votre message…"></textarea></label><div class="nouveau-mail-actions"><span id="nouveau-mail-statut" class="meta" role="status"></span><button id="nouveau-mail-creer" class="btn btn-primary" type="submit">Créer le brouillon Gmail</button></div></form></dialog>
     <dialog id="modeles">
     <h2 id="modeles-titre">Répondre</h2><p class="meta">Un brouillon sera créé dans Gmail. Rien n'est envoyé sans votre validation.</p>
@@ -329,6 +346,6 @@
       setTimeout(function(){if(!window.__appPret)montrer("L'application n'a pas démarré. Vérifiez votre connexion internet (les composants Firebase se chargent depuis Google), désactivez un éventuel bloqueur de publicités, puis rechargez. Appuyez sur F12 > Console pour voir le détail.");},6000);
     })();
   </script>
-  <script type="module" src="app.js?v=20261104-33"></script>
+  <script type="module" src="app.js?v=20261104-34"></script>
 </body>
 </html>
