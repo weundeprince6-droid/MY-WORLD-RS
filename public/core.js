@@ -254,11 +254,12 @@ const base64Lignes = (b64) => (b64.match(/.{1,76}/g) || []).join("\r\n");
  * Construit le message brut (RFC 2822, base64url) attendu par l'API Gmail, pour un envoi ou un brouillon.
  * pieces : [{ nom, type, base64 }] (base64 standard du contenu du fichier) -> message multipart/mixed.
  */
-export function construireMessageBrut({ a, cc, sujet, corps, pieces = [] }) {
+export function construireMessageBrut({ a, cc, sujet, corps, pieces = [], enReponseA = "" }) {
   const entetes = [
     `To: ${adresseSure(a)}`,
     ...(adresseSure(cc) ? [`Cc: ${adresseSure(cc)}`] : []),
     `Subject: ${sujetEncode(sujet)}`,
+    ...(adresseSure(enReponseA) ? [`In-Reply-To: ${adresseSure(enReponseA)}`, `References: ${adresseSure(enReponseA)}`] : []),
     "MIME-Version: 1.0",
   ];
   if (!pieces.length) {
@@ -314,7 +315,7 @@ export function lireMessageComplet(msg) {
   };
   parcourir(msg?.payload);
   return {
-    id: msg?.id, threadId: msg?.threadId, de: h("From"), a: h("To"), cc: h("Cc"), sujet: h("Subject") || "(sans objet)",
+    id: msg?.id, threadId: msg?.threadId, messageId: h("Message-ID") || h("Message-Id"), repondreA: h("Reply-To"), de: h("From"), a: h("To"), cc: h("Cc"), sujet: h("Subject") || "(sans objet)",
     date: Number(msg?.internalDate || 0), corps: texte.trim() || htmlEnTexte(html) || msg?.snippet || "", pieces,
   };
 }

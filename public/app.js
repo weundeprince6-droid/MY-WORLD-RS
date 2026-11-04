@@ -1900,6 +1900,7 @@ walletSetDateDefaults();
 const nouveauMailDialog = $("nouveau-mail-dialog");
 const MAX_PJ = 10 * 1024 * 1024;
 let piecesJointes = [];
+let reponseEnCours = null; // { threadId, messageId } quand on répond à un message
 const tailleLisible = (o) => (o >= 1048576 ? (o / 1048576).toFixed(1).replace(".", ",") + " Mo" : Math.max(1, Math.round(o / 1024)) + " Ko");
 function rendrePiecesJointes() {
   const ul = $("nouveau-mail-pj");
@@ -1927,7 +1928,8 @@ $("nouveau-mail-fichiers").addEventListener("change", async (e) => {
 });
 $("nouveau-mail").addEventListener("click", () => {
   $("nouveau-mail-form").reset();
-  piecesJointes = []; rendrePiecesJointes();
+  piecesJointes = []; rendrePiecesJointes(); reponseEnCours = null;
+  $("nouveau-mail-titre").textContent = "Nouveau mail";
   $("nouveau-mail-statut").textContent = "";
   nouveauMailDialog.showModal();
 });
@@ -1952,11 +1954,12 @@ async function envoyerOuEnregistrerMail(envoyer) {
   boutons.forEach((b) => (b.disabled = true));
   $("nouveau-mail-statut").textContent = envoyer ? "Envoi en cours…" : "Création du brouillon…";
   try {
-    const raw = construireMessageBrut({ a, cc, sujet, corps, pieces: piecesJointes });
-    if (envoyer) await google(URL_GMAIL + "messages/send", { method: "POST", body: JSON.stringify({ raw }) });
-    else await google(URL_GMAIL + "drafts", { method: "POST", body: JSON.stringify({ message: { raw } }) });
+    const raw = construireMessageBrut({ a, cc, sujet, corps, pieces: piecesJointes, enReponseA: reponseEnCours?.messageId });
+    const threadId = reponseEnCours?.threadId;
+    if (envoyer) await google(URL_GMAIL + "messages/send", { method: "POST", body: JSON.stringify({ raw, ...(threadId ? { threadId } : {}) }) });
+    else await google(URL_GMAIL + "drafts", { method: "POST", body: JSON.stringify({ message: { raw, ...(threadId ? { threadId } : {}) } }) });
     nouveauMailDialog.close();
-    if (envoyer) { envoyesCharges = false; if (!$("pane-messages").hidden) chargerEnvoyes(); }
+    if (envoyer) { envoyesCharges = false; if (!$("vue-envoyes").hidden) chargerEnvoyes(); }
     messageEnvoye(envoyer ? `Mail envoyé à ${a}${piecesJointes.length ? " avec " + piecesJointes.length + " pièce(s) jointe(s)" : ""}.` : "Brouillon créé dans Gmail. Vous pouvez le relire et l’envoyer depuis Gmail.");
   } catch (e) {
     $("nouveau-mail-statut").textContent = "";
@@ -1991,7 +1994,14 @@ async function chargerEnvoyes() {
   } finally { envoyesEnCours = false; }
 }
 $("envoyes-actualiser").addEventListener("click", () => chargerEnvoyes());
-document.querySelector('[data-tab="messages"]')?.addEventListener("click", () => { if (!envoyesCharges) chargerEnvoyes(); });
+const TEXTES_VUES = { importants: "Les messages qui méritent votre attention.", recus: "Vos messages Gmail récents, importants ou non.", envoyes: "Les derniers messages que vous avez envoyés, depuis Gmail ou cette application." };
+function choisirVueMessages(vue) {
+  ["importants", "recus", "envoyes"].forEach((v) => { $("vue-" + v).hidden = v !== vue; });
+  document.querySelectorAll("[data-vue-messages]").forEach((b) => { const actif = b.dataset.vueMessages === vue; b.classList.toggle("vue-actif", actif); b.setAttribute("aria-pressed", String(actif)); });
+  $("messages-vue-texte").textContent = TEXTES_VUES[vue];
+  if (vue === "envoyes" && !envoyesCharges) chargerEnvoyes();
+}
+document.querySelectorAll("[data-vue-messages]").forEach((b) => b.addEventListener("click", () => choisirVueMessages(b.dataset.vueMessages)));
 
 async function telechargerPieceJointe(idMessage, piece) {
   const r = await google(URL_GMAIL + `messages/${idMessage}/attachments/${piece.idPiece}`);
@@ -2003,12 +2013,36 @@ async function telechargerPieceJointe(idMessage, piece) {
   document.body.appendChild(lien); lien.click(); lien.remove();
   setTimeout(() => URL.revokeObjectURL(lien.href), 5000);
 }
+let mailLu = null;
+const adresseDe = (s) => (String(s || "").match(/<([^>]+)>/)?.[1] || String(s || "").split(",")[0]).trim();
+function repondreAuMail() {
+  const m = mailLu; if (!m) return;
+  const moi = String(fb?.auth.currentUser?.email || "").toLowerCase();
+  const envoyeParMoi = moi && String(m.de).toLowerCase().includes(moi);
+  const destinataire = envoyeParMoi ? adresseDe(m.a) : adresseDe(m.repondreA || m.de);
+  $("mail-lecture").close();
+  $("nouveau-mail-form").reset();
+  piecesJointes = []; rendrePiecesJointes();
+  $("nouveau-mail-statut").textContent = "";
+  $("nouveau-mail-titre").textContent = "Répondre";
+  reponseEnCours = { threadId: m.threadId, messageId: m.messageId };
+  const f = $("nouveau-mail-form").elements;
+  f.a.value = destinataire;
+  f.sujet.value = /^(re|réf?)\s*:/i.test(m.sujet) ? m.sujet : "Re : " + m.sujet;
+  const date = m.date ? new Date(m.date).toLocaleString("fr-FR") : "";
+  f.corps.value = `\n\nLe ${date}, ${m.de} a écrit :\n` + String(m.corps || "").split("\n").map((l) => "> " + l).join("\n");
+  nouveauMailDialog.showModal();
+  f.corps.focus(); f.corps.setSelectionRange(0, 0);
+}
+$("mail-lecture-repondre").addEventListener("click", repondreAuMail);
 async function lireMail(id) {
+  mailLu = null;
   const dlg = $("mail-lecture");
   $("mail-lecture-sujet").textContent = "Chargement…"; $("mail-lecture-meta").textContent = ""; $("mail-lecture-corps").textContent = ""; $("mail-lecture-pj").innerHTML = "";
   if (!dlg.open) dlg.showModal();
   try {
     const m = lireMessageComplet(await google(URL_GMAIL + `messages/${encodeURIComponent(id)}?format=full`));
+    mailLu = m;
     $("mail-lecture-sujet").textContent = m.sujet;
     $("mail-lecture-meta").textContent = `De : ${m.de}` + (m.a ? ` · À : ${m.a}` : "") + (m.cc ? ` · Cc : ${m.cc}` : "") + (m.date ? ` · ${jourHeure.format(new Date(m.date))}` : "");
     $("mail-lecture-corps").textContent = m.corps;

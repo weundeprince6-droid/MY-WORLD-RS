@@ -266,7 +266,9 @@ srv.listen(8765, async () => {
   res.push(await scenario('Gmail : pièce jointe à l\'envoi, mails envoyés visibles et lisibles', {}, async (p, appels, logs, etat) => {
     p.on('dialog', (d) => d.accept());
     await p.click('#bouton-connexion'); await p.waitForTimeout(2500);
-    await p.click('[data-tab="messages"]'); await p.waitForTimeout(1500);
+    await p.click('[data-tab="messages"]'); await p.waitForTimeout(500);
+    const boutonsVues = await p.$$('.messages-barre [data-vue-messages]'); const prochesDuBouton = await p.evaluate(() => document.getElementById('nouveau-mail').parentElement === document.querySelector('[data-vue-messages="envoyes"]').parentElement);
+    await p.click('[data-vue-messages="envoyes"]'); await p.waitForTimeout(1500);
     const envoyes = await p.textContent('#liste-envoyes'); const lectures = await p.$$('#liste-envoyes [data-lire]');
     await p.click('#nouveau-mail'); await p.waitForTimeout(300);
     await p.fill('#nouveau-mail-form [name=a]', 'marie@ex.com'); await p.fill('#nouveau-mail-form [name=sujet]', 'Avec fichier'); await p.fill('#nouveau-mail-form [name=corps]', 'Voir PJ');
@@ -278,7 +280,21 @@ srv.listen(8765, async () => {
     const pj = brut.includes('multipart/mixed') && brut.includes('Content-Disposition: attachment') && brut.includes(Buffer.from('Contenu du fichier é').toString('base64'));
     await p.click('#liste-envoyes [data-lire]'); await p.waitForTimeout(1200);
     const dlg = await p.isVisible('#mail-lecture'); const sujet = (await p.textContent('#mail-lecture-sujet')).trim();
-    return { ok: lectures.length > 0 && envoyes.includes('À :') && liste.includes('note é.txt') && pj && dlg && sujet.length > 0 && sujet !== 'Chargement…', detail: JSON.stringify({ n: lectures.length, liste: liste.slice(0, 30), pj, dlg, sujet: sujet.slice(0, 40) }) };
+    return { ok: boutonsVues.length === 3 && prochesDuBouton && lectures.length > 0 && envoyes.includes('À :') && liste.includes('note é.txt') && pj && dlg && sujet.length > 0 && sujet !== 'Chargement…', detail: JSON.stringify({ n: lectures.length, liste: liste.slice(0, 30), pj, dlg, sujet: sujet.slice(0, 40) }) };
+  }));
+  res.push(await scenario('Gmail : répondre depuis la lecture d\'un message', {}, async (p, appels, logs, etat) => {
+    p.on('dialog', (d) => d.accept());
+    await p.click('#bouton-connexion'); await p.waitForTimeout(2500);
+    await p.click('[data-tab="messages"]'); await p.waitForTimeout(500);
+    await p.click('#liste-messages [data-lire]'); await p.waitForTimeout(1200);
+    await p.click('#mail-lecture-repondre'); await p.waitForTimeout(500);
+    const dest = await p.inputValue('#nouveau-mail-form [name=a]'); const sujet = await p.inputValue('#nouveau-mail-form [name=sujet]'); const corps = await p.inputValue('#nouveau-mail-form [name=corps]');
+    const titre = (await p.textContent('#nouveau-mail-titre')).trim();
+    await p.fill('#nouveau-mail-form [name=corps]', 'Merci, bien reçu.\n' + corps);
+    await p.click('#nouveau-mail-envoyer'); await p.waitForTimeout(1500);
+    const envoi = (etat.mails || []).find((x) => x.url.includes('/messages/send'));
+    const brut = envoi ? Buffer.from(envoi.corps.raw.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8') : '';
+    return { ok: titre === 'Répondre' && dest.includes('@') && /^Re/.test(sujet) && corps.includes('a écrit') && envoi && !!envoi.corps.threadId && brut.includes('Merci, bien reçu.'), detail: JSON.stringify({ titre, dest, sujet, threadId: envoi && envoi.corps.threadId }) };
   }));
   res.push(await scenario('Agenda : ajouter puis supprimer un rendez-vous', {}, async (p, appels, logs, etat) => {
     p.on('dialog', (d) => d.accept());

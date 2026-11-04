@@ -63,6 +63,9 @@ const piege = b64d(construireBrouillonBrut({ a: "a@ex.com\r\nBcc: pirate@ex.com"
 assert.ok(!/\r\nBcc:/.test(piege) && !/\nBcc:/.test(piege.replace(/\r\n/g, "\n").split("\n\n")[0].replace(/^To:.*$/m, "").replace(/^Cc:.*$/m, "")));
 assert.ok(!piege.includes("Cc: x@ex.com\n"));
 
+// Réponse : en-têtes de conversation (sans injection)
+const rep = b64d(construireMessageBrut({ a: "a@ex.com", sujet: "Re : S", corps: "C", enReponseA: "<abc@mail.gmail.com>\r\nBcc: x@ex.com" }));
+assert.ok(rep.includes("In-Reply-To: <abc@mail.gmail.com> Bcc: x@ex.com\r\n") && !/\r\nBcc:/.test(rep));
 // Pièces jointes : message multipart
 const contenuPj = Buffer.from("Bonjour pièce jointe é").toString("base64");
 const mp = b64d(construireMessageBrut({ a: "a@ex.com", sujet: "Avec PJ", corps: "Texte", pieces: [{ nom: 'rapport "final".pdf', type: "application/pdf", base64: contenuPj }] }));
@@ -84,7 +87,7 @@ const enc = (s) => Buffer.from(s).toString("base64").replace(/\+/g, "-").replace
 const lu = lireMessageComplet({ id: "m9", threadId: "t9", internalDate: "1700000000000", payload: { headers: [{ name: "From", value: "Moi <moi@ex.com>" }, { name: "To", value: "marie@ex.com" }, { name: "Subject", value: "Sujet é" }],
   mimeType: "multipart/mixed", parts: [{ mimeType: "multipart/alternative", parts: [{ mimeType: "text/plain", body: { data: enc("Bonjour é\nLigne 2") } }, { mimeType: "text/html", body: { data: enc("<p>HTML</p>") } }] },
   { mimeType: "application/pdf", filename: "facture.pdf", body: { attachmentId: "att1", size: 2048 } }] } });
-assert.equal(lu.corps, "Bonjour é\nLigne 2"); assert.equal(lu.pieces.length, 1); assert.equal(lu.pieces[0].nom, "facture.pdf"); assert.equal(lu.pieces[0].idPiece, "att1"); assert.equal(lu.a, "marie@ex.com");
+assert.equal(lu.corps, "Bonjour é\nLigne 2"); assert.equal(lu.messageId, ""); assert.equal(lu.pieces.length, 1); assert.equal(lu.pieces[0].nom, "facture.pdf"); assert.equal(lu.pieces[0].idPiece, "att1"); assert.equal(lu.a, "marie@ex.com");
 const luHtml = lireMessageComplet({ id: "m", payload: { headers: [], mimeType: "text/html", body: { data: enc("<style>x{}</style><div>Salut&nbsp;toi</div><p>Ligne&amp;2</p>") } } });
 assert.equal(luHtml.corps, "Salut toi\nLigne&2");
 

@@ -6,7 +6,7 @@
   <title>My World RS</title>
   <meta name="description" content="Votre espace personnel : messages, agenda, bases de données et alertes.">
   <script>try{const t=localStorage.getItem("mwrs.theme");document.documentElement.dataset.theme=(t==="light"||t==="dark")?t:(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");}catch{document.documentElement.dataset.theme="light";}</script>
-  <link rel="stylesheet" href="style.css?v=20261104-70">
+  <link rel="stylesheet" href="style.css?v=20261104-80">
 </head>
 <body>
   <header class="entete">
@@ -90,12 +90,16 @@
             <section class="carte dashboard-alerts"><div class="card-heading"><div><p class="eyebrow">À NE PAS MANQUER</p><h2>Alertes et rappels</h2></div><span class="heading-icon">⚑</span></div><ul id="liste-alertes" class="liste alertes"></ul></section>
           </section>
           <section class="tab-pane" id="pane-messages" role="tabpanel" data-pane="messages" hidden>
-            <div class="section-heading messages-heading"><div><p class="eyebrow">COMMUNICATION</p><h2>Messages importants</h2><p>Les messages qui méritent votre attention.</p></div><button id="nouveau-mail" class="btn btn-primary" type="button">✉ Nouveau mail</button></div>
-            <section class="carte"><ul id="liste-messages" class="liste"></ul></section>
-            <div class="section-heading"><div><p class="eyebrow">BOÎTE DE RÉCEPTION</p><h2>Derniers e-mails</h2><p>Vos messages Gmail récents, importants ou non.</p></div></div>
-            <section class="carte"><ul id="liste-recents" class="liste"></ul></section>
-            <div class="section-heading"><div><p class="eyebrow">ENVOYÉS</p><h2>Mails envoyés</h2><p>Les derniers messages que vous avez envoyés depuis Gmail ou cette application.</p></div><button id="envoyes-actualiser" class="btn btn-light" type="button">↻ Actualiser</button></div>
-            <section class="carte"><ul id="liste-envoyes" class="liste"><li class="vide">Ouvrez cet onglet pour charger vos mails envoyés.</li></ul></section>
+            <div class="section-heading messages-heading"><div><p class="eyebrow">COMMUNICATION</p><h2>Messages</h2><p id="messages-vue-texte">Les messages qui méritent votre attention.</p></div>
+              <div class="messages-barre" role="group" aria-label="Affichage des messages">
+                <button id="nouveau-mail" class="btn btn-primary" type="button">✉ Nouveau mail</button>
+                <button class="btn btn-light vue-actif" type="button" data-vue-messages="importants" aria-pressed="true">Messages importants</button>
+                <button class="btn btn-light" type="button" data-vue-messages="recus" aria-pressed="false">Boîte de réception</button>
+                <button class="btn btn-light" type="button" data-vue-messages="envoyes" aria-pressed="false">Messages envoyés</button>
+              </div></div>
+            <section class="carte" id="vue-importants"><ul id="liste-messages" class="liste"></ul></section>
+            <section class="carte" id="vue-recus" hidden><ul id="liste-recents" class="liste"></ul></section>
+            <section class="carte" id="vue-envoyes" hidden><div class="card-heading"><div><h2>Mails envoyés</h2></div><button id="envoyes-actualiser" class="btn btn-light" type="button">↻ Actualiser</button></div><ul id="liste-envoyes" class="liste"><li class="vide">Chargement des mails envoyés…</li></ul></section>
           </section>
           <section class="tab-pane" id="pane-agenda" role="tabpanel" data-pane="agenda" hidden>
             <div class="section-heading"><div><p class="eyebrow">ORGANISATION</p><h2>Mon agenda</h2><p>Consultez vos rendez-vous en aperçu, puis ajoutez ou modifiez au besoin.</p></div><button class="btn btn-primary" id="agenda-nouveau" type="button">＋ Nouveau rendez-vous</button></div>
@@ -325,8 +329,8 @@
       <p class="pin-gate-note">Verrouillage automatique après 10 minutes d’inactivité.</p>
     </form>
   </section>
-<dialog id="nouveau-mail-dialog"><form id="nouveau-mail-form" class="nouveau-mail-form"><div class="nouveau-mail-head"><div><p class="eyebrow">GMAIL</p><h2>Nouveau mail</h2><p class="meta">Envoyez directement le message, ou enregistrez-le d'abord dans vos brouillons Gmail.</p></div><button type="button" id="nouveau-mail-fermer" class="btn btn-quiet" aria-label="Fermer">✕</button></div><label>Destinataire<input name="a" type="email" required maxlength="320" placeholder="adresse@example.com" autocomplete="email"></label><label>Copie (Cc) <span class="meta">facultatif</span><input name="cc" type="text" maxlength="500" placeholder="autre@example.com, …"></label><label>Objet<input name="sujet" type="text" required maxlength="500" placeholder="Objet du mail"></label><label>Message<textarea name="corps" required rows="9" maxlength="30000" placeholder="Écrivez votre message…"></textarea></label><div class="pj-zone"><label class="btn btn-light" for="nouveau-mail-fichiers">📎 Joindre des fichiers</label><input id="nouveau-mail-fichiers" type="file" multiple hidden><span class="meta">10 Mo au total</span><ul id="nouveau-mail-pj" class="pj-liste"></ul></div><div class="nouveau-mail-actions"><span id="nouveau-mail-statut" class="meta" role="status"></span><button id="nouveau-mail-creer" class="btn btn-light" type="button">Enregistrer en brouillon</button><button id="nouveau-mail-envoyer" class="btn btn-primary" type="submit">Envoyer</button></div></form></dialog>
-    <dialog id="mail-lecture"><div class="mail-lecture"><div class="nouveau-mail-head"><div><p class="eyebrow" id="mail-lecture-type">MESSAGE</p><h2 id="mail-lecture-sujet"></h2><p class="meta" id="mail-lecture-meta"></p></div><button type="button" id="mail-lecture-fermer" class="btn btn-quiet" aria-label="Fermer">✕</button></div><pre id="mail-lecture-corps" class="mail-lecture-corps"></pre><ul id="mail-lecture-pj" class="pj-liste"></ul><div class="nouveau-mail-actions"><a id="mail-lecture-gmail" class="btn btn-light" target="_blank" rel="noopener noreferrer" href="https://mail.google.com/">Ouvrir dans Gmail ↗</a></div></div></dialog>
+<dialog id="nouveau-mail-dialog"><form id="nouveau-mail-form" class="nouveau-mail-form"><div class="nouveau-mail-head"><div><p class="eyebrow">GMAIL</p><h2 id="nouveau-mail-titre">Nouveau mail</h2><p class="meta">Envoyez directement le message, ou enregistrez-le d'abord dans vos brouillons Gmail.</p></div><button type="button" id="nouveau-mail-fermer" class="btn btn-quiet" aria-label="Fermer">✕</button></div><label>Destinataire<input name="a" type="email" required maxlength="320" placeholder="adresse@example.com" autocomplete="email"></label><label>Copie (Cc) <span class="meta">facultatif</span><input name="cc" type="text" maxlength="500" placeholder="autre@example.com, …"></label><label>Objet<input name="sujet" type="text" required maxlength="500" placeholder="Objet du mail"></label><label>Message<textarea name="corps" required rows="9" maxlength="30000" placeholder="Écrivez votre message…"></textarea></label><div class="pj-zone"><label class="btn btn-light" for="nouveau-mail-fichiers">📎 Joindre des fichiers</label><input id="nouveau-mail-fichiers" type="file" multiple hidden><span class="meta">10 Mo au total</span><ul id="nouveau-mail-pj" class="pj-liste"></ul></div><div class="nouveau-mail-actions"><span id="nouveau-mail-statut" class="meta" role="status"></span><button id="nouveau-mail-creer" class="btn btn-light" type="button">Enregistrer en brouillon</button><button id="nouveau-mail-envoyer" class="btn btn-primary" type="submit">Envoyer</button></div></form></dialog>
+    <dialog id="mail-lecture"><div class="mail-lecture"><div class="nouveau-mail-head"><div><p class="eyebrow" id="mail-lecture-type">MESSAGE</p><h2 id="mail-lecture-sujet"></h2><p class="meta" id="mail-lecture-meta"></p></div><button type="button" id="mail-lecture-fermer" class="btn btn-quiet" aria-label="Fermer">✕</button></div><pre id="mail-lecture-corps" class="mail-lecture-corps"></pre><ul id="mail-lecture-pj" class="pj-liste"></ul><div class="nouveau-mail-actions"><button id="mail-lecture-repondre" class="btn btn-primary" type="button">↩ Répondre</button><a id="mail-lecture-gmail" class="btn btn-light" target="_blank" rel="noopener noreferrer" href="https://mail.google.com/">Ouvrir dans Gmail ↗</a></div></div></dialog>
     <dialog id="modeles">
     <h2 id="modeles-titre">Répondre</h2><p class="meta">Choisissez un modèle : « Brouillon » l'enregistre dans Gmail, « Envoyer » l'envoie tout de suite (après confirmation).</p>
     <div id="modeles-liste" class="modeles"></div><button id="modeles-fermer" class="btn btn-quiet">Annuler</button>
@@ -350,6 +354,6 @@
       setTimeout(function(){if(!window.__appPret)montrer("L'application n'a pas démarré. Vérifiez votre connexion internet (les composants Firebase se chargent depuis Google), désactivez un éventuel bloqueur de publicités, puis rechargez. Appuyez sur F12 > Console pour voir le détail.");},6000);
     })();
   </script>
-  <script type="module" src="app.js?v=20261104-70"></script>
+  <script type="module" src="app.js?v=20261104-80"></script>
 </body>
 </html>
