@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import {
   scoreMessage, messagesImportants, repartirAgenda, evaluerSeuil, construireAlertes,
-  resumeDuJour, remplirModele, construireBrouillonBrut, expediteurLisible, enLots,
+  resumeDuJour, remplirModele, construireBrouillonBrut, construireMessageBrut, lireMessageComplet, expediteurLisible, enLots,
 } from "../public/core.js";
 
 const msg = (id, from, subject, labels = [], snippet = "") => ({
@@ -62,6 +62,31 @@ assert.ok(avecCc.includes("\r\nCc: b@ex.com, c@ex.com\r\n"));
 const piege = b64d(construireBrouillonBrut({ a: "a@ex.com\r\nBcc: pirate@ex.com", cc: "x@ex.com\nBcc: z@ex.com", sujet: "S", corps: "C" }));
 assert.ok(!/\r\nBcc:/.test(piege) && !/\nBcc:/.test(piege.replace(/\r\n/g, "\n").split("\n\n")[0].replace(/^To:.*$/m, "").replace(/^Cc:.*$/m, "")));
 assert.ok(!piege.includes("Cc: x@ex.com\n"));
+
+// Pièces jointes : message multipart
+const contenuPj = Buffer.from("Bonjour pièce jointe é").toString("base64");
+const mp = b64d(construireMessageBrut({ a: "a@ex.com", sujet: "Avec PJ", corps: "Texte", pieces: [{ nom: 'rapport "final".pdf', type: "application/pdf", base64: contenuPj }] }));
+assert.ok(/Content-Type: multipart\/mixed; boundary="(mwrs_[a-z0-9]+)"/.test(mp));
+const front = mp.match(/boundary="([^"]+)"/)[1];
+assert.ok(mp.includes("--" + front + "--"));
+assert.ok(mp.includes("Content-Type: application/pdf; name=\"=?UTF-8?B?"));
+assert.ok(mp.includes("Content-Disposition: attachment; filename=\"=?UTF-8?B?"));
+assert.ok(!mp.includes('rapport "final"'));
+assert.ok(mp.includes(contenuPj));
+assert.ok(mp.includes("Content-Transfer-Encoding: base64"));
+assert.ok(!/^Content-Type: multipart/m.test(b64d(construireMessageBrut({ a: "a@ex.com", sujet: "S", corps: "C" }))));
+// gros fichier (3 Mo) sans dépassement de pile
+const gros = Buffer.alloc(3 * 1024 * 1024, 7).toString("base64");
+assert.ok(construireMessageBrut({ a: "a@ex.com", sujet: "S", corps: "C", pieces: [{ nom: "gros.bin", type: "application/octet-stream", base64: gros }] }).length > 4000000);
+
+// Lecture d'un message complet
+const enc = (s) => Buffer.from(s).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+const lu = lireMessageComplet({ id: "m9", threadId: "t9", internalDate: "1700000000000", payload: { headers: [{ name: "From", value: "Moi <moi@ex.com>" }, { name: "To", value: "marie@ex.com" }, { name: "Subject", value: "Sujet é" }],
+  mimeType: "multipart/mixed", parts: [{ mimeType: "multipart/alternative", parts: [{ mimeType: "text/plain", body: { data: enc("Bonjour é\nLigne 2") } }, { mimeType: "text/html", body: { data: enc("<p>HTML</p>") } }] },
+  { mimeType: "application/pdf", filename: "facture.pdf", body: { attachmentId: "att1", size: 2048 } }] } });
+assert.equal(lu.corps, "Bonjour é\nLigne 2"); assert.equal(lu.pieces.length, 1); assert.equal(lu.pieces[0].nom, "facture.pdf"); assert.equal(lu.pieces[0].idPiece, "att1"); assert.equal(lu.a, "marie@ex.com");
+const luHtml = lireMessageComplet({ id: "m", payload: { headers: [], mimeType: "text/html", body: { data: enc("<style>x{}</style><div>Salut&nbsp;toi</div><p>Ligne&amp;2</p>") } } });
+assert.equal(luHtml.corps, "Salut toi\nLigne&2");
 
 // Exécution par lots : ordre conservé, jamais plus de 4 appels en même temps
 let actifs = 0, maxActifs = 0;

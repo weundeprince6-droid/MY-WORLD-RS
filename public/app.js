@@ -1,7 +1,7 @@
 // app.js — interface My World RS : connexion Google, lecture Gmail/Agenda/Firestore, rendu.
 import {
   messagesImportants, repartirAgenda, corpsEvenement, evaluerSeuil, construireAlertes,
-  resumeDuJour, remplirModele, construireBrouillonBrut, expediteurLisible, enLots,
+  resumeDuJour, remplirModele, construireBrouillonBrut, construireMessageBrut, lireMessageComplet, expediteurLisible, enLots,
 } from "./core.js";
 import {
   jetonFacebookValide, urlGraph, expliquerErreurFacebook, choisirPages, extraireMessagesConversations,
@@ -1122,6 +1122,7 @@ function ligneMessage(m, i, avecBrouillon) {
         <div>${echapper(m.sujet)}</div>
         <div class="extrait">${echapper(m.extrait)}</div>
         <div class="actions">
+          <button data-lire="${echapper(m.id)}">Lire</button>
           <a href="https://mail.google.com/mail/u/0/#inbox/${m.threadId}" target="_blank" rel="noopener">Ouvrir</a>
           ${avecBrouillon ? `<button data-brouillon="${i}">Brouillon de réponse</button>` : ""}
         </div></li>`;
@@ -1897,8 +1898,36 @@ walletSetDateDefaults();
 //
 // ---------- Nouveau mail Gmail ----------
 const nouveauMailDialog = $("nouveau-mail-dialog");
+const MAX_PJ = 10 * 1024 * 1024;
+let piecesJointes = [];
+const tailleLisible = (o) => (o >= 1048576 ? (o / 1048576).toFixed(1).replace(".", ",") + " Mo" : Math.max(1, Math.round(o / 1024)) + " Ko");
+function rendrePiecesJointes() {
+  const ul = $("nouveau-mail-pj");
+  ul.innerHTML = piecesJointes.map((f, i) => `<li><span>📎 ${echapper(f.nom)} <span class="meta">${tailleLisible(f.taille)}</span></span><button type="button" data-pj-retirer="${i}" aria-label="Retirer">✕</button></li>`).join("");
+  ul.querySelectorAll("[data-pj-retirer]").forEach((b) => b.addEventListener("click", () => { piecesJointes.splice(Number(b.dataset.pjRetirer), 1); rendrePiecesJointes(); }));
+}
+function fichierEnBase64(fichier) {
+  return new Promise((ok, ko) => {
+    const lecteur = new FileReader();
+    lecteur.onerror = () => ko(new Error("Lecture du fichier impossible : " + fichier.name));
+    lecteur.onload = () => ok(String(lecteur.result).split(",")[1] || "");
+    lecteur.readAsDataURL(fichier);
+  });
+}
+$("nouveau-mail-fichiers").addEventListener("change", async (e) => {
+  const choisis = [...e.target.files];
+  e.target.value = "";
+  const statut = $("nouveau-mail-statut");
+  for (const f of choisis) {
+    if (piecesJointes.reduce((s, x) => s + x.taille, 0) + f.size > MAX_PJ) { statut.textContent = `« ${f.name} » dépasse la limite de 10 Mo au total : non joint.`; continue; }
+    try { piecesJointes.push({ nom: f.name, type: f.type || "application/octet-stream", taille: f.size, base64: await fichierEnBase64(f) }); statut.textContent = ""; }
+    catch (err) { statut.textContent = err.message; }
+  }
+  rendrePiecesJointes();
+});
 $("nouveau-mail").addEventListener("click", () => {
   $("nouveau-mail-form").reset();
+  piecesJointes = []; rendrePiecesJointes();
   $("nouveau-mail-statut").textContent = "";
   nouveauMailDialog.showModal();
 });
@@ -1918,16 +1947,17 @@ async function envoyerOuEnregistrerMail(envoyer) {
   const cc = String(donnees.get("cc") || "").trim();
   const sujet = String(donnees.get("sujet") || "").trim();
   const corps = String(donnees.get("corps") || "").trim();
-  if (envoyer && !confirm(`Envoyer ce mail à ${a}${cc ? " (Cc : " + cc + ")" : ""} ?\nObjet : ${sujet}`)) return;
+  if (envoyer && !confirm(`Envoyer ce mail à ${a}${cc ? " (Cc : " + cc + ")" : ""} ?\nObjet : ${sujet}` + (piecesJointes.length ? `\nPièces jointes : ${piecesJointes.map((f) => f.nom).join(", ")}` : ""))) return;
   const boutons = [$("nouveau-mail-creer"), $("nouveau-mail-envoyer")];
   boutons.forEach((b) => (b.disabled = true));
   $("nouveau-mail-statut").textContent = envoyer ? "Envoi en cours…" : "Création du brouillon…";
   try {
-    const raw = construireBrouillonBrut({ a, cc, sujet, corps });
+    const raw = construireMessageBrut({ a, cc, sujet, corps, pieces: piecesJointes });
     if (envoyer) await google(URL_GMAIL + "messages/send", { method: "POST", body: JSON.stringify({ raw }) });
     else await google(URL_GMAIL + "drafts", { method: "POST", body: JSON.stringify({ message: { raw } }) });
     nouveauMailDialog.close();
-    messageEnvoye(envoyer ? `Mail envoyé à ${a}.` : "Brouillon créé dans Gmail. Vous pouvez le relire et l’envoyer depuis Gmail.");
+    if (envoyer) { envoyesCharges = false; if (!$("pane-messages").hidden) chargerEnvoyes(); }
+    messageEnvoye(envoyer ? `Mail envoyé à ${a}${piecesJointes.length ? " avec " + piecesJointes.length + " pièce(s) jointe(s)" : ""}.` : "Brouillon créé dans Gmail. Vous pouvez le relire et l’envoyer depuis Gmail.");
   } catch (e) {
     $("nouveau-mail-statut").textContent = "";
     afficherErreur(`${envoyer ? "Mail non envoyé" : "Brouillon non créé"} : ${e.message}`);
@@ -1937,6 +1967,63 @@ async function envoyerOuEnregistrerMail(envoyer) {
 }
 $("nouveau-mail-form").addEventListener("submit", (event) => { event.preventDefault(); envoyerOuEnregistrerMail(true); });
 $("nouveau-mail-creer").addEventListener("click", () => envoyerOuEnregistrerMail(false));
+
+
+// ---------- Mails envoyés et lecture d'un message ----------
+let envoyesCharges = false, envoyesEnCours = false, listeEnvoyes = [];
+async function chargerEnvoyes() {
+  if (envoyesEnCours) return;
+  envoyesEnCours = true;
+  const zone = $("liste-envoyes");
+  try {
+    if (!envoyesCharges) zone.innerHTML = '<li class="vide">Chargement des mails envoyés…</li>';
+    const liste = await google(URL_GMAIL + "messages?maxResults=30&q=" + encodeURIComponent("in:sent"));
+    const complets = await enLots((liste.messages || []).map((m) => m.id), 4, (id) =>
+      google(URL_GMAIL + `messages/${id}?format=metadata&metadataHeaders=To&metadataHeaders=Cc&metadataHeaders=Subject&metadataHeaders=Date`));
+    const h = (m, n) => (m.payload?.headers || []).find((x) => x.name.toLowerCase() === n)?.value || "";
+    listeEnvoyes = complets.map((m) => ({ id: m.id, threadId: m.threadId, a: h(m, "to"), cc: h(m, "cc"), sujet: h(m, "subject") || "(sans objet)", extrait: m.snippet || "", date: Number(m.internalDate || 0) }))
+      .sort((x, y) => y.date - x.date);
+    envoyesCharges = true;
+    zone.innerHTML = listeEnvoyes.length ? listeEnvoyes.map((m) => `<li><div class="ligne"><strong>À : ${echapper(expediteurLisible(m.a) || m.a || "—")}</strong><span class="meta">${m.date ? jourHeure.format(new Date(m.date)) : ""}</span></div><div>${echapper(m.sujet)}</div><div class="extrait">${echapper(m.extrait)}</div><div class="actions"><button data-lire="${echapper(m.id)}">Lire</button><a href="https://mail.google.com/mail/u/0/#sent/${m.threadId}" target="_blank" rel="noopener">Ouvrir</a></div></li>`).join("")
+      : '<li class="vide">Aucun mail envoyé trouvé.</li>';
+  } catch (e) {
+    zone.innerHTML = `<li class="vide">Mails envoyés indisponibles : ${echapper(e.message)}</li>`;
+  } finally { envoyesEnCours = false; }
+}
+$("envoyes-actualiser").addEventListener("click", () => chargerEnvoyes());
+document.querySelector('[data-tab="messages"]')?.addEventListener("click", () => { if (!envoyesCharges) chargerEnvoyes(); });
+
+async function telechargerPieceJointe(idMessage, piece) {
+  const r = await google(URL_GMAIL + `messages/${idMessage}/attachments/${piece.idPiece}`);
+  const bin = atob(String(r.data || "").replace(/-/g, "+").replace(/_/g, "/"));
+  const octets = Uint8Array.from(bin, (c) => c.charCodeAt(0));
+  const lien = document.createElement("a");
+  lien.href = URL.createObjectURL(new Blob([octets], { type: piece.type || "application/octet-stream" }));
+  lien.download = piece.nom;
+  document.body.appendChild(lien); lien.click(); lien.remove();
+  setTimeout(() => URL.revokeObjectURL(lien.href), 5000);
+}
+async function lireMail(id) {
+  const dlg = $("mail-lecture");
+  $("mail-lecture-sujet").textContent = "Chargement…"; $("mail-lecture-meta").textContent = ""; $("mail-lecture-corps").textContent = ""; $("mail-lecture-pj").innerHTML = "";
+  if (!dlg.open) dlg.showModal();
+  try {
+    const m = lireMessageComplet(await google(URL_GMAIL + `messages/${encodeURIComponent(id)}?format=full`));
+    $("mail-lecture-sujet").textContent = m.sujet;
+    $("mail-lecture-meta").textContent = `De : ${m.de}` + (m.a ? ` · À : ${m.a}` : "") + (m.cc ? ` · Cc : ${m.cc}` : "") + (m.date ? ` · ${jourHeure.format(new Date(m.date))}` : "");
+    $("mail-lecture-corps").textContent = m.corps;
+    $("mail-lecture-gmail").href = "https://mail.google.com/mail/u/0/#all/" + (m.threadId || m.id);
+    const ul = $("mail-lecture-pj");
+    ul.innerHTML = m.pieces.map((f, i) => `<li><span>📎 ${echapper(f.nom)} <span class="meta">${tailleLisible(f.taille)}</span></span><button type="button" data-pj-telecharger="${i}">Télécharger</button></li>`).join("");
+    ul.querySelectorAll("[data-pj-telecharger]").forEach((b) => b.addEventListener("click", async () => {
+      b.disabled = true;
+      try { await telechargerPieceJointe(m.id, m.pieces[Number(b.dataset.pjTelecharger)]); } catch (e) { afficherErreur("Téléchargement impossible : " + e.message); }
+      b.disabled = false;
+    }));
+  } catch (e) { $("mail-lecture-sujet").textContent = "Lecture impossible"; $("mail-lecture-corps").textContent = e.message; }
+}
+$("mail-lecture-fermer").addEventListener("click", () => $("mail-lecture").close());
+$("pane-messages").addEventListener("click", (ev) => { const b = ev.target.closest("[data-lire]"); if (b) lireMail(b.dataset.lire); });
 
 // ---------- Brouillons de réponse ----------
 let messageCible = null;

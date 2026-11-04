@@ -263,6 +263,23 @@ srv.listen(8765, async () => {
     const ok = envoi && brut.includes('To: marie@ex.com') && brut.includes('Cc: paul@ex.com') && brut.endsWith('Message de test') && conf1.includes('Mail envoyé à marie@ex.com') && brouillon && !(etat.mails || []).some((x) => x.url.includes('/messages/send') && Buffer.from(x.corps.raw.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8').includes('luc@ex.com'));
     return { ok, detail: JSON.stringify({ envoi: !!envoi, conf1: conf1.slice(0, 60), brouillon: !!brouillon }) };
   }));
+  res.push(await scenario('Gmail : pièce jointe à l\'envoi, mails envoyés visibles et lisibles', {}, async (p, appels, logs, etat) => {
+    p.on('dialog', (d) => d.accept());
+    await p.click('#bouton-connexion'); await p.waitForTimeout(2500);
+    await p.click('[data-tab="messages"]'); await p.waitForTimeout(1500);
+    const envoyes = await p.textContent('#liste-envoyes'); const lectures = await p.$$('#liste-envoyes [data-lire]');
+    await p.click('#nouveau-mail'); await p.waitForTimeout(300);
+    await p.fill('#nouveau-mail-form [name=a]', 'marie@ex.com'); await p.fill('#nouveau-mail-form [name=sujet]', 'Avec fichier'); await p.fill('#nouveau-mail-form [name=corps]', 'Voir PJ');
+    await p.setInputFiles('#nouveau-mail-fichiers', [{ name: 'note é.txt', mimeType: 'text/plain', buffer: Buffer.from('Contenu du fichier é') }]); await p.waitForTimeout(500);
+    const liste = await p.textContent('#nouveau-mail-pj');
+    await p.click('#nouveau-mail-envoyer'); await p.waitForTimeout(1500);
+    const envoi = (etat.mails || []).find((x) => x.url.includes('/messages/send'));
+    const brut = envoi ? Buffer.from(envoi.corps.raw.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8') : '';
+    const pj = brut.includes('multipart/mixed') && brut.includes('Content-Disposition: attachment') && brut.includes(Buffer.from('Contenu du fichier é').toString('base64'));
+    await p.click('#liste-envoyes [data-lire]'); await p.waitForTimeout(1200);
+    const dlg = await p.isVisible('#mail-lecture'); const sujet = (await p.textContent('#mail-lecture-sujet')).trim();
+    return { ok: lectures.length > 0 && envoyes.includes('À :') && liste.includes('note é.txt') && pj && dlg && sujet.length > 0 && sujet !== 'Chargement…', detail: JSON.stringify({ n: lectures.length, liste: liste.slice(0, 30), pj, dlg, sujet: sujet.slice(0, 40) }) };
+  }));
   res.push(await scenario('Agenda : ajouter puis supprimer un rendez-vous', {}, async (p, appels, logs, etat) => {
     p.on('dialog', (d) => d.accept());
     await p.click('#bouton-connexion'); await p.waitForTimeout(2500);

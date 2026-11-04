@@ -232,7 +232,7 @@ export function remplirModele(modele, valeurs) {
 function base64urlUtf8(texte) {
   const octets = new TextEncoder().encode(texte);
   let bin = "";
-  for (const o of octets) bin += String.fromCharCode(o);
+  for (let i = 0; i < octets.length; i += 0x8000) bin += String.fromCharCode.apply(null, octets.subarray(i, i + 0x8000));
   const b64 = typeof btoa === "function" ? btoa(bin) : Buffer.from(bin, "binary").toString("base64");
   return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
@@ -247,18 +247,76 @@ function sujetEncode(sujet) {
 
 /** Construit le message brut (RFC 2822, base64url) attendu par l'API Gmail pour un brouillon. */
 const adresseSure = (v) => String(v || "").replace(/[\r\n]+/g, " ").trim(); // jamais de saut de ligne dans un en-tête (injection d'en-têtes)
-export function construireBrouillonBrut({ a, cc, sujet, corps }) {
-  const lignes = [
+const nomFichierSur = (v) => String(v || "fichier").replace(/[\r\n"\\/]+/g, "_").trim() || "fichier";
+const base64Lignes = (b64) => (b64.match(/.{1,76}/g) || []).join("\r\n");
+
+/**
+ * Construit le message brut (RFC 2822, base64url) attendu par l'API Gmail, pour un envoi ou un brouillon.
+ * pieces : [{ nom, type, base64 }] (base64 standard du contenu du fichier) -> message multipart/mixed.
+ */
+export function construireMessageBrut({ a, cc, sujet, corps, pieces = [] }) {
+  const entetes = [
     `To: ${adresseSure(a)}`,
     ...(adresseSure(cc) ? [`Cc: ${adresseSure(cc)}`] : []),
     `Subject: ${sujetEncode(sujet)}`,
     "MIME-Version: 1.0",
-    'Content-Type: text/plain; charset="UTF-8"',
-    "Content-Transfer-Encoding: 8bit",
-    "",
-    corps,
   ];
-  return base64urlUtf8(lignes.join("\r\n"));
+  if (!pieces.length) {
+    return base64urlUtf8([...entetes, 'Content-Type: text/plain; charset="UTF-8"', "Content-Transfer-Encoding: 8bit", "", corps].join("\r\n"));
+  }
+  const frontiere = "mwrs_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
+  const parties = [
+    `--${frontiere}`, 'Content-Type: text/plain; charset="UTF-8"', "Content-Transfer-Encoding: 8bit", "", corps,
+  ];
+  for (const f of pieces) {
+    const nom = nomFichierSur(f.nom), nomEnc = sujetEncode(nom);
+    parties.push(
+      `--${frontiere}`,
+      `Content-Type: ${String(f.type || "application/octet-stream").replace(/[\r\n;]+/g, "")}; name="${nomEnc}"`,
+      "Content-Transfer-Encoding: base64",
+      `Content-Disposition: attachment; filename="${nomEnc}"`,
+      "",
+      base64Lignes(f.base64 || ""),
+    );
+  }
+  parties.push(`--${frontiere}--`, "");
+  return base64urlUtf8([...entetes, `Content-Type: multipart/mixed; boundary="${frontiere}"`, "", ...parties].join("\r\n"));
+}
+export const construireBrouillonBrut = construireMessageBrut;
+
+function decoderBase64Url(donnees) {
+  const b64 = String(donnees || "").replace(/-/g, "+").replace(/_/g, "/");
+  const bin = typeof atob === "function" ? atob(b64) : Buffer.from(b64, "base64").toString("binary");
+  const octets = Uint8Array.from(bin, (c) => c.charCodeAt(0));
+  return new TextDecoder("utf-8").decode(octets);
+}
+function htmlEnTexte(html) {
+  return String(html || "")
+    .replace(/<(script|style)[\s\S]*?<\/\1>/gi, "")
+    .replace(/<br\s*\/?>|<\/(p|div|tr|li|h\d)>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&")
+    .replace(/\n{3,}/g, "\n\n").trim();
+}
+/** Lit un message Gmail complet (format=full) : en-têtes, texte lisible et liste des pièces jointes. */
+export function lireMessageComplet(msg) {
+  const enTetes = msg?.payload?.headers || [];
+  const h = (nom) => enTetes.find((x) => String(x.name).toLowerCase() === nom.toLowerCase())?.value || "";
+  let texte = "", html = "";
+  const pieces = [];
+  const parcourir = (part) => {
+    if (!part) return;
+    if (part.filename && part.body?.attachmentId) {
+      pieces.push({ nom: part.filename, type: part.mimeType || "", taille: Number(part.body.size || 0), idPiece: part.body.attachmentId });
+    } else if (part.mimeType === "text/plain" && part.body?.data && !texte) texte = decoderBase64Url(part.body.data);
+    else if (part.mimeType === "text/html" && part.body?.data && !html) html = decoderBase64Url(part.body.data);
+    (part.parts || []).forEach(parcourir);
+  };
+  parcourir(msg?.payload);
+  return {
+    id: msg?.id, threadId: msg?.threadId, de: h("From"), a: h("To"), cc: h("Cc"), sujet: h("Subject") || "(sans objet)",
+    date: Number(msg?.internalDate || 0), corps: texte.trim() || htmlEnTexte(html) || msg?.snippet || "", pieces,
+  };
 }
 
 /** Exécute f sur chaque élément, `taille` à la fois (ordre conservé) : évite de dépasser les quotas de Google. */
