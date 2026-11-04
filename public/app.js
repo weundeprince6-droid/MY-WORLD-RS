@@ -1045,6 +1045,33 @@ function rendreAgenda() {
   rendreCalendrierAgenda();
 }
 // ---------- Agenda : ajouter et supprimer des rendez-vous ----------
+
+let agendaEvenementEnEdition=null;
+function ouvrirFormAgenda(e=null){
+  const card=$("agenda-editor-card"),f=$("agenda-form");if(!card||!f)return;
+  agendaEvenementEnEdition=e?.id||null;
+  f.reset();
+  f.elements.titre.value=e?.titre||"";
+  f.elements.date.value=e?.date||"";
+  f.elements.debut.value=e?.debutHeure||"";
+  f.elements.fin.value=e?.finHeure||"";
+  f.elements.lieu.value=e?.lieu||"";
+  f.elements.description.value=e?.description||"";
+  f.elements.toutlejour.checked=!!e?.toutLeJour;
+  $("agenda-heures").hidden=!!e?.toutLeJour;
+  $("agenda-form-title").textContent=e?"Modifier le rendez-vous":"Nouveau rendez-vous";
+  $("agenda-ajouter").textContent=e?"Enregistrer les modifications":"Ajouter à Google Agenda";
+  card.hidden=false;
+  card.scrollIntoView({behavior:"smooth",block:"start"});
+}
+$("agenda-nouveau")?.addEventListener("click",()=>ouvrirFormAgenda());
+$("agenda-annuler")?.addEventListener("click",()=>{
+  agendaEvenementEnEdition=null;
+  $("agenda-editor-card").hidden=true;
+  $("agenda-form").reset();
+  $("agenda-heures").hidden=false;
+});
+
 function retourAgenda(texte, erreur = false) {
   const el = $("agenda-retour");
   el.textContent = texte;
