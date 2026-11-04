@@ -897,3 +897,4 @@ html[data-theme="light"] .agenda-anniversaire{background:#f8f8f6!important;color
 #pane-wallet .rist-part .btn-primary:disabled{opacity:.55;cursor:not-allowed;transform:none}
 html[data-theme="light"] #pane-wallet .wallet-ristourne .rist-part{background:linear-gradient(115deg,var(--primary-soft),var(--surface));border-color:#b9d5c8}
 @media(max-width:560px){#pane-wallet .wallet-ristourne .rist-part{align-items:stretch;padding:15px}#pane-wallet .rist-part>div{min-width:0}#pane-wallet .rist-part .btn-primary{width:100%}}
+.rist-part-actions{display:flex;gap:10px;flex-wrap:wrap}

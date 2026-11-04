@@ -1386,8 +1386,9 @@ function calculerPartsRistourne() {
   });
 }
 function rendrePartRistourne() {
-  const info = $("rist-part-info"), bouton = $("rist-part-enregistrer");
+  const info = $("rist-part-info"), bouton = $("rist-part-enregistrer"), reinit = $("rist-part-reinit");
   if (!info || !bouton) return;
+  if (reinit) reinit.disabled = !walletAccounts.some(a => a.name === NOM_COMPTE_PART);
   if (!derniereRistourne) { info.textContent = "Synchronisation avec ESE DB en attente…"; bouton.disabled = true; return; }
   const parts = calculerPartsRistourne().filter(p => p.solde > 0 || p.deja > 0);
   if (!parts.length) { info.textContent = "Aucun solde de ristourne disponible pour le moment."; bouton.disabled = true; return; }
@@ -1433,6 +1434,42 @@ async function enregistrerPartRistourne() {
   } finally { partRistourneEnCours = false; rendrePartRistourne(); }
 }
 $("rist-part-enregistrer")?.addEventListener("click", enregistrerPartRistourne);
+
+// Réinitialise le compte « Mes parts de ristourne » : efface ses mouvements, remet solde et part enregistrée à zéro
+async function reinitialiserPartsRistourne() {
+  if (partRistourneEnCours) return;
+  const comptes = walletAccounts.filter(a => a.name === NOM_COMPTE_PART);
+  if (!comptes.length) return;
+  const ids = new Set(comptes.map(a => a.id));
+  const lignes = walletTransactions.filter(x => ids.has(x.accountId));
+  const liens = new Set(lignes.filter(x => x.transferId).map(x => x.transferId));
+  const lot = walletTransactions.filter(x => ids.has(x.accountId) || (x.transferId && liens.has(x.transferId)));
+  const autres = lot.filter(x => !ids.has(x.accountId)).length;
+  if (!confirm(`Réinitialiser « ${NOM_COMPTE_PART} » ?\n• ${lignes.length} mouvement(s) seront supprimés et le solde remis à 0.\n• La part de 50 % redeviendra entièrement « à enregistrer ».` + (autres ? `\n• ${autres} mouvement(s) liés dans d'autres comptes (transferts) seront aussi annulés.` : ""))) return;
+  const statut = $("wallet-status"), uid = fb?.auth.currentUser?.uid;
+  partRistourneEnCours = true;
+  try {
+    if (statut) statut.textContent = "Réinitialisation en cours…";
+    for (const ligne of lot) {
+      await walletDeleteDoc("walletTransactions", ligne.id);
+      walletTransactions = walletTransactions.filter(x => x.id !== ligne.id);
+      if (!ids.has(ligne.accountId)) {
+        const autre = walletAccounts.find(a => a.id === ligne.accountId);
+        if (autre) { const effet = walletEffet(ligne); await walletPatchAccount(autre, -effet); autre.balance = Number(autre.balance || 0) - effet; }
+      }
+    }
+    for (const compte of comptes) {
+      await google(urlFirestore(firebaseConfig.projectId, walletPath(uid, "walletAccounts", compte.id)) + "?updateMask.fieldPaths=balance&updateMask.fieldPaths=ristourneCredite", { method: "PATCH", body: JSON.stringify(walletFields({ balance: 0, ristourneCredite: 0 })) });
+      compte.balance = 0; compte.ristourneCredite = 0;
+    }
+    walletRender();
+    if (statut) statut.textContent = "Compte « " + NOM_COMPTE_PART + " » réinitialisé : cliquez sur « Enregistrer ma part » pour repartir sur une base correcte.";
+  } catch (e) {
+    walletRender();
+    if (statut) statut.textContent = "Réinitialisation non terminée : " + e.message + " — cliquez sur « Actualiser » pour revérifier vos soldes.";
+  } finally { partRistourneEnCours = false; rendrePartRistourne(); }
+}
+$("rist-part-reinit")?.addEventListener("click", reinitialiserPartsRistourne);
 async function chargerRistourne(force = false, silencieux = false) {
   const statut = $("wallet-ristourne-status");
   const base = bases.ese;

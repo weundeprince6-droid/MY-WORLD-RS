@@ -255,6 +255,19 @@ srv.listen(8765, async () => {
     const ok = reactive && remis && /3\s?750 FC/.test(info) && compte && compte.corps.fields.name.stringValue === 'Mes parts de ristourne' && tx && tx.corps.fields.amount.doubleValue === 3750 && tx.corps.fields.kind.stringValue === 'income' && patch && patch.fields.balance.doubleValue === 3750 && patch.fields.ristourneCredite.doubleValue === 3750 && desactive && statut.includes('enregistrée');
     return { ok, detail: JSON.stringify({ info: info.slice(0, 120), compte: !!compte, montant: tx && tx.corps.fields.amount.doubleValue, patch: patch && patch.fields.balance.doubleValue, desactive, statut: statut.slice(0, 60) }) };
   }));
+  res.push(await scenario('Porte-Monnaie : réinitialiser « Mes parts de ristourne »', {}, async (p, appels, logs, etat) => {
+    p.on('dialog', (d) => d.accept());
+    await p.click('#bouton-connexion'); await p.waitForTimeout(3000);
+    await p.click('[data-tab="wallet"]'); await p.waitForTimeout(1500);
+    await p.click('#rist-part-enregistrer'); await p.waitForTimeout(1500);
+    const avant = etat.wallet.patchs.length;
+    await p.click('#rist-part-reinit'); await p.waitForTimeout(1800);
+    const patchs = etat.wallet.patchs.slice(avant);
+    const remis = patchs.some((x) => x.fields.balance && x.fields.balance.doubleValue === 0 && x.fields.ristourneCredite && x.fields.ristourneCredite.doubleValue === 0);
+    const reactive = !(await p.isDisabled('#rist-part-enregistrer'));
+    const statut = (await p.textContent('#wallet-status')).trim();
+    return { ok: remis && reactive && statut.includes('réinitialisé'), detail: JSON.stringify({ remis, reactive, statut: statut.slice(0, 70) }) };
+  }));
   res.push(await scenario('Porte-Monnaie : supprimer un mouvement corrige le solde', {}, async (p, appels, logs, etat) => {
     p.on('dialog', (d) => d.accept());
     await p.click('#bouton-connexion'); await p.waitForTimeout(3000);
