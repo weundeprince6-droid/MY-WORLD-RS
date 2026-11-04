@@ -1378,6 +1378,7 @@ function walletRender() {
   const monthNet = currency => monthTx.filter(t=>t.currency===currency).reduce((s,t)=>s+(t.kind==="income"?1:-1)*Number(t.amount||0),0);
   $("wallet-month-total").textContent = "Ce mois : " + walletMoney(monthNet("USD"),"USD") + " · " + walletMoney(monthNet("FC"),"FC");
   $("wallet-accounts").innerHTML = walletAccounts.length ? walletAccounts.map(a => `<article class="wallet-account"><div><strong>${echapper(a.name)}</strong><small>${a.type==="personal"?"Personnel":"Professionnel"} · ${echapper(a.currency)}</small></div><b>${walletMoney(a.balance,a.currency)}</b></article>`).join("") : '<p class="vide">Aucun compte. Créez votre premier compte.</p>';
+  walletRenderForecasts();
   const options = walletAccounts.map(a=>`<option value="${echapper(a.id)}">${echapper(a.name)} — ${a.currency} (${a.type==="personal"?"Personnel":"Pro"})</option>`).join("");
   ["wallet-op-account","wallet-transfer-from","wallet-transfer-to"].forEach(id => { const el=$(id); if(el){const old=el.value;el.innerHTML=options || '<option value="">Créez d’abord un compte</option>';if(walletAccounts.some(a=>a.id===old))el.value=old;} });
   const filter=$("wallet-history-account"), old=filter.value;
