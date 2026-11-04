@@ -95,6 +95,7 @@ export function normaliserEvenement(ev) {
     id: ev.id,
     titre: ev.summary || "(sans titre)",
     lieu: ev.location || "",
+    description: ev.description || "",
     lien: ev.htmlLink || "",
     debut,
     fin,
