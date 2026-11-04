@@ -24,7 +24,7 @@ export const reglages = {
   // pour ne plus se reconnecter toutes les heures. Voir docs/connexion-persistante.md. Laissez vide sinon.
   googleClientId: "90992521092-1geeefc7snhnih846f9gsub5g8jddcht.apps.googleusercontent.com",
   // Compte Google autorisé à ouvrir MY WORLD RS (contrôle côté interface).
-  allowedGoogleEmail: "weunde6@gmail.com",
+  allowedGoogleEmail: "weundeprince6@gmail.com",
 
   gmail: {
     requete: "in:inbox newer_than:14d -category:promotions -category:social",
