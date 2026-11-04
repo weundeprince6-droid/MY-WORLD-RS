@@ -1271,25 +1271,39 @@ let walletLoaded = false;
 const walletMoney = (n, currency) => new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 2 }).format(Number(n || 0)) + " " + currency;
 // Prévisions à 30 jours par compte, d'après les mouvements des 90 derniers jours (transferts exclus)
 function walletRenderForecasts() {
-  const zone = $("wallet-forecasts");
-  if (!zone) return;
-  if (!walletAccounts.length) { zone.innerHTML = '<p class="vide">Créez un compte pour voir ses prévisions.</p>'; return; }
-  const jour = 86400000, auj = new Date(), debut = new Date(auj.getTime() - 90 * jour).toISOString().slice(0, 10);
-  zone.innerHTML = walletAccounts.map(a => {
-    const tx = walletTransactions.filter(t => t.accountId === a.id && t.kind !== "transfer" && String(t.date || "") >= debut);
-    const somme = k => tx.filter(t => t.kind === k).reduce((s, t) => s + Number(t.amount || 0), 0);
-    const entrees = somme("income") / 3, sorties = somme("expense") / 3; // moyenne sur 30 jours
-    const net = entrees - sorties, solde = Number(a.balance || 0), projete = solde + net;
-    const classe = projete < 0 ? "negative" : net < 0 ? "warning" : "positive";
-    const tag = !tx.length ? "Pas assez de données" : projete < 0 ? "Risque de solde négatif" : net < 0 ? "Tendance à la baisse" : "Tendance stable ou positive";
-    return `<article class="wallet-forecast-item"><div class="wallet-forecast-top"><div><strong>${echapper(a.name)}</strong><small>${a.type === "personal" ? "Personnel" : "Professionnel"} · ${echapper(a.currency)}</small></div><span class="wallet-forecast-tag">${tag}</span></div>`
-      + `<div class="wallet-forecast-metrics"><div><span>Solde actuel</span><b>${walletMoney(solde, a.currency)}</b></div>`
-      + `<div><span>Entrées prévues (30 j)</span><b>${walletMoney(Math.round(entrees), a.currency)}</b></div>`
-      + `<div><span>Sorties prévues (30 j)</span><b>${walletMoney(Math.round(sorties), a.currency)}</b></div>`
-      + `<div><span>Solde estimé dans 30 j</span><b class="wallet-forecast-${classe}">${walletMoney(Math.round(projete), a.currency)}</b></div></div></article>`;
-  }).join("");
-}
-const walletId = () => (crypto.randomUUID ? crypto.randomUUID() : "w" + Date.now().toString(36) + Math.random().toString(36).slice(2));
+  const zone = $("wallet-forecasts"), select = $("wallet-forecast-account"), next = $("wallet-forecast-next");
+  if (!zone || !select) return;
+  const previous = select.value;
+  select.innerHTML = walletAccounts.map(a => `<option value="${echapper(a.id)}">${echapper(a.name)} — ${echapper(a.currency)} (${a.type === "personal" ? "Personnel" : "Professionnel"})</option>`).join("");
+  if (!walletAccounts.length) {
+    select.innerHTML = '<option value="">Aucun compte disponible</option>';
+    zone.innerHTML = '<p class="vide">Créez un compte et enregistrez quelques mouvements pour afficher les prévisions.</p>';
+    if (next) next.disabled = true;
+    return;
+  }
+  select.value = walletAccounts.some(a => a.id === previous) ? previous : walletAccounts[0].id;
+  if (next) next.disabled = walletAccounts.length < 2;
+  select.onchange = () => walletRenderForecasts();
+  if (next) next.onclick = () => {
+    const index = walletAccounts.findIndex(a => a.id === select.value);
+    select.value = walletAccounts[(index + 1) % walletAccounts.length].id;
+    walletRenderForecasts();
+  };
+  const a = walletAccounts.find(x => x.id === select.value) || walletAccounts[0];
+  const jour = 86400000, debut = new Date(Date.now() - 90 * jour).toISOString().slice(0, 10);
+  const tx = walletTransactions.filter(t => t.accountId === a.id && t.kind !== "transfer" && String(t.date || "") >= debut);
+  const somme = k => tx.filter(t => t.kind === k).reduce((s, t) => s + Number(t.amount || 0), 0);
+  const entrees = somme("income") / 3, sorties = somme("expense") / 3;
+  const net = entrees - sorties, solde = Number(a.balance || 0), projete = solde + net;
+  const classe = projete < 0 ? "negative" : net < 0 ? "warning" : "positive";
+  const tag = tx.length < 3 ? "Données limitées" : projete < 0 ? "Risque de solde négatif" : net < 0 ? "Tendance à la baisse" : "Tendance stable ou positive";
+  zone.innerHTML = `<article class="wallet-forecast-item"><div class="wallet-forecast-top"><div><strong>${echapper(a.name)}</strong><small>${a.type === "personal" ? "Personnel" : "Professionnel"} · ${echapper(a.currency)}</small></div><span class="wallet-forecast-tag">${tag}</span></div>
+    <div class="wallet-forecast-metrics"><div><span>Solde actuel</span><b>${walletMoney(solde, a.currency)}</b></div>
+    <div><span>Entrées estimées (30 jours)</span><b>${walletMoney(Math.round(entrees), a.currency)}</b></div>
+    <div><span>Sorties estimées (30 jours)</span><b>${walletMoney(Math.round(sorties), a.currency)}</b></div>
+    <div><span>Solde estimé dans 30 jours</span><b class="wallet-forecast-${classe}">${walletMoney(Math.round(projete), a.currency)}</b></div></div></article>`;
+  if (!tx.length) zone.innerHTML += '<p class="meta">Aucun mouvement récent pour ce compte : les estimations sont à zéro. Enregistrez des entrées et sorties pour améliorer la projection.</p>';
+}const walletId = () => (crypto.randomUUID ? crypto.randomUUID() : "w" + Date.now().toString(36) + Math.random().toString(36).slice(2));
 const walletPath = (uid, collection, id = "") => `/users/${encodeURIComponent(uid)}/${collection}${id ? "/" + encodeURIComponent(id) : ""}`;
 const walletFields = (obj) => ({ fields: Object.fromEntries(Object.entries(obj).map(([k,v]) => [k, typeof v === "number" ? { doubleValue: v } : typeof v === "boolean" ? { booleanValue: v } : { stringValue: String(v ?? "") }])) });
 async function walletReadCollection(collection) {
