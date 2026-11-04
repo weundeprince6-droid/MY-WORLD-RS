@@ -32,3 +32,14 @@ const r = calculerRapport({
 });
 assert.ok(r && typeof r === "object");
 console.log("rapport.test.mjs OK");
+assert.equal(r.semaines.length, 12);
+assert.equal(r.semaines[11].fin >= "2026-11-04", true);
+assert.equal(new Date(r.semaines[11].debut + "T12:00:00").getDay(), 1);
+const s = calculerRapport({ devise: "FC", comptes: [{ id: "a", name: "C", currency: "FC", balance: 70 }], transactions: [
+  { id: "1", kind: "income", accountId: "a", currency: "FC", amount: 100, date: "2026-11-03" },
+  { id: "2", kind: "expense", accountId: "a", currency: "FC", amount: 30, date: "2026-10-27" }], maintenant: new Date("2026-11-04T10:00:00") });
+assert.equal(s.semaines[11].entrees, 100);
+assert.equal(s.semaines[10].sorties, 30);
+assert.equal(s.semaines[11].solde, 70);
+assert.equal(s.semaines[10].solde, -30 + 0 === -30 ? -30 : 0);
+console.log("semaines OK");

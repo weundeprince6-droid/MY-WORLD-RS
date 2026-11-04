@@ -129,6 +129,27 @@ export function calculerRapport({ transactions = [], comptes = [], devise, risto
     m.solde = soldeNet - apres.reduce((s, t) => s + effetMouvement(t), 0);
   });
 
+  // Hebdomadaire : 12 dernières semaines (lundi au dimanche), solde de fin de semaine reconstitué
+  const iso = (dt) => `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+  const lundi = new Date(maintenant.getFullYear(), maintenant.getMonth(), maintenant.getDate());
+  lundi.setDate(lundi.getDate() - ((lundi.getDay() + 6) % 7));
+  const semaines = [];
+  for (let i = 11; i >= 0; i--) {
+    const debut = new Date(lundi); debut.setDate(debut.getDate() - 7 * i);
+    const fin = new Date(debut); fin.setDate(fin.getDate() + 6);
+    semaines.push({ debut: iso(debut), fin: iso(fin), label: `${String(debut.getDate()).padStart(2, "0")}/${String(debut.getMonth() + 1).padStart(2, "0")}`, entrees: 0, sorties: 0, solde: 0 });
+  }
+  tx.filter((t) => enDevise(t) && t.kind !== "transfer").forEach((t) => {
+    const j = String(t.date || "").slice(0, 10);
+    const s = semaines.find((x) => j >= x.debut && j <= x.fin);
+    if (!s) return;
+    if (t.kind === "income") s.entrees += Number(t.amount || 0); else s.sorties += Number(t.amount || 0);
+  });
+  semaines.forEach((s) => {
+    const apres = tx.filter((t) => enDevise(t) && String(t.date || "").slice(0, 10) > s.fin);
+    s.solde = soldeNet - apres.reduce((a, t) => a + effetMouvement(t), 0);
+  });
+
   // Historique avec solde après opération, compte par compte
   const soldes = new Map(comptes.map((c) => [c.id, Number(c.balance || 0)]));
   const apresOperation = new Map();
@@ -161,7 +182,7 @@ export function calculerRapport({ transactions = [], comptes = [], devise, risto
     devise, devises, utilisateur, maintenant, periode,
     kpis: { soldeNet, entrees, sorties, nbMouvements: tx.length },
     comptes: lignesComptes, totalComptes: soldeNet,
-    parType, parMoyen, parCategorie, mois, historique, ristournes,
+    parType, parMoyen, parCategorie, mois, semaines, historique, ristournes,
   };
 }
 
@@ -364,30 +385,30 @@ export function dessinerRapport(doc, d) {
       doc.text(etiquetteAxe(pas * k), x0 - 2, yy + 1, { align: "right" });
     }
   };
-  const pageGraphiques = () => {
-    nouvellePage(); titre(2, "ENTRÉES ET SORTIES PAR MOIS"); y += 2;
-    const nbm = d.mois.length, gx0 = M + 12, gx1 = W - M - 2, haut = y + 10, bas = y + 70;
-    const g = graduation(Math.max(...d.mois.flatMap((m) => [m.entrees, m.sorties]), 1));
+  const pageGraphiques = (serie, nom, n1, n2) => {
+    nouvellePage(); titre(n1, `ENTRÉES ET SORTIES PAR ${nom}`); y += 2;
+    const nbm = serie.length, gx0 = M + 12, gx1 = W - M - 2, haut = y + 10, bas = y + 70;
+    const g = graduation(Math.max(...serie.flatMap((m) => [m.entrees, m.sorties]), 1));
     fill(C.vert2); doc.rect(M + 12, y, 4, 3, "F"); police("normal", 7); txt(C.encre); doc.text(`Entrées (${d.devise})`, M + 18, y + 2.6);
     fill(C.rouge); doc.rect(M + 52, y, 4, 3, "F"); doc.text(`Sorties (${d.devise})`, M + 58, y + 2.6);
     axeY(gx0, gx1, haut, bas, g.max, g.pas);
     const pas = (gx1 - gx0) / nbm, bw = Math.min(5.2, pas * 0.3);
-    d.mois.forEach((m, i) => {
+    serie.forEach((m, i) => {
       const cx = gx0 + pas * (i + 0.5), he = (m.entrees / g.max) * (bas - haut), hs = (m.sorties / g.max) * (bas - haut);
       fill(C.vert2); doc.rect(cx - bw - 0.4, bas - he, bw, he, "F"); fill(C.rouge); doc.rect(cx + 0.4, bas - hs, bw, hs, "F");
       police("normal", 6.8); txt(C.gris); doc.text(m.label, cx, bas + 5, { align: "center" });
     });
     y = bas + 16;
 
-    titre(3, "ÉVOLUTION DU SOLDE NET"); y += 2;
+    titre(n2, `ÉVOLUTION DU SOLDE NET (${nom === "MOIS" ? "MENSUEL" : "HEBDOMADAIRE"})`); y += 2;
     const haut2 = y + 6, bas2 = y + 66;
-    const soldes = d.mois.map((m) => m.solde), mn = Math.min(0, ...soldes), mx = Math.max(...soldes, 1);
+    const soldes = serie.map((m) => m.solde), mn = Math.min(0, ...soldes), mx = Math.max(...soldes, 1);
     const g2 = graduation(mx - mn); const origine = mn < 0 ? Math.floor(mn / g2.pas) * g2.pas : 0;
     const plage = Math.max(g2.pas * 4, mx - origine); const pas2 = graduation(plage).pas; const max2 = pas2 * 4;
     police("normal", 6.5); txt(C.gris);
     for (let k = 0; k <= 4; k++) { const yy = bas2 - ((bas2 - haut2) * k) / 4; draw(C.trait); doc.setLineWidth(0.2); doc.line(gx0, yy, gx1, yy); doc.text(etiquetteAxe(origine + pas2 * k), gx0 - 2, yy + 1, { align: "right" }); }
     let prec = null;
-    d.mois.forEach((m, i) => {
+    serie.forEach((m, i) => {
       const px = gx0 + pas * (i + 0.5), py = bas2 - ((m.solde - origine) / max2) * (bas2 - haut2);
       if (prec) { draw(C.vert); doc.setLineWidth(0.9); doc.line(prec[0], prec[1], px, py); }
       fill(C.vert); doc.circle(px, py, 1.1, "F"); police("normal", 6.8); txt(C.gris); doc.text(m.label, px, bas2 + 5, { align: "center" });
@@ -398,7 +419,7 @@ export function dessinerRapport(doc, d) {
 
   // ---------- page 4 : ristournes + dépenses ----------
   const pageRistournes = () => {
-    nouvellePage(); titre(4, "RISTOURNES ET REMBOURSEMENTS"); y += 1;
+    nouvellePage(); titre(6, "RISTOURNES ET REMBOURSEMENTS"); y += 1;
     const r = d.ristournes;
     const totalTxt = ["FC", "USD"].filter((c) => r.total[c] > 0).map((c) => fmt(r.total[c], c)).join("  +  ") || "0";
     const moyTxt = ["FC", "USD"].filter((c) => r.total[c] > 0).map((c) => fmt(r.moyenne[c], c)).join("  +  ") || "0";
@@ -417,7 +438,7 @@ export function dessinerRapport(doc, d) {
       });
     }
     y += 4;
-    titre(5, "RÉPARTITION DES DÉPENSES PAR CATÉGORIE"); y += 2;
+    titre(7, "RÉPARTITION DES DÉPENSES PAR CATÉGORIE"); y += 2;
     fill(C.blanc); draw(C.trait); doc.setLineWidth(0.3); doc.roundedRect(M, y - 2, CW, 52, 1.5, 1.5, "FD");
     const parts = d.parCategorie.map((p, i) => ({ v: p.montant, c: PALETTE[i % PALETTE.length] }));
     donut(M + 55, y + 24, 21, 11, parts);
@@ -428,7 +449,7 @@ export function dessinerRapport(doc, d) {
 
   // ---------- page 5+ : historique ----------
   const pageHistorique = () => {
-    nouvellePage(); titre(6, "HISTORIQUE DÉTAILLÉ DE TOUS LES MOUVEMENTS");
+    nouvellePage(); titre(8, "HISTORIQUE DÉTAILLÉ DE TOUS LES MOUVEMENTS");
     const lignes = d.historique.map((h) => {
       const enEntree = h.sens === "in";
       return [
@@ -445,7 +466,7 @@ export function dessinerRapport(doc, d) {
       colonnes: ["Date", "Compte", "Type", "Description", "Catégorie", "Moyen de paiement", `Entrées (${d.devise})`, `Sorties (${d.devise})`, `Solde après (${d.devise})`],
       largeurs: [22, 25, 17, 30, 19, 22, 18, 17, 20], alignements: ["left", "left", "left", "left", "left", "left", "right", "right", "right"],
       lignes: lignes.length ? lignes : [["Aucun mouvement enregistré", "", "", "", "", "", "", "", ""]], tailleTexte: 6.2,
-      pageSuite: () => titre(6, "HISTORIQUE DÉTAILLÉ (suite)"),
+      pageSuite: () => titre(8, "HISTORIQUE DÉTAILLÉ (suite)"),
     });
     // légende et informations
     if (y + 30 > BAS) nouvellePage();
@@ -462,7 +483,8 @@ export function dessinerRapport(doc, d) {
 
   couverture();
   pageSynthese();
-  pageGraphiques();
+  pageGraphiques(d.mois, "MOIS", 2, 3);
+  pageGraphiques(d.semaines, "SEMAINE", 4, 5);
   pageRistournes();
   pageHistorique();
   piedDePage();
