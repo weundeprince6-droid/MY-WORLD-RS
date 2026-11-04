@@ -54,6 +54,7 @@
             <button class="nav-item" role="tab" aria-selected="false" data-tab="social"><span class="nav-icon">◎</span><span>Réseaux sociaux</span><span class="nav-arrow">›</span></button>
             <button class="nav-item" role="tab" aria-selected="false" data-tab="drive"><span class="nav-icon">▣</span><span>Google Drive</span><span class="nav-arrow">›</span></button>
             <button class="nav-item" role="tab" aria-selected="false" data-tab="tasks"><span class="nav-icon">☑</span><span>Google Tasks</span><span class="nav-arrow">›</span></button>
+            <button class="nav-item" role="tab" aria-selected="false" data-tab="notes"><span class="nav-icon">📝</span><span>Notes & Projets</span><span class="nav-arrow">›</span></button>
             <button class="nav-item" role="tab" aria-selected="false" data-tab="wallet"><span class="nav-icon">💰</span><span>Mon Porte-Monnaie</span><span class="nav-arrow">›</span></button>
             <button class="nav-item" role="tab" aria-selected="false" data-tab="profile"><span class="nav-icon">♙</span><span>Profil</span><span class="nav-arrow">›</span></button>
           </nav>
@@ -261,6 +262,22 @@
             </section>
             <p id="wallet-status" class="meta" role="status">Les données du porte-monnaie sont privées et synchronisées dans votre Firebase My World RS.</p>
           </section>
+          <section class="tab-pane" id="pane-notes" role="tabpanel" data-pane="notes" hidden>
+            <div class="section-heading"><div><p class="eyebrow">VOTRE ESPACE PERSONNEL</p><h2>Notes & Projets</h2><p>Capturez vos idées, préparez vos projets et retrouvez-les sur vos appareils grâce à Firebase.</p></div><span class="section-icon blue">📝</span></div>
+            <section class="carte notes-intro"><div><strong>Google Keep</strong><p class="meta">Votre compte Gmail est personnel : Google ne permet pas la synchronisation directe de Keep via son API officielle. Vous pouvez ouvrir Keep séparément.</p></div><a class="btn btn-light" href="https://keep.google.com/" target="_blank" rel="noopener noreferrer">Ouvrir Google Keep ↗</a></section>
+            <section class="carte notes-editor"><div class="card-heading"><div><p class="eyebrow">CAPTURE RAPIDE</p><h2 id="notes-form-title">Nouvelle note ou projet</h2></div><span class="heading-icon">✍</span></div>
+              <form id="notes-form" class="notes-form"><input type="hidden" name="id"><div class="notes-fields">
+                <label>Type<select name="type"><option value="note">Note</option><option value="project">Projet</option></select></label>
+                <label>Titre<input name="title" maxlength="160" required placeholder="Titre de votre note ou projet"></label>
+                <label>Catégorie<input name="category" maxlength="80" placeholder="Personnel, travail, église…"></label>
+                <label class="notes-project-only">Statut du projet<select name="status"><option value="todo">À faire</option><option value="doing">En cours</option><option value="done">Terminé</option></select></label>
+                <label class="notes-project-only">Échéance<input name="due" type="date"></label>
+                <label class="notes-wide">Contenu / description<textarea name="body" rows="5" maxlength="20000" placeholder="Écrivez vos idées, détails ou objectifs…"></textarea></label>
+                <label class="notes-wide notes-project-only">Étapes du projet <span class="meta">(une étape par ligne)</span><textarea name="steps" rows="4" maxlength="10000" placeholder="Préparer…\nContacter…\nFinaliser…"></textarea></label>
+              </div><div class="notes-actions"><span id="notes-status" class="meta" role="status">Vos notes et projets sont privés et enregistrés dans votre espace Firebase.</span><div><button class="btn btn-quiet" id="notes-cancel" type="button" hidden>Annuler la modification</button> <button class="btn btn-primary" id="notes-save" type="submit">Enregistrer</button></div></div></form>
+            </section>
+            <section class="carte notes-list-card"><div class="card-heading"><div><p class="eyebrow">VOTRE COLLECTION</p><h2>Notes et projets enregistrés</h2></div><button class="btn btn-light" id="notes-refresh" type="button">↻ Actualiser</button></div><div class="notes-toolbar"><input id="notes-search" type="search" placeholder="Rechercher dans vos notes et projets…" aria-label="Rechercher dans vos notes et projets"><select id="notes-filter"><option value="all">Tout afficher</option><option value="note">Notes</option><option value="project">Projets</option><option value="todo">Projets à faire</option><option value="doing">Projets en cours</option><option value="done">Projets terminés</option></select></div><div id="notes-list" class="notes-list"><p class="vide">Connectez-vous pour charger vos notes et projets.</p></div></section>
+          </section>
           <section class="tab-pane" id="pane-profile" role="tabpanel" data-pane="profile" hidden>
             <div class="section-heading"><div><p class="eyebrow">VOS INFORMATIONS</p><h2>Mon profil</h2><p>Complétez vos informations une seule fois. Elles seront synchronisées dans Firebase avec votre compte Google.</p></div><span class="section-icon blue">♙</span></div>
             <section class="carte profile-card">
@@ -293,7 +310,7 @@
       function ouvrirOnglet(nom) {
         document.querySelectorAll("[data-pane]").forEach(function (p) { var actif=p.dataset.pane===nom; p.hidden=!actif; p.classList.toggle("active",actif); });
         document.querySelectorAll("[data-tab]").forEach(function (b) { var actif=b.dataset.tab===nom; b.classList.toggle("active",actif); b.setAttribute("aria-selected",actif?"true":"false"); });
-        var titres={dashboard:"Tableau de bord",messages:"Messages",agenda:"Agenda",bases:"Mes bases",social:"Réseaux sociaux",drive:"Google Drive",tasks:"Google Tasks",wallet:"Mon Porte-Monnaie",profile:"Mon profil"}; document.title=(titres[nom]||"My World RS")+" — My World RS";
+        var titres={dashboard:"Tableau de bord",messages:"Messages",agenda:"Agenda",bases:"Mes bases",social:"Réseaux sociaux",drive:"Google Drive",tasks:"Google Tasks",wallet:"Mon Porte-Monnaie",profile:"Mon profil",notes:"Notes & Projets"}; document.title=(titres[nom]||"My World RS")+" — My World RS";
       }
       document.querySelectorAll("[data-tab]").forEach(function(b){b.addEventListener("click",function(){ouvrirOnglet(b.dataset.tab);});});
       document.querySelectorAll("[data-go]").forEach(function(b){b.addEventListener("click",function(){ouvrirOnglet(b.dataset.go);});});
@@ -307,6 +324,6 @@
       setTimeout(function(){if(!window.__appPret)montrer("L'application n'a pas démarré. Vérifiez votre connexion internet (les composants Firebase se chargent depuis Google), désactivez un éventuel bloqueur de publicités, puis rechargez. Appuyez sur F12 > Console pour voir le détail.");},6000);
     })();
   </script>
-  <script type="module" src="app.js?v=20261104-2"></script>
+  <script type="module" src="app.js?v=20261104-3"></script>
 </body>
 </html>
