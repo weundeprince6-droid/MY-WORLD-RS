@@ -1395,6 +1395,7 @@ function rendrePartRistourne() {
     + ". Une fois enregistrée, la somme est dans le compte « " + NOM_COMPTE_PART + " » : retirez-la ou utilisez-la avec une sortie ou un transfert.";
   bouton.disabled = !parts.some(p => p.aEnregistrer > 0);
 }
+const estPartRistourne = (x) => x.kind === "income" && x.category === "Ristourne" && String(x.description || "").startsWith("Part de ristourne");
 let partRistourneEnCours = false;
 async function enregistrerPartRistourne() {
   if (partRistourneEnCours) return;
@@ -1610,10 +1611,11 @@ async function supprimerMouvementWallet(id) {
   const resume = tx.kind === "transfer"
     ? "ce transfert (départ et arrivée seront annulés)"
     : `cette ${tx.kind === "income" ? "entrée" : "sortie"} de ${walletMoney(tx.amount, tx.currency || "")}`;
-  if (!confirm(`Supprimer ${resume} ?\nLe solde du compte sera corrigé automatiquement.`)) return;
+  if (!confirm(`Supprimer ${resume} ?\nLe solde du compte sera corrigé automatiquement.${estPartRistourne(tx) ? "\nLa somme redeviendra « à enregistrer » dans le bloc des ristournes." : ""}`)) return;
   const status = $("wallet-status");
   try {
     if (status) status.textContent = "Suppression en cours…";
+    let partRetiree = false;
     for (const ligne of lot) {
       await walletDeleteDoc("walletTransactions", ligne.id);
       walletTransactions = walletTransactions.filter((x) => x.id !== ligne.id);
@@ -1622,9 +1624,18 @@ async function supprimerMouvementWallet(id) {
         const effet = walletEffet(ligne);
         await walletPatchAccount(compte, -effet);
         compte.balance = Number(compte.balance || 0) - effet;
+        // Part de ristourne supprimée : la somme redevient « à enregistrer »
+        if (estPartRistourne(ligne)) {
+          const credite = Math.max(0, arrondir2(Number(compte.ristourneCredite || 0) - Number(ligne.amount || 0)));
+          const uid = fb?.auth.currentUser?.uid;
+          await google(urlFirestore(firebaseConfig.projectId, walletPath(uid, "walletAccounts", compte.id)) + "?updateMask.fieldPaths=ristourneCredite", { method: "PATCH", body: JSON.stringify(walletFields({ ristourneCredite: credite })) });
+          compte.ristourneCredite = credite;
+          partRetiree = true;
+        }
       }
     }
     walletRender();
+    if (partRetiree && status) { status.textContent = "Part de ristourne supprimée : la somme est de nouveau « à enregistrer » dans le bloc des ristournes."; return; }
     if (status) status.textContent = lot.length > 1 ? "Transfert supprimé, soldes corrigés." : "Mouvement supprimé, solde corrigé.";
   } catch (e) {
     walletRender();
