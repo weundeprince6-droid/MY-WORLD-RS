@@ -728,3 +728,100 @@ html[data-theme="light"] .section-icon.purple,
 html[data-theme="light"] .feature-purple .feature-icon{background:#eeeaf5;color:#624b8a}
 html[data-theme="light"] .section-icon.orange,
 html[data-theme="light"] .feature-orange .feature-icon{background:#f5ece2;color:#87521d}
+
+
+/* Mode clair — fond moins lumineux et typographie plus foncée (réglage fin) */
+html[data-theme="light"]{
+  --bg:#e9edf1;
+  --surface:#f8f8f6;
+  --text:#17212b;
+  --muted:#3f4b58;
+  --border:#cbd3dc;
+  --primary:#145b47;
+  --primary-dark:#104936;
+  --primary-soft:#dcebe4;
+  --shadow:0 2px 10px rgba(25,38,50,.035);
+}
+html[data-theme="light"] body,
+html[data-theme="light"] .carte,
+html[data-theme="light"] .sidebar,
+html[data-theme="light"] .feature-card,
+html[data-theme="light"] .resume-jour,
+html[data-theme="light"] .kpi,
+html[data-theme="light"] .notes-item,
+html[data-theme="light"] .date-chip,
+html[data-theme="light"] .agenda-cal-jour,
+html[data-theme="light"] .tasks-entete,
+html[data-theme="light"] .theme-toggle{
+  background-color:var(--bg);
+  color:var(--text);
+}
+html[data-theme="light"] .carte,
+html[data-theme="light"] .sidebar,
+html[data-theme="light"] .feature-card,
+html[data-theme="light"] .resume-jour,
+html[data-theme="light"] .kpi,
+html[data-theme="light"] .notes-item,
+html[data-theme="light"] .date-chip,
+html[data-theme="light"] .theme-toggle{
+  background-color:var(--surface)!important;
+  border-color:var(--border)!important;
+}
+html[data-theme="light"] .welcome-row h1,
+html[data-theme="light"] .section-heading h2,
+html[data-theme="light"] .carte h2,
+html[data-theme="light"] .carte h3,
+html[data-theme="light"] .feature-card h3,
+html[data-theme="light"] .accueil h2,
+html[data-theme="light"] .kpi .valeur,
+html[data-theme="light"] .notes-item h3,
+html[data-theme="light"] .liste strong,
+html[data-theme="light"] .resume-jour p,
+html[data-theme="light"] .profile-google strong{
+  color:#17212b!important;
+}
+html[data-theme="light"] .meta,
+html[data-theme="light"] .welcome-sub,
+html[data-theme="light"] .section-heading p:not(.eyebrow),
+html[data-theme="light"] .feature-card p,
+html[data-theme="light"] .sidebar-note p,
+html[data-theme="light"] .liste .extrait,
+html[data-theme="light"] .kpi .libelle,
+html[data-theme="light"] .profile-actions .meta,
+html[data-theme="light"] .notes-meta,
+html[data-theme="light"] .notes-footer,
+html[data-theme="light"] .vide,
+html[data-theme="light"] .date-chip,
+html[data-theme="light"] .nav-item,
+html[data-theme="light"] .nav-caption,
+html[data-theme="light"] .summary-label,
+html[data-theme="light"] .feature-label,
+html[data-theme="light"] .eyebrow{
+  color:#3f4b58!important;
+}
+html[data-theme="light"] .nav-item.active{
+  color:#145b47!important;
+  background:#dcebe4!important;
+}
+html[data-theme="light"] input,
+html[data-theme="light"] select,
+html[data-theme="light"] textarea{
+  background:#f8f8f6!important;
+  color:#17212b!important;
+  border-color:#c5ced8!important;
+}
+html[data-theme="light"] input::placeholder,
+html[data-theme="light"] textarea::placeholder{
+  color:#536170!important;
+  opacity:1;
+}
+html[data-theme="light"] .tasks-entete{
+  background:#f8f8f6!important;
+  border-color:#c5ced8!important;
+}
+html[data-theme="light"] .tasks-entete-label{color:#145b47!important}
+html[data-theme="light"] #tasks-entete-texte{color:#17212b!important}
+html[data-theme="light"] .btn{color:#17212b}
+html[data-theme="light"] .btn-primary{color:#fff}
+html[data-theme="light"] .btn-light{background:#dcebe4;color:#145b47}
+html[data-theme="light"] .agenda-anniversaire{background:#f8f8f6!important;color:#17212b!important}
