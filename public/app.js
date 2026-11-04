@@ -1903,34 +1903,40 @@ $("nouveau-mail").addEventListener("click", () => {
   nouveauMailDialog.showModal();
 });
 $("nouveau-mail-fermer").addEventListener("click", () => nouveauMailDialog.close());
-$("nouveau-mail-form").addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const form = event.currentTarget;
+const URL_GMAIL = "https://gmail.googleapis.com/gmail/v1/users/me/";
+const messageEnvoye = (texte) => {
+  afficherErreur("");
+  $("confirmation").textContent = texte;
+  $("confirmation").hidden = false;
+  setTimeout(() => ($("confirmation").hidden = true), 8000);
+};
+async function envoyerOuEnregistrerMail(envoyer) {
+  const form = $("nouveau-mail-form");
+  if (!form.reportValidity()) return;
   const donnees = new FormData(form);
   const a = String(donnees.get("a") || "").trim();
+  const cc = String(donnees.get("cc") || "").trim();
   const sujet = String(donnees.get("sujet") || "").trim();
   const corps = String(donnees.get("corps") || "").trim();
-  const bouton = $("nouveau-mail-creer");
-  bouton.disabled = true;
-  $("nouveau-mail-statut").textContent = "Création du brouillon…";
+  if (envoyer && !confirm(`Envoyer ce mail à ${a}${cc ? " (Cc : " + cc + ")" : ""} ?\nObjet : ${sujet}`)) return;
+  const boutons = [$("nouveau-mail-creer"), $("nouveau-mail-envoyer")];
+  boutons.forEach((b) => (b.disabled = true));
+  $("nouveau-mail-statut").textContent = envoyer ? "Envoi en cours…" : "Création du brouillon…";
   try {
-    const raw = construireBrouillonBrut({ a, sujet, corps });
-    await google("https://gmail.googleapis.com/gmail/v1/users/me/drafts", {
-      method: "POST",
-      body: JSON.stringify({ message: { raw } }),
-    });
+    const raw = construireBrouillonBrut({ a, cc, sujet, corps });
+    if (envoyer) await google(URL_GMAIL + "messages/send", { method: "POST", body: JSON.stringify({ raw }) });
+    else await google(URL_GMAIL + "drafts", { method: "POST", body: JSON.stringify({ message: { raw } }) });
     nouveauMailDialog.close();
-    afficherErreur("");
-    $("confirmation").textContent = "Brouillon créé dans Gmail. Vous pouvez le relire et l’envoyer depuis Gmail.";
-    $("confirmation").hidden = false;
-    setTimeout(() => ($("confirmation").hidden = true), 8000);
+    messageEnvoye(envoyer ? `Mail envoyé à ${a}.` : "Brouillon créé dans Gmail. Vous pouvez le relire et l’envoyer depuis Gmail.");
   } catch (e) {
     $("nouveau-mail-statut").textContent = "";
-    afficherErreur(`Brouillon non créé : ${e.message}`);
+    afficherErreur(`${envoyer ? "Mail non envoyé" : "Brouillon non créé"} : ${e.message}`);
   } finally {
-    bouton.disabled = false;
+    boutons.forEach((b) => (b.disabled = false));
   }
-});
+}
+$("nouveau-mail-form").addEventListener("submit", (event) => { event.preventDefault(); envoyerOuEnregistrerMail(true); });
+$("nouveau-mail-creer").addEventListener("click", () => envoyerOuEnregistrerMail(false));
 
 // ---------- Brouillons de réponse ----------
 let messageCible = null;
@@ -1938,14 +1944,15 @@ function ouvrirModeles(index) {
   messageCible = etat.messages[index];
   $("modeles-titre").textContent = `Répondre à ${messageCible.de}`;
   $("modeles-liste").innerHTML = reglages.modeles
-    .map((m, i) => `<button data-modele="${i}">${echapper(m.nom)}</button>`)
+    .map((m, i) => `<div class="modele-ligne"><span>${echapper(m.nom)}</span><button data-modele="${i}" title="Enregistrer dans les brouillons Gmail">Brouillon</button><button data-modele-envoyer="${i}" class="btn-envoyer" title="Envoyer tout de suite">Envoyer</button></div>`)
     .join("");
-  $("modeles-liste").querySelectorAll("[data-modele]").forEach((b) => b.addEventListener("click", () => creerBrouillon(Number(b.dataset.modele))));
+  $("modeles-liste").querySelectorAll("[data-modele]").forEach((b) => b.addEventListener("click", () => creerBrouillon(Number(b.dataset.modele), false)));
+  $("modeles-liste").querySelectorAll("[data-modele-envoyer]").forEach((b) => b.addEventListener("click", () => creerBrouillon(Number(b.dataset.modeleEnvoyer), true)));
   $("modeles").showModal();
 }
 $("modeles-fermer").addEventListener("click", () => $("modeles").close());
 
-async function creerBrouillon(i) {
+async function creerBrouillon(i, envoyer = false) {
   const modele = reglages.modeles[i];
   const valeurs = { nom: messageCible.de, sujet: messageCible.sujet };
   const brut = construireBrouillonBrut({
@@ -1953,19 +1960,15 @@ async function creerBrouillon(i) {
     sujet: `${modele.sujetPrefixe || ""}${messageCible.sujet}`,
     corps: remplirModele(modele.corps, valeurs),
   });
+  if (envoyer && !confirm(`Envoyer la réponse « ${modele.nom} » à ${expediteurLisible(messageCible.deBrut)} ?`)) return;
   try {
-    await google("https://gmail.googleapis.com/gmail/v1/users/me/drafts", {
-      method: "POST",
-      body: JSON.stringify({ message: { raw: brut, threadId: messageCible.threadId } }),
-    });
+    if (envoyer) await google(URL_GMAIL + "messages/send", { method: "POST", body: JSON.stringify({ raw: brut, threadId: messageCible.threadId }) });
+    else await google(URL_GMAIL + "drafts", { method: "POST", body: JSON.stringify({ message: { raw: brut, threadId: messageCible.threadId } }) });
     $("modeles").close();
-    afficherErreur("");
-    $("confirmation").textContent = `Brouillon créé dans Gmail pour ${expediteurLisible(messageCible.deBrut)}. Relisez-le puis envoyez-le.`;
-    $("confirmation").hidden = false;
-    setTimeout(() => ($("confirmation").hidden = true), 8000);
+    messageEnvoye(envoyer ? `Réponse envoyée à ${expediteurLisible(messageCible.deBrut)}.` : `Brouillon créé dans Gmail pour ${expediteurLisible(messageCible.deBrut)}. Relisez-le puis envoyez-le.`);
   } catch (e) {
     $("modeles").close();
-    afficherErreur(`Brouillon non créé : ${e.message}`);
+    afficherErreur(`${envoyer ? "Réponse non envoyée" : "Brouillon non créé"} : ${e.message}`);
   }
 }
 

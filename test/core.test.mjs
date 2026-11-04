@@ -55,6 +55,13 @@ assert.ok(/^[A-Za-z0-9_-]+$/.test(brut));
 const decode = Buffer.from(brut.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf8");
 assert.ok(decode.startsWith("To: marie@ex.com\r\nSubject: =?UTF-8?B?"));
 assert.ok(decode.endsWith("Bonjour é"));
+// Cc et protection contre l'injection d'en-têtes
+const b64d = (s) => Buffer.from(s.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf8");
+const avecCc = b64d(construireBrouillonBrut({ a: "a@ex.com", cc: "b@ex.com, c@ex.com", sujet: "S", corps: "C" }));
+assert.ok(avecCc.includes("\r\nCc: b@ex.com, c@ex.com\r\n"));
+const piege = b64d(construireBrouillonBrut({ a: "a@ex.com\r\nBcc: pirate@ex.com", cc: "x@ex.com\nBcc: z@ex.com", sujet: "S", corps: "C" }));
+assert.ok(!/\r\nBcc:/.test(piege) && !/\nBcc:/.test(piege.replace(/\r\n/g, "\n").split("\n\n")[0].replace(/^To:.*$/m, "").replace(/^Cc:.*$/m, "")));
+assert.ok(!piege.includes("Cc: x@ex.com\n"));
 
 // Exécution par lots : ordre conservé, jamais plus de 4 appels en même temps
 let actifs = 0, maxActifs = 0;

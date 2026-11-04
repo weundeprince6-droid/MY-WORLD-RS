@@ -246,9 +246,11 @@ function sujetEncode(sujet) {
 }
 
 /** Construit le message brut (RFC 2822, base64url) attendu par l'API Gmail pour un brouillon. */
-export function construireBrouillonBrut({ a, sujet, corps }) {
+const adresseSure = (v) => String(v || "").replace(/[\r\n]+/g, " ").trim(); // jamais de saut de ligne dans un en-tête (injection d'en-têtes)
+export function construireBrouillonBrut({ a, cc, sujet, corps }) {
   const lignes = [
-    `To: ${a}`,
+    `To: ${adresseSure(a)}`,
+    ...(adresseSure(cc) ? [`Cc: ${adresseSure(cc)}`] : []),
     `Subject: ${sujetEncode(sujet)}`,
     "MIME-Version: 1.0",
     'Content-Type: text/plain; charset="UTF-8"',

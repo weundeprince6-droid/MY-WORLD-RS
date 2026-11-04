@@ -69,6 +69,7 @@ async function scenario(nom, { mode = 'ok', sdkBloque = false, quotaGmail = fals
     if (m === 'PATCH' && u.includes('/social_inbox/')) { etat.patches.push({ id: decodeURIComponent(u.split('/social_inbox/')[1].split('?')[0]), body: JSON.parse(route.request().postData()) }); return route.fulfill(json({})); }
     if (u.includes(':runQuery') && etat.patches.length) return route.fulfill(json(etat.patches.map((x) => ({ document: { name: 'x/social_inbox/' + x.id, fields: x.body.fields } }))));
     appels.push(m + ' ' + u.replace(/\?.*/, '').slice(0, 110));
+    if (u.includes('gmail.googleapis.com') && m === 'POST') { (etat.mails = etat.mails || []).push({ url: u, corps: JSON.parse(route.request().postData()) }); return route.fulfill(json({ id: 'envoye1', threadId: 't1' })); }
     if (u.includes('gmail.googleapis.com') && u.includes('/messages?')) return route.fulfill(json({ messages: [{ id: 'm1' }, { id: 'm2' }] }));
     if (quotaGmail && u.includes('/messages/m1') && !quota.deja) { quota.deja = true; return route.fulfill({ status: 403, headers: { ...CORS, 'content-type': 'application/json' }, body: JSON.stringify({ error: { code: 403, message: "Quota exceeded for quota metric 'Total Query Cost' and limit 'Units per minute per user'" } }) }); }
     if (u.includes('/messages/m1')) return route.fulfill(json({ id: 'm1', threadId: 't1', labelIds: ['UNREAD', 'IMPORTANT'], snippet: 'Merci de régler avant le 5', internalDate: String(Date.now()), payload: { headers: [{ name: 'From', value: 'Marie Dupont <marie@ex.com>' }, { name: 'Subject', value: 'Rappel facture urgente' }] } }));
@@ -243,6 +244,24 @@ srv.listen(8765, async () => {
     const premiere = etat.notes.crees[0] || {};
     const ok = apres1 === 2 && statut1.includes('2 note(s) importée(s)') && apres2 === 2 && liste.includes('Courses') && liste.includes('☑ Riz') && !liste.includes('Corbeille') && premiere.source && premiere.source.stringValue === 'keep';
     return { ok, detail: JSON.stringify({ apres1, apres2, statut1: statut1.slice(0, 90), statut2: statut2.slice(0, 90) }) };
+  }));
+  res.push(await scenario('Gmail : envoyer un mail pour de vrai, ou l\'enregistrer en brouillon', {}, async (p, appels, logs, etat) => {
+    p.on('dialog', (d) => d.accept());
+    await p.click('#bouton-connexion'); await p.waitForTimeout(2500);
+    await p.click('[data-tab="messages"]'); await p.waitForTimeout(300);
+    await p.click('#nouveau-mail'); await p.waitForTimeout(300);
+    await p.fill('#nouveau-mail-form [name=a]', 'marie@ex.com'); await p.fill('#nouveau-mail-form [name=cc]', 'paul@ex.com');
+    await p.fill('#nouveau-mail-form [name=sujet]', 'Bonjour'); await p.fill('#nouveau-mail-form [name=corps]', 'Message de test');
+    await p.click('#nouveau-mail-envoyer'); await p.waitForTimeout(1200);
+    const envoi = (etat.mails || []).find((x) => x.url.includes('/messages/send'));
+    const brut = envoi ? Buffer.from(envoi.corps.raw.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8') : '';
+    const conf1 = (await p.textContent('#confirmation')).trim();
+    await p.click('#nouveau-mail'); await p.waitForTimeout(300);
+    await p.fill('#nouveau-mail-form [name=a]', 'luc@ex.com'); await p.fill('#nouveau-mail-form [name=sujet]', 'Brouillon'); await p.fill('#nouveau-mail-form [name=corps]', 'À relire');
+    await p.click('#nouveau-mail-creer'); await p.waitForTimeout(1200);
+    const brouillon = (etat.mails || []).find((x) => x.url.includes('/drafts'));
+    const ok = envoi && brut.includes('To: marie@ex.com') && brut.includes('Cc: paul@ex.com') && brut.endsWith('Message de test') && conf1.includes('Mail envoyé à marie@ex.com') && brouillon && !(etat.mails || []).some((x) => x.url.includes('/messages/send') && Buffer.from(x.corps.raw.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8').includes('luc@ex.com'));
+    return { ok, detail: JSON.stringify({ envoi: !!envoi, conf1: conf1.slice(0, 60), brouillon: !!brouillon }) };
   }));
   res.push(await scenario('Agenda : ajouter puis supprimer un rendez-vous', {}, async (p, appels, logs, etat) => {
     p.on('dialog', (d) => d.accept());

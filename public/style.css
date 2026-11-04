@@ -914,3 +914,4 @@ html[data-theme="light"] #pane-wallet .wallet-ristourne .rist-part{background:li
 .pin-gate-note{font-size:12px;text-align:center;margin:16px 0 0!important}
 .notes-intro-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.keep-import{cursor:pointer}
 .notes-pinned{margin-left:6px}
+.modele-ligne{display:flex;align-items:center;gap:8px;margin:6px 0}.modele-ligne span{flex:1;font-weight:600}.modele-ligne button{margin:0}.btn-envoyer{background:var(--accent,#0f766e);color:#fff;border:0;border-radius:10px;padding:8px 12px;cursor:pointer}
