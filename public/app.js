@@ -63,6 +63,9 @@ $("bouton-deconnexion").addEventListener("click", async () => {
   } catch (e) { console.warn("Révocation Google non confirmée :", e); }
   try { if (fb) await fb.signOut(fb.auth); } catch { /* ignoré */ }
   jetonGoogle = null; jetonGoogleExpireA = 0; utilisateurConnecte = null; uidSessionTraitee = null;
+  if (minuterieVerrouillage) clearTimeout(minuterieVerrouillage);
+  minuterieVerrouillage = null;
+  $("pin-gate").hidden = true;
   effacerJetonMemorise();
   afficherSession(false);
 });
@@ -90,6 +93,9 @@ const sdkPret = (async () => {
       utilisateurConnecte = user || null;
       if (!user) {
         uidSessionTraitee = null; jetonGoogle = null; jetonGoogleExpireA = 0;
+        if (minuterieVerrouillage) clearTimeout(minuterieVerrouillage);
+        minuterieVerrouillage = null;
+        $("pin-gate").hidden = true;
         afficherSession(false);
       } else if (!connexionGoogleEnCours) {
         restaurerSessionGoogle(user).catch((e) => afficherErreur(e.message));
@@ -546,6 +552,7 @@ async function seConnecter() {
     utilisateurConnecte = resultat.user;
     if (!emailAutorise(resultat.user)) {
       afficherErreur("Compte Google non autorisé. Utilisez le compte Google configuré pour MY WORLD RS.");
+      connexionGoogleEnCours = false;
       await fb.signOut(fb.auth);
       return;
     }
