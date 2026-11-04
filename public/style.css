@@ -825,3 +825,18 @@ html[data-theme="light"] .btn{color:#17212b}
 html[data-theme="light"] .btn-primary{color:#fff}
 html[data-theme="light"] .btn-light{background:#dcebe4;color:#145b47}
 html[data-theme="light"] .agenda-anniversaire{background:#f8f8f6!important;color:#17212b!important}
+
+
+/* Aperçu par défaut des données personnelles, notes/projets et agenda */
+.profile-form[hidden],.notes-editor[hidden],.agenda-editor[hidden],
+#profil-apercu[hidden],#profil-modifier[hidden]{display:none!important}
+.profil-apercu{margin:18px 0 12px}
+.profil-apercu-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.profil-apercu-item{display:grid;gap:5px;padding:13px 15px;border:1px solid var(--border);border-radius:11px;background:var(--bg);min-width:0}
+.profil-apercu-item span{font-size:11px;font-weight:700;color:var(--muted)}
+.profil-apercu-item strong{font-size:14px;color:var(--text);overflow-wrap:anywhere;white-space:pre-wrap}
+.profile-view-actions{display:flex;justify-content:flex-end;margin-top:12px}
+.agenda-editor{margin-top:16px}
+.agenda-form-actions{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+#agenda-nouveau,#notes-new{white-space:nowrap}
+@media(max-width:600px){.profil-apercu-grid{grid-template-columns:1fr}.profile-view-actions{justify-content:stretch}.profile-view-actions .btn{width:100%}.agenda-form-actions{flex-direction:column;align-items:stretch}.agenda-form-actions .btn{width:100%}.section-heading:has(#notes-new),.section-heading:has(#agenda-nouveau){align-items:flex-start;flex-direction:column}}
