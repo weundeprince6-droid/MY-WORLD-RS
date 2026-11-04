@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>My World RS</title>
   <meta name="description" content="Votre espace personnel : messages, agenda, bases de données et alertes.">
-  <link rel="stylesheet" href="style.css?v=20261104-01">
+  <script>try{const t=localStorage.getItem("mwrs.theme");document.documentElement.dataset.theme=(t==="light"||t==="dark")?t:(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");}catch{document.documentElement.dataset.theme="light";}</script>
+  <link rel="stylesheet" href="style.css?v=20261104-02">
 </head>
 <body>
   <header class="entete">
@@ -15,6 +16,8 @@
     </a>
     <div id="tasks-entete" class="tasks-entete" aria-live="polite" aria-label="Tâches Google"><span class="tasks-entete-label">À FAIRE</span><span id="tasks-entete-texte">Vos tâches apparaîtront ici</span></div>
     <div class="outils">
+      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Passer au mode sombre" title="Changer le thème"><span class="theme-toggle-icon" id="theme-toggle-icon" aria-hidden="true">🌙</span><span class="theme-toggle-label" id="theme-toggle-label">Sombre</span></button>
+      
       <button id="direct" class="direct" type="button" hidden title="Actualisation automatique : cliquez pour arrêter ou reprendre">● En direct</button>
       <span id="utilisateur" class="meta"></span>
       <button id="bouton-actualiser" class="btn btn-light btn-icon-header" type="button" hidden title="Actualiser les données" aria-label="Actualiser les données"><span aria-hidden="true">↻</span></button>
@@ -324,6 +327,6 @@
       setTimeout(function(){if(!window.__appPret)montrer("L'application n'a pas démarré. Vérifiez votre connexion internet (les composants Firebase se chargent depuis Google), désactivez un éventuel bloqueur de publicités, puis rechargez. Appuyez sur F12 > Console pour voir le détail.");},6000);
     })();
   </script>
-  <script type="module" src="app.js?v=20261104-3"></script>
+  <script type="module" src="app.js?v=20261104-4"></script>
 </body>
 </html>
