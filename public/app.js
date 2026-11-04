@@ -2090,3 +2090,21 @@ $("notes-search").addEventListener("input", notesRender);
 $("notes-filter").addEventListener("change", notesRender);
 document.querySelector('[data-tab="notes"]')?.addEventListener("click", () => notesLoad());
 
+
+
+// ---------- Thème clair / sombre : préférence indépendante du navigateur ----------
+(function initThemeToggle(){
+  const root=document.documentElement, button=$("theme-toggle"), icon=$("theme-toggle-icon"), label=$("theme-toggle-label");
+  if(!button)return;
+  function applyTheme(theme, save=true){
+    const dark=theme==="dark";
+    root.dataset.theme=dark?"dark":"light";
+    button.setAttribute("aria-label",dark?"Passer au mode clair":"Passer au mode sombre");
+    button.setAttribute("title",dark?"Activer le mode clair":"Activer le mode sombre");
+    if(icon)icon.textContent=dark?"☀️":"🌙";
+    if(label)label.textContent=dark?"Clair":"Sombre";
+    if(save){try{localStorage.setItem("mwrs.theme",dark?"dark":"light");}catch{}}
+  }
+  applyTheme(root.dataset.theme==="dark"?"dark":"light",false);
+  button.addEventListener("click",()=>applyTheme(root.dataset.theme==="dark"?"light":"dark"));
+})();
