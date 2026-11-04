@@ -1948,3 +1948,145 @@ $("facebook-form").addEventListener("submit", (e) => {
 });
 $("facebook-retirer").addEventListener("click", retirerFacebook);
 majStatutFacebook();
+
+
+// ---------- Notes & Projets : stockage privé par utilisateur dans Firebase ----------
+const notesCollection = "notesProjects";
+let notesItems = [];
+let notesLoaded = false;
+let notesLoading = false;
+const notesStatus = (message, error = false) => {
+  const el = $("notes-status");
+  if (el) { el.textContent = message; el.classList.toggle("erreur-texte", error); }
+};
+function notesId() { return crypto.randomUUID ? crypto.randomUUID() : "n" + Date.now().toString(36) + Math.random().toString(36).slice(2); }
+function notesDate(value) {
+  if (!value) return "";
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? "" : new Intl.DateTimeFormat("fr-FR", { day:"numeric", month:"short", year:"numeric" }).format(d);
+}
+function notesStatusLabel(value) { return ({todo:"À faire",doing:"En cours",done:"Terminé"})[value] || "À faire"; }
+async function notesRead() {
+  const uid = fb?.auth.currentUser?.uid;
+  if (!uid) throw new Error("Connectez-vous à votre compte Google.");
+  const docs = [];
+  let page = "";
+  do {
+    const url = urlFirestore(firebaseConfig.projectId, walletPath(uid, notesCollection)) + "?pageSize=300" + (page ? "&pageToken=" + encodeURIComponent(page) : "");
+    const res = await google(url);
+    for (const d of (res.documents || [])) {
+      const item = decoderChamps(d.fields || {});
+      item.id = item.id || d.name.split("/").pop();
+      docs.push(item);
+    }
+    page = res.nextPageToken || "";
+  } while (page);
+  return docs.sort((a,b) => String(b.updatedAt || b.createdAt || "").localeCompare(String(a.updatedAt || a.createdAt || "")));
+}
+async function notesSave(item) {
+  const uid = fb?.auth.currentUser?.uid;
+  if (!uid) throw new Error("Connectez-vous à votre compte Google.");
+  const data = { ...item, updatedAt: new Date().toISOString() };
+  if (!data.createdAt) data.createdAt = data.updatedAt;
+  const url = urlFirestore(firebaseConfig.projectId, walletPath(uid, notesCollection)) + "?documentId=" + encodeURIComponent(data.id);
+  return google(url, { method:"PATCH", body:JSON.stringify(walletFields(data)) });
+}
+async function notesDelete(id) {
+  const uid = fb?.auth.currentUser?.uid;
+  if (!uid) throw new Error("Connectez-vous à votre compte Google.");
+  return google(urlFirestore(firebaseConfig.projectId, walletPath(uid, notesCollection, id)), { method:"DELETE" });
+}
+function notesSetType(type) {
+  document.querySelectorAll(".notes-project-only").forEach(el => el.hidden = type !== "project");
+  $("notes-form-title").textContent = type === "project" ? "Nouveau projet" : "Nouvelle note";
+  $("notes-save").textContent = type === "project" ? "Enregistrer le projet" : "Enregistrer la note";
+}
+function notesReset() {
+  $("notes-form").reset();
+  $("notes-form").elements.id.value = "";
+  $("notes-form").elements.type.value = "note";
+  notesSetType("note");
+  $("notes-cancel").hidden = true;
+}
+function notesEdit(id) {
+  const item = notesItems.find(x => x.id === id);
+  if (!item) return;
+  const f = $("notes-form").elements;
+  f.id.value = item.id || "";
+  f.type.value = item.type || "note";
+  f.title.value = item.title || "";
+  f.category.value = item.category || "";
+  f.status.value = item.status || "todo";
+  f.due.value = item.due || "";
+  f.body.value = item.body || "";
+  f.steps.value = item.steps || "";
+  notesSetType(f.type.value);
+  $("notes-form-title").textContent = "Modifier " + (item.type === "project" ? "le projet" : "la note");
+  $("notes-save").textContent = "Enregistrer les modifications";
+  $("notes-cancel").hidden = false;
+  $("notes-form").scrollIntoView({ behavior:"smooth", block:"start" });
+}
+function notesRender() {
+  const zone = $("notes-list");
+  if (!zone) return;
+  const q = ($("notes-search")?.value || "").trim().toLocaleLowerCase("fr");
+  const filter = $("notes-filter")?.value || "all";
+  const items = notesItems.filter(x => {
+    const text = [x.title,x.category,x.body,x.steps].join(" ").toLocaleLowerCase("fr");
+    if (q && !text.includes(q)) return false;
+    if (filter === "note" || filter === "project") return (x.type || "note") === filter;
+    if (["todo","doing","done"].includes(filter)) return x.type === "project" && (x.status || "todo") === filter;
+    return true;
+  });
+  if (!items.length) {
+    zone.innerHTML = '<p class="vide">' + (notesItems.length ? "Aucun résultat pour cette recherche." : "Aucune note ou projet pour le moment. Créez votre premier élément ci-dessus.") + '</p>';
+    return;
+  }
+  zone.innerHTML = items.map(item => {
+    const isProject = item.type === "project";
+    const steps = isProject && item.steps ? item.steps.split(/\r?\n/).map(x=>x.trim()).filter(Boolean) : [];
+    return '<article class="notes-item ' + (isProject ? "notes-project" : "notes-note") + '">' +
+      '<div class="notes-item-head"><div><span class="notes-kind">' + (isProject ? "📌 Projet" : "📝 Note") + '</span>' +
+      '<h3>' + echapper(item.title || "Sans titre") + '</h3><div class="notes-meta">' + (item.category ? '<span>' + echapper(item.category) + '</span>' : '') +
+      (isProject ? '<span class="notes-status notes-status-' + echapper(item.status || "todo") + '">' + notesStatusLabel(item.status) + '</span>' : '') +
+      (item.due ? '<span>Échéance : ' + notesDate(item.due) + '</span>' : '') + '</div></div>' +
+      '<div class="notes-item-actions"><button class="btn btn-light" data-note-edit="' + echapper(item.id) + '" type="button">Modifier</button><button class="btn btn-quiet" data-note-delete="' + echapper(item.id) + '" type="button" aria-label="Supprimer">Supprimer</button></div></div>' +
+      (item.body ? '<p class="notes-body">' + echapper(item.body).replace(/\n/g,"<br>") + '</p>' : '') +
+      (steps.length ? '<div class="notes-steps"><strong>Étapes</strong><ul>' + steps.map(x=>'<li>'+echapper(x)+'</li>').join("") + '</ul></div>' : '') +
+      '<div class="notes-footer">Mis à jour ' + notesDate(item.updatedAt || item.createdAt) + '</div></article>';
+  }).join("");
+  zone.querySelectorAll("[data-note-edit]").forEach(b => b.addEventListener("click", () => notesEdit(b.dataset.noteEdit)));
+  zone.querySelectorAll("[data-note-delete]").forEach(b => b.addEventListener("click", async () => {
+    const id=b.dataset.noteDelete, item=notesItems.find(x=>x.id===id);
+    if (!confirm('Supprimer définitivement "' + (item?.title || "cet élément") + '" ?')) return;
+    b.disabled=true;
+    try { await notesDelete(id); notesItems=notesItems.filter(x=>x.id!==id); notesRender(); notesStatus("Élément supprimé."); }
+    catch(e) { notesStatus("Suppression impossible : "+e.message,true); b.disabled=false; }
+  }));
+}
+async function notesLoad(force = false) {
+  if (notesLoading || (notesLoaded && !force)) return;
+  if (!fb?.auth.currentUser) { notesStatus("Connectez-vous pour utiliser Notes & Projets.", true); return; }
+  notesLoading=true;
+  $("notes-list").innerHTML='<p class="vide">Chargement de vos notes et projets…</p>';
+  try { notesItems=await notesRead(); notesLoaded=true; notesRender(); notesStatus("Synchronisé avec Firebase · "+notesItems.length+" élément(s)."); }
+  catch(e) { notesStatus("Chargement impossible : "+e.message,true); $("notes-list").innerHTML='<p class="vide">Impossible de charger vos notes. Vérifiez la connexion et les autorisations Firestore.</p>'; }
+  finally { notesLoading=false; }
+}
+$("notes-form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const f=e.currentTarget.elements, id=f.id.value || notesId(), type=f.type.value;
+  const item={id,type,title:f.title.value.trim(),category:f.category.value.trim(),body:f.body.value.trim()};
+  if (type==="project") { item.status=f.status.value; item.due=f.due.value; item.steps=f.steps.value.trim(); }
+  const btn=$("notes-save"); btn.disabled=true; notesStatus("Enregistrement dans Firebase…");
+  try { const old=notesItems.find(x=>x.id===id); if(old) item.createdAt=old.createdAt; await notesSave(item); notesItems=[item,...notesItems.filter(x=>x.id!==id)].sort((a,b)=>String(b.updatedAt||"").localeCompare(String(a.updatedAt||""))); notesReset(); notesRender(); notesStatus("Enregistré et synchronisé avec Firebase."); }
+  catch(err) { notesStatus("Enregistrement impossible : "+err.message,true); }
+  finally { btn.disabled=false; }
+});
+$("notes-form").elements.type.addEventListener("change", e => notesSetType(e.target.value));
+$("notes-cancel").addEventListener("click", notesReset);
+$("notes-refresh").addEventListener("click", () => notesLoad(true));
+$("notes-search").addEventListener("input", notesRender);
+$("notes-filter").addEventListener("change", notesRender);
+document.querySelector('[data-tab="notes"]')?.addEventListener("click", () => notesLoad());
+
