@@ -6,7 +6,7 @@
   <title>My World RS</title>
   <meta name="description" content="Votre espace personnel : messages, agenda, bases de données et alertes.">
   <script>try{const t=localStorage.getItem("mwrs.theme");document.documentElement.dataset.theme=(t==="light"||t==="dark")?t:(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");}catch{document.documentElement.dataset.theme="light";}</script>
-  <link rel="stylesheet" href="style.css?v=20261104-9">
+  <link rel="stylesheet" href="style.css?v=20261104-30">
 </head>
 <body>
   <header class="entete">
@@ -210,6 +210,7 @@
               </div>
               <div id="rist-groupes" class="rist-groupes"></div>
               <p id="rist-credits" class="meta rist-credits"></p>
+              <div class="rist-part"><div><strong>Mes parts de ristourne (50 %)</strong><p id="rist-part-info" class="meta">Calcul de votre part en attente…</p></div><button id="rist-part-enregistrer" class="btn btn-primary" type="button" disabled>Enregistrer ma part</button></div>
               <div class="wallet-ristourne-foot"><span class="wallet-db-dot"></span><span id="wallet-ristourne-status">Synchronisation avec ESE DB en attente…</span></div>
             </section>
             <div class="wallet-block-heading"><div><p class="eyebrow">COMPTES & MOUVEMENTS</p><h3>Gérer mon argent</h3><p>Créez vos comptes, enregistrez les opérations et effectuez vos transferts.</p></div></div>
@@ -328,6 +329,6 @@
       setTimeout(function(){if(!window.__appPret)montrer("L'application n'a pas démarré. Vérifiez votre connexion internet (les composants Firebase se chargent depuis Google), désactivez un éventuel bloqueur de publicités, puis rechargez. Appuyez sur F12 > Console pour voir le détail.");},6000);
     })();
   </script>
-  <script type="module" src="app.js?v=20261104-21"></script>
+  <script type="module" src="app.js?v=20261104-30"></script>
 </body>
 </html>

@@ -883,3 +883,6 @@ html[data-theme="light"] .agenda-anniversaire{background:#f8f8f6!important;color
 .wallet-forecast-tag{background:var(--primary-soft);color:var(--primary);font-weight:700}
 .wallet-forecast-card>.meta{margin:12px 2px 0;line-height:1.6}
 @media(prefers-color-scheme:dark){.wallet-forecast-card{background:linear-gradient(135deg,var(--surface),var(--primary-soft))}.wallet-forecast-item{box-shadow:none}}
+
+.rist-part{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin:14px 0;padding:14px 16px;border:1px solid var(--border,#dce2e8);border-radius:14px;background:var(--surface-soft,#f8fafc)}
+.rist-part p{margin:4px 0 0}

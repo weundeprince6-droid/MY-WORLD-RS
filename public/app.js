@@ -1355,6 +1355,67 @@ function rendreRistourne(r) {
   }
 }
 let derniereRistourne = null;
+
+// ---------- Mes parts de ristourne : 50 % du solde des ristournes, versés dans un compte du porte-monnaie ----------
+const NOM_COMPTE_PART = "Mes parts de ristourne", TAUX_PART = 0.5;
+const arrondir2 = n => Math.floor(Number(n || 0) * 100 + 1e-6) / 100;
+function calculerPartsRistourne() {
+  const r = derniereRistourne;
+  return ["FC", "USD"].map(devise => {
+    const solde = r ? Number(r.total.solde[devise] || 0) : 0;
+    const cible = Math.max(0, arrondir2(solde * TAUX_PART));
+    const compte = walletAccounts.find(a => a.name === NOM_COMPTE_PART && a.currency === devise);
+    const deja = Number(compte?.ristourneCredite || 0);
+    return { devise, solde, cible, deja, aEnregistrer: arrondir2(cible - deja), compte };
+  });
+}
+function rendrePartRistourne() {
+  const info = $("rist-part-info"), bouton = $("rist-part-enregistrer");
+  if (!info || !bouton) return;
+  if (!derniereRistourne) { info.textContent = "Synchronisation avec ESE DB en attente…"; bouton.disabled = true; return; }
+  const parts = calculerPartsRistourne().filter(p => p.solde > 0 || p.deja > 0);
+  if (!parts.length) { info.textContent = "Aucun solde de ristourne disponible pour le moment."; bouton.disabled = true; return; }
+  info.textContent = parts.map(p => `${p.devise} : part de 50 % = ${formatMontantDevise(p.cible, p.devise)} · déjà enregistrée ${formatMontantDevise(p.deja, p.devise)} · à enregistrer ${formatMontantDevise(Math.max(0, p.aEnregistrer), p.devise)}`).join("  |  ")
+    + ". Une fois enregistrée, la somme est dans le compte « " + NOM_COMPTE_PART + " » : retirez-la ou utilisez-la avec une sortie ou un transfert.";
+  bouton.disabled = !parts.some(p => p.aEnregistrer > 0);
+}
+let partRistourneEnCours = false;
+async function enregistrerPartRistourne() {
+  if (partRistourneEnCours) return;
+  const bouton = $("rist-part-enregistrer"), statut = $("wallet-status");
+  partRistourneEnCours = true; if (bouton) bouton.disabled = true;
+  try {
+    if (!walletLoaded) await chargerWallet(true);
+    await chargerRistourne(true, true);
+    const uid = fb?.auth.currentUser?.uid;
+    if (!uid) throw new Error("Connectez-vous à votre compte Google.");
+    const faits = [];
+    for (const p of calculerPartsRistourne()) {
+      if (!(p.aEnregistrer > 0)) continue;
+      let compte = p.compte;
+      if (!compte) {
+        const id = walletId();
+        compte = { name: NOM_COMPTE_PART, type: "personal", currency: p.devise, balance: 0, ristourneCredite: 0, createdAt: new Date().toISOString() };
+        await walletCreate("walletAccounts", id, compte);
+        compte = { ...compte, id }; walletAccounts.push(compte);
+      }
+      const tx = { kind: "income", accountId: compte.id, accountName: compte.name, accountType: compte.type, currency: p.devise, amount: p.aEnregistrer, category: "Ristourne", description: "Part de ristourne (50 %)", paymentMethod: "", date: new Date().toISOString().slice(0, 10), createdAt: new Date().toISOString() };
+      const txId = walletId();
+      await walletCreate("walletTransactions", txId, tx);
+      const nouveauSolde = Number(compte.balance || 0) + p.aEnregistrer, nouveauCredite = p.deja + p.aEnregistrer;
+      const url = urlFirestore(firebaseConfig.projectId, walletPath(uid, "walletAccounts", compte.id)) + "?updateMask.fieldPaths=balance&updateMask.fieldPaths=ristourneCredite";
+      await google(url, { method: "PATCH", body: JSON.stringify(walletFields({ balance: nouveauSolde, ristourneCredite: nouveauCredite })) });
+      compte.balance = nouveauSolde; compte.ristourneCredite = nouveauCredite;
+      walletTransactions.unshift({ ...tx, id: txId });
+      faits.push(formatMontantDevise(p.aEnregistrer, p.devise));
+    }
+    walletRender(); rendrePartRistourne();
+    if (statut) statut.textContent = faits.length ? "Part de ristourne enregistrée : " + faits.join(" + ") + " ajouté(s) à « " + NOM_COMPTE_PART + " »." : "Rien de nouveau à enregistrer.";
+  } catch (e) {
+    if (statut) statut.textContent = "Enregistrement de la part impossible : " + e.message;
+  } finally { partRistourneEnCours = false; rendrePartRistourne(); }
+}
+$("rist-part-enregistrer")?.addEventListener("click", enregistrerPartRistourne);
 async function chargerRistourne(force = false, silencieux = false) {
   const statut = $("wallet-ristourne-status");
   const base = bases.ese;
@@ -1366,6 +1427,7 @@ async function chargerRistourne(force = false, silencieux = false) {
     const r = calculerRistourne(jours, cfg);
     derniereRistourne = r;
     rendreRistourne(r);
+    rendrePartRistourne();
     if (statut) statut.textContent = `Synchronisé avec ESE DB à ${heure.format(new Date())} · ${r.mouvements} mouvement(s) de ristourne lus.`;
   } catch (e) {
     if (statut) statut.textContent = "Synchronisation ESE DB impossible : " + e.message;
@@ -1400,6 +1462,7 @@ function walletFilteredTransactions() {
   });
 }
 function walletRender() {
+  rendrePartRistourne();
   if (!$("wallet-accounts")) return;
   const sum = (type,currency) => walletAccounts.filter(a => a.type === type && a.currency === currency).reduce((s,a)=>s+Number(a.balance||0),0);
   $("wallet-personal-usd").textContent = walletMoney(sum("personal","USD"),"USD");

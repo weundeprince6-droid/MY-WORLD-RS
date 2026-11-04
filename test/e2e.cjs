@@ -79,6 +79,7 @@ async function scenario(nom, { mode = 'ok', sdkBloque = false, quotaGmail = fals
       etat.wallet = etat.wallet || { supprimes: [], patchs: [] };
       if (m === 'DELETE') { etat.wallet.supprimes.push(decodeURIComponent(u.split('/walletTransactions/')[1] || '')); return route.fulfill(json({})); }
       if (m === 'PATCH') { etat.wallet.patchs.push(JSON.parse(route.request().postData())); return route.fulfill(json({})); }
+      if (m === 'POST') { (etat.wallet.crees = etat.wallet.crees || []).push({ url: u, corps: JSON.parse(route.request().postData()) }); return route.fulfill(json({})); }
       const S = (v) => ({ stringValue: v });
       if (u.includes('/walletAccounts')) return route.fulfill(json({ documents: [{ name: 'x/walletAccounts/a1', fields: { name: S('Caisse'), type: S('personal'), currency: S('USD'), balance: { doubleValue: 70 }, createdAt: S('2026-11-01') } }] }));
       return route.fulfill(json({ documents: [{ name: 'x/walletTransactions/t1', fields: { kind: S('expense'), accountId: S('a1'), accountName: S('Caisse'), currency: S('USD'), amount: { doubleValue: 30 }, date: S('2026-11-03'), description: S('Transport') } }] }));
@@ -233,6 +234,20 @@ srv.listen(8765, async () => {
     const lectures = etat.lecturesJours || 0;
     const ok = /3\s?000/.test(avant) && /9\s?000/.test(apres) && voyant.includes('En direct') && lectures >= 2 && lectures <= 6;
     return { ok, detail: JSON.stringify({ avantA: avant.slice(avant.indexOf('Ventes'), avant.indexOf('Ventes') + 40), apresA: apres.slice(apres.indexOf('Ventes'), apres.indexOf('Ventes') + 40), voyant, lectures }) };
+  }));
+  res.push(await scenario('Porte-Monnaie : 50 % des ristournes versés dans « Mes parts de ristourne »', {}, async (p, appels, logs, etat) => {
+    await p.click('#bouton-connexion'); await p.waitForTimeout(3000);
+    await p.click('[data-tab="wallet"]'); await p.waitForTimeout(1500);
+    const info = (await p.textContent('#rist-part-info')).replace(/\s/g, ' ');
+    await p.click('#rist-part-enregistrer'); await p.waitForTimeout(1500);
+    const crees = (etat.wallet && etat.wallet.crees) || [];
+    const compte = crees.find((c) => c.url.includes('/walletAccounts'));
+    const tx = crees.find((c) => c.url.includes('/walletTransactions'));
+    const patch = (etat.wallet.patchs || []).find((x) => x.fields.ristourneCredite);
+    const statut = (await p.textContent('#wallet-status')).trim();
+    const desactive = await p.isDisabled('#rist-part-enregistrer');
+    const ok = /3\s?750 FC/.test(info) && compte && compte.corps.fields.name.stringValue === 'Mes parts de ristourne' && tx && tx.corps.fields.amount.doubleValue === 3750 && tx.corps.fields.kind.stringValue === 'income' && patch && patch.fields.balance.doubleValue === 3750 && patch.fields.ristourneCredite.doubleValue === 3750 && desactive && statut.includes('enregistrée');
+    return { ok, detail: JSON.stringify({ info: info.slice(0, 120), compte: !!compte, montant: tx && tx.corps.fields.amount.doubleValue, patch: patch && patch.fields.balance.doubleValue, desactive, statut: statut.slice(0, 60) }) };
   }));
   res.push(await scenario('Porte-Monnaie : supprimer un mouvement corrige le solde', {}, async (p, appels, logs, etat) => {
     p.on('dialog', (d) => d.accept());
