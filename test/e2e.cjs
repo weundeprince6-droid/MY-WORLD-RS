@@ -203,6 +203,7 @@ srv.listen(8765, async () => {
     p.on('dialog', (d) => d.accept());
     await p.click('#bouton-connexion'); await p.waitForTimeout(2500);
     await p.click('[data-tab="agenda"]'); await p.waitForTimeout(300);
+    await p.click('#agenda-nouveau'); await p.waitForTimeout(300);
     await p.click('#agenda-ajouter'); await p.waitForTimeout(200);
     const vide = (await p.textContent('#agenda-retour')).trim();
     await p.fill('#agenda-form [name=titre]', 'Réunion AVEC'); await p.fill('#agenda-form [name=date]', '2026-11-05');
@@ -210,7 +211,7 @@ srv.listen(8765, async () => {
     await p.click('#agenda-ajouter'); await p.waitForTimeout(1500);
     const retour = (await p.textContent('#agenda-retour')).trim(); const ev = (etat.evenements || [])[0];
     await p.click('[data-supprimer-evenement]'); await p.waitForTimeout(1200);
-    const ok = retour.includes('ajouté') && ev && ev.summary === 'Réunion AVEC' && ev.start.dateTime === '2026-11-05T14:00:00' && ev.end.dateTime === '2026-11-05T15:30:00' && ev.location === 'Bureau' && etat.supprime === 'e1';
+    const ok = retour.includes('enregistré') && ev && ev.summary === 'Réunion AVEC' && ev.start.dateTime === '2026-11-05T14:00:00' && ev.end.dateTime === '2026-11-05T15:30:00' && ev.location === 'Bureau' && etat.supprime === 'e1';
     return { ok, detail: JSON.stringify({ retour, supprime: etat.supprime, debut: ev && ev.start.dateTime }) };
   }));
   res.push(await scenario('Porte-Monnaie : ristournes ESE DB synchronisées', {}, async (p) => {
