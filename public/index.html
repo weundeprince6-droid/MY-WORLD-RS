@@ -6,7 +6,7 @@
   <title>My World RS</title>
   <meta name="description" content="Votre espace personnel : messages, agenda, bases de données et alertes.">
   <script>try{const t=localStorage.getItem("mwrs.theme");document.documentElement.dataset.theme=(t==="light"||t==="dark")?t:(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");}catch{document.documentElement.dataset.theme="light";}</script>
-  <link rel="stylesheet" href="style.css?v=20261104-8">
+  <link rel="stylesheet" href="style.css?v=20261104-9">
 </head>
 <body>
   <header class="entete">
@@ -223,7 +223,7 @@
                 </form>
                 <p class="meta">Chaque compte conserve son propre solde et sa devise.</p>
                 <div id="wallet-accounts" class="wallet-accounts"><p class="vide">Aucun compte pour le moment. Créez votre premier compte ci-dessus.</p></div>
-                <div class="wallet-forecast-card"><div class="card-heading"><div><p class="eyebrow">PRÉVISION BUDGÉTAIRE</p><h3>Anticiper le solde de mes comptes</h3><p>Consultez la projection d’un compte à la fois et passez au suivant.</p></div><span class="wallet-forecast-icon">📈</span></div><div class="wallet-forecast-controls"><label for="wallet-forecast-account">Compte à analyser<select id="wallet-forecast-account" aria-label="Choisir le compte à analyser"><option value="">Chargement des comptes…</option></select></label><button type="button" class="btn btn-secondary" id="wallet-forecast-next">Voir le compte suivant →</button></div><div id="wallet-forecasts" class="wallet-forecasts"><p class="vide">Les prévisions apparaîtront après le chargement des mouvements.</p></div><p class="meta">Méthode : les entrées et sorties des 90 derniers jours (transferts exclus) sont ramenées à une moyenne mensuelle, puis appliquées au solde actuel pour estimer les 30 prochains jours. C’est une tendance indicative, pas une garantie. Des mouvements réguliers rendent l’estimation plus pertinente.</p></div></section>
+                </section>
               <section class="carte"><div class="card-heading"><div><p class="eyebrow">NOUVELLE OPÉRATION</p><h2>Entrée ou sortie</h2></div></div>
                 <form id="wallet-operation-form" class="wallet-form">
                   <label>Compte<select name="account" id="wallet-op-account" required><option value="">Créez d'abord un compte</option></select></label>
@@ -236,6 +236,7 @@
                   <button class="btn btn-primary" type="submit">Enregistrer l'opération</button>
                 </form>
               </section>
+              <div class="wallet-forecast-card"><div class="card-heading"><div><p class="eyebrow">PRÉVISION BUDGÉTAIRE</p><h3>Anticiper le solde de mes comptes</h3><p>Consultez la projection d’un compte à la fois et passez au suivant.</p></div><span class="wallet-forecast-icon">📈</span></div><div class="wallet-forecast-controls"><label for="wallet-forecast-account">Compte à analyser<select id="wallet-forecast-account" aria-label="Choisir le compte à analyser"><option value="">Chargement des comptes…</option></select></label><button type="button" class="btn btn-secondary" id="wallet-forecast-next">Voir le compte suivant →</button></div><div id="wallet-forecasts" class="wallet-forecasts"><p class="vide">Les prévisions apparaîtront après le chargement des mouvements.</p></div><p class="meta">Méthode : les entrées et sorties des 90 derniers jours (transferts exclus) sont ramenées à une moyenne mensuelle, puis appliquées au solde actuel pour estimer les 30 prochains jours. C’est une tendance indicative, pas une garantie. Des mouvements réguliers rendent l’estimation plus pertinente.</p></div>
               <section class="carte"><div class="card-heading"><div><p class="eyebrow">MOUVEMENT ENTRE COMPTES</p><h2>Transfert</h2></div></div>
                 <form id="wallet-transfer-form" class="wallet-form">
                   <label>Compte de départ<select name="from" id="wallet-transfer-from" required></select></label>
