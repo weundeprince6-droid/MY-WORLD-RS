@@ -68,6 +68,8 @@ $("bouton-deconnexion").addEventListener("click", async () => {
   $("pin-gate").hidden = true;
   effacerJetonMemorise();
   afficherSession(false);
+  afficherBoutonRenouveler(false);
+  const bc = $("bouton-connexion"); if (bc) bc.textContent = "Se connecter avec Google";
 });
 $("bouton-actualiser").addEventListener("click", () => tout());
 
@@ -406,6 +408,7 @@ async function obtenirJetonGoogle(force = false) {
     return jetonGoogle;
   })();
   try { return await recuperationGoogleEnCours; }
+  catch (e) { if (reglages.googleClientId && fb?.auth.currentUser) afficherBoutonRenouveler(true); throw e; }
   finally { recuperationGoogleEnCours = null; }
 }
 
@@ -417,7 +420,7 @@ const DELAI_VERROUILLAGE = 10 * 60 * 1000;
 const CLE_PIN_PREFIXE = "mwrs.pin.v1.";
 
 function emailAutorise(user) {
-  const autorise = String(config?.reglages?.allowedGoogleEmail || "").trim().toLowerCase();
+  const autorise = String(reglages?.allowedGoogleEmail || "").trim().toLowerCase();
   return !!autorise && String(user?.email || "").trim().toLowerCase() === autorise;
 }
 function clePin(uid) { return CLE_PIN_PREFIXE + uid; }
@@ -531,16 +534,66 @@ async function restaurerSessionGoogle(user) {
       return;
     }
     afficherSession(false);
+    const b = $("bouton-connexion"); if (b) b.textContent = libelleConnexion();
     console.info("Session Google non renouvelée :", e?.message);
-    throw new Error("Votre accès Google a expiré (il dure 1 heure). Cliquez sur « Se connecter avec Google » : une seule fois suffit.");
+    throw new Error(reglages.googleClientId
+      ? "Votre accès Google a expiré (il dure 1 heure). Cliquez sur « Reprendre ma session Google » : un clic, sans choisir de compte."
+      : "Votre accès Google a expiré (il dure 1 heure). Cliquez sur « Se connecter avec Google » : une seule fois suffit.");
   }
 }
+
+const libelleConnexion = () => fb?.auth.currentUser && emailAutorise(fb.auth.currentUser) && reglages.googleClientId ? "Reprendre ma session Google" : "Se connecter avec Google";
+
+// Votre identité reste connue du navigateur ; seul l'accès Gmail/Agenda (1 h) doit être renouvelé.
+// Un clic suffit : fenêtre Google qui se ferme seule, sans choix de compte, sans rechargement.
+async function renouvelerAccesGoogle() {
+  const user = fb?.auth.currentUser;
+  if (!user || !reglages.googleClientId) return false;
+  const r = await renouvelerJetonSilencieux(user.email);
+  jetonGoogle = r.access_token;
+  jetonGoogleExpireA = Date.now() + (Number(r.expires_in) || 3600) * 1000;
+  memoriserJetonGoogle(user.uid, jetonGoogle, jetonGoogleExpireA);
+  afficherBoutonRenouveler(false);
+  return true;
+}
+function afficherBoutonRenouveler(visible) { const b = $("bouton-renouveler"); if (b) b.hidden = !visible; }
+$("bouton-renouveler")?.addEventListener("click", async () => {
+  const b = $("bouton-renouveler"); if (b.disabled) return;
+  b.disabled = true;
+  try { await renouvelerAccesGoogle(); afficherErreur(""); await tout(); }
+  catch (e) { afficherErreur("Renouvellement impossible (" + (e?.message || "fenêtre bloquée") + "). Autorisez les fenêtres surgissantes pour ce site, puis réessayez."); afficherBoutonRenouveler(true); }
+  finally { b.disabled = false; }
+});
+// Surveillance : renouvelle en silence avant l'expiration ; si le navigateur bloque la fenêtre, propose le bouton « Renouveler l'accès »
+let renouvellementAuto = false;
+setInterval(async () => {
+  if (renouvellementAuto || !jetonGoogle || !fb?.auth.currentUser || $("tableau")?.hidden) return;
+  const restant = jetonGoogleExpireA - Date.now();
+  if (restant > 6 * 60 * 1000) return;
+  renouvellementAuto = true;
+  try { await renouvelerAccesGoogle(); }
+  catch { afficherBoutonRenouveler(true); }
+  finally { renouvellementAuto = false; }
+}, 30000);
 
 async function seConnecter() {
   afficherErreur("");
   const bouton = $("bouton-connexion");
   bouton.disabled = true;
   bouton.textContent = "Connexion en cours…";
+  try {
+    await sdkPret;
+    const existant = fb.auth.currentUser;
+    if (existant && emailAutorise(existant) && reglages.googleClientId) {
+      try {
+        await renouvelerAccesGoogle();
+        uidSessionTraitee = null;
+        await restaurerSessionGoogle(existant);
+        bouton.disabled = false; bouton.textContent = libelleConnexion();
+        return;
+      } catch (e) { console.info("Reprise en un clic impossible, connexion complète :", e?.message); }
+    }
+  } catch { /* le chargement du SDK est géré plus bas */ }
   connexionGoogleEnCours = true;
   try {
     await sdkPret;
@@ -582,7 +635,7 @@ async function seConnecter() {
     if (e?.code !== "auth/cancelled-popup-request") afficherErreur(expliquerErreur(e));
   } finally {
     bouton.disabled = false;
-    bouton.textContent = "Se connecter avec Google";
+    bouton.textContent = libelleConnexion();
   }
 }
 

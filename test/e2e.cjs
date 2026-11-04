@@ -19,22 +19,25 @@ const stubApp = 'export function initializeApp(c){return {c}}';
 const stubAuth = (mode) => `
 export function getAuth(){return { get currentUser(){ return window.__u || null } }}
 export class GoogleAuthProvider{ addScope(s){(window.__scopes=window.__scopes||[]).push(s)} setCustomParameters(){} static credentialFromResult(r){return {accessToken:'jeton-test'}} }
-export async function signInWithPopup(){ ${mode === 'ok' ? "window.__u={uid:'u1',displayName:'Prince Test',email:'t@x.com'}; localStorage.setItem('__stubuser','1'); return {user:window.__u}" : "const e=new Error('x'); e.code='" + mode + "'; throw e"} }
+export async function signInWithPopup(){ ${mode === 'ok' ? "window.__u={uid:'u1',displayName:'Prince Test',email:'weundeprince6@gmail.com'}; localStorage.setItem('__stubuser','1'); return {user:window.__u}" : "const e=new Error('x'); e.code='" + mode + "'; throw e"} }
 export async function signOut(){}
 export async function setPersistence(){}
 export const browserLocalPersistence={};
-export function onAuthStateChanged(a, cb){ if (localStorage.getItem('__stubuser')) { window.__u={uid:'u1',displayName:'Prince Test',email:'t@x.com',getIdToken:async()=>'id'}; setTimeout(()=>cb(window.__u),0) } }`;
+export function onAuthStateChanged(a, cb){ if (localStorage.getItem('__stubuser')) { window.__u={uid:'u1',displayName:'Prince Test',email:'weundeprince6@gmail.com',getIdToken:async()=>'id'}; setTimeout(()=>cb(window.__u),0) } }`;
 
 const T0 = Math.floor(Date.now() / 1000) * 1000;
 async function scenario(nom, { mode = 'ok', sdkBloque = false, quotaGmail = false }, verifier) {
   const quota = { deja: false };
   const etat = { patches: [], offsets: [], fuite: false };
   const b = await chromium.launch(); const ctx = await b.newContext(); const p = await ctx.newPage();
+  // Verrouillage PIN : le test saisit automatiquement 123456 (création ou déverrouillage)
+  await p.addInitScript(() => { setInterval(() => { const g = document.getElementById('pin-gate'); if (!g || g.hidden) return; const f = document.getElementById('pin-gate-form'); const i = document.getElementById('pin-gate-input'); const c = document.getElementById('pin-confirmation'); if (!f || !i || i.value) return; i.value = '123456'; if (c) c.value = '123456'; f.dispatchEvent(new Event('submit', { cancelable: true })); }, 200); });
   const appels = [];
   await ctx.route('**/*', async (route) => {
     const u = route.request().url(); const m = route.request().method();
     if (u.startsWith('http://localhost')) return route.continue();
     if (m === 'OPTIONS') return route.fulfill({ status: 204, headers: CORS });
+    if (u.includes('accounts.google.com/gsi/client')) return route.fulfill(js("window.google={accounts:{oauth2:{initTokenClient:function(o){return{requestAccessToken:function(){setTimeout(function(){if(localStorage.getItem('gis_ok')==='1')o.callback({access_token:'tok-gis',expires_in:3600});else o.error_callback({type:'popup_failed_to_open'});},50);}};}}}};"));
     if (u.includes('gstatic.com')) { if (sdkBloque) return route.abort(); return route.fulfill(js(u.includes('firebase-app') ? stubApp : stubAuth(mode))); }
     if (u.includes('api.telegram.org')) {
       if (u.includes('BADBAD')) return route.fulfill(json({ ok: false, error_code: 401, description: 'Unauthorized' }));
@@ -198,7 +201,27 @@ srv.listen(8765, async () => {
     await p.evaluate(() => { const m = JSON.parse(localStorage.getItem('mwrs.google.jeton')); m.expireA = Date.now() - 1000; localStorage.setItem('mwrs.google.jeton', JSON.stringify(m)); });
     await p.reload(); await p.waitForTimeout(3500);
     const bouton = await p.isVisible('#bouton-connexion'); const erreur = (await p.textContent('#erreur')).trim();
-    return { ok: bouton && erreur.includes('Se connecter avec Google') && !erreur.includes('Failed'), detail: JSON.stringify({ bouton, erreur: erreur.slice(0, 160) }) };
+    return { ok: bouton && erreur.includes('Reprendre ma session Google') && !erreur.includes('Failed'), detail: JSON.stringify({ bouton, erreur: erreur.slice(0, 160) }) };
+  }));
+  res.push(await scenario('Jeton expiré : « Reprendre ma session » en un clic, sans reconnexion complète', {}, async (p) => {
+    await p.click('#bouton-connexion'); await p.waitForTimeout(2500);
+    await p.evaluate(() => { const m = JSON.parse(localStorage.getItem('mwrs.google.jeton')); m.expireA = Date.now() - 1000; localStorage.setItem('mwrs.google.jeton', JSON.stringify(m)); });
+    await p.reload(); await p.waitForTimeout(3500);
+    const libelle = (await p.textContent('#bouton-connexion')).trim(); const visibleAvant = await p.isVisible('#tableau');
+    await p.evaluate(() => localStorage.setItem('gis_ok', '1'));
+    await p.click('#bouton-connexion'); await p.waitForTimeout(3500);
+    const tableau = await p.isVisible('#tableau'); const msgs = await p.textContent('#liste-messages');
+    const jeton = await p.evaluate(() => JSON.parse(localStorage.getItem('mwrs.google.jeton') || '{}').jeton);
+    return { ok: libelle === 'Reprendre ma session Google' && !visibleAvant && tableau && msgs.includes('Marie Dupont') && jeton === 'tok-gis', detail: JSON.stringify({ libelle, visibleAvant, tableau, jeton }) };
+  }));
+  res.push(await scenario('Accès Google bientôt expiré : renouvelé automatiquement avant la fin', {}, async (p) => {
+    await p.evaluate(() => localStorage.setItem('gis_ok', '1'));
+    await p.click('#bouton-connexion'); await p.waitForTimeout(2500);
+    await p.evaluate(() => { const m = JSON.parse(localStorage.getItem('mwrs.google.jeton')); m.expireA = Date.now() + 2 * 60 * 1000; localStorage.setItem('mwrs.google.jeton', JSON.stringify(m)); });
+    await p.reload(); await p.waitForTimeout(3500);
+    await p.waitForTimeout(32000);
+    const jeton = await p.evaluate(() => JSON.parse(localStorage.getItem('mwrs.google.jeton') || '{}').jeton);
+    return { ok: jeton === 'tok-gis', detail: JSON.stringify({ jeton }) };
   }));
   res.push(await scenario('Agenda : ajouter puis supprimer un rendez-vous', {}, async (p, appels, logs, etat) => {
     p.on('dialog', (d) => d.accept());
