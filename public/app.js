@@ -1179,7 +1179,7 @@ function rendreAlertes() {
 
 /* Résumé rotatif du tableau de bord : change de section toutes les 30 secondes */
 const resumeRotatifItems=[
- {titre:"Vue d’ensemble",texte:()=>resumeDuJour({messages:etat.messages,agenda:etat.agenda,alertes:construireAlertes({...etat}))},
+ {titre:"Vue d’ensemble",texte:()=>resumeDuJour({messages:etat.messages,agenda:etat.agenda,alertes:construireAlertes({...etat})}),
  {titre:"Agenda",texte:()=>{const n=(etat.agenda.aujourdhui||[]).length+(etat.agenda.aVenir||[]).length;return n? n+" rendez-vous aujourd’hui et à venir.":"Aucun rendez-vous aujourd’hui ou à venir.";}},
  {titre:"Notes & Projets",texte:()=>{const n=typeof notesItems!=="undefined"?notesItems.length:0;const p=typeof notesItems!=="undefined"?notesItems.filter(x=>x.type==="project").length:0;return n+" notes et projets enregistrés, dont "+p+" projet(s).";}},
  {titre:"Profil",texte:()=>{const f=$("form-profil");const nom=f?[f.elements.nom?.value,f.elements.prenom?.value].filter(Boolean).join(" "):"";return nom?"Profil de "+nom+".":"Votre profil personnel est disponible à consulter et modifier.";}},
