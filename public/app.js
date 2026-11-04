@@ -169,6 +169,28 @@ async function enregistrerProfilCloud(profil) {
   }
   return r.json();
 }
+
+function rendreApercuProfil(){
+  const form=$("form-profil"),zone=$("profil-apercu");if(!form||!zone)return;
+  const labels={nom:"Nom",postnom:"Postnom",prenom:"Prénom",naissance:"Date de naissance",sexe:"Sexe",telephone:"Téléphone",adresse:"Adresse / ville"};
+  const values={};
+  Object.keys(labels).forEach(k=>{
+    let v=form.elements.namedItem(k)?.value?.trim()||"";
+    if(k==="sexe")v=({F:"Féminin",M:"Masculin",autre:"Autre / préfère ne pas préciser"})[v]||v;
+    if(k==="naissance"&&v){const d=new Date(v+"T12:00:00");if(!Number.isNaN(d.getTime()))v=d.toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"});}
+    values[k]=v||"Non renseigné";
+  });
+  zone.innerHTML='<div class="profil-apercu-grid">'+Object.keys(labels).map(k=>'<div class="profil-apercu-item"><span>'+labels[k]+'</span><strong>'+echapper(values[k])+'</strong></div>').join("")+'</div>';
+}
+function ouvrirEditionProfil(){
+  const f=$("form-profil");if(!f)return;f.hidden=false;$("profil-apercu").hidden=true;$("profil-modifier").hidden=true;
+  f.scrollIntoView({behavior:"smooth",block:"start"});
+}
+function fermerEditionProfil(){
+  const f=$("form-profil");if(!f)return;f.hidden=true;$("profil-apercu").hidden=false;$("profil-modifier").hidden=false;rendreApercuProfil();
+}
+$("profil-modifier")?.addEventListener("click",ouvrirEditionProfil);
+
 async function chargerProfilGoogle(user) {
   utilisateurProfil = {
     uid: user.uid,
@@ -217,6 +239,8 @@ async function chargerProfilGoogle(user) {
         ? "Profil local retrouvé. La synchronisation Firebase sera vérifiée à l'enregistrement."
         : "Complétez vos informations puis enregistrez-les dans Firebase.";
   }
+  rendreApercuProfil();
+  fermerEditionProfil();
   afficherAnniversaireAgenda();
 }
 $("form-profil")?.addEventListener("submit", async (event) => {
@@ -235,6 +259,8 @@ $("form-profil")?.addEventListener("submit", async (event) => {
     try { localStorage.setItem(cleProfil(), JSON.stringify(profil)); } catch {}
     afficherAnniversaireAgenda();
     rendreCalendrierAgenda();
+    rendreApercuProfil();
+    fermerEditionProfil();
     $("profil-status").textContent = "Profil synchronisé avec Firebase. Vous le retrouverez avec ce compte Google sur vos autres appareils.";
     $("confirmation").textContent = "Votre profil a été enregistré et synchronisé dans Firebase.";
     $("confirmation").hidden = false;
