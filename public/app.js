@@ -22,6 +22,8 @@ const SDK = "https://www.gstatic.com/firebasejs/10.14.1/";
 const SCOPES = [
   "https://www.googleapis.com/auth/gmail.readonly",
   "https://www.googleapis.com/auth/gmail.compose",
+  // Étoile / libellé « Important » posés depuis l'application
+  "https://www.googleapis.com/auth/gmail.modify",
   "https://www.googleapis.com/auth/calendar.readonly",
   // Ajout et suppression de rendez-vous depuis l'onglet Agenda
   "https://www.googleapis.com/auth/calendar.events",
@@ -722,6 +724,8 @@ async function googleUneFois(url, options = {}, nouvelEssai = true) {
     if (quota) conseil = " → Google limite temporairement les requêtes. Attendez une minute puis cliquez sur « Actualiser ».";
     const erreur = new Error(`Google a répondu ${r.status}${detail ? " : " + detail : ""}${conseil}`);
     erreur.quota = quota;
+    erreur.status = r.status;
+    erreur.portee = r.status === 403 && /insufficient|scope/i.test(detail);
     throw erreur;
   }
   if (r.status === 204) return {};
@@ -1123,6 +1127,7 @@ function ligneMessage(m, i, avecBrouillon) {
         <div class="extrait">${echapper(m.extrait)}</div>
         <div class="actions">
           <button data-lire="${echapper(m.id)}">Lire</button>
+          <button data-important="${echapper(m.id)}" class="btn-important${m.etoile ? " actif" : ""}" aria-pressed="${m.etoile ? "true" : "false"}" title="${m.etoile ? "Retirer des messages importants" : "Marquer comme important"}">${m.etoile ? "★ Important" : "☆ Marquer important"}</button>
           <a href="https://mail.google.com/mail/u/0/#inbox/${m.threadId}" target="_blank" rel="noopener">Ouvrir</a>
           ${avecBrouillon ? `<button data-brouillon="${i}">Brouillon de réponse</button>` : ""}
         </div></li>`;
@@ -2071,6 +2076,7 @@ async function lireMail(id) {
   try {
     const m = lireMessageComplet(await google(URL_GMAIL + `messages/${encodeURIComponent(id)}?format=full`));
     mailLu = m;
+    majBoutonImportantLecture();
     $("mail-lecture-sujet").textContent = m.sujet;
     $("mail-lecture-meta").textContent = `De : ${m.de}` + (m.a ? ` · À : ${m.a}` : "") + (m.cc ? ` · Cc : ${m.cc}` : "") + (m.date ? ` · ${jourHeure.format(new Date(m.date))}` : "");
     $("mail-lecture-corps").textContent = m.corps;
@@ -2086,6 +2092,46 @@ async function lireMail(id) {
 }
 $("mail-lecture-fermer").addEventListener("click", () => $("mail-lecture").close());
 $("pane-messages").addEventListener("click", (ev) => { const b = ev.target.closest("[data-lire]"); if (b) lireMail(b.dataset.lire); });
+
+
+// ---------- Marquer un message important (étoile + libellé Important dans Gmail) ----------
+async function modifierMessageGmail(id, ajouter, retirer) {
+  const appel = () => google(URL_GMAIL + `messages/${encodeURIComponent(id)}/modify`, { method: "POST", body: JSON.stringify({ addLabelIds: ajouter, removeLabelIds: retirer }) });
+  try { return await appel(); }
+  catch (e) {
+    if (!e.portee) throw e;
+    // Nouvelle autorisation nécessaire (modification des libellés) : un clic dans la fenêtre Google, puis on réessaie
+    effacerJetonMemorise(); jetonGoogle = null; jetonGoogleExpireA = 0;
+    await renouvelerAccesGoogle();
+    return appel();
+  }
+}
+async function basculerImportant(id, bouton) {
+  const tous = [...etat.messages, ...etat.recents];
+  const m = tous.find((x) => x.id === id) || (mailLu && mailLu.id === id ? mailLu : null);
+  const actif = !(m && m.etoile);
+  if (bouton) bouton.disabled = true;
+  try {
+    await modifierMessageGmail(id, actif ? ["STARRED", "IMPORTANT"] : [], actif ? [] : ["STARRED", "IMPORTANT"]);
+    [...etat.messages, ...etat.recents].filter((x) => x.id === id).forEach((x) => { x.etoile = actif; });
+    if (mailLu && mailLu.id === id) { mailLu.etoile = actif; majBoutonImportantLecture(); }
+    const base = etat.recents.find((x) => x.id === id) || etat.messages.find((x) => x.id === id);
+    if (actif && base && !etat.messages.some((x) => x.id === id)) etat.messages = [{ ...base, etoile: true }, ...etat.messages].sort((a, b) => b.date - a.date);
+    if (!actif) etat.messages = etat.messages.filter((x) => x.id !== id);
+    rendreMessages();
+    if (typeof rendreDashboard === "function") { try { rendreDashboard(); } catch { /* non bloquant */ } }
+    messageEnvoye(actif ? "Message marqué comme important (étoile ajoutée dans Gmail)." : "Message retiré des importants (étoile retirée dans Gmail).");
+  } catch (e) {
+    afficherErreur("Impossible de modifier le message : " + e.message);
+  } finally { if (bouton) bouton.disabled = false; }
+}
+function majBoutonImportantLecture() {
+  const b = $("mail-lecture-important"); if (!b || !mailLu) return;
+  b.textContent = mailLu.etoile ? "★ Important" : "☆ Marquer important";
+  b.classList.toggle("actif", !!mailLu.etoile);
+}
+$("mail-lecture-important")?.addEventListener("click", () => mailLu && basculerImportant(mailLu.id, $("mail-lecture-important")));
+$("pane-messages").addEventListener("click", (ev) => { const b = ev.target.closest("[data-important]"); if (b) basculerImportant(b.dataset.important, b); });
 
 // ---------- Brouillons de réponse ----------
 let messageCible = null;

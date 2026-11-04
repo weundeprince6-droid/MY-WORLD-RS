@@ -310,6 +310,19 @@ srv.listen(8765, async () => {
     const ok = tous.includes('Marie Dupont') && tous.includes('Shop') && perso.includes('Shop') && !perso.includes('Marie Dupont') && pro.includes('Marie Dupont') && !pro.includes('Shop') && retour.includes('Shop') && retour.includes('Marie Dupont') && cTous === '2' && cPerso === '1' && cPro === '1';
     return { ok, detail: JSON.stringify({ cTous, cPerso, cPro }) };
   }));
+  res.push(await scenario('Messages : marquer un message important depuis l\'application', {}, async (p, appels, logs, etat) => {
+    await p.click('#bouton-connexion'); await p.waitForTimeout(2500);
+    await p.click('[data-tab="messages"]'); await p.waitForTimeout(500);
+    const avant = await p.textContent('#liste-messages');
+    await p.click('[data-vue-messages="recus"]'); await p.waitForTimeout(300);
+    await p.click('#liste-recents li:has-text("Promotion") [data-important]'); await p.waitForTimeout(1000);
+    const appel = (etat.mails || []).find((x) => x.url.includes('/messages/m2/modify'));
+    const ajoute = appel ? appel.corps.addLabelIds : [];
+    const bouton = (await p.textContent('#liste-recents li:has-text("Promotion") [data-important]')).trim();
+    await p.click('[data-vue-messages="importants"]'); await p.waitForTimeout(300);
+    const apres = await p.textContent('#liste-messages');
+    return { ok: !avant.includes('Promotion') && ajoute.includes('STARRED') && ajoute.includes('IMPORTANT') && bouton === '★ Important' && apres.includes('Promotion'), detail: JSON.stringify({ ajoute, bouton, dansImportants: apres.includes('Promotion') }) };
+  }));
   res.push(await scenario('Agenda : ajouter puis supprimer un rendez-vous', {}, async (p, appels, logs, etat) => {
     p.on('dialog', (d) => d.accept());
     await p.click('#bouton-connexion'); await p.waitForTimeout(2500);

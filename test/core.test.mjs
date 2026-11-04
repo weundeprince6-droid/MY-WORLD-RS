@@ -63,6 +63,9 @@ const piege = b64d(construireBrouillonBrut({ a: "a@ex.com\r\nBcc: pirate@ex.com"
 assert.ok(!/\r\nBcc:/.test(piege) && !/\nBcc:/.test(piege.replace(/\r\n/g, "\n").split("\n\n")[0].replace(/^To:.*$/m, "").replace(/^Cc:.*$/m, "")));
 assert.ok(!piege.includes("Cc: x@ex.com\n"));
 
+// Étoile (message marqué important)
+assert.equal(messagesImportants([msg("1", "a@b.com", "X", ["STARRED"])], { seuil: -100 })[0].etoile, true);
+assert.equal(messagesImportants([msg("2", "a@b.com", "X", [])], { seuil: -100 })[0].etoile, false);
 // Comptes personnels / professionnels
 assert.equal(typeCompte("Marie <marie@gmail.com>"), "personnel");
 assert.equal(typeCompte("x@yahoo.fr"), "personnel");

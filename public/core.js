@@ -90,6 +90,7 @@ export function messagesImportants(messages, options = {}) {
       extrait: x.message.snippet || "",
       date: Number(x.message.internalDate || 0),
       nonLu: (x.message.labelIds || []).includes("UNREAD"),
+      etoile: (x.message.labelIds || []).includes("STARRED"),
       score: x.score,
     }));
 }
@@ -334,7 +335,7 @@ export function lireMessageComplet(msg) {
   };
   parcourir(msg?.payload);
   return {
-    id: msg?.id, threadId: msg?.threadId, messageId: h("Message-ID") || h("Message-Id"), repondreA: h("Reply-To"), de: h("From"), a: h("To"), cc: h("Cc"), sujet: h("Subject") || "(sans objet)",
+    id: msg?.id, threadId: msg?.threadId, etoile: (msg?.labelIds || []).includes("STARRED"), messageId: h("Message-ID") || h("Message-Id"), repondreA: h("Reply-To"), de: h("From"), a: h("To"), cc: h("Cc"), sujet: h("Subject") || "(sans objet)",
     date: Number(msg?.internalDate || 0), corps: texte.trim() || htmlEnTexte(html) || msg?.snippet || "", pieces,
   };
 }
