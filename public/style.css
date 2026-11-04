@@ -840,3 +840,20 @@ html[data-theme="light"] .agenda-anniversaire{background:#f8f8f6!important;color
 .agenda-form-actions{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
 #agenda-nouveau,#notes-new{white-space:nowrap}
 @media(max-width:600px){.profil-apercu-grid{grid-template-columns:1fr}.profile-view-actions{justify-content:stretch}.profile-view-actions .btn{width:100%}.agenda-form-actions{flex-direction:column;align-items:stretch}.agenda-form-actions .btn{width:100%}.section-heading:has(#notes-new),.section-heading:has(#agenda-nouveau){align-items:flex-start;flex-direction:column}}
+
+/* Prévisions budgétaires par compte */
+.wallet-forecast-card{margin-top:18px;padding:18px;border:1px solid var(--border,#dce2e8);border-radius:16px;background:var(--surface,#fff)}
+.wallet-forecast-icon{font-size:1.6rem}
+.wallet-forecasts{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:14px 0}
+.wallet-forecast-item{padding:14px;border:1px solid var(--border,#dce2e8);border-radius:12px;background:var(--surface-soft,#f8fafc);min-width:0}
+.wallet-forecast-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px}
+.wallet-forecast-top strong{display:block;overflow-wrap:anywhere}
+.wallet-forecast-top small{display:block;color:var(--muted,#667085);margin-top:3px}
+.wallet-forecast-tag{font-size:.75rem;padding:5px 8px;border-radius:999px;background:#edf2f7;color:#344054;text-align:center}
+.wallet-forecast-metrics{display:grid;gap:8px}
+.wallet-forecast-metrics>div{display:flex;justify-content:space-between;align-items:center;gap:10px;padding-top:8px;border-top:1px solid var(--border,#dce2e8)}
+.wallet-forecast-metrics span{font-size:.82rem;color:var(--muted,#667085)}
+.wallet-forecast-metrics b{font-size:.92rem;text-align:right}
+.wallet-forecast-positive{color:#16794b}
+.wallet-forecast-warning{color:#a15c00}
+.wallet-forecast-negative{color:#b42318}
