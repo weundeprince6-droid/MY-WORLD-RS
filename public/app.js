@@ -1170,10 +1170,39 @@ function rendreAlertes() {
   $("liste-alertes").innerHTML = alertes.length
     ? alertes.map((a) => `<li class="niveau-${a.niveau}"><span class="pastille"></span>${echapper(a.texte)} <span class="meta">${echapper(a.source)}</span></li>`).join("")
     : '<li class="vide">Aucune alerte. Tout est calme.</li>';
-  $("resume").textContent = resumeDuJour({ messages: etat.messages, agenda: etat.agenda, alertes });
+  if(typeof resumeRotatifItems==="undefined") $("resume").textContent = resumeDuJour({ messages: etat.messages, agenda: etat.agenda, alertes });
+  else afficherResumeRotatif(resumeRotatifIndex);
 }
 
 
+
+
+/* Résumé rotatif du tableau de bord : change de section toutes les 30 secondes */
+const resumeRotatifItems=[
+ {titre:"Vue d’ensemble",texte:()=>resumeDuJour({messages:etat.messages,agenda:etat.agenda,alertes:construireAlertes({...etat}))},
+ {titre:"Agenda",texte:()=>{const n=(etat.agenda.aujourdhui||[]).length+(etat.agenda.aVenir||[]).length;return n? n+" rendez-vous aujourd’hui et à venir.":"Aucun rendez-vous aujourd’hui ou à venir.";}},
+ {titre:"Notes & Projets",texte:()=>{const n=typeof notesItems!=="undefined"?notesItems.length:0;const p=typeof notesItems!=="undefined"?notesItems.filter(x=>x.type==="project").length:0;return n+" notes et projets enregistrés, dont "+p+" projet(s).";}},
+ {titre:"Profil",texte:()=>{const f=$("form-profil");const nom=f?[f.elements.nom?.value,f.elements.prenom?.value].filter(Boolean).join(" "):"";return nom?"Profil de "+nom+".":"Votre profil personnel est disponible à consulter et modifier.";}},
+ {titre:"Porte-monnaie",texte:()=>{const s=$("wallet-personal-usd")?.textContent||"";return s&&s!=="0 USD"?"Solde personnel : "+s+".":"Consultez vos soldes et opérations dans le porte-monnaie.";}},
+ {titre:"Messages",texte:()=>etat.messages.length?etat.messages.length+" message(s) important(s) à consulter.":"Aucun message important pour le moment."}
+];
+let resumeRotatifIndex=0,resumeRotatifTimer=null;
+function afficherResumeRotatif(index){
+ const zone=$("resume"),label=document.querySelector(".resume-jour .summary-label");
+ if(!zone||!resumeRotatifItems.length)return;
+ resumeRotatifIndex=(index+resumeRotatifItems.length)%resumeRotatifItems.length;
+ const item=resumeRotatifItems[resumeRotatifIndex];
+ if(label)label.textContent="RÉSUMÉ · "+item.titre.toLocaleUpperCase("fr-FR");
+ zone.textContent=item.texte();
+ zone.classList.remove("resume-rotation-entree");
+ void zone.offsetWidth;
+ zone.classList.add("resume-rotation-entree");
+}
+function demarrerResumeRotatif(){
+ if(resumeRotatifTimer)clearInterval(resumeRotatifTimer);
+ afficherResumeRotatif(resumeRotatifIndex);
+ resumeRotatifTimer=setInterval(()=>afficherResumeRotatif(resumeRotatifIndex+1),30000);
+}
 
 // ---------- Résumé synthétique du tableau de bord ----------
 function rendreDashboard() {
@@ -1216,6 +1245,7 @@ function rendreDashboard() {
 
 function tout_rendre() {
   rendreMessages(); rendreAgenda(); rendreKpis(); rendreSocial(); rendreAlertes(); rendreDashboard();
+  if(typeof demarrerResumeRotatif==="function") demarrerResumeRotatif();
   $("derniere-maj").textContent = `Mis à jour à ${heure.format(new Date())}`;
 }
 
