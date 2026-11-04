@@ -1011,11 +1011,11 @@ function afficherAnniversaireAgenda(){
 }
 
 function rendreAgenda() {
-  const ligne = (e) => '<li><div class="ligne"><strong>'+echapper(e.titre)+'</strong><span class="meta">'+(e.toutLeJour ? "Journée entière" : heure.format(e.debut))+'</span></div>'+(e.lieu ? '<div class="extrait">'+echapper(e.lieu)+'</div>' : '')+'<div class="actions"><button type="button" data-supprimer-evenement="'+echapper(e.id)+'">Supprimer</button></div></li>';
+  const ligne = (e) => '<li><div class="ligne"><strong>'+echapper(e.titre)+'</strong><span class="meta">'+(e.toutLeJour ? "Journée entière" : heure.format(e.debut))+'</span></div>'+(e.lieu ? '<div class="extrait">'+echapper(e.lieu)+'</div>' : '')+'<div class="actions"><button type="button" data-modifier-evenement="'+echapper(e.id)+'">Modifier</button><button type="button" data-supprimer-evenement="'+echapper(e.id)+'">Supprimer</button></div></li>';
   const auj = etat.agenda.aujourdhui.slice(0,2);
   $("liste-agenda").innerHTML = auj.length ? auj.map(ligne).join("") : '<li class="vide">Aucun rendez-vous aujourd’hui.</li>';
   const suite = etat.agenda.aVenir.slice(0,2);
-  $("liste-avenir").innerHTML = suite.length ? suite.map(e=>'<li><div class="ligne"><strong>'+echapper(e.titre)+'</strong><span class="meta">'+jourCourt.format(e.debut)+(e.toutLeJour ? "" : " · "+heure.format(e.debut))+'</span></div><div class="actions"><button type="button" data-supprimer-evenement="'+echapper(e.id)+'">Supprimer</button></div></li>').join("") : '<li class="vide">Rien de prévu dans les prochains jours.</li>';
+  $("liste-avenir").innerHTML = suite.length ? suite.map(e=>'<li><div class="ligne"><strong>'+echapper(e.titre)+'</strong><span class="meta">'+jourCourt.format(e.debut)+(e.toutLeJour ? "" : " · "+heure.format(e.debut))+'</span></div><div class="actions"><button type="button" data-modifier-evenement="'+echapper(e.id)+'">Modifier</button><button type="button" data-supprimer-evenement="'+echapper(e.id)+'">Supprimer</button></div></li>').join("") : '<li class="vide">Rien de prévu dans les prochains jours.</li>';
   rendreCalendrierAgenda();
 }
 // ---------- Agenda : ajouter et supprimer des rendez-vous ----------
@@ -1044,11 +1044,13 @@ $("agenda-form").addEventListener("submit", async (ev) => {
       toutLeJour: f.toutlejour.checked, lieu: f.lieu.value, description: f.description.value,
     }, Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC");
     bouton.disabled = true;
-    retourAgenda("Ajout en cours…");
-    await google("https://www.googleapis.com/calendar/v3/calendars/primary/events", { method: "POST", body: JSON.stringify(corps) });
+    retourAgenda(agendaEvenementEnEdition?"Modification en cours…":"Ajout en cours…");
+    const urlAgenda=agendaEvenementEnEdition?`https://www.googleapis.com/calendar/v3/calendars/primary/events/${encodeURIComponent(agendaEvenementEnEdition)}`:"https://www.googleapis.com/calendar/v3/calendars/primary/events";
+    await google(urlAgenda, { method: agendaEvenementEnEdition?"PATCH":"POST", body: JSON.stringify(corps) });
+    agendaEvenementEnEdition=null;$("agenda-editor-card").hidden=true;
     f.reset();
     $("agenda-heures").hidden = false;
-    retourAgenda("Rendez-vous ajouté à Google Agenda.");
+    retourAgenda("Rendez-vous enregistré dans Google Agenda.");
     etat.agenda = await chargerAgenda();
     tout_rendre();
   } catch (e) {
@@ -1058,6 +1060,8 @@ $("agenda-form").addEventListener("submit", async (ev) => {
   }
 });
 document.addEventListener("click", async (ev) => {
+  const edit=ev.target.closest?.("[data-modifier-evenement]");
+  if(edit){const e=[...etat.agenda.aujourdhui,...etat.agenda.aVenir].find(x=>x.id===edit.dataset.modifierEvenement);if(e){const d=e.debut;const date=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;const fmt=t=>`${String(t.getHours()).padStart(2,"0")}:${String(t.getMinutes()).padStart(2,"0")}`;ouvrirFormAgenda({...e,date,debutHeure:e.toutLeJour?"":fmt(d),finHeure:e.toutLeJour?"":fmt(e.fin)});}return;}
   const b = ev.target.closest?.("[data-supprimer-evenement]");
   if (!b) return;
   if (!confirm("Supprimer ce rendez-vous de Google Agenda ?")) return;
@@ -2007,7 +2011,9 @@ function notesReset() {
   $("notes-form").elements.type.value = "note";
   notesSetType("note");
   $("notes-cancel").hidden = true;
+  $("notes-editor-card").hidden = true;
 }
+$("notes-new")?.addEventListener("click",()=>{notesReset();$("notes-editor-card").hidden=false;$("notes-editor-card").scrollIntoView({behavior:"smooth",block:"start"});});
 function notesEdit(id) {
   const item = notesItems.find(x => x.id === id);
   if (!item) return;
@@ -2024,6 +2030,7 @@ function notesEdit(id) {
   $("notes-form-title").textContent = "Modifier " + (item.type === "project" ? "le projet" : "la note");
   $("notes-save").textContent = "Enregistrer les modifications";
   $("notes-cancel").hidden = false;
+  $("notes-editor-card").hidden = false;
   $("notes-form").scrollIntoView({ behavior:"smooth", block:"start" });
 }
 function notesRender() {
