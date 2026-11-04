@@ -651,3 +651,80 @@ html[data-theme="light"] .bandeau.erreur{background:#fff0ee;color:#8b1e16;border
 .theme-toggle-icon{font-size:18px;line-height:1}
 .theme-toggle-label{font-size:12px}
 @media(max-width:560px){.theme-toggle{min-width:38px;padding:7px 9px}.theme-toggle-label{display:none}}
+
+
+/* Mode clair : palette douce et lisible pour réduire l'éblouissement */
+html[data-theme="light"]{
+  --bg:#f1f3f5;
+  --surface:#fffefa;
+  --text:#263238;
+  --muted:#596879;
+  --border:#d5dce4;
+  --primary:#176b55;
+  --primary-dark:#125642;
+  --primary-soft:#e6f1ec;
+  --shadow:0 3px 14px rgba(35,48,58,.045);
+}
+html[data-theme="light"] body{
+  background:var(--bg);
+  color:var(--text);
+  line-height:1.62;
+}
+html[data-theme="light"] .carte,
+html[data-theme="light"] .sidebar,
+html[data-theme="light"] .feature-card,
+html[data-theme="light"] .resume-jour,
+html[data-theme="light"] .kpi,
+html[data-theme="light"] .notes-item{
+  background:var(--surface);
+  border-color:var(--border);
+  box-shadow:var(--shadow);
+}
+html[data-theme="light"] .meta,
+html[data-theme="light"] .welcome-sub,
+html[data-theme="light"] .section-heading p:not(.eyebrow),
+html[data-theme="light"] .feature-card p,
+html[data-theme="light"] .sidebar-note p,
+html[data-theme="light"] .liste .extrait,
+html[data-theme="light"] .kpi .libelle,
+html[data-theme="light"] .profile-actions .meta,
+html[data-theme="light"] .notes-meta,
+html[data-theme="light"] .notes-footer,
+html[data-theme="light"] .vide{
+  color:#596879!important;
+}
+html[data-theme="light"] .eyebrow,
+html[data-theme="light"] .summary-label,
+html[data-theme="light"] .feature-label,
+html[data-theme="light"] .nav-caption{
+  color:#596879!important;
+}
+html[data-theme="light"] input,
+html[data-theme="light"] select,
+html[data-theme="light"] textarea{
+  color:#263238;
+}
+html[data-theme="light"] input::placeholder,
+html[data-theme="light"] textarea::placeholder{
+  color:#687787;
+  opacity:1;
+}
+html[data-theme="light"] .btn,
+html[data-theme="light"] .theme-toggle{
+  border-color:#cbd4dd;
+}
+html[data-theme="light"] .btn-quiet{color:#596879}
+html[data-theme="light"] .nav-item{color:#526174!important}
+html[data-theme="light"] .nav-item.active{color:#176b55!important;background:#e6f1ec!important}
+html[data-theme="light"] .date-chip{background:#fffefa;border-color:#d5dce4;color:#596879}
+html[data-theme="light"] .agenda-cal-jour{background:#fffefa;color:#263238}
+html[data-theme="light"] .agenda-cal-entete{color:#596879}
+html[data-theme="light"] .agenda-anniversaire{background:#fffefa!important}
+html[data-theme="light"] .section-icon.green,
+html[data-theme="light"] .feature-green .feature-icon{background:#e6f1ec;color:#176b55}
+html[data-theme="light"] .section-icon.blue,
+html[data-theme="light"] .feature-blue .feature-icon{background:#e8eef6;color:#245a91}
+html[data-theme="light"] .section-icon.purple,
+html[data-theme="light"] .feature-purple .feature-icon{background:#eeeaf5;color:#624b8a}
+html[data-theme="light"] .section-icon.orange,
+html[data-theme="light"] .feature-orange .feature-icon{background:#f5ece2;color:#87521d}
