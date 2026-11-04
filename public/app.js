@@ -512,10 +512,26 @@ async function google(url, options = {}) {
 
 async function googleUneFois(url, options = {}, nouvelEssai = true) {
   await obtenirJetonGoogle();
-  const r = await fetch(url, {
+  const envoyer = () => fetch(url, {
     ...options,
     headers: { Authorization: `Bearer ${jetonGoogle}`, "Content-Type": "application/json", ...(options.headers || {}) },
   });
+  let r;
+  try {
+    r = await envoyer();
+  } catch (e) {
+    // Coupure réseau : un seul nouvel essai, uniquement pour les lectures (jamais pour une écriture, pour éviter les doublons)
+    const lecture = !options.method || String(options.method).toUpperCase() === "GET" || /:run(Aggregation)?Query/.test(url);
+    if (lecture) {
+      await new Promise((ok) => setTimeout(ok, 1500));
+      try { r = await envoyer(); } catch { r = null; }
+    }
+    if (!r) {
+      const erreur = new Error("Connexion internet interrompue : Google est injoignable pour le moment. Vérifiez votre connexion (ou un bloqueur de publicités / VPN), l'application réessaiera toute seule.");
+      erreur.reseau = true;
+      throw erreur;
+    }
+  }
   if (r.status === 401 && nouvelEssai) {
     jetonGoogle = null; jetonGoogleExpireA = 0; effacerJetonMemorise();
     await obtenirJetonGoogle(true);
