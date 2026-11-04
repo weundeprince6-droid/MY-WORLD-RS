@@ -422,18 +422,12 @@ async function hacherPin(pin, sel) {
   return Array.from(new Uint8Array(bits), b=>b.toString(16).padStart(2,"0")).join("");
 }
 function verrouillerApplication() {
-  if (!utilisateurConnecte) return;
+  if (!utilisateurConnecte || pinGateEnCours) return;
   if (minuterieVerrouillage) clearTimeout(minuterieVerrouillage);
   minuterieVerrouillage = null;
-  $("tableau").hidden = true;
-  $("zone-connexion").hidden = true;
-  $("pin-gate").hidden = false;
-  $("pin-gate-titre").textContent = "Session verrouillée";
-  $("pin-gate-description").textContent = "Entrez votre PIN pour reprendre votre session My World RS.";
-  $("pin-confirmation-wrap").hidden = true;
-  $("pin-gate-form").dataset.mode = "unlock";
-  $("pin-gate-input").value = "";
-  $("pin-gate-input").focus();
+  demanderPin(utilisateurConnecte).then(() => {
+    if (UID_SESSION_CHARGEE.has(utilisateurConnecte.uid)) afficherSession(true, utilisateurConnecte.displayName || utilisateurConnecte.email);
+  }).catch(e => afficherErreur(e?.message || "Verrouillage PIN indisponible."));
 }
 function programmerVerrouillage() {
   if (minuterieVerrouillage) clearTimeout(minuterieVerrouillage);
