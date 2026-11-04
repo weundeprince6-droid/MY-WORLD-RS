@@ -15,6 +15,7 @@ import {
   calculerCreditsAvec, MESURES_CREDITS_AVEC, calculerEse, MESURES_ESE, calculerRistourne, decoderChamps,
 } from "./firestore.js";
 import { calculerRapport, dessinerRapport } from "./rapport.js";
+import { lireFichiersKeep } from "./notes.js";
 
 const $ = (id) => document.getElementById(id);
 const SDK = "https://www.gstatic.com/firebasejs/10.14.1/";
@@ -2467,7 +2468,7 @@ function notesRender() {
     const isProject = item.type === "project";
     const steps = isProject && item.steps ? item.steps.split(/\r?\n/).map(x=>x.trim()).filter(Boolean) : [];
     return '<article class="notes-item ' + (isProject ? "notes-project" : "notes-note") + '">' +
-      '<div class="notes-item-head"><div><span class="notes-kind">' + (isProject ? "📌 Projet" : "📝 Note") + '</span>' +
+      '<div class="notes-item-head"><div><span class="notes-kind">' + (isProject ? "📌 Projet" : "📝 Note") + (item.pinned ? '<span class="notes-pinned" title="Épinglée dans Keep">📍</span>' : '') + '</span>' +
       '<h3>' + echapper(item.title || "Sans titre") + '</h3><div class="notes-meta">' + (item.category ? '<span>' + echapper(item.category) + '</span>' : '') +
       (isProject ? '<span class="notes-status notes-status-' + echapper(item.status || "todo") + '">' + notesStatusLabel(item.status) + '</span>' : '') +
       (item.due ? '<span>Échéance : ' + notesDate(item.due) + '</span>' : '') + '</div></div>' +
@@ -2510,6 +2511,32 @@ $("notes-refresh").addEventListener("click", () => notesLoad(true));
 $("notes-search").addEventListener("input", notesRender);
 $("notes-filter").addEventListener("change", notesRender);
 document.querySelector('[data-tab="notes"]')?.addEventListener("click", () => notesLoad());
+
+// ---------- Import Google Keep (Takeout) ----------
+$("keep-fichiers")?.addEventListener("change", async (e) => {
+  const entree = e.target, statut = $("keep-statut");
+  const fichiers = [...entree.files];
+  if (!fichiers.length) return;
+  const dire = (m, erreur = false) => { if (statut) { statut.textContent = m; statut.style.color = erreur ? "var(--danger,#b42318)" : ""; } };
+  try {
+    if (!fb?.auth.currentUser) throw new Error("Connectez-vous d'abord à votre compte Google.");
+    dire("Lecture des fichiers…");
+    if (!notesLoaded) await notesLoad(true);
+    const { notes, ignorees } = await lireFichiersKeep(fichiers);
+    const connus = new Set(notesItems.map(x => x.id));
+    const nouvelles = notes.filter(n => !connus.has(n.id));
+    let faites = 0, echecs = 0;
+    for (const n of nouvelles) {
+      dire(`Import en cours : ${faites + echecs}/${nouvelles.length}…`);
+      try { await notesSave(n, false); notesItems.push(n); faites++; } catch { echecs++; }
+    }
+    notesItems.sort((a, b) => String(b.updatedAt || "").localeCompare(String(a.updatedAt || "")));
+    notesRender();
+    dire(`${faites} note(s) importée(s), ${notes.length - nouvelles.length} déjà présente(s), ${ignorees} fichier(s) ignoré(s)` + (echecs ? `, ${echecs} échec(s) (relancez l'import pour réessayer)` : "") + ".", echecs > 0);
+  } catch (err) {
+    dire("Import impossible : " + (err?.message || err), true);
+  } finally { entree.value = ""; }
+});
 
 
 

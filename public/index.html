@@ -6,7 +6,7 @@
   <title>My World RS</title>
   <meta name="description" content="Votre espace personnel : messages, agenda, bases de données et alertes.">
   <script>try{const t=localStorage.getItem("mwrs.theme");document.documentElement.dataset.theme=(t==="light"||t==="dark")?t:(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");}catch{document.documentElement.dataset.theme="light";}</script>
-  <link rel="stylesheet" href="style.css?v=20261104-34">
+  <link rel="stylesheet" href="style.css?v=20261104-50">
 </head>
 <body>
   <header class="entete">
@@ -270,7 +270,7 @@
           </section>
           <section class="tab-pane" id="pane-notes" role="tabpanel" data-pane="notes" hidden>
             <div class="section-heading"><div><p class="eyebrow">VOTRE ESPACE PERSONNEL</p><h2>Notes & Projets</h2><p>Consultez vos notes et projets en mode aperçu. Ouvrez la modification seulement si nécessaire.</p></div><button class="btn btn-primary" id="notes-new" type="button">＋ Nouvelle note / projet</button></div>
-            <section class="carte notes-intro"><div><strong>Google Keep</strong><p class="meta">Votre compte Gmail est personnel : Google ne permet pas la synchronisation directe de Keep via son API officielle. Vous pouvez ouvrir Keep séparément.</p></div><a class="btn btn-light" href="https://keep.google.com/" target="_blank" rel="noopener noreferrer">Ouvrir Google Keep ↗</a></section>
+            <section class="carte notes-intro"><div><strong>Importer vos notes Google Keep</strong><p class="meta">Votre compte Gmail est personnel : Google ne permet pas la synchronisation directe de Keep. Exportez vos notes avec <a href="https://takeout.google.com/settings/takeout/custom/keep" target="_blank" rel="noopener noreferrer">Google Takeout</a> (cochez seulement « Keep »), puis choisissez ici le fichier .zip reçu (ou les fichiers .json). Les notes déjà importées ne sont jamais dupliquées, les notes à la corbeille sont ignorées.</p><p id="keep-statut" class="meta" role="status"></p></div><div class="notes-intro-actions"><label class="btn btn-primary keep-import" for="keep-fichiers">Importer depuis Keep</label><input id="keep-fichiers" type="file" accept=".zip,.json,application/zip,application/json" multiple hidden><a class="btn btn-light" href="https://keep.google.com/" target="_blank" rel="noopener noreferrer">Ouvrir Google Keep ↗</a></div></section>
             <section class="carte notes-editor" id="notes-editor-card" hidden><div class="card-heading"><div><p class="eyebrow">CAPTURE RAPIDE</p><h2 id="notes-form-title">Nouvelle note ou projet</h2></div><span class="heading-icon">✍</span></div>
               <form id="notes-form" class="notes-form"><input type="hidden" name="id"><div class="notes-fields">
                 <label>Type<select name="type"><option value="note">Note</option><option value="project">Projet</option></select></label>
@@ -347,6 +347,6 @@
       setTimeout(function(){if(!window.__appPret)montrer("L'application n'a pas démarré. Vérifiez votre connexion internet (les composants Firebase se chargent depuis Google), désactivez un éventuel bloqueur de publicités, puis rechargez. Appuyez sur F12 > Console pour voir le détail.");},6000);
     })();
   </script>
-  <script type="module" src="app.js?v=20261104-41"></script>
+  <script type="module" src="app.js?v=20261104-50"></script>
 </body>
 </html>

@@ -912,3 +912,5 @@ html[data-theme="light"] #pane-wallet .wallet-ristourne .rist-part{background:li
 .pin-gate-card button{width:100%;margin-top:18px;min-height:48px}
 .pin-gate-error{min-height:1.3em;margin:10px 0;color:#d04438;font-size:13px}
 .pin-gate-note{font-size:12px;text-align:center;margin:16px 0 0!important}
+.notes-intro-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.keep-import{cursor:pointer}
+.notes-pinned{margin-left:6px}

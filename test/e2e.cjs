@@ -78,6 +78,11 @@ async function scenario(nom, { mode = 'ok', sdkBloque = false, quotaGmail = fals
     if (u.includes('calendar/v3')) return route.fulfill(json({ items: [{ id: 'e1', summary: 'Réunion du comité', start: { dateTime: dans30.toISOString() }, end: { dateTime: new Date(dans30.getTime() + 3600000).toISOString() } }] }));
     if (u.includes(':runAggregationQuery')) return route.fulfill(json([{ result: { aggregateFields: { v: { integerValue: '7' } } } }]));
     if (u.includes(':runQuery')) return route.fulfill(json([]));
+    if (u.includes('/notesProjects')) {
+      etat.notes = etat.notes || { crees: [] };
+      if (m === 'POST') { etat.notes.crees.push(JSON.parse(route.request().postData()).fields); return route.fulfill(json({})); }
+      return route.fulfill(json({ documents: [{ name: 'x/notesProjects/n0', fields: { type: { stringValue: 'note' }, title: { stringValue: 'Ancienne note' }, body: { stringValue: 'x' }, updatedAt: { stringValue: '2026-10-01T00:00:00.000Z' } } }] }));
+    }
     if (u.includes('/walletTransactions') || u.includes('/walletAccounts')) {
       etat.wallet = etat.wallet || { supprimes: [], patchs: [] };
       if (m === 'DELETE') { etat.wallet.supprimes.push(decodeURIComponent(u.split('/walletTransactions/')[1] || '')); return route.fulfill(json({})); }
@@ -222,6 +227,22 @@ srv.listen(8765, async () => {
     await p.waitForTimeout(32000);
     const jeton = await p.evaluate(() => JSON.parse(localStorage.getItem('mwrs.google.jeton') || '{}').jeton);
     return { ok: jeton === 'tok-gis', detail: JSON.stringify({ jeton }) };
+  }));
+  res.push(await scenario('Notes : import Google Keep (JSON), sans doublon à la réimportation', {}, async (p, appels, logs, etat) => {
+    await p.click('#bouton-connexion'); await p.waitForTimeout(2500);
+    await p.click('[data-tab="notes"]'); await p.waitForTimeout(1200);
+    const keep = (nom, o) => ({ name: nom, mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(o)) });
+    const fichiers = [keep('a.json', { title: 'Courses', textContent: 'Lait', isTrashed: false, labels: [{ name: 'Maison' }], createdTimestampUsec: 1700000000000000, userEditedTimestampUsec: 1700000500000000 }),
+      keep('b.json', { title: 'Liste', listContent: [{ text: 'Riz', isChecked: true }], isPinned: true, createdTimestampUsec: 1700000100000000 }),
+      keep('c.json', { title: 'Corbeille', textContent: 'x', isTrashed: true })];
+    await p.setInputFiles('#keep-fichiers', fichiers); await p.waitForTimeout(2500);
+    const apres1 = etat.notes.crees.length; const statut1 = (await p.textContent('#keep-statut')).trim();
+    await p.setInputFiles('#keep-fichiers', fichiers); await p.waitForTimeout(2500);
+    const apres2 = etat.notes.crees.length; const statut2 = (await p.textContent('#keep-statut')).trim();
+    const liste = await p.textContent('#notes-list');
+    const premiere = etat.notes.crees[0] || {};
+    const ok = apres1 === 2 && statut1.includes('2 note(s) importée(s)') && apres2 === 2 && liste.includes('Courses') && liste.includes('☑ Riz') && !liste.includes('Corbeille') && premiere.source && premiere.source.stringValue === 'keep';
+    return { ok, detail: JSON.stringify({ apres1, apres2, statut1: statut1.slice(0, 90), statut2: statut2.slice(0, 90) }) };
   }));
   res.push(await scenario('Agenda : ajouter puis supprimer un rendez-vous', {}, async (p, appels, logs, etat) => {
     p.on('dialog', (d) => d.accept());

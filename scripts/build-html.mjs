@@ -15,6 +15,7 @@ const core = sansExport(lire("core.js"));
 const firestore = sansExport(lire("firestore.js"));
 const telegram = sansExport(lire("telegram.js")).replace(importsLocaux, "");
 const rapport = sansExport(lire("rapport.js")).replace(importsLocaux, "");
+const notesKeep = sansExport(lire("notes.js")).replace(importsLocaux, "");
 const facebook = sansExport(lire("facebook.js")).replace(importsLocaux, "");
 let app = lire("app.js").replace(importsLocaux, "");
 
@@ -35,6 +36,7 @@ const script = [
   "// ===== telegram.js =====", telegram,
   "// ===== facebook.js =====", facebook,
   "// ===== rapport.js =====", rapport,
+  "// ===== notes.js =====", notesKeep,
   "// ===== app.js =====", app,
 ].join("\n");
 
