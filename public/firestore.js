@@ -189,10 +189,13 @@ export function calculerRistourne(jours, cfg) {
     return groupes.get(cle);
   };
   let mouvements = 0;
+  const lignes = [];
+  const nomsGroupes = (cfg && cfg.ristGroups) || {};
   for (const j of jours || []) {
     for (const it of Object.values((j && j.items) || {})) {
       if (!it || it.k !== "r") continue;
       mouvements += 1;
+      lignes.push({ date: String((j && j.id) || ""), type: it.type === "out" ? "out" : "in", note: String(it.name || ""), groupe: it.g ? (nomsGroupes[it.g] && nomsGroupes[it.g].name) || "Groupe supprimé" : "Général", montant: nombre(it.a), devise: deviseEse(it) });
       const c = deviseEse(it);
       const g = groupe(it.g);
       const cible = it.type === "out" ? "retraits" : "depots";
@@ -223,7 +226,8 @@ export function calculerRistourne(jours, cfg) {
   sortie.sort((a, b) => a.nom.localeCompare(b.nom, "fr"));
   const arrondiPaire = (o) => ({ FC: arrondi(o.FC), USD: arrondi(o.USD) });
   const net = (o) => { for (const k of Object.keys(o)) if (o[k] && typeof o[k] === "object") o[k] = arrondiPaire(o[k]); return o; };
-  return { total: net(total), groupes: sortie.map(net), mouvements, credits, nbGroupes: Object.keys(noms).length };
+  lignes.sort((a, b) => b.date.localeCompare(a.date));
+  return { total: net(total), groupes: sortie.map(net), mouvements, credits, nbGroupes: Object.keys(noms).length, lignes };
 }
 
 export const MESURES_ESE = {

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>My World RS</title>
   <meta name="description" content="Votre espace personnel : messages, agenda, bases de données et alertes.">
-  <link rel="stylesheet" href="style.css?v=20261103-22">
+  <link rel="stylesheet" href="style.css?v=20261104-2">
 </head>
 <body>
   <header class="entete">
@@ -226,6 +226,7 @@
                   <label>Type<select name="kind"><option value="income">Entrée / revenu</option><option value="expense">Sortie / dépense</option></select></label>
                   <label>Montant<input name="amount" type="number" min="0.01" step="0.01" required placeholder="0.00"></label>
                   <label>Catégorie<input name="category" maxlength="60" placeholder="Ex. salaire, transport, vente"></label>
+                  <label>Moyen de paiement<select name="paymentMethod"><option value="">—</option><option>Espèces</option><option>Virement</option><option>Mobile Money</option><option>Carte bancaire</option><option>Chèque</option><option>Autre</option></select></label>
                   <label>Date<input name="date" type="date" required></label>
                   <label>Description<input name="description" maxlength="180" placeholder="Détail de l'opération"></label>
                   <button class="btn btn-primary" type="submit">Enregistrer l'opération</button>
@@ -306,6 +307,6 @@
       setTimeout(function(){if(!window.__appPret)montrer("L'application n'a pas démarré. Vérifiez votre connexion internet (les composants Firebase se chargent depuis Google), désactivez un éventuel bloqueur de publicités, puis rechargez. Appuyez sur F12 > Console pour voir le détail.");},6000);
     })();
   </script>
-  <script type="module" src="app.js?v=20261103-22"></script>
+  <script type="module" src="app.js?v=20261104-2"></script>
 </body>
 </html>
