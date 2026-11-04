@@ -73,7 +73,7 @@ async function scenario(nom, { mode = 'ok', sdkBloque = false, quotaGmail = fals
     if (u.includes('gmail.googleapis.com') && u.includes('/messages?')) return route.fulfill(json({ messages: [{ id: 'm1' }, { id: 'm2' }] }));
     if (quotaGmail && u.includes('/messages/m1') && !quota.deja) { quota.deja = true; return route.fulfill({ status: 403, headers: { ...CORS, 'content-type': 'application/json' }, body: JSON.stringify({ error: { code: 403, message: "Quota exceeded for quota metric 'Total Query Cost' and limit 'Units per minute per user'" } }) }); }
     if (u.includes('/messages/m1')) return route.fulfill(json({ id: 'm1', threadId: 't1', labelIds: ['UNREAD', 'IMPORTANT'], snippet: 'Merci de régler avant le 5', internalDate: String(Date.now()), payload: { headers: [{ name: 'From', value: 'Marie Dupont <marie@ex.com>' }, { name: 'Subject', value: 'Rappel facture urgente' }] } }));
-    if (u.includes('/messages/m2')) return route.fulfill(json({ id: 'm2', threadId: 't2', labelIds: ['CATEGORY_PROMOTIONS'], snippet: 'promo', internalDate: '1', payload: { headers: [{ name: 'From', value: 'Shop <no-reply@shop.com>' }, { name: 'Subject', value: 'Promotion -50%' }] } }));
+    if (u.includes('/messages/m2')) return route.fulfill(json({ id: 'm2', threadId: 't2', labelIds: ['CATEGORY_PROMOTIONS'], snippet: 'promo', internalDate: '1', payload: { headers: [{ name: 'From', value: 'Shop <no-reply@gmail.com>' }, { name: 'Subject', value: 'Promotion -50%' }] } }));
     if (u.includes('calendar/v3') && m === 'POST') { etat.evenements = etat.evenements || []; etat.evenements.push(JSON.parse(route.request().postData())); return route.fulfill(json({ id: 'nouveau1' })); }
     if (u.includes('calendar/v3') && m === 'DELETE') { etat.supprime = decodeURIComponent(u.split('/events/')[1]); return route.fulfill({ status: 204, headers: CORS }); }
     if (u.includes('calendar/v3')) return route.fulfill(json({ items: [{ id: 'e1', summary: 'Réunion du comité', start: { dateTime: dans30.toISOString() }, end: { dateTime: new Date(dans30.getTime() + 3600000).toISOString() } }] }));
@@ -295,6 +295,20 @@ srv.listen(8765, async () => {
     const envoi = (etat.mails || []).find((x) => x.url.includes('/messages/send'));
     const brut = envoi ? Buffer.from(envoi.corps.raw.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8') : '';
     return { ok: titre === 'Répondre' && dest.includes('@') && /^Re/.test(sujet) && corps === '' && envoi && !!envoi.corps.threadId && brut.includes('Merci, bien reçu.'), detail: JSON.stringify({ titre, dest, sujet, threadId: envoi && envoi.corps.threadId }) };
+  }));
+  res.push(await scenario('Messages : filtres comptes personnels / professionnels', {}, async (p) => {
+    await p.click('#bouton-connexion'); await p.waitForTimeout(2500);
+    await p.click('[data-tab="messages"]'); await p.waitForTimeout(500);
+    await p.click('[data-vue-messages="recus"]'); await p.waitForTimeout(300);
+    const tous = await p.textContent('#liste-recents'); const cTous = (await p.textContent('[data-compteur="tous"]')).trim();
+    await p.click('[data-compte-messages="personnel"]'); await p.waitForTimeout(300);
+    const perso = await p.textContent('#liste-recents'); const cPerso = (await p.textContent('[data-compteur="personnel"]')).trim();
+    await p.click('[data-compte-messages="professionnel"]'); await p.waitForTimeout(300);
+    const pro = await p.textContent('#liste-recents'); const cPro = (await p.textContent('[data-compteur="professionnel"]')).trim();
+    await p.click('[data-compte-messages="tous"]'); await p.waitForTimeout(300);
+    const retour = await p.textContent('#liste-recents');
+    const ok = tous.includes('Marie Dupont') && tous.includes('Shop') && perso.includes('Shop') && !perso.includes('Marie Dupont') && pro.includes('Marie Dupont') && !pro.includes('Shop') && retour.includes('Shop') && retour.includes('Marie Dupont') && cTous === '2' && cPerso === '1' && cPro === '1';
+    return { ok, detail: JSON.stringify({ cTous, cPerso, cPro }) };
   }));
   res.push(await scenario('Agenda : ajouter puis supprimer un rendez-vous', {}, async (p, appels, logs, etat) => {
     p.on('dialog', (d) => d.accept());

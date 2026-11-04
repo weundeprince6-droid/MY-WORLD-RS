@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import {
   scoreMessage, messagesImportants, repartirAgenda, evaluerSeuil, construireAlertes,
-  resumeDuJour, remplirModele, construireBrouillonBrut, construireMessageBrut, lireMessageComplet, expediteurLisible, enLots,
+  typeCompte, resumeDuJour, remplirModele, construireBrouillonBrut, construireMessageBrut, lireMessageComplet, expediteurLisible, enLots,
 } from "../public/core.js";
 
 const msg = (id, from, subject, labels = [], snippet = "") => ({
@@ -63,6 +63,17 @@ const piege = b64d(construireBrouillonBrut({ a: "a@ex.com\r\nBcc: pirate@ex.com"
 assert.ok(!/\r\nBcc:/.test(piege) && !/\nBcc:/.test(piege.replace(/\r\n/g, "\n").split("\n\n")[0].replace(/^To:.*$/m, "").replace(/^Cc:.*$/m, "")));
 assert.ok(!piege.includes("Cc: x@ex.com\n"));
 
+// Comptes personnels / professionnels
+assert.equal(typeCompte("Marie <marie@gmail.com>"), "personnel");
+assert.equal(typeCompte("x@yahoo.fr"), "personnel");
+assert.equal(typeCompte("x@outlook.fr"), "personnel");
+assert.equal(typeCompte("x@hotmail.com"), "personnel");
+assert.equal(typeCompte("a@mail.orange.fr"), "personnel");
+assert.equal(typeCompte("notifications@github.com"), "professionnel");
+assert.equal(typeCompte("Jean <jean@entreprise.cd>"), "professionnel");
+assert.equal(typeCompte("a@notgmail.com"), "professionnel");
+assert.equal(typeCompte("a@societe.com", ["societe.com"]), "personnel");
+assert.equal(typeCompte(""), "professionnel");
 // Réponse : en-têtes de conversation (sans injection)
 const rep = b64d(construireMessageBrut({ a: "a@ex.com", sujet: "Re : S", corps: "C", enReponseA: "<abc@mail.gmail.com>\r\nBcc: x@ex.com" }));
 assert.ok(rep.includes("In-Reply-To: <abc@mail.gmail.com> Bcc: x@ex.com\r\n") && !/\r\nBcc:/.test(rep));

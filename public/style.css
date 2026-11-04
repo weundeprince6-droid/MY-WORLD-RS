@@ -921,3 +921,4 @@ html[data-theme="light"] #pane-wallet .wallet-ristourne .rist-part{background:li
 #mail-lecture,#nouveau-mail-dialog{max-width:92vw}
 .messages-barre{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.messages-barre .vue-actif{background:var(--accent,#0f766e);color:#fff;border-color:transparent}
 @media(max-width:600px){.messages-barre{width:100%}.messages-barre .btn{flex:1 1 45%}}
+.messages-comptes{margin:4px 0 14px}.compteur{opacity:.7;font-weight:600;margin-left:4px}.compteur:not(:empty)::before{content:"("}.compteur:not(:empty)::after{content:")"}

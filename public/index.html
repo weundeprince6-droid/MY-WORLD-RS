@@ -6,7 +6,7 @@
   <title>My World RS</title>
   <meta name="description" content="Votre espace personnel : messages, agenda, bases de données et alertes.">
   <script>try{const t=localStorage.getItem("mwrs.theme");document.documentElement.dataset.theme=(t==="light"||t==="dark")?t:(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");}catch{document.documentElement.dataset.theme="light";}</script>
-  <link rel="stylesheet" href="style.css?v=20261104-80">
+  <link rel="stylesheet" href="style.css?v=20261104-90">
 </head>
 <body>
   <header class="entete">
@@ -97,6 +97,12 @@
                 <button class="btn btn-light" type="button" data-vue-messages="recus" aria-pressed="false">Boîte de réception</button>
                 <button class="btn btn-light" type="button" data-vue-messages="envoyes" aria-pressed="false">Messages envoyés</button>
               </div></div>
+            <div class="messages-barre messages-comptes" role="group" aria-label="Type de compte">
+              <span class="meta">Comptes :</span>
+              <button class="btn btn-light vue-actif" type="button" data-compte-messages="tous" aria-pressed="true">Tous <span class="compteur" data-compteur="tous"></span></button>
+              <button class="btn btn-light" type="button" data-compte-messages="personnel" aria-pressed="false">👤 Personnels <span class="compteur" data-compteur="personnel"></span></button>
+              <button class="btn btn-light" type="button" data-compte-messages="professionnel" aria-pressed="false">💼 Professionnels <span class="compteur" data-compteur="professionnel"></span></button>
+            </div>
             <section class="carte" id="vue-importants"><ul id="liste-messages" class="liste"></ul></section>
             <section class="carte" id="vue-recus" hidden><ul id="liste-recents" class="liste"></ul></section>
             <section class="carte" id="vue-envoyes" hidden><div class="card-heading"><div><h2>Mails envoyés</h2></div><button id="envoyes-actualiser" class="btn btn-light" type="button">↻ Actualiser</button></div><ul id="liste-envoyes" class="liste"><li class="vide">Chargement des mails envoyés…</li></ul></section>
@@ -354,6 +360,6 @@
       setTimeout(function(){if(!window.__appPret)montrer("L'application n'a pas démarré. Vérifiez votre connexion internet (les composants Firebase se chargent depuis Google), désactivez un éventuel bloqueur de publicités, puis rechargez. Appuyez sur F12 > Console pour voir le détail.");},6000);
     })();
   </script>
-  <script type="module" src="app.js?v=20261104-81"></script>
+  <script type="module" src="app.js?v=20261104-90"></script>
 </body>
 </html>

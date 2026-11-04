@@ -29,6 +29,25 @@ export function expediteurLisible(from) {
   return String(from || "").trim() || "Inconnu";
 }
 
+const FOURNISSEURS_PERSONNELS = [
+  "gmail.com", "googlemail.com", "yahoo.", "ymail.com", "outlook.", "hotmail.", "live.", "msn.com", "icloud.com", "me.com", "mac.com",
+  "proton.me", "protonmail.com", "pm.me", "aol.com", "gmx.", "mail.com", "yandex.", "orange.fr", "wanadoo.fr", "free.fr", "sfr.fr",
+  "laposte.net", "bbox.fr", "neuf.fr", "zoho.com", "tutanota.com", "tuta.io", "qq.com", "163.com",
+];
+/**
+ * Type de compte d'une adresse : "personnel" (messagerie grand public : Gmail, Yahoo, Outlook…) ou "professionnel" (domaine d'entreprise
+ * ou d'organisation). `extras` : domaines supplémentaires à considérer comme personnels.
+ */
+export function typeCompte(adresse, extras = []) {
+  const brut = String(adresse || "");
+  const m = brut.match(/<([^>]+)>/);
+  const mail = (m ? m[1] : brut.split(",")[0]).trim().toLowerCase();
+  const domaine = mail.split("@")[1] || "";
+  if (!domaine) return "professionnel";
+  const liste = [...FOURNISSEURS_PERSONNELS, ...extras.map((d) => String(d).toLowerCase())];
+  return liste.some((d) => (d.endsWith(".") ? domaine.startsWith(d) || domaine.includes("." + d) : domaine === d || domaine.endsWith("." + d))) ? "personnel" : "professionnel";
+}
+
 /**
  * Note d'importance d'un message Gmail (plus c'est haut, plus c'est important).
  * Signaux : non lu, étoilé, marqué important par Gmail, mots-clés, bruit marketing.

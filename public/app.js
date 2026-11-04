@@ -1,7 +1,7 @@
 // app.js — interface My World RS : connexion Google, lecture Gmail/Agenda/Firestore, rendu.
 import {
   messagesImportants, repartirAgenda, corpsEvenement, evaluerSeuil, construireAlertes,
-  resumeDuJour, remplirModele, construireBrouillonBrut, construireMessageBrut, lireMessageComplet, expediteurLisible, enLots,
+  resumeDuJour, remplirModele, construireBrouillonBrut, construireMessageBrut, lireMessageComplet, expediteurLisible, enLots, typeCompte,
 } from "./core.js";
 import {
   jetonFacebookValide, urlGraph, expliquerErreurFacebook, choisirPages, extraireMessagesConversations,
@@ -1128,20 +1128,37 @@ function ligneMessage(m, i, avecBrouillon) {
         </div></li>`;
 }
 
+let filtreCompte = "tous"; // tous | personnel | professionnel
+const domainesPerso = () => reglages.gmail?.domainesPersonnels || [];
+const compteDe = (m, envoye = false) => typeCompte(envoye ? m.a : m.deBrut, domainesPerso());
+const gardeCompte = (m, envoye = false) => filtreCompte === "tous" || compteDe(m, envoye) === filtreCompte;
+function majCompteurs() {
+  const vue = ["importants", "recus", "envoyes"].find((v) => !$("vue-" + v).hidden) || "importants";
+  const liste = vue === "importants" ? etat.messages : vue === "recus" ? etat.recents : listeEnvoyes;
+  const envoye = vue === "envoyes";
+  const n = { tous: liste.length, personnel: 0, professionnel: 0 };
+  liste.forEach((m) => { n[compteDe(m, envoye)]++; });
+  document.querySelectorAll("[data-compteur]").forEach((s) => { s.textContent = liste.length ? String(n[s.dataset.compteur]) : ""; });
+}
 function rendreMessages() {
   const el = $("liste-messages");
-  if (!etat.messages.length) {
-    el.innerHTML = '<li class="vide">Rien d\'important pour le moment.</li>';
+  const vides = { personnel: "Aucun message de compte personnel.", professionnel: "Aucun message de compte professionnel." };
+  const importants = etat.messages.map((m, i) => ({ m, i })).filter(({ m }) => gardeCompte(m));
+  if (!importants.length) {
+    el.innerHTML = '<li class="vide">' + (etat.messages.length && filtreCompte !== "tous" ? vides[filtreCompte] : "Rien d'important pour le moment.") + '</li>';
   } else {
-    el.innerHTML = etat.messages.map((m, i) => ligneMessage(m, i, true)).join("");
+    el.innerHTML = importants.map(({ m, i }) => ligneMessage(m, i, true)).join("");
     el.querySelectorAll("[data-brouillon]").forEach((b) => b.addEventListener("click", () => ouvrirModeles(Number(b.dataset.brouillon))));
   }
   const rec = $("liste-recents");
   if (rec) {
-    rec.innerHTML = etat.recents.length
-      ? etat.recents.map((m, i) => ligneMessage(m, i, false)).join("")
-      : '<li class="vide">Aucun message récent dans la boîte de réception.</li>';
+    const recents = etat.recents.map((m, i) => ({ m, i })).filter(({ m }) => gardeCompte(m));
+    rec.innerHTML = recents.length
+      ? recents.map(({ m, i }) => ligneMessage(m, i, false)).join("")
+      : '<li class="vide">' + (etat.recents.length && filtreCompte !== "tous" ? vides[filtreCompte] : "Aucun message récent dans la boîte de réception.") + '</li>';
   }
+  if (typeof listeEnvoyes !== "undefined" && envoyesCharges) rendreEnvoyes();
+  majCompteurs();
 }
 
 let agendaMoisAffiche = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
@@ -1974,6 +1991,13 @@ $("nouveau-mail-creer").addEventListener("click", () => envoyerOuEnregistrerMail
 
 // ---------- Mails envoyés et lecture d'un message ----------
 let envoyesCharges = false, envoyesEnCours = false, listeEnvoyes = [];
+function rendreEnvoyes() {
+  const zone = $("liste-envoyes");
+  const visibles = listeEnvoyes.filter((m) => gardeCompte(m, true));
+  zone.innerHTML = visibles.length ? visibles.map((m) => `<li><div class="ligne"><strong>À : ${echapper(expediteurLisible(m.a) || m.a || "—")}</strong><span class="meta">${m.date ? jourHeure.format(new Date(m.date)) : ""}</span></div><div>${echapper(m.sujet)}</div><div class="extrait">${echapper(m.extrait)}</div><div class="actions"><button data-lire="${echapper(m.id)}">Lire</button><a href="https://mail.google.com/mail/u/0/#sent/${m.threadId}" target="_blank" rel="noopener">Ouvrir</a></div></li>`).join("")
+    : '<li class="vide">' + (listeEnvoyes.length ? (filtreCompte === "personnel" ? "Aucun mail envoyé vers un compte personnel." : "Aucun mail envoyé vers un compte professionnel.") : "Aucun mail envoyé trouvé.") + '</li>';
+  majCompteurs();
+}
 async function chargerEnvoyes() {
   if (envoyesEnCours) return;
   envoyesEnCours = true;
@@ -1987,8 +2011,7 @@ async function chargerEnvoyes() {
     listeEnvoyes = complets.map((m) => ({ id: m.id, threadId: m.threadId, a: h(m, "to"), cc: h(m, "cc"), sujet: h(m, "subject") || "(sans objet)", extrait: m.snippet || "", date: Number(m.internalDate || 0) }))
       .sort((x, y) => y.date - x.date);
     envoyesCharges = true;
-    zone.innerHTML = listeEnvoyes.length ? listeEnvoyes.map((m) => `<li><div class="ligne"><strong>À : ${echapper(expediteurLisible(m.a) || m.a || "—")}</strong><span class="meta">${m.date ? jourHeure.format(new Date(m.date)) : ""}</span></div><div>${echapper(m.sujet)}</div><div class="extrait">${echapper(m.extrait)}</div><div class="actions"><button data-lire="${echapper(m.id)}">Lire</button><a href="https://mail.google.com/mail/u/0/#sent/${m.threadId}" target="_blank" rel="noopener">Ouvrir</a></div></li>`).join("")
-      : '<li class="vide">Aucun mail envoyé trouvé.</li>';
+    rendreEnvoyes();
   } catch (e) {
     zone.innerHTML = `<li class="vide">Mails envoyés indisponibles : ${echapper(e.message)}</li>`;
   } finally { envoyesEnCours = false; }
@@ -2000,7 +2023,13 @@ function choisirVueMessages(vue) {
   document.querySelectorAll("[data-vue-messages]").forEach((b) => { const actif = b.dataset.vueMessages === vue; b.classList.toggle("vue-actif", actif); b.setAttribute("aria-pressed", String(actif)); });
   $("messages-vue-texte").textContent = TEXTES_VUES[vue];
   if (vue === "envoyes" && !envoyesCharges) chargerEnvoyes();
+  majCompteurs();
 }
+document.querySelectorAll("[data-compte-messages]").forEach((b) => b.addEventListener("click", () => {
+  filtreCompte = b.dataset.compteMessages;
+  document.querySelectorAll("[data-compte-messages]").forEach((x) => { const actif = x === b; x.classList.toggle("vue-actif", actif); x.setAttribute("aria-pressed", String(actif)); });
+  rendreMessages();
+}));
 document.querySelectorAll("[data-vue-messages]").forEach((b) => b.addEventListener("click", () => choisirVueMessages(b.dataset.vueMessages)));
 
 async function telechargerPieceJointe(idMessage, piece) {
