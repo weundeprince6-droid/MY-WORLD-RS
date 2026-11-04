@@ -245,6 +245,8 @@ export function dessinerRapport(doc, d) {
     }
   };
   const nouvellePage = () => { doc.addPage(); y = 14; };
+  // Une rubrique se place à la suite de la précédente ; on ne change de page que si la place manque
+  const reserver = (h) => { if (y + h > BAS) nouvellePage(); };
   const titre = (numero, texte, droite = "") => {
     fill(C.vert); doc.rect(M, y - 5, 7, 7, "F"); police("bold", 9); txt(C.blanc); doc.text(String(numero), M + 3.5, y + 0.1, { align: "center" });
     police("bold", 11); txt(C.vert); doc.text(texte, M + 11, y + 0.3);
@@ -386,7 +388,7 @@ export function dessinerRapport(doc, d) {
     }
   };
   const pageGraphiques = (serie, nom, n1, n2) => {
-    nouvellePage(); titre(n1, `ENTRÉES ET SORTIES PAR ${nom}`); y += 2;
+    reserver(96); titre(n1, `ENTRÉES ET SORTIES PAR ${nom}`); y += 2;
     const nbm = serie.length, gx0 = M + 12, gx1 = W - M - 2, haut = y + 10, bas = y + 70;
     const g = graduation(Math.max(...serie.flatMap((m) => [m.entrees, m.sorties]), 1));
     fill(C.vert2); doc.rect(M + 12, y, 4, 3, "F"); police("normal", 7); txt(C.encre); doc.text(`Entrées (${d.devise})`, M + 18, y + 2.6);
@@ -400,7 +402,7 @@ export function dessinerRapport(doc, d) {
     });
     y = bas + 16;
 
-    titre(n2, `ÉVOLUTION DU SOLDE NET (${nom === "MOIS" ? "MENSUEL" : "HEBDOMADAIRE"})`); y += 2;
+    reserver(88); titre(n2, `ÉVOLUTION DU SOLDE NET (${nom === "MOIS" ? "MENSUEL" : "HEBDOMADAIRE"})`); y += 2;
     const haut2 = y + 6, bas2 = y + 66;
     const soldes = serie.map((m) => m.solde), mn = Math.min(0, ...soldes), mx = Math.max(...soldes, 1);
     const g2 = graduation(mx - mn); const origine = mn < 0 ? Math.floor(mn / g2.pas) * g2.pas : 0;
@@ -419,7 +421,7 @@ export function dessinerRapport(doc, d) {
 
   // ---------- page 4 : ristournes + dépenses ----------
   const pageRistournes = () => {
-    nouvellePage(); titre(6, "RISTOURNES ET REMBOURSEMENTS"); y += 1;
+    reserver(75); titre(6, "RISTOURNES ET REMBOURSEMENTS"); y += 1;
     const r = d.ristournes;
     const totalTxt = ["FC", "USD"].filter((c) => r.total[c] > 0).map((c) => fmt(r.total[c], c)).join("  +  ") || "0";
     const moyTxt = ["FC", "USD"].filter((c) => r.total[c] > 0).map((c) => fmt(r.moyenne[c], c)).join("  +  ") || "0";
@@ -438,7 +440,7 @@ export function dessinerRapport(doc, d) {
       });
     }
     y += 4;
-    titre(7, "RÉPARTITION DES DÉPENSES PAR CATÉGORIE"); y += 2;
+    reserver(70); titre(7, "RÉPARTITION DES DÉPENSES PAR CATÉGORIE"); y += 2;
     fill(C.blanc); draw(C.trait); doc.setLineWidth(0.3); doc.roundedRect(M, y - 2, CW, 52, 1.5, 1.5, "FD");
     const parts = d.parCategorie.map((p, i) => ({ v: p.montant, c: PALETTE[i % PALETTE.length] }));
     donut(M + 55, y + 24, 21, 11, parts);
@@ -449,7 +451,7 @@ export function dessinerRapport(doc, d) {
 
   // ---------- page 5+ : historique ----------
   const pageHistorique = () => {
-    nouvellePage(); titre(8, "HISTORIQUE DÉTAILLÉ DE TOUS LES MOUVEMENTS");
+    reserver(45); titre(8, "HISTORIQUE DÉTAILLÉ DE TOUS LES MOUVEMENTS");
     const lignes = d.historique.map((h) => {
       const enEntree = h.sens === "in";
       return [
@@ -469,7 +471,7 @@ export function dessinerRapport(doc, d) {
       pageSuite: () => titre(8, "HISTORIQUE DÉTAILLÉ (suite)"),
     });
     // légende et informations
-    if (y + 30 > BAS) nouvellePage();
+    reserver(34);
     y += 4;
     fill(C.pale); draw(C.trait); doc.setLineWidth(0.3); doc.roundedRect(M, y, 58, 26, 1.5, 1.5, "FD");
     police("bold", 7); txt(C.vert); doc.text("LÉGENDE", M + 4, y + 6);
