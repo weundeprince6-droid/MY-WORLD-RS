@@ -886,3 +886,14 @@ html[data-theme="light"] .agenda-anniversaire{background:#f8f8f6!important;color
 
 .rist-part{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin:14px 0;padding:14px 16px;border:1px solid var(--border,#dce2e8);border-radius:14px;background:var(--surface-soft,#f8fafc)}
 .rist-part p{margin:4px 0 0}
+
+/* Carte Mes parts de ristourne — couleurs My World RS */
+#pane-wallet .wallet-ristourne .rist-part{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;margin:18px 0 14px;padding:18px 20px;border:1px solid color-mix(in srgb,var(--primary) 30%,var(--border));border-radius:16px;background:linear-gradient(115deg,var(--primary-soft),var(--surface));box-shadow:var(--shadow)}
+#pane-wallet .rist-part>div{flex:1;min-width:220px}
+#pane-wallet .rist-part strong{display:block;color:var(--primary);font-size:15px;font-weight:800;letter-spacing:-.01em}
+#pane-wallet .rist-part p{margin:5px 0 0;color:var(--muted);font-size:12px;line-height:1.6}
+#pane-wallet .rist-part .btn-primary{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:11px 18px;border-radius:11px;background:var(--primary);border-color:var(--primary);color:#fff;font-weight:750;white-space:normal}
+#pane-wallet .rist-part .btn-primary:hover{background:var(--primary-dark);border-color:var(--primary-dark);transform:translateY(-1px)}
+#pane-wallet .rist-part .btn-primary:disabled{opacity:.55;cursor:not-allowed;transform:none}
+html[data-theme="light"] #pane-wallet .wallet-ristourne .rist-part{background:linear-gradient(115deg,var(--primary-soft),var(--surface));border-color:#b9d5c8}
+@media(max-width:560px){#pane-wallet .wallet-ristourne .rist-part{align-items:stretch;padding:15px}#pane-wallet .rist-part>div{min-width:0}#pane-wallet .rist-part .btn-primary{width:100%}}
