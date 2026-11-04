@@ -867,3 +867,19 @@ html[data-theme="light"] .agenda-anniversaire{background:#f8f8f6!important;color
 .wallet-forecasts{display:block}
 .wallet-forecast-item{max-width:720px}
 @media(max-width:600px){.wallet-forecast-controls{align-items:stretch}.wallet-forecast-controls label{min-width:100%}.wallet-forecast-controls button{width:100%}}
+
+/* Bloc prévisionnel : identité visuelle My World RS */
+.wallet-forecast-card{margin:16px 0 22px;padding:clamp(16px,2.4vw,24px);border:1px solid color-mix(in srgb,var(--primary) 24%,var(--border));border-radius:20px;background:linear-gradient(135deg,var(--surface) 0%,var(--primary-soft) 100%);box-shadow:var(--shadow);position:relative;overflow:hidden}
+.wallet-forecast-card:before{content:"";position:absolute;inset:0 auto 0 0;width:5px;background:linear-gradient(180deg,var(--primary),var(--green))}
+.wallet-forecast-card .card-heading{align-items:center}
+.wallet-forecast-card .eyebrow{color:var(--primary);font-weight:800;letter-spacing:.11em}
+.wallet-forecast-card h3{color:var(--text);margin:3px 0 5px}
+.wallet-forecast-controls{padding:13px;background:var(--surface);border:1px solid var(--border);border-radius:14px}
+.wallet-forecast-controls label{color:var(--text);font-size:13px}
+.wallet-forecast-controls select{background:var(--bg);border-color:var(--border);color:var(--text);font:inherit}
+.wallet-forecast-controls .btn-secondary{background:var(--primary);border-color:var(--primary);color:#fff;font-weight:700}
+.wallet-forecast-controls .btn-secondary:hover{background:var(--primary-dark);border-color:var(--primary-dark)}
+.wallet-forecast-item{background:var(--surface);border-color:color-mix(in srgb,var(--primary) 18%,var(--border));box-shadow:0 5px 18px rgba(31,50,81,.04);border-radius:15px}
+.wallet-forecast-tag{background:var(--primary-soft);color:var(--primary);font-weight:700}
+.wallet-forecast-card>.meta{margin:12px 2px 0;line-height:1.6}
+@media(prefers-color-scheme:dark){.wallet-forecast-card{background:linear-gradient(135deg,var(--surface),var(--primary-soft))}.wallet-forecast-item{box-shadow:none}}
