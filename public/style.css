@@ -898,3 +898,17 @@ html[data-theme="light"] .agenda-anniversaire{background:#f8f8f6!important;color
 html[data-theme="light"] #pane-wallet .wallet-ristourne .rist-part{background:linear-gradient(115deg,var(--primary-soft),var(--surface));border-color:#b9d5c8}
 @media(max-width:560px){#pane-wallet .wallet-ristourne .rist-part{align-items:stretch;padding:15px}#pane-wallet .rist-part>div{min-width:0}#pane-wallet .rist-part .btn-primary{width:100%}}
 .rist-part-actions{display:flex;gap:10px;flex-wrap:wrap}
+
+
+/* Écran de sécurité PIN MY WORLD RS */
+.pin-gate[hidden]{display:none!important}
+.pin-gate{position:fixed;z-index:10000;inset:0;display:grid;place-items:center;padding:20px;background:rgba(5,12,20,.88);backdrop-filter:blur(9px)}
+.pin-gate-card{box-sizing:border-box;width:min(100%,430px);padding:clamp(22px,5vw,34px);border:1px solid var(--border);border-radius:22px;background:var(--surface);color:var(--text);box-shadow:0 24px 80px rgba(0,0,0,.35)}
+.pin-gate-logo{display:grid;place-items:center;width:54px;height:54px;margin-bottom:18px;border-radius:16px;background:var(--primary);color:#fff;font-weight:900;font-size:19px}
+.pin-gate-card h2{margin:5px 0 10px;font-size:25px;color:var(--text)}
+.pin-gate-card>p:not(.eyebrow){color:var(--muted);line-height:1.6}
+.pin-gate-card label{display:block;margin:15px 0 7px;font-size:13px;font-weight:750;color:var(--text)}
+.pin-gate-card input{box-sizing:border-box;width:100%;min-height:48px;padding:12px 14px;border:1px solid var(--border);border-radius:11px;background:var(--bg);color:var(--text);font:inherit;font-size:20px;letter-spacing:.25em}
+.pin-gate-card button{width:100%;margin-top:18px;min-height:48px}
+.pin-gate-error{min-height:1.3em;margin:10px 0;color:#d04438;font-size:13px}
+.pin-gate-note{font-size:12px;text-align:center;margin:16px 0 0!important}
