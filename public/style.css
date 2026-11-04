@@ -857,3 +857,13 @@ html[data-theme="light"] .agenda-anniversaire{background:#f8f8f6!important;color
 .wallet-forecast-positive{color:#16794b}
 .wallet-forecast-warning{color:#a15c00}
 .wallet-forecast-negative{color:#b42318}
+
+/* Prévisions budgétaires : sélection d'un compte à la fois */
+.wallet-forecast-controls{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin:14px 0}
+.wallet-forecast-controls label{display:flex;flex-direction:column;gap:7px;flex:1;min-width:220px;font-weight:600}
+.wallet-forecast-controls select{width:100%;min-height:42px;padding:9px 12px;border:1px solid var(--border,#dce2e8);border-radius:10px;background:var(--surface,#fff);color:var(--text,#1d2939)}
+.wallet-forecast-controls button{min-height:42px}
+.wallet-forecast-controls button:disabled{opacity:.5;cursor:not-allowed}
+.wallet-forecasts{display:block}
+.wallet-forecast-item{max-width:720px}
+@media(max-width:600px){.wallet-forecast-controls{align-items:stretch}.wallet-forecast-controls label{min-width:100%}.wallet-forecast-controls button{width:100%}}
