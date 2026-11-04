@@ -2040,13 +2040,20 @@ async function notesRead() {
   } while (page);
   return docs.sort((a,b) => String(b.updatedAt || b.createdAt || "").localeCompare(String(a.updatedAt || a.createdAt || "")));
 }
-async function notesSave(item) {
+async function notesSave(item, existing=false) {
   const uid = fb?.auth.currentUser?.uid;
   if (!uid) throw new Error("Connectez-vous à votre compte Google.");
   const data = { ...item, updatedAt: new Date().toISOString() };
   if (!data.createdAt) data.createdAt = data.updatedAt;
+  const fields = JSON.stringify(walletFields(data));
+  if (existing) {
+    // PATCH vise le document précis : documentId n'est pas un paramètre valide pour PATCH.
+    const url = urlFirestore(firebaseConfig.projectId, walletPath(uid, notesCollection, data.id));
+    return google(url, { method:"PATCH", body:fields });
+  }
+  // Pour un nouveau document, documentId est autorisé sur POST de collection.
   const url = urlFirestore(firebaseConfig.projectId, walletPath(uid, notesCollection)) + "?documentId=" + encodeURIComponent(data.id);
-  return google(url, { method:"PATCH", body:JSON.stringify(walletFields(data)) });
+  return google(url, { method:"POST", body:fields });
 }
 async function notesDelete(id) {
   const uid = fb?.auth.currentUser?.uid;
@@ -2139,7 +2146,7 @@ $("notes-form").addEventListener("submit", async e => {
   const item={id,type,title:f.title.value.trim(),category:f.category.value.trim(),body:f.body.value.trim()};
   if (type==="project") { item.status=f.status.value; item.due=f.due.value; item.steps=f.steps.value.trim(); }
   const btn=$("notes-save"); btn.disabled=true; notesStatus("Enregistrement dans Firebase…");
-  try { const old=notesItems.find(x=>x.id===id); if(old) item.createdAt=old.createdAt; await notesSave(item); notesItems=[item,...notesItems.filter(x=>x.id!==id)].sort((a,b)=>String(b.updatedAt||"").localeCompare(String(a.updatedAt||""))); notesReset(); notesRender(); notesStatus("Enregistré et synchronisé avec Firebase."); }
+  try { const old=notesItems.find(x=>x.id===id); if(old) item.createdAt=old.createdAt; await notesSave(item,!!old); notesItems=[item,...notesItems.filter(x=>x.id!==id)].sort((a,b)=>String(b.updatedAt||"").localeCompare(String(a.updatedAt||""))); notesReset(); notesRender(); notesStatus("Enregistré et synchronisé avec Firebase."); }
   catch(err) { notesStatus("Enregistrement impossible : "+err.message,true); }
   finally { btn.disabled=false; }
 });
