@@ -923,3 +923,105 @@ html[data-theme="light"] #pane-wallet .wallet-ristourne .rist-part{background:li
 @media(max-width:600px){.messages-barre{width:100%}.messages-barre .btn{flex:1 1 45%}}
 .messages-comptes{margin:4px 0 14px}.compteur{opacity:.7;font-weight:600;margin-left:4px}.compteur:not(:empty)::before{content:"("}.compteur:not(:empty)::after{content:")"}
 .btn-important.actif{color:#b45309;font-weight:800}
+
+
+/* ===== Identité visuelle inspirée de ESE DB : bleu professionnel ===== */
+:root{
+  --bg:#dce9f7;
+  --surface:#ffffff;
+  --text:#183653;
+  --muted:#52708e;
+  --border:#c5d8ed;
+  --primary:#20558e;
+  --primary-dark:#173f6d;
+  --primary-soft:#e7f0fb;
+  --shadow:0 3px 12px rgba(27,69,115,.10);
+  --green:#238457;
+  --blue:#2868a8;
+  --purple:#6b62a8;
+  --orange:#c9821b;
+}
+html[data-theme="dark"]{
+  --bg:#101e30;
+  --surface:#182b42;
+  --text:#eaf3ff;
+  --muted:#a8bfd9;
+  --border:#2c4664;
+  --primary:#6eafea;
+  --primary-dark:#8bc3f3;
+  --primary-soft:#203b57;
+  --shadow:0 5px 18px rgba(0,0,0,.22);
+}
+body{background:var(--bg);color:var(--text)}
+.entete{
+  background:#204f84!important;
+  color:#fff!important;
+  border-bottom:0!important;
+  box-shadow:0 3px 12px rgba(15,45,79,.18);
+}
+.entete .marque,.entete .marque-texte strong,.entete .marque-texte small,
+.entete .meta{color:#fff!important}
+.entete .marque-texte strong span{color:#b9dcff!important}
+.entete .logo{background:#fff!important;color:#204f84!important;border-radius:50%!important}
+.entete .btn{background:rgba(255,255,255,.12)!important;border-color:rgba(255,255,255,.32)!important;color:#fff!important}
+.entete .btn-primary{background:#fff!important;color:#204f84!important}
+.theme-toggle{background:rgba(255,255,255,.12)!important;color:#fff!important;border-color:rgba(255,255,255,.32)!important}
+.workspace{display:block}
+.sidebar{
+  position:sticky;top:76px;z-index:4;
+  display:block;width:100%;margin:0 0 22px;
+  padding:10px 12px;background:#eaf2fc;
+  border:1px solid #c3d7ed;border-radius:12px;
+  box-shadow:0 2px 8px rgba(26,68,111,.08);
+}
+.nav-caption,.sidebar-note,.sidebar-footer{display:none!important}
+.navigation{
+  display:flex;align-items:center;gap:7px;
+  overflow-x:auto;scrollbar-width:thin;
+}
+.nav-item{
+  width:auto;flex:0 0 auto;display:flex;flex-direction:row;
+  align-items:center;gap:8px;white-space:nowrap;
+  padding:10px 14px;border-radius:8px;
+  color:#315a82;font-size:13px;font-weight:650;
+}
+.nav-icon{width:auto;font-size:17px}
+.nav-arrow{display:none}
+.nav-item:hover{background:#d7e7f8;color:#174a7d}
+.nav-item.active{background:#20558e;color:#fff}
+main{max-width:1600px;padding-top:24px}
+.resume-jour,.carte,.feature-card,.kpi,.date-chip{
+  border-radius:10px;box-shadow:0 2px 9px rgba(25,67,111,.08);
+}
+.carte{border-color:#c7d9ed}
+.kpi{border-radius:9px;border-top:3px solid var(--primary)}
+.kpi .valeur{color:var(--primary)}
+.btn-primary{background:var(--primary);border-color:var(--primary)}
+.section-icon{border-radius:10px}
+.dashboard-grid{gap:12px}
+.feature-card{border-radius:10px}
+@media(max-width:760px){
+  main{padding:14px 10px 25px}
+  .workspace{display:block}
+  .sidebar{
+    position:sticky;top:68px;bottom:auto;left:auto;right:auto;
+    border-radius:10px;margin:0 0 15px;padding:8px;
+    overflow:hidden;box-shadow:0 2px 8px rgba(26,68,111,.08)
+  }
+  .navigation{justify-content:flex-start;min-width:0}
+  .nav-item{flex:0 0 auto;min-width:fit-content;flex-direction:row;padding:9px 12px;font-size:12px}
+  .nav-icon{font-size:16px}
+  .nav-arrow{display:none}
+  .entete{position:sticky;top:0}
+}
+@media(max-width:430px){
+  .marque-texte strong{font-size:15px}
+  .nav-item{padding:8px 10px}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+/* Respecter le mode sombre tout en conservant l'identité bleue */
+html[data-theme="dark"] .sidebar{background:#182b42;border-color:#2c4664}
+html[data-theme="dark"] .nav-item{color:#b8cde4}
+html[data-theme="dark"] .nav-item:hover{background:#203b57;color:#fff}
+html[data-theme="dark"] .nav-item.active{background:#2868a8;color:#fff}
+html[data-theme="dark"] .entete .btn-light{background:rgba(255,255,255,.14)!important;color:#fff!important}
