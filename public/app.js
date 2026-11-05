@@ -1912,16 +1912,55 @@ async function walletExporterPdf() {
   finally{if(btn){btn.disabled=false;btn.textContent=btn.dataset.ancienTexte||"Télécharger le rapport PDF";}}
 }$("wallet-export-pdf")?.addEventListener("click",walletExporterPdf);
 
+async function collecterDonneesRapport() {
+  const essayer = async (f) => { try { return await f(); } catch { return null; } };
+  const status = $("rapport-appli-status"), etape = (t) => { if (status) status.textContent = t; };
+  const d = {};
+  const form = $("form-profil"), pf = {};
+  ["nom","postnom","prenom","naissance","sexe","telephone","adresse"].forEach(k => { pf[k] = form?.elements.namedItem(k)?.value?.trim() || ""; });
+  pf.email = utilisateurConnecte?.email || ""; d.profil = pf;
+  if (jetonGoogle) {
+    etape("Lecture de vos messages et de votre agenda…");
+    const [gm, ag, ta, kp] = await Promise.all([
+      etat.recents.length ? { importants: etat.messages, recents: etat.recents } : essayer(chargerGmail),
+      (etat.agenda.aujourdhui.length || etat.agenda.aVenir.length) ? etat.agenda : essayer(chargerAgenda),
+      essayer(async () => { if (!tasksCharge) await chargerTasks(); return tasksCharge ? tasksTickerItems : null; }),
+      etat.kpis.length ? etat.kpis : essayer(() => chargerKpis()),
+    ]);
+    if (gm) d.messages = { recents: gm.recents.length, nonLus: gm.recents.filter(x => x.nonLu).length, importants: gm.importants };
+    if (ag) d.agenda = ag;
+    if (ta) d.taches = ta;
+    if (kp) d.indicateurs = kp;
+    etape("Lecture du porte-monnaie, des ristournes et des notes…");
+    await essayer(() => walletLoaded ? null : chargerWallet(true));
+    if (walletLoaded) {
+      const totaux = {};
+      for (const t of walletTransactions) {
+        const dv = t.currency || "—", x = totaux[dv] ||= { revenus: 0, depenses: 0, solde: 0 };
+        if (t.kind === "income") x.revenus += t.amount; else if (t.kind === "expense") x.depenses += t.amount;
+      }
+      for (const a of walletAccounts) { const x = totaux[a.currency || "—"] ||= { revenus: 0, depenses: 0, solde: 0 }; x.solde += a.balance; }
+      d.wallet = { comptes: walletAccounts, nbMouvements: walletTransactions.length, totaux, derniers: walletTransactions.slice(0, 15).map(t => ({ ...t, compte: walletAccountName(t.accountId) })) };
+    }
+    if (!derniereRistourne) await essayer(() => chargerRistourne(false, true));
+    if (derniereRistourne) d.ristourne = derniereRistourne;
+  }
+  await essayer(() => notesLoad());
+  if (notesLoaded) d.notes = notesItems;
+  d.social = etat.social;
+  return d;
+}
 async function exporterRapportAppli() {
   const btn=$("rapport-appli-pdf"), status=$("rapport-appli-status");
   if(btn?.disabled)return;
   if(btn){btn.disabled=true;btn.dataset.ancienTexte=btn.textContent;btn.textContent="Préparation du PDF…";}
   try {
+    const donnees=await collecterDonneesRapport();
     const JsPDF=await walletChargerJsPdf();
     const doc=new JsPDF({orientation:"portrait",unit:"mm",format:"a4"});
-    dessinerRapportAppli(doc,{date:new Date(),utilisateur:utilisateurConnecte?.displayName||utilisateurConnecte?.email||""});
-    doc.save("My-World-RS_Rapport-application_"+new Date().toISOString().slice(0,10)+".pdf");
-    if(status)status.textContent="Rapport de l'application téléchargé.";
+    dessinerRapportAppli(doc,{date:new Date(),utilisateur:utilisateurConnecte?.displayName||utilisateurConnecte?.email||"",donnees});
+    doc.save("My-World-RS_Rapport-complet_"+new Date().toISOString().slice(0,10)+".pdf");
+    if(status)status.textContent="Rapport téléchargé avec vos données.";
   }catch(e){if(status)status.textContent="Export PDF impossible : "+e.message;}
   finally{if(btn){btn.disabled=false;btn.textContent=btn.dataset.ancienTexte||"↓ Télécharger le rapport de l'application";}}
 }

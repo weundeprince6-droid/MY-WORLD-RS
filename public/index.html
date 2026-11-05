@@ -6,7 +6,7 @@
   <title>My World RS</title>
   <meta name="description" content="Votre espace personnel : messages, agenda, bases de données et alertes.">
   <script>try{const t=localStorage.getItem("mwrs.theme");document.documentElement.dataset.theme=(t==="light"||t==="dark")?t:(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");}catch{document.documentElement.dataset.theme="light";}</script>
-  <link rel="stylesheet" href="style.css?v=20261105-96">
+  <link rel="stylesheet" href="style.css?v=20261105-97">
 </head>
 <body>
   <header class="entete">
@@ -298,7 +298,7 @@
           </section>
           <section class="tab-pane" id="pane-profile" role="tabpanel" data-pane="profile" hidden>
             <div class="section-heading"><div><p class="eyebrow">VOS INFORMATIONS</p><h2>Mon profil</h2><p>Complétez vos informations une seule fois. Elles seront synchronisées dans Firebase avec votre compte Google.</p></div><span class="section-icon blue">♙</span></div>
-            <section class="carte profile-card"><div class="card-heading"><div><p class="eyebrow">DOCUMENTATION</p><h2>Rapport de l'application</h2><p class="meta">Onglets, connexion, architecture, sécurité, limites et prochaines étapes.</p></div><button id="rapport-appli-pdf" class="btn btn-primary" type="button">↓ Télécharger le rapport de l'application</button></div><p id="rapport-appli-status" class="meta" role="status"></p></section>
+            <section class="carte profile-card"><div class="card-heading"><div><p class="eyebrow">DOCUMENTATION</p><h2>Rapport de l'application</h2><p class="meta">Vos données (messages, agenda, tâches, bases, ristournes, porte-monnaie, notes, réseaux), puis le fonctionnement de l'application.</p></div><button id="rapport-appli-pdf" class="btn btn-primary" type="button">↓ Télécharger le rapport de l'application</button></div><p id="rapport-appli-status" class="meta" role="status"></p></section>
             <section class="carte profile-card">
               <div class="profile-google"><span class="profile-avatar" id="profil-avatar">G</span><div><strong id="profil-google-nom">Compte Google</strong><p id="profil-google-email" class="meta"></p><span class="profile-status" id="profil-status">Informations à compléter</span></div></div>
               <div id="profil-apercu" class="profil-apercu"></div><div class="profile-view-actions"><button id="profil-modifier" class="btn btn-primary" type="button">Modifier mon profil</button></div><form id="form-profil" class="profile-form" hidden>
@@ -361,6 +361,6 @@
       setTimeout(function(){if(!window.__appPret)montrer("L'application n'a pas démarré. Vérifiez votre connexion internet (les composants Firebase se chargent depuis Google), désactivez un éventuel bloqueur de publicités, puis rechargez. Appuyez sur F12 > Console pour voir le détail.");},6000);
     })();
   </script>
-  <script type="module" src="app.js?v=20261105-96"></script>
+  <script type="module" src="app.js?v=20261105-97"></script>
 </body>
 </html>

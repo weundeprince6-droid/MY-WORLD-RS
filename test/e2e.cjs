@@ -402,6 +402,16 @@ srv.listen(8765, async () => {
     const ok = avant.includes('Transport') && !apres.includes('Transport') && etat.wallet.supprimes[0] === 't1' && solde === 100 && statut.includes('supprimé');
     return { ok, detail: JSON.stringify({ supprimes: etat.wallet && etat.wallet.supprimes, solde, statut: statut.slice(0, 60) }) };
   }));
+  res.push(await scenario('Rapport complet : le PDF contient mes données', { }, async (p) => {
+    await p.evaluate(() => { window.__pdf = []; window.jspdf = { jsPDF: function () { const d = this; ['setFont','setFontSize','setTextColor','setDrawColor','line','setPage','addPage'].forEach((k) => { d[k] = () => {}; }); d.splitTextToSize = (t) => [String(t)]; d.getNumberOfPages = () => 1; d.text = (t) => { window.__pdf.push([].concat(t).join(' ')); }; d.save = (n) => { window.__pdfNom = n; }; } }; });
+    await p.click('#bouton-connexion'); await p.waitForTimeout(3000);
+    await p.click('[data-tab="profile"]'); await p.waitForTimeout(500);
+    await p.click('#rapport-appli-pdf'); await p.waitForTimeout(5000);
+    const texte = await p.evaluate(() => (window.__pdf || []).join('\n')); const nom = await p.evaluate(() => window.__pdfNom || '');
+    const statut = (await p.textContent('#rapport-appli-status')).trim();
+    const ok = nom.startsWith('My-World-RS_Rapport-complet') && texte.includes('MES DONN') && texte.includes('Porte-monnaie') && texte.includes('Messages (Gmail)') && texte.includes('FONCTIONNEMENT');
+    return { ok, detail: JSON.stringify({ nom, statut: statut.slice(0, 60), taille: texte.length }) };
+  }));
   res.push(await scenario('Domaine non autorisé : message clair', { mode: 'auth/unauthorized-domain' }, async (p) => {
     await p.click('#bouton-connexion'); await p.waitForTimeout(800);
     const t = (await p.textContent('#erreur')).trim(); const actif = !(await p.isDisabled('#bouton-connexion'));

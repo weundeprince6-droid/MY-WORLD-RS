@@ -44,17 +44,64 @@ export const RAPPORT_APPLI = [
     "Ajouter une signature et la mise en forme riche dans les mails."] },
 ];
 
-export function dessinerRapportAppli(doc, { date = new Date(), utilisateur = "" } = {}) {
+const nb = (n) => Number(n || 0).toLocaleString("fr-FR", { maximumFractionDigits: 2 });
+const jour = (d) => { const x = new Date(d); return Number.isNaN(x.getTime()) ? "" : x.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" }); };
+const heureJour = (d) => { const x = new Date(d); return Number.isNaN(x.getTime()) ? "" : jour(x) + " " + x.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }); };
+const coupe = (t, n = 90) => { const x = String(t ?? "").replace(/\s+/g, " ").trim(); return x.length > n ? x.slice(0, n - 1) + "…" : x; };
+const NON = "Non chargé (connexion nécessaire ou source indisponible).";
+
+/** Transforme les données collectées dans l'application en sections lisibles. */
+export function sectionsDonnees(d = {}) {
+  const out = [];
+  const p = d.profil;
+  out.push({ titre: "Mon profil", puces: p && Object.values(p).some(Boolean)
+    ? Object.entries({ Nom: p.nom, Postnom: p.postnom, "Prénom": p.prenom, "Naissance": p.naissance, Sexe: p.sexe, "Téléphone": p.telephone, Adresse: p.adresse, "Compte Google": p.email }).filter(([, v]) => v).map(([k, v]) => k + " : " + v)
+    : ["Profil non renseigné."] });
+  const m = d.messages;
+  out.push({ titre: "Messages (Gmail)", puces: !m ? [NON] : [
+    nb(m.recents) + " message(s) récent(s) dans la boîte, dont " + nb(m.nonLus) + " non lu(s).",
+    nb(m.importants.length) + " message(s) important(s) :",
+    ...m.importants.slice(0, 12).map((x) => "  " + jour(x.date) + " · " + coupe(x.de, 30) + " · " + coupe(x.sujet, 70)) ] });
+  const a = d.agenda;
+  out.push({ titre: "Agenda", puces: !a ? [NON] : [
+    nb(a.aujourdhui.length) + " rendez-vous aujourd'hui, " + nb(a.aVenir.length) + " à venir.",
+    ...[...a.aujourdhui, ...a.aVenir].slice(0, 15).map((e) => heureJour(e.debut) + " · " + coupe(e.titre, 70) + (e.lieu ? " (" + coupe(e.lieu, 30) + ")" : "")) ] });
+  const t = d.taches;
+  out.push({ titre: "Tâches (Google Tasks)", puces: !t ? [NON] : t.length ? [nb(t.length) + " tâche(s) non terminée(s) :",
+    ...t.slice(0, 20).map((x) => coupe(x.title, 70) + (x.list ? " [" + coupe(x.list, 25) + "]" : "") + (x.due ? " · échéance " + jour(x.due) : ""))] : ["Aucune tâche en cours."] });
+  const k = d.indicateurs;
+  out.push({ titre: "Bases de données (AVEC LA SAGESSE, ESE DB)", puces: !k || !k.length ? [NON]
+    : k.map((x) => (x.base ? x.base + " · " : "") + (x.nom || x.titre || x.id || "Indicateur") + " : " + (x.erreur ? "indisponible" : nb(x.valeur) + (x.unite ? " " + x.unite : ""))) });
+  const r = d.ristourne;
+  out.push({ titre: "Ristournes", puces: !r ? [NON] : [
+    ...[["solde", "Solde"], ["depots", "Dépôts"], ["retraits", "Retraits"], ["interets", "Intérêts"]].map(([c, l]) => l + " : " + nb(r.total?.[c]?.FC) + " FC · " + nb(r.total?.[c]?.USD) + " USD"),
+    nb(r.mouvements) + " mouvement(s) lus." ] });
+  const w = d.wallet;
+  out.push({ titre: "Porte-monnaie", puces: !w ? [NON] : [
+    nb(w.comptes.length) + " compte(s), " + nb(w.nbMouvements) + " mouvement(s).",
+    ...w.comptes.map((c) => c.name + " : " + nb(c.balance) + " " + (c.currency || "")),
+    ...Object.entries(w.totaux || {}).map(([dv, v]) => "Total " + dv + " : revenus " + nb(v.revenus) + ", dépenses " + nb(v.depenses) + ", solde " + nb(v.solde)),
+    ...(w.derniers.length ? ["Derniers mouvements :", ...w.derniers.map((x) => "  " + x.date + " · " + coupe(x.compte, 25) + " · " + x.kind + " " + nb(x.amount) + " " + (x.currency || "") + (x.description ? " · " + coupe(x.description, 40) : ""))] : []) ] });
+  const n = d.notes;
+  out.push({ titre: "Notes et projets", puces: !n ? [NON] : n.length ? [nb(n.length) + " élément(s) :", ...n.slice(0, 25).map((x) => (x.type ? x.type + " · " : "") + coupe(x.title, 60) + (x.category ? " [" + coupe(x.category, 20) + "]" : ""))] : ["Aucune note."] });
+  const so = d.social;
+  out.push({ titre: "Réseaux sociaux", puces: !so ? [NON] : so.length ? [nb(so.length) + " message(s) enregistré(s) :", ...so.slice(0, 15).map((x) => jour(x.date) + " · " + coupe(x.de, 25) + (x.groupe ? " (" + coupe(x.groupe, 20) + ")" : "") + " : " + coupe(x.texte, 70))] : ["Aucun message enregistré."] });
+  return out;
+}
+
+export function dessinerRapportAppli(doc, { date = new Date(), utilisateur = "", donnees = null } = {}) {
   const L = 14, R = 196, W = R - L;
   let y = 22;
   const place = (h) => { if (y + h > 280) { doc.addPage(); y = 20; } };
   doc.setFont("helvetica", "bold"); doc.setFontSize(20); doc.setTextColor(20, 70, 55);
   doc.text("MY WORLD RS", L, y); y += 8;
-  doc.setFontSize(13); doc.setTextColor(30, 40, 36); doc.text("Rapport complet de l'application", L, y); y += 6;
+  doc.setFontSize(13); doc.setTextColor(30, 40, 36); doc.text(donnees ? "Rapport complet : mes données et l'application" : "Rapport complet de l'application", L, y); y += 6;
   doc.setFont("helvetica", "normal"); doc.setFontSize(9); doc.setTextColor(75, 91, 84);
   doc.text(date.toLocaleDateString("fr-FR") + (utilisateur ? " · " + utilisateur : ""), L, y); y += 4;
   doc.setDrawColor(218, 228, 223); doc.line(L, y, R, y); y += 8;
-  for (const s of RAPPORT_APPLI) {
+  const toutes = donnees ? [{ titre: "PARTIE 1 · MES DONNÉES", partie: true }, ...sectionsDonnees(donnees), { titre: "PARTIE 2 · FONCTIONNEMENT DE L'APPLICATION", partie: true }, ...RAPPORT_APPLI] : RAPPORT_APPLI;
+  for (const s of toutes) {
+    if (s.partie) { place(18); doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(75, 91, 84); doc.text(s.titre, L, y); y += 7; continue; }
     place(16);
     doc.setFont("helvetica", "bold"); doc.setFontSize(13); doc.setTextColor(20, 70, 55);
     doc.text(s.titre, L, y); y += 6;
@@ -64,8 +111,8 @@ export function dessinerRapportAppli(doc, { date = new Date(), utilisateur = "" 
       place(l.length * 4.8); doc.text(l, L, y); y += l.length * 4.8 + 2;
     }
     for (const p of s.puces || []) {
-      const l = doc.splitTextToSize(p, W - 6);
-      place(l.length * 4.8); doc.text("•", L + 1, y); doc.text(l, L + 6, y); y += l.length * 4.8 + 1.5;
+      const sous = p.startsWith("  "); const l = doc.splitTextToSize(p.trim(), W - 6 - (sous ? 6 : 0));
+      place(l.length * 4.8); if (!sous) doc.text("•", L + 1, y); doc.text(l, L + 6 + (sous ? 6 : 0), y); y += l.length * 4.8 + 1.5;
     }
     y += 4;
   }
