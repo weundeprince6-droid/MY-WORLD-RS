@@ -15,6 +15,7 @@ import {
   calculerCreditsAvec, MESURES_CREDITS_AVEC, calculerEse, MESURES_ESE, calculerRistourne, decoderChamps,
 } from "./firestore.js";
 import { calculerRapport, dessinerRapport } from "./rapport.js";
+import { dessinerRapportAppli } from "./rapport-appli.js";
 import { lireFichiersKeep } from "./notes.js";
 
 const $ = (id) => document.getElementById(id);
@@ -1910,6 +1911,21 @@ async function walletExporterPdf() {
   }catch(e){if(status)status.textContent="Export PDF impossible : "+e.message;}
   finally{if(btn){btn.disabled=false;btn.textContent=btn.dataset.ancienTexte||"Télécharger le rapport PDF";}}
 }$("wallet-export-pdf")?.addEventListener("click",walletExporterPdf);
+
+async function exporterRapportAppli() {
+  const btn=$("rapport-appli-pdf"), status=$("rapport-appli-status");
+  if(btn?.disabled)return;
+  if(btn){btn.disabled=true;btn.dataset.ancienTexte=btn.textContent;btn.textContent="Préparation du PDF…";}
+  try {
+    const JsPDF=await walletChargerJsPdf();
+    const doc=new JsPDF({orientation:"portrait",unit:"mm",format:"a4"});
+    dessinerRapportAppli(doc,{date:new Date(),utilisateur:utilisateurConnecte?.displayName||utilisateurConnecte?.email||""});
+    doc.save("My-World-RS_Rapport-application_"+new Date().toISOString().slice(0,10)+".pdf");
+    if(status)status.textContent="Rapport de l'application téléchargé.";
+  }catch(e){if(status)status.textContent="Export PDF impossible : "+e.message;}
+  finally{if(btn){btn.disabled=false;btn.textContent=btn.dataset.ancienTexte||"↓ Télécharger le rapport de l'application";}}
+}
+$("rapport-appli-pdf")?.addEventListener("click",exporterRapportAppli);
 
 $("wallet-export")?.addEventListener("click",()=>{
   const rows=[["Date","Compte","Type","Devise","Montant","Catégorie","Description"],...walletTransactions.map(t=>[t.date,t.accountName,t.kind,t.currency,t.amount,t.category,t.description])];
