@@ -91,6 +91,29 @@ export function sectionsDonnees(d = {}) {
 
 export function dessinerRapportAppli(doc, { date = new Date(), utilisateur = "", donnees = null } = {}) {
   const L = 14, R = 196, W = R - L;
+  const VERT = [11, 92, 62], OR = [196, 154, 58], ENCRE = [34, 44, 40];
+  const fond = (c) => doc.setFillColor(...c), trait = (c) => doc.setDrawColor(...c), encre = (c) => doc.setTextColor(...c);
+  // ---------- page de garde ----------
+  if (doc.rect && doc.circle) {
+    fond([255, 255, 255]); doc.rect(0, 0, 210, 297, "F");
+    fond(VERT); doc.rect(0, 196, 210, 101, "F");
+    fond(OR); doc.ellipse && doc.ellipse(125, 203, 110, 7, "F");
+    trait(VERT); doc.setLineWidth(1.2); doc.circle(105, 34, 14, "S");
+    fond(VERT); doc.rect(98, 38, 3.4, 7, "F"); doc.rect(103, 33, 3.4, 12, "F"); doc.rect(108, 28, 3.4, 17, "F");
+    trait(OR); doc.setLineWidth(0.8); doc.circle(114, 25, 4.2, "S");
+    doc.setFont("helvetica", "bold"); doc.setFontSize(20); encre(VERT); doc.text("MY WORLD RS", 105, 62, { align: "center" });
+    doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); encre(ENCRE); doc.text("Tout l'essentiel, dans une seule application", 105, 69, { align: "center" });
+    doc.setFont("helvetica", "bold"); doc.setFontSize(25); encre(VERT);
+    doc.text("RAPPORT COMPLET", 105, 100, { align: "center" });
+    doc.text(donnees ? "DE MES DONNÉES" : "DE L'APPLICATION", 105, 113, { align: "center" });
+    if (donnees) doc.text("ET DE L'APPLICATION", 105, 126, { align: "center" });
+    trait(OR); doc.setLineWidth(0.5); doc.line(30, 135, 180, 135);
+    doc.setFontSize(12.5); encre(OR); doc.text("MESSAGES · AGENDA · BASES · PORTE-MONNAIE", 105, 145, { align: "center" });
+    const info = (yy, e, v) => { doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); encre([214, 235, 224]); doc.text(e, 32, yy - 3); doc.setFont("helvetica", "bold"); doc.setFontSize(9.5); encre([255, 255, 255]); doc.text(String(v).slice(0, 70), 32, yy + 2.5); };
+    info(236, "Utilisateur", utilisateur || "Utilisateur My World RS");
+    info(251, "Date de génération", date.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }) + " à " + date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }));
+    doc.addPage();
+  }
   let y = 22;
   const place = (h) => { if (y + h > 280) { doc.addPage(); y = 20; } };
   doc.setFont("helvetica", "bold"); doc.setFontSize(20); doc.setTextColor(20, 70, 55);
@@ -117,7 +140,7 @@ export function dessinerRapportAppli(doc, { date = new Date(), utilisateur = "",
     y += 4;
   }
   const n = doc.getNumberOfPages();
-  for (let i = 1; i <= n; i++) {
+  for (let i = 2; i <= n; i++) {
     doc.setPage(i); doc.setFont("helvetica", "normal"); doc.setFontSize(8); doc.setTextColor(75, 91, 84);
     doc.text("MY WORLD RS · Rapport de l'application", L, 290); doc.text("Page " + i + " / " + n, R, 290, { align: "right" });
   }

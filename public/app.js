@@ -12,7 +12,7 @@ import {
 } from "./telegram.js";
 import {
   corpsAgregation, lireAgregat, corpsListe, lireListe, decoderDocument,
-  calculerCreditsAvec, MESURES_CREDITS_AVEC, calculerEse, MESURES_ESE, calculerRistourne, decoderChamps,
+  calculerCreditsAvec, MESURES_CREDITS_AVEC, calculerEse, MESURES_ESE, calculerRistourne, calculerCaisseEse, decoderChamps,
 } from "./firestore.js";
 import { calculerRapport, dessinerRapport } from "./rapport.js";
 import { dessinerRapportAppli } from "./rapport-appli.js";
@@ -1558,6 +1558,11 @@ function rendreRistourne(r) {
   }
 }
 let derniereRistourne = null;
+let caisseEse = null; // somme de caisse d'ESE DB, affichée comme un compte (lecture seule) dans le porte-monnaie
+function comptesCaisseEse() {
+  if (!caisseEse) return [];
+  return ["FC", "USD"].filter(d => d === "FC" || caisseEse[d]).map(d => ({ name: "Caisse ESE DB", currency: d, balance: caisseEse[d] }));
+}
 
 // ---------- Mes parts de ristourne : 50 % du solde des ristournes, versés dans un compte du porte-monnaie ----------
 const NOM_COMPTE_PART = "Mes parts de ristourne", TAUX_PART = 0.5;
@@ -1667,8 +1672,10 @@ async function chargerRistourne(force = false, silencieux = false) {
     const [jours, cfg] = await Promise.all([lireJoursEse(base.projectId), lireCfgEse(base.projectId)]);
     const r = calculerRistourne(jours, cfg);
     derniereRistourne = r;
+    caisseEse = calculerCaisseEse(jours, cfg);
     rendreRistourne(r);
     rendrePartRistourne();
+    if (walletLoaded) walletRender();
     if (statut) statut.textContent = `Synchronisé avec ESE DB à ${heure.format(new Date())} · ${r.mouvements} mouvement(s) de ristourne lus.`;
   } catch (e) {
     if (statut) statut.textContent = "Synchronisation ESE DB impossible : " + e.message;
@@ -1705,7 +1712,7 @@ function walletFilteredTransactions() {
 function walletRender() {
   rendrePartRistourne();
   if (!$("wallet-accounts")) return;
-  const sum = (type,currency) => walletAccounts.filter(a => a.type === type && a.currency === currency).reduce((s,a)=>s+Number(a.balance||0),0);
+  const sum = (type,currency) => walletAccounts.filter(a => a.type === type && a.currency === currency).reduce((s,a)=>s+Number(a.balance||0),0) + (type === "professional" && caisseEse ? Number(caisseEse[currency] || 0) : 0);
   $("wallet-personal-usd").textContent = walletMoney(sum("personal","USD"),"USD");
   $("wallet-personal-fc").textContent = walletMoney(sum("personal","FC"),"FC");
   $("wallet-pro-usd").textContent = walletMoney(sum("professional","USD"),"USD");
@@ -1715,7 +1722,7 @@ function walletRender() {
   const monthTx = walletTransactions.filter(t => String(t.date||"").startsWith(monthKey) && t.kind !== "transfer");
   const monthNet = currency => monthTx.filter(t=>t.currency===currency).reduce((s,t)=>s+(t.kind==="income"?1:-1)*Number(t.amount||0),0);
   $("wallet-month-total").textContent = "Ce mois : " + walletMoney(monthNet("USD"),"USD") + " · " + walletMoney(monthNet("FC"),"FC");
-  $("wallet-accounts").innerHTML = walletAccounts.length ? walletAccounts.map(a => `<article class="wallet-account"><div><strong>${echapper(a.name)}</strong><small>${a.type==="personal"?"Personnel":"Professionnel"} · ${echapper(a.currency)}</small></div><b>${walletMoney(a.balance,a.currency)}</b></article>`).join("") : '<p class="vide">Aucun compte. Créez votre premier compte.</p>';
+  $("wallet-accounts").innerHTML = (walletAccounts.length || caisseEse) ? comptesCaisseEse().map(a => `<article class="wallet-account wallet-account-ese"><div><strong>${echapper(a.name)}</strong><small>Professionnel · ${echapper(a.currency)} · synchronisé depuis ESE DB (lecture seule)</small></div><b>${walletMoney(a.balance,a.currency)}</b></article>`).join("") + walletAccounts.map(a => `<article class="wallet-account"><div><strong>${echapper(a.name)}</strong><small>${a.type==="personal"?"Personnel":"Professionnel"} · ${echapper(a.currency)}</small></div><b>${walletMoney(a.balance,a.currency)}</b></article>`).join("") : '<p class="vide">Aucun compte. Créez votre premier compte.</p>';
   walletRenderForecasts();
   const options = walletAccounts.map(a=>`<option value="${echapper(a.id)}">${echapper(a.name)} — ${a.currency} (${a.type==="personal"?"Personnel":"Pro"})</option>`).join("");
   ["wallet-op-account","wallet-transfer-from","wallet-transfer-to"].forEach(id => { const el=$(id); if(el){const old=el.value;el.innerHTML=options || '<option value="">Créez d’abord un compte</option>';if(walletAccounts.some(a=>a.id===old))el.value=old;} });

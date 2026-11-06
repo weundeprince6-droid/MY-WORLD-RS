@@ -173,3 +173,15 @@ console.log("ESE DB : OK");
   assert.equal(vide.groupes.length, 0);
   console.log("Ristournes ESE DB : OK");
 }
+
+{
+  const { calculerCaisseEse } = await import("../public/firestore.js");
+  const jours = [{ id: "2026-11-01", items: {
+    a: { k: "s", q: 2, p: 1000, c: "FC" }, b: { k: "s", q: 1, p: 5, c: "USD" }, c: { k: "e", a: 500, c: "FC" },
+    d: { k: "m", type: "in", a: 1000, c: "FC" }, e: { k: "m", type: "out", a: 2, c: "USD" }, f: { k: "r", type: "in", a: 999, c: "FC" } } }];
+  const c = calculerCaisseEse(jours, { open: { FC: 100, USD: 10 } });
+  assert.equal(c.FC, 100 + 2000 - 500 + 1000);
+  assert.equal(c.USD, 10 + 5 - 2);
+  assert.deepEqual(calculerCaisseEse([], null), { FC: 0, USD: 0 });
+  console.log("caisse ESE OK");
+}

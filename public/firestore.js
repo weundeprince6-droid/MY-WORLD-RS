@@ -175,6 +175,26 @@ export function calculerEse(jours, cfg, aujourdhuiISO) {
 }
 
 /**
+ * Caisse d'ESE DB, par devise, comme dans l'onglet « Caisse » de l'application ESE :
+ * argent de départ (cfg.open) + ventes − dépenses + apports − retraits personnels (éléments k:"m").
+ */
+export function calculerCaisseEse(jours, cfg) {
+  const open = cfg && cfg.open;
+  const depart = typeof open === "number" ? { FC: open, USD: 0 } : { FC: nombre(open && open.FC), USD: nombre(open && open.USD) };
+  const c = { FC: depart.FC, USD: depart.USD };
+  for (const j of jours) {
+    for (const it of Object.values((j && j.items) || {})) {
+      if (!it) continue;
+      const d = deviseEse(it);
+      if (it.k === "s") c[d] += nombre(it.q) * nombre(it.p);
+      else if (it.k === "e") c[d] -= nombre(it.a);
+      else if (it.k === "m") c[d] += it.type === "in" ? nombre(it.a) : -nombre(it.a);
+    }
+  }
+  return { FC: arrondi(c.FC), USD: arrondi(c.USD) };
+}
+
+/**
  * Ristournes ESE DB : dépôts et retraits par groupe (éléments k:"r" des jours), crédits de ristourne (cfg.ristLoans)
  * et groupes (cfg.ristGroups). Comme dans l'application ESE : solde = dépôts − intérêts dus − retraits, par devise.
  * Aucune conversion de devise : le FC et l'USD restent séparés.
