@@ -182,6 +182,11 @@ console.log("ESE DB : OK");
   const c = calculerCaisseEse(jours, { open: { FC: 100, USD: 10 } });
   assert.equal(c.FC, 100 + 2000 - 500 + 1000);
   assert.equal(c.USD, 10 + 5 - 2);
-  assert.deepEqual(calculerCaisseEse([], null), { FC: 0, USD: 0 });
+  assert.equal(c.cur, "FC"); assert.equal(c.taux, 2800);
+  assert.equal(c.total, 2600 + 13 * 2800);
+  // cas de l'écran ESE : départ 20 000 FC, affichage en $, 1 $ = 2400 FC → Francs 72 100 FC · Dollars -12 $ = 18,04 $
+  const e = calculerCaisseEse([{ id: "j", items: { a: { k: "s", q: 1, p: 52100, c: "FC" }, b: { k: "e", a: 12, c: "USD" } } }], { open: { FC: 20000 }, cur: "USD", rate: 2400 });
+  assert.equal(e.FC, 72100); assert.equal(e.USD, -12); assert.equal(e.cur, "USD"); assert.equal(e.total, 18.04);
+  assert.deepEqual(calculerCaisseEse([], null).FC, 0);
   console.log("caisse ESE OK");
 }

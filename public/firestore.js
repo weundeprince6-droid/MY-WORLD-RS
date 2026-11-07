@@ -191,7 +191,20 @@ export function calculerCaisseEse(jours, cfg) {
       else if (it.k === "m") c[d] += it.type === "in" ? nombre(it.a) : -nombre(it.a);
     }
   }
-  return { FC: arrondi(c.FC), USD: arrondi(c.USD) };
+  // Présentation d'ESE : un total dans la devise d'affichage (cfg.cur, FC par défaut) au taux cfg.rate (2800 par défaut)
+  const cur = cfg && cfg.cur === "USD" ? "USD" : "FC";
+  const taux = nombre(cfg && cfg.rate) || 2800;
+  const conv = (m, d) => (d === cur ? m : cur === "FC" ? m * taux : m / taux);
+  let recettes = 0, depenses = 0;
+  for (const j of jours) {
+    for (const it of Object.values((j && j.items) || {})) {
+      if (!it) continue;
+      if (it.k === "s") recettes += conv(nombre(it.q) * nombre(it.p), deviseEse(it));
+      else if (it.k === "e") depenses += conv(nombre(it.a), deviseEse(it));
+    }
+  }
+  const total = conv(c.FC, "FC") + conv(c.USD, "USD");
+  return { FC: arrondi(c.FC), USD: arrondi(c.USD), cur, taux, recettes: arrondi(recettes), depenses: arrondi(depenses), total: arrondi(total) };
 }
 
 /**
