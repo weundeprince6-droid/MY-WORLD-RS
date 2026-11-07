@@ -419,6 +419,18 @@ srv.listen(8765, async () => {
     const ok = /Caisse ESE DB/.test(comptes) && /lecture seule/.test(comptes) && /Somme restante en caisse/.test(comptes) && /3\s?000\s?FC/.test(comptes);
     return { ok, detail: comptes.slice(0, 160) };
   }));
+  res.push(await scenario('Porte-monnaie : encaisser la moitié de la caisse ESE dans le solde professionnel', { }, async (p, appels, logs, etat) => {
+    p.on('dialog', (d) => d.accept());
+    await p.click('#bouton-connexion'); await p.waitForTimeout(3000);
+    await p.click('[data-tab="wallet"]'); await p.waitForTimeout(3500);
+    const info = (await p.textContent('#caisse-part-info')).replace(/\s+/g, ' ');
+    await p.click('#caisse-part-enregistrer'); await p.waitForTimeout(2500);
+    const crees = etat.wallet.crees || [];
+    const compte = crees.find((c) => c.url.includes('walletAccounts') && JSON.stringify(c.corps).includes('Ma part de caisse ESE'));
+    const tx = crees.find((c) => c.url.includes('walletTransactions') && JSON.stringify(c.corps).includes('Caisse ESE'));
+    const ok = /1\s?500\s?FC/.test(info) && !!compte && JSON.stringify(compte.corps).includes('professional') && !!tx && JSON.stringify(tx.corps).includes('1500');
+    return { ok, detail: info.slice(0, 120) + ' | ' + crees.length };
+  }));
   res.push(await scenario('Domaine non autorisé : message clair', { mode: 'auth/unauthorized-domain' }, async (p) => {
     await p.click('#bouton-connexion'); await p.waitForTimeout(800);
     const t = (await p.textContent('#erreur')).trim(); const actif = !(await p.isDisabled('#bouton-connexion'));

@@ -1667,6 +1667,98 @@ async function reinitialiserPartsRistourne() {
   } finally { partRistourneEnCours = false; rendrePartRistourne(); }
 }
 $("rist-part-reinit")?.addEventListener("click", reinitialiserPartsRistourne);
+
+// ---------- Ma part de caisse ESE : 50 % de la somme restante en caisse, versés dans le solde professionnel ----------
+const NOM_COMPTE_CAISSE = "Ma part de caisse ESE", TAUX_CAISSE = 0.5;
+const estPartCaisse = (x) => x.kind === "income" && x.category === "Caisse ESE" && String(x.description || "").startsWith("Part de caisse ESE");
+function calculerPartsCaisse() {
+  return ["FC", "USD"].map(devise => {
+    const solde = caisseEse ? Number(caisseEse[devise] || 0) : 0;
+    const cible = Math.max(0, arrondir2(solde * TAUX_CAISSE));
+    const compte = walletAccounts.find(a => a.name === NOM_COMPTE_CAISSE && a.currency === devise);
+    const deja = Number(compte?.caisseCredite || 0);
+    return { devise, solde, cible, deja, aEnregistrer: arrondir2(cible - deja), compte };
+  });
+}
+function rendrePartCaisse() {
+  const info = $("caisse-part-info"), bouton = $("caisse-part-enregistrer"), reinit = $("caisse-part-reinit");
+  if (!info || !bouton) return;
+  if (reinit) reinit.disabled = !walletAccounts.some(a => a.name === NOM_COMPTE_CAISSE);
+  if (!caisseEse) { info.textContent = "Synchronisation avec ESE DB en attente…"; bouton.disabled = true; return; }
+  const parts = calculerPartsCaisse().filter(p => p.cible > 0 || p.deja > 0);
+  if (!parts.length) { info.textContent = "Aucune somme en caisse à partager pour le moment."; bouton.disabled = true; return; }
+  info.textContent = parts.map(p => `${p.devise} : part de 50 % = ${formatMontantDevise(p.cible, p.devise)} · déjà encaissée ${formatMontantDevise(p.deja, p.devise)} · à encaisser ${formatMontantDevise(Math.max(0, p.aEnregistrer), p.devise)}`).join("  |  ")
+    + ". Une fois encaissée, la somme est dans le compte professionnel « " + NOM_COMPTE_CAISSE + " ».";
+  bouton.disabled = !parts.some(p => p.aEnregistrer > 0);
+}
+let partCaisseEnCours = false;
+async function enregistrerPartCaisse() {
+  if (partCaisseEnCours) return;
+  const bouton = $("caisse-part-enregistrer"), statut = $("wallet-status");
+  partCaisseEnCours = true; if (bouton) bouton.disabled = true;
+  try {
+    if (!walletLoaded) await chargerWallet(true);
+    await chargerRistourne(true, true);
+    const uid = fb?.auth.currentUser?.uid;
+    if (!uid) throw new Error("Connectez-vous à votre compte Google.");
+    const faits = [];
+    for (const p of calculerPartsCaisse()) {
+      if (!(p.aEnregistrer > 0)) continue;
+      let compte = p.compte;
+      if (!compte) {
+        const id = walletId();
+        compte = { name: NOM_COMPTE_CAISSE, type: "professional", currency: p.devise, balance: 0, caisseCredite: 0, createdAt: new Date().toISOString() };
+        await walletCreate("walletAccounts", id, compte);
+        compte = { ...compte, id }; walletAccounts.push(compte);
+      }
+      const tx = { kind: "income", accountId: compte.id, accountName: compte.name, accountType: compte.type, currency: p.devise, amount: p.aEnregistrer, category: "Caisse ESE", description: "Part de caisse ESE (50 %)", paymentMethod: "", date: new Date().toISOString().slice(0, 10), createdAt: new Date().toISOString() };
+      const txId = walletId();
+      await walletCreate("walletTransactions", txId, tx);
+      const nouveauSolde = Number(compte.balance || 0) + p.aEnregistrer, nouveauCredite = p.deja + p.aEnregistrer;
+      await google(urlFirestore(firebaseConfig.projectId, walletPath(uid, "walletAccounts", compte.id)) + "?updateMask.fieldPaths=balance&updateMask.fieldPaths=caisseCredite", { method: "PATCH", body: JSON.stringify(walletFields({ balance: nouveauSolde, caisseCredite: nouveauCredite })) });
+      compte.balance = nouveauSolde; compte.caisseCredite = nouveauCredite;
+      walletTransactions.unshift({ ...tx, id: txId });
+      faits.push(formatMontantDevise(p.aEnregistrer, p.devise));
+    }
+    walletRender();
+    if (statut) statut.textContent = faits.length ? "Part de caisse encaissée : " + faits.join(" + ") + " ajouté(s) au solde professionnel (« " + NOM_COMPTE_CAISSE + " »)." : "Rien de nouveau à encaisser.";
+  } catch (e) {
+    if (statut) statut.textContent = "Encaissement de la part impossible : " + e.message;
+  } finally { partCaisseEnCours = false; rendrePartCaisse(); }
+}
+$("caisse-part-enregistrer")?.addEventListener("click", enregistrerPartCaisse);
+async function reinitialiserPartsCaisse() {
+  if (partCaisseEnCours) return;
+  const comptes = walletAccounts.filter(a => a.name === NOM_COMPTE_CAISSE);
+  if (!comptes.length) return;
+  const ids = new Set(comptes.map(a => a.id));
+  const lignes = walletTransactions.filter(x => ids.has(x.accountId));
+  const liens = new Set(lignes.filter(x => x.transferId).map(x => x.transferId));
+  const lot = walletTransactions.filter(x => ids.has(x.accountId) || (x.transferId && liens.has(x.transferId)));
+  if (!confirm(`Réinitialiser « ${NOM_COMPTE_CAISSE} » ?\n• ${lignes.length} mouvement(s) seront supprimés et le solde remis à 0.\n• La part de 50 % redeviendra entièrement « à encaisser ».`)) return;
+  const statut = $("wallet-status"), uid = fb?.auth.currentUser?.uid;
+  partCaisseEnCours = true;
+  try {
+    for (const ligne of lot) {
+      await walletDeleteDoc("walletTransactions", ligne.id);
+      walletTransactions = walletTransactions.filter(x => x.id !== ligne.id);
+      if (!ids.has(ligne.accountId)) {
+        const autre = walletAccounts.find(a => a.id === ligne.accountId);
+        if (autre) { const effet = walletEffet(ligne); await walletPatchAccount(autre, -effet); autre.balance = Number(autre.balance || 0) - effet; }
+      }
+    }
+    for (const compte of comptes) {
+      await google(urlFirestore(firebaseConfig.projectId, walletPath(uid, "walletAccounts", compte.id)) + "?updateMask.fieldPaths=balance&updateMask.fieldPaths=caisseCredite", { method: "PATCH", body: JSON.stringify(walletFields({ balance: 0, caisseCredite: 0 })) });
+      compte.balance = 0; compte.caisseCredite = 0;
+    }
+    walletRender();
+    if (statut) statut.textContent = "Compte « " + NOM_COMPTE_CAISSE + " » réinitialisé.";
+  } catch (e) {
+    walletRender();
+    if (statut) statut.textContent = "Réinitialisation non terminée : " + e.message + " — cliquez sur « Actualiser ».";
+  } finally { partCaisseEnCours = false; rendrePartCaisse(); }
+}
+$("caisse-part-reinit")?.addEventListener("click", reinitialiserPartsCaisse);
 async function chargerRistourne(force = false, silencieux = false) {
   const statut = $("wallet-ristourne-status");
   const base = bases.ese;
@@ -1680,6 +1772,7 @@ async function chargerRistourne(force = false, silencieux = false) {
     caisseEse = calculerCaisseEse(jours, cfg);
     rendreRistourne(r);
     rendrePartRistourne();
+    rendrePartCaisse();
     if (walletLoaded) walletRender();
     if (statut) statut.textContent = `Synchronisé avec ESE DB à ${heure.format(new Date())} · ${r.mouvements} mouvement(s) de ristourne lus.`;
   } catch (e) {
@@ -1716,6 +1809,7 @@ function walletFilteredTransactions() {
 }
 function walletRender() {
   rendrePartRistourne();
+  rendrePartCaisse();
   if (!$("wallet-accounts")) return;
   const sum = (type,currency) => walletAccounts.filter(a => a.type === type && a.currency === currency).reduce((s,a)=>s+Number(a.balance||0),0);
   $("wallet-personal-usd").textContent = walletMoney(sum("personal","USD"),"USD");
@@ -1861,6 +1955,13 @@ async function supprimerMouvementWallet(id) {
         await walletPatchAccount(compte, -effet);
         compte.balance = Number(compte.balance || 0) - effet;
         // Part de ristourne supprimée : la somme redevient « à enregistrer »
+        if (estPartCaisse(ligne)) {
+          const credite = Math.max(0, arrondir2(Number(compte.caisseCredite || 0) - Number(ligne.amount || 0)));
+          const uid = fb?.auth.currentUser?.uid;
+          await google(urlFirestore(firebaseConfig.projectId, walletPath(uid, "walletAccounts", compte.id)) + "?updateMask.fieldPaths=caisseCredite", { method: "PATCH", body: JSON.stringify(walletFields({ caisseCredite: credite })) });
+          compte.caisseCredite = credite;
+          partRetiree = true;
+        }
         if (estPartRistourne(ligne)) {
           const credite = Math.max(0, arrondir2(Number(compte.ristourneCredite || 0) - Number(ligne.amount || 0)));
           const uid = fb?.auth.currentUser?.uid;
@@ -1871,7 +1972,7 @@ async function supprimerMouvementWallet(id) {
       }
     }
     walletRender();
-    if (partRetiree && status) { status.textContent = "Part de ristourne supprimée : la somme est de nouveau « à enregistrer » dans le bloc des ristournes."; return; }
+    if (partRetiree && status) { status.textContent = "Part supprimée : la somme est de nouveau « à enregistrer / à encaisser » dans son bloc."; return; }
     if (status) status.textContent = lot.length > 1 ? "Transfert supprimé, soldes corrigés." : "Mouvement supprimé, solde corrigé.";
   } catch (e) {
     walletRender();
