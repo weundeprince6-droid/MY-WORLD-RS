@@ -70,8 +70,7 @@ exports.googleOAuthStart = onRequest(
           "https://www.googleapis.com/auth/calendar.readonly",
           "https://www.googleapis.com/auth/calendar.events",
           "https://www.googleapis.com/auth/datastore",
-          "https://www.googleapis.com/auth/drive.metadata.readonly",
-          "https://www.googleapis.com/auth/tasks"
+          "https://www.googleapis.com/auth/drive.metadata.readonly"
         ].join(" "),
         access_type: "offline",
         prompt: "consent select_account",

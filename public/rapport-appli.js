@@ -4,11 +4,11 @@ export const RAPPORT_APPLI = [
     "My World RS regroupe en une seule application la messagerie, les agendas, les réseaux sociaux, les bases de données et les finances personnelles, et en tire l'essentiel sur un tableau de bord.",
     "Elle fonctionne entièrement dans le navigateur, sans serveur à maintenir. Les données personnelles sont enregistrées dans Firebase (projet my-world-rs) et protégées par la connexion Google et un code PIN."] },
   { titre: "Les onglets", puces: [
-    "Tableau de bord : synthèse des messages importants, des rendez-vous, des tâches et des bases.",
+    "Tableau de bord : synthèse des messages importants, des rendez-vous et des bases.",
     "Messages : Gmail avec lecture dans l'application, envoi direct, pièces jointes, réponse, messages envoyés, messages importants (marquage depuis l'application), filtres comptes personnels et professionnels.",
     "Agenda : Google Agenda, création et modification.",
     "Ma maison : dépenses et revenus du foyer, budget familial, projet de construction, matériel répertorié et matériel à ravitailler, avec déduction du compte choisi.",
-    "Projet pro : même modèle côté professionnel (dépenses, revenus, budget, investissement du projet, équipements) et tâches Google Tasks.",
+    "Projet pro : même modèle côté professionnel (dépenses, revenus, budget, investissement du projet, équipements) et équipements.",
     "Drive : accès aux fichiers récents.",
     "Réseaux sociaux : Telegram et Facebook raccordés. WhatsApp n'est pas encore raccordé.",
     "Bases de données : AVEC LA SAGESSE et ESE DB, synthèses et indicateurs.",
@@ -17,9 +17,9 @@ export const RAPPORT_APPLI = [
     "Profil : informations personnelles et téléchargement de ce rapport."] },
   { titre: "Connexion Google", paragraphes: [
     "La connexion utilise Firebase Auth (fenêtre Google) puis un jeton d'accès valable une heure, conservé sur l'appareil et renouvelé automatiquement avant son expiration. Si le navigateur bloque le renouvellement, un bouton « Reprendre ma session Google » le rétablit en un clic.",
-    "Huit autorisations sont demandées : Gmail (lecture, écriture/brouillons, modification pour marquer important), Agenda, Tasks, Drive et le profil. La première utilisation de la modification Gmail demande un nouveau consentement."] },
+    "Sept autorisations sont demandées : Gmail (lecture, écriture/brouillons, modification pour marquer important), Agenda (lecture et rendez-vous), bases Firestore et Drive (métadonnées, lecture seule). La première utilisation de la modification Gmail demande un nouveau consentement."] },
   { titre: "Architecture", puces: [
-    "Gmail, Agenda, Tasks, Drive : API REST Google appelées depuis le navigateur.",
+    "Gmail, Agenda, Drive : API REST Google appelées depuis le navigateur.",
     "Firestore « my-world-rs » : porte-monnaie, notes et profil.",
     "Bases externes AVEC LA SAGESSE et ESE DB : Firestore REST en lecture.",
     "Telegram : API Bot. Facebook : API Graph.",
@@ -68,9 +68,6 @@ export function sectionsDonnees(d = {}) {
   out.push({ titre: "Agenda", puces: !a ? [NON] : [
     nb(a.aujourdhui.length) + " rendez-vous aujourd'hui, " + nb(a.aVenir.length) + " à venir.",
     ...[...a.aujourdhui, ...a.aVenir].slice(0, 15).map((e) => heureJour(e.debut) + " · " + coupe(e.titre, 70) + (e.lieu ? " (" + coupe(e.lieu, 30) + ")" : "")) ] });
-  const t = d.taches;
-  out.push({ titre: "Tâches (Google Tasks)", puces: !t ? [NON] : t.length ? [nb(t.length) + " tâche(s) non terminée(s) :",
-    ...t.slice(0, 20).map((x) => coupe(x.title, 70) + (x.list ? " [" + coupe(x.list, 25) + "]" : "") + (x.due ? " · échéance " + jour(x.due) : ""))] : ["Aucune tâche en cours."] });
   const k = d.indicateurs;
   out.push({ titre: "Bases de données (AVEC LA SAGESSE, ESE DB)", puces: !k || !k.length ? [NON]
     : k.map((x) => (x.base ? x.base + " · " : "") + (x.nom || x.titre || x.id || "Indicateur") + " : " + (x.erreur ? "indisponible" : nb(x.valeur) + (x.unite ? " " + x.unite : ""))) });

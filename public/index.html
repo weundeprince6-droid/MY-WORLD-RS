@@ -14,7 +14,6 @@
       <span class="logo" aria-hidden="true">MW</span>
       <span class="marque-texte"><strong>My World <span>RS</span></strong><small>Votre espace de pilotage</small></span>
     </a>
-    <div id="tasks-entete" class="tasks-entete" aria-live="polite" aria-label="Tâches Google"><span class="tasks-entete-label">À FAIRE</span><span id="tasks-entete-texte">Vos tâches apparaîtront ici</span></div>
     <div class="outils">
       <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Passer au mode sombre" title="Changer le thème"><span class="theme-toggle-icon" id="theme-toggle-icon" aria-hidden="true">🌙</span><span class="theme-toggle-label" id="theme-toggle-label">Sombre</span></button>
       
@@ -57,7 +56,7 @@
             <button class="nav-item" role="tab" aria-selected="false" data-tab="bases"><span class="nav-icon">▤</span><span>Mes bases</span><span class="nav-arrow">›</span></button>
             <button class="nav-item" role="tab" aria-selected="false" data-tab="social"><span class="nav-icon">◎</span><span>Réseaux sociaux</span><span class="nav-arrow">›</span></button>
             <button class="nav-item" role="tab" aria-selected="false" data-tab="drive"><span class="nav-icon">▣</span><span>Google Drive</span><span class="nav-arrow">›</span></button>
-            <button class="nav-item" role="tab" aria-selected="false" data-tab="tasks"><span class="nav-icon">☑</span><span>Projet pro</span><span class="nav-arrow">›</span></button>
+            <button class="nav-item" role="tab" aria-selected="false" data-tab="pro"><span class="nav-icon">☑</span><span>Projet pro</span><span class="nav-arrow">›</span></button>
             <button class="nav-item" role="tab" aria-selected="false" data-tab="notes"><span class="nav-icon">📝</span><span>Notes & Projets</span><span class="nav-arrow">›</span></button>
             <button class="nav-item" role="tab" aria-selected="false" data-tab="wallet"><span class="nav-icon">💰</span><span>Mon Porte-Monnaie</span><span class="nav-arrow">›</span></button>
             <button class="nav-item" role="tab" aria-selected="false" data-tab="maison"><span class="nav-icon">🏠</span><span>Ma maison</span><span class="nav-arrow">›</span></button>
@@ -75,7 +74,6 @@
               <article class="dashboard-metric"><span class="metric-icon">▦</span><div><span class="metric-label">Rendez-vous aujourd'hui</span><strong id="dash-agenda">—</strong><small id="dash-agenda-note">Google Agenda</small></div><button class="metric-link" data-go="agenda" aria-label="Ouvrir l'agenda">↗</button></article>
               <article class="dashboard-metric"><span class="metric-icon">▤</span><div><span class="metric-label">Indicateurs disponibles</span><strong id="dash-kpis">—</strong><small id="dash-kpis-note">AVEC LA SAGESSE · ESE DB</small></div><button class="metric-link" data-go="bases" aria-label="Ouvrir les indicateurs">↗</button></article>
               <article class="dashboard-metric"><span class="metric-icon">◎</span><div><span class="metric-label">Messages sociaux</span><strong id="dash-social">—</strong><small id="dash-social-note">Telegram · Facebook</small></div><button class="metric-link" data-go="social" aria-label="Ouvrir les réseaux sociaux">↗</button></article>
-              <article class="dashboard-metric"><span class="metric-icon">☑</span><div><span class="metric-label">Tâches à faire</span><strong id="dash-tasks">—</strong><small id="dash-tasks-note">Google Tasks</small></div><button class="metric-link" data-go="tasks" aria-label="Ouvrir les tâches">↗</button></article>
             </div>
             <div class="dashboard-grid">
               <article class="feature-card feature-green"><div class="feature-icon">✉</div><div><span class="feature-label">COMMUNICATION</span><h3>Messages importants</h3><p>Consultez vos messages prioritaires et préparez vos réponses.</p><button class="text-link" data-go="messages">Voir les messages <span>→</span></button></div></article>
@@ -198,10 +196,11 @@
               <button class="btn" id="drive-plus" type="button" hidden>Charger plus</button>
             </section>
           </section>
-          <section class="tab-pane" id="pane-tasks" role="tabpanel" data-pane="tasks" hidden>
-            <div class="section-heading"><div><p class="eyebrow">MON ACTIVITÉ</p><h2>Projet pro</h2><p>Dépenses et revenus de l'activité, budget professionnel, investissement du projet, équipements et tâches.</p></div><span class="section-icon blue">☑</span></div>
+          <section class="tab-pane" id="pane-pro" role="tabpanel" data-pane="pro" hidden>
+            <div class="section-heading"><div><p class="eyebrow">MON ACTIVITÉ</p><h2>Projet pro</h2><p>Dépenses et revenus de l'activité, budget professionnel, investissement du projet et équipements.</p></div><span class="section-icon blue">☑</span></div>
             <div id="pro-vue">
               <div class="maison-resume" id="pro-resume"></div>
+              <section class="carte wallet-card maison-card"><div class="card-heading"><h3>Détail du mois et du projet</h3></div><div id="pro-detail"></div></section>
               <div class="maison-grille">
                 <section class="carte wallet-card maison-card"><h3>Ajouter une opération</h3>
                   <form id="pro-form" class="wallet-form" autocomplete="off">
@@ -227,7 +226,6 @@
                   </form>
                 </section>
               </div>
-              <section class="carte wallet-card maison-card"><div class="card-heading"><h3>Détail du mois et du projet</h3></div><div id="pro-detail"></div></section>
               <section class="carte wallet-card maison-card"><div class="card-heading"><h3>Historique</h3><label class="maison-filtre">Afficher<select id="pro-filtre"><option value="all">Tout</option><option value="depense">Dépenses professionnelles</option><option value="revenu">Revenus de l'activité</option><option value="chantier">Investissement du projet</option></select></label></div><div id="pro-liste"></div></section>
               <div class="maison-grille maison-materiel">
                 <section class="carte wallet-card maison-card"><h3>Matériel et équipements</h3><p class="meta" id="promat-total">Aucun équipement répertorié.</p>
@@ -257,12 +255,6 @@
               </div>
               <p id="pro-status" class="meta" role="status"></p>
             </div>
-            <div class="wallet-block-heading"><div><p class="eyebrow">TÂCHES</p><h3>Tâches du projet (Google Tasks)</h3><p>Créez et gérez vos listes, ajoutez des tâches, modifiez-les et cochez celles qui sont terminées.</p></div></div>
-            <section class="carte">
-              <div class="tasks-toolbar"><form id="tasks-creer-liste" class="task-ajout task-ajout-liste"><input name="title" required maxlength="100" placeholder="Nom de la nouvelle liste…" aria-label="Nom de la nouvelle liste"><button class="btn btn-primary" type="submit">Créer une liste</button></form><button class="btn btn-light" id="tasks-actualiser" type="button">Actualiser</button></div>
-              <p id="tasks-statut" class="meta" role="status">Ouvrez cette rubrique pour charger vos tâches.</p>
-              <div id="tasks-listes" class="tasks-listes"></div>
-            </section>
           </section>
           <section class="tab-pane" id="pane-wallet" role="tabpanel" data-pane="wallet" hidden>
             <div class="section-heading wallet-page-heading"><div><p class="eyebrow">GESTION FINANCIÈRE</p><h2>Mon Porte-Monnaie</h2><p>Suivez vos comptes, vos entrées, vos dépenses et vos transferts en USD et en FC.</p></div><span class="section-icon green">💰</span></div>
@@ -345,6 +337,7 @@
             <div class="section-heading wallet-page-heading"><div><p class="eyebrow">MON FOYER</p><h2>Ma maison</h2><p>Dépenses du foyer, budget familial et projet de construction.</p></div><span class="section-icon">🏠</span></div>
             <div id="wallet-vue-maison">
               <div class="maison-resume" id="maison-resume"></div>
+              <section class="carte wallet-card maison-card"><div class="card-heading"><h3>Détail du mois et du chantier</h3></div><div id="maison-detail"></div></section>
               <div class="maison-grille">
                 <section class="carte wallet-card maison-card"><h3>Ajouter une opération</h3>
                   <form id="maison-form" class="wallet-form" autocomplete="off">
@@ -370,7 +363,6 @@
                   </form>
                 </section>
               </div>
-              <section class="carte wallet-card maison-card"><div class="card-heading"><h3>Détail du mois et du chantier</h3></div><div id="maison-detail"></div></section>
               <section class="carte wallet-card maison-card"><div class="card-heading"><h3>Historique</h3><label class="maison-filtre">Afficher<select id="maison-filtre"><option value="all">Tout</option><option value="depense">Dépenses de la maison</option><option value="revenu">Revenus du foyer</option><option value="chantier">Projet de construction</option></select></label></div><div id="maison-liste"></div></section>
               <div class="maison-grille maison-materiel">
                 <section class="carte wallet-card maison-card"><h3>Matériel de la maison</h3><p class="meta" id="materiel-total">Aucun matériel répertorié.</p>
@@ -468,7 +460,7 @@
       function ouvrirOnglet(nom) {
         document.querySelectorAll("[data-pane]").forEach(function (p) { var actif=p.dataset.pane===nom; p.hidden=!actif; p.classList.toggle("active",actif); });
         document.querySelectorAll("[data-tab]").forEach(function (b) { var actif=b.dataset.tab===nom; b.classList.toggle("active",actif); b.setAttribute("aria-selected",actif?"true":"false"); });
-        var titres={dashboard:"Tableau de bord",messages:"Messages",agenda:"Agenda",bases:"Mes bases",social:"Réseaux sociaux",drive:"Google Drive",tasks:"Google Tasks",wallet:"Mon Porte-Monnaie",profile:"Mon profil",notes:"Notes & Projets"}; document.title=(titres[nom]||"My World RS")+" — My World RS";
+        var titres={dashboard:"Tableau de bord",messages:"Messages",agenda:"Agenda",bases:"Mes bases",social:"Réseaux sociaux",drive:"Google Drive",pro:"Projet pro",wallet:"Mon Porte-Monnaie",profile:"Mon profil",notes:"Notes & Projets"}; document.title=(titres[nom]||"My World RS")+" — My World RS";
       }
       document.querySelectorAll("[data-tab]").forEach(function(b){b.addEventListener("click",function(){ouvrirOnglet(b.dataset.tab);});});
       document.querySelectorAll("[data-go]").forEach(function(b){b.addEventListener("click",function(){ouvrirOnglet(b.dataset.go);});});
@@ -482,6 +474,6 @@
       setTimeout(function(){if(!window.__appPret)montrer("L'application n'a pas démarré. Vérifiez votre connexion internet (les composants Firebase se chargent depuis Google), désactivez un éventuel bloqueur de publicités, puis rechargez. Appuyez sur F12 > Console pour voir le détail.");},6000);
     })();
   </script>
-  <script type="module" src="app.js?v=20261107-111"></script>
+  <script type="module" src="app.js?v=20261107-112"></script>
 </body>
 </html>

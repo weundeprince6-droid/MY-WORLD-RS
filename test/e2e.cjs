@@ -491,19 +491,20 @@ srv.listen(8765, async () => {
     const ok = /100\s?000\s?FC/.test(t1) && /30\s?000\s?FC/.test(t2) && sansCompte.includes('Choisissez') && refuse.includes('en FC') && /2 matériel/.test(t3) && !!txV && JSON.stringify(txV.corps).includes('expense') && JSON.stringify(etat.wallet.patchs).includes('68');
     return { ok, detail: [t1, t2, t3, vide, sansCompte, refuse, crees.length].join(' | ') };
   }));
-  res.push(await scenario('Projet pro : dépenses, budget, équipements et tâches Google', { }, async (p, appels, logs, etat) => {
+  res.push(await scenario('Projet pro : dépenses, budget, équipements, sans Google Tasks', { }, async (p, appels, logs, etat) => {
     p.on('dialog', (d) => d.accept());
     await p.click('#bouton-connexion'); await p.waitForTimeout(3000);
-    const nav = (await p.textContent('[data-tab="tasks"]')).trim();
-    await p.click('[data-tab="tasks"]'); await p.waitForTimeout(2500);
+    const nav = (await p.textContent('[data-tab="pro"]')).trim();
+    await p.click('[data-tab="pro"]'); await p.waitForTimeout(2500);
     await p.fill('#pro-reglages input[name=budgetFC]', '500000'); await p.click('#pro-reglages button[type=submit]'); await p.waitForTimeout(700);
     await p.selectOption('#pro-categorie', 'Fournitures'); await p.fill('#pro-form input[name=amount]', '100000'); await p.click('#pro-form button[type=submit]'); await p.waitForTimeout(1000);
     await p.fill('#promat-stock-form input[name=name]', 'Ordinateur'); await p.fill('#promat-stock-form input[name=price]', '300000'); await p.click('#promat-stock-form button[type=submit]'); await p.waitForTimeout(1000);
     const resume = (await p.textContent('#pro-resume')).replace(/\s+/g, ' '), total = (await p.textContent('#promat-total')).replace(/\s+/g, ' ');
-    const taches = await p.isVisible('#tasks-creer-liste');
+    const sansTasks = !(await p.$('#tasks-listes')) && !(await p.$('#tasks-entete')) && !(await p.$('[data-go="tasks"]'));
+    const yDetail = (await p.locator('#pro-detail').boundingBox()).y, yForm = (await p.locator('#pro-form').boundingBox()).y;
     const crees = (etat.wallet.crees || []).map((c) => c.url);
-    const ok = nav.includes('Projet pro') && /100\s?000\s?FC/.test(resume) && /20 %/.test(resume) && /300\s?000\s?FC/.test(total) && taches && crees.some((u) => u.includes('proEntries')) && crees.some((u) => u.includes('proItems')) && !crees.some((u) => u.includes('houseEntries'));
-    return { ok, detail: [nav, resume.slice(0, 120), total, taches].join(' | ') };
+    const ok = nav.includes('Projet pro') && /100\s?000\s?FC/.test(resume) && /20 %/.test(resume) && /300\s?000\s?FC/.test(total) && sansTasks && yDetail < yForm && crees.some((u) => u.includes('proEntries')) && crees.some((u) => u.includes('proItems')) && !crees.some((u) => u.includes('houseEntries'));
+    return { ok, detail: [nav, resume.slice(0, 120), total, sansTasks, yDetail, yForm].join(' | ') };
   }));
   res.push(await scenario('Domaine non autorisé : message clair', { mode: 'auth/unauthorized-domain' }, async (p) => {
     await p.click('#bouton-connexion'); await p.waitForTimeout(800);
