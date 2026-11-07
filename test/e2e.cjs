@@ -416,7 +416,7 @@ srv.listen(8765, async () => {
     await p.click('#bouton-connexion'); await p.waitForTimeout(3000);
     await p.click('[data-tab="wallet"]'); await p.waitForTimeout(3500);
     const comptes = (await p.textContent('#wallet-accounts')).replace(/\s+/g, ' ');
-    const ok = /Caisse ESE DB/.test(comptes) && /lecture seule/.test(comptes) && /Somme restante en caisse/.test(comptes) && /3\s?000\s?FC/.test(comptes);
+    const ok = /Caisse ESE DB/.test(comptes) && /Somme restante en caisse/.test(comptes) && /3\s?000\s?FC/.test(comptes);
     return { ok, detail: comptes.slice(0, 160) };
   }));
   res.push(await scenario('Porte-monnaie : encaisser la moitié de la caisse ESE dans le solde professionnel', { }, async (p, appels, logs, etat) => {
