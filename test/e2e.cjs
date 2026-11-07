@@ -84,13 +84,13 @@ async function scenario(nom, { mode = 'ok', sdkBloque = false, quotaGmail = fals
       if (m === 'POST') { etat.notes.crees.push(JSON.parse(route.request().postData()).fields); return route.fulfill(json({})); }
       return route.fulfill(json({ documents: [{ name: 'x/notesProjects/n0', fields: { type: { stringValue: 'note' }, title: { stringValue: 'Ancienne note' }, body: { stringValue: 'x' }, updatedAt: { stringValue: '2026-10-01T00:00:00.000Z' } } }] }));
     }
-    if (u.includes('/walletTransactions') || u.includes('/walletAccounts') || u.includes('/houseEntries') || u.includes('/houseSettings')) {
+    if (u.includes('/walletTransactions') || u.includes('/walletAccounts') || u.includes('/houseEntries') || u.includes('/houseSettings') || u.includes('/houseItems')) {
       etat.wallet = etat.wallet || { supprimes: [], patchs: [] };
       if (m === 'DELETE') { etat.wallet.supprimes.push(decodeURIComponent(u.split('/walletTransactions/')[1] || '')); return route.fulfill(json({})); }
       if (m === 'PATCH') { etat.wallet.patchs.push(JSON.parse(route.request().postData())); return route.fulfill(json({})); }
       if (m === 'POST') { (etat.wallet.crees = etat.wallet.crees || []).push({ url: u, corps: JSON.parse(route.request().postData()) }); return route.fulfill(json({})); }
       const S = (v) => ({ stringValue: v });
-      if (u.includes('/houseEntries') || u.includes('/houseSettings')) return route.fulfill(json({}));
+      if (u.includes('/houseEntries') || u.includes('/houseSettings') || u.includes('/houseItems')) return route.fulfill(json({}));
       if (u.includes('/walletAccounts')) return route.fulfill(json({ documents: [{ name: 'x/walletAccounts/a1', fields: { name: S('Caisse'), type: S('personal'), currency: S('USD'), balance: { doubleValue: 70 }, createdAt: S('2026-11-01') } }] }));
       return route.fulfill(json({ documents: [{ name: 'x/walletTransactions/t1', fields: { kind: S('expense'), accountId: S('a1'), accountName: S('Caisse'), currency: S('USD'), amount: { doubleValue: 30 }, date: S('2026-11-03'), description: S('Transport') } }] }));
     }
@@ -468,6 +468,21 @@ srv.listen(8765, async () => {
     const patch2 = etat.wallet.patchs.length;
     const ok = /Caisse/.test(options) && !!tx && JSON.stringify(tx.corps).includes('expense') && patch.includes('65') && statut.includes('Déduit') && patch2 >= 2 && etat.wallet.supprimes.length >= 1;
     return { ok, detail: options.slice(0, 60) + ' | ' + statut.slice(0, 80) + ' | ' + patch.slice(0, 80) + ' | ' + patch2 };
+  }));
+  res.push(await scenario('Ma maison : matériel répertorié, matériel à ravitailler et achat', { }, async (p, appels, logs, etat) => {
+    p.on('dialog', (d) => d.accept());
+    await p.click('#bouton-connexion'); await p.waitForTimeout(3000);
+    await p.click('[data-tab="maison"]'); await p.waitForTimeout(2500);
+    await p.fill('#materiel-stock-form input[name=name]', 'Table'); await p.fill('#materiel-stock-form input[name=qty]', '2'); await p.fill('#materiel-stock-form input[name=price]', '50000');
+    await p.click('#materiel-stock-form button[type=submit]'); await p.waitForTimeout(1000);
+    await p.fill('#materiel-achat-form input[name=name]', 'Casserole'); await p.fill('#materiel-achat-form input[name=qty]', '3'); await p.fill('#materiel-achat-form input[name=price]', '10000');
+    await p.click('#materiel-achat-form button[type=submit]'); await p.waitForTimeout(1000);
+    const t1 = (await p.textContent('#materiel-total')).replace(/\s+/g, ' '), t2 = (await p.textContent('#materiel-achat-total')).replace(/\s+/g, ' ');
+    await p.click('[data-materiel-achete]'); await p.waitForTimeout(1500);
+    const t3 = (await p.textContent('#materiel-total')).replace(/\s+/g, ' '), vide = (await p.textContent('#materiel-achat-total')).trim();
+    const crees = (etat.wallet.crees || []).filter((c) => c.url.includes('houseItems') || c.url.includes('houseEntries'));
+    const ok = /100\s?000\s?FC/.test(t1) && /30\s?000\s?FC/.test(t2) && /2 matériel/.test(t3) && vide.includes('Rien') && crees.length === 3;
+    return { ok, detail: [t1, t2, t3, vide, crees.length].join(' | ') };
   }));
   res.push(await scenario('Domaine non autorisé : message clair', { mode: 'auth/unauthorized-domain' }, async (p) => {
     await p.click('#bouton-connexion'); await p.waitForTimeout(800);

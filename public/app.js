@@ -15,7 +15,7 @@ import {
   calculerCreditsAvec, MESURES_CREDITS_AVEC, calculerEse, MESURES_ESE, calculerRistourne, calculerCaisseEse, decoderChamps,
 } from "./firestore.js";
 import { calculerRapport, dessinerRapport } from "./rapport.js";
-import { calculerMaison, normaliserEntreeMaison, moisDe, CATEGORIES_MAISON, CATEGORIES_REVENU, CATEGORIES_CHANTIER } from "./maison.js";
+import { calculerMateriel, normaliserMateriel, calculerMaison, normaliserEntreeMaison, moisDe, CATEGORIES_MAISON, CATEGORIES_REVENU, CATEGORIES_CHANTIER } from "./maison.js";
 import { dessinerRapportAppli } from "./rapport-appli.js";
 import { lireFichiersKeep } from "./notes.js";
 
@@ -1818,6 +1818,7 @@ async function ouvrirMaison() {
   const d = document.querySelector("#maison-form input[name=date]"); if (d && !d.value) d.value = new Date().toISOString().slice(0, 10);
   if (!walletLoaded) await chargerWallet(false);
   if (!maisonCharge) await chargerMaison(); else rendreMaison();
+  await chargerMateriel();
 }
 document.querySelector('[data-tab="maison"]')?.addEventListener("click", ouvrirMaison);
 $("maison-section")?.addEventListener("change", majCategoriesMaison);
@@ -1881,6 +1882,68 @@ $("maison-liste")?.addEventListener("click", async (ev) => {
     await walletDeleteDoc("houseEntries", id); maisonEntrees = maisonEntrees.filter(x => x.id !== id); rendreMaison(); if (st) st.textContent = "Opération supprimée." + note; }
   catch (e) { if (st) st.textContent = "Suppression impossible : " + e.message; }
 });
+
+// ---------- Ma maison : matériel répertorié et matériel à ravitailler ----------
+let materielItems = [];
+async function chargerMateriel() {
+  try { materielItems = (await walletReadCollection("houseItems")).map(i => ({ ...i, qty: Number(i.qty || 1), price: Number(i.price || 0) })).sort((a, b) => String(a.name || "").localeCompare(String(b.name || ""), "fr")); }
+  catch (e) { const st = $("maison-status"); if (st) st.textContent = "Chargement du matériel impossible : " + e.message; }
+  rendreMateriel();
+}
+function rendreMateriel() {
+  if (!$("materiel-stock-liste")) return;
+  const t = calculerMateriel(materielItems);
+  const dv = (o) => [o.FC ? walletMoney(o.FC, "FC") : "", o.USD ? walletMoney(o.USD, "USD") : ""].filter(Boolean).join(" · ") || "0 FC";
+  const stock = materielItems.filter(i => i.kind === "stock"), achats = materielItems.filter(i => i.kind === "ravitailler");
+  const ordre = { Urgent: 0, Normal: 1, "Plus tard": 2 };
+  achats.sort((a, b) => (ordre[a.priority] ?? 1) - (ordre[b.priority] ?? 1));
+  $("materiel-total").textContent = stock.length ? `${stock.length} matériel(s) répertorié(s) · ${t.nbArticlesStock} pièce(s) · valeur estimée : ${dv(t.valeurStock)}` : "Aucun matériel répertorié.";
+  $("materiel-achat-total").textContent = achats.length ? `${achats.length} article(s) à acheter · coût estimé : ${dv(t.coutAchats)}${t.urgents ? " · " + t.urgents + " urgent(s)" : ""}` : "Rien à acheter pour le moment.";
+  const prix = (i) => i.price > 0 ? `${walletMoney(i.price, i.currency === "USD" ? "USD" : "FC")} × ${i.qty} = ${walletMoney(Math.round(i.price * i.qty * 100) / 100, i.currency === "USD" ? "USD" : "FC")}` : `× ${i.qty} · prix non renseigné`;
+  $("materiel-stock-liste").innerHTML = stock.length ? stock.map(i => `<div class="maison-liste-ligne"><div><strong>${echapper(i.name)}</strong><small>${echapper(i.place || "")}${i.state ? " · " + echapper(i.state) : ""} · ${prix(i)}</small></div><span></span><button class="btn btn-secondary" type="button" data-materiel-supprimer="${echapper(i.id)}">Supprimer</button></div>`).join("") : "";
+  $("materiel-achat-liste").innerHTML = achats.length ? achats.map(i => `<div class="maison-liste-ligne"><div><strong>${echapper(i.name)}</strong><small>${echapper(i.priority || "Normal")} · ${prix(i)}</small></div><button class="btn btn-primary" type="button" data-materiel-achete="${echapper(i.id)}">Acheté</button><button class="btn btn-secondary" type="button" data-materiel-supprimer="${echapper(i.id)}">Supprimer</button></div>`).join("") : "";
+}
+async function ajouterMateriel(ev, kind) {
+  ev.preventDefault();
+  const f = ev.target, st = $("maison-status");
+  const res = normaliserMateriel({ ...Object.fromEntries(new FormData(f)), kind });
+  if (res.erreur) { if (st) st.textContent = res.erreur; return; }
+  try {
+    const id = walletId(), item = { ...res.item, createdAt: new Date().toISOString() };
+    await walletCreate("houseItems", id, item);
+    materielItems.push({ ...item, id });
+    f.elements.namedItem("name").value = ""; f.elements.namedItem("qty").value = "1"; f.elements.namedItem("price").value = "";
+    rendreMateriel();
+    if (st) st.textContent = kind === "stock" ? "Matériel ajouté au répertoire." : "Article ajouté à la liste d'achats.";
+  } catch (e) { if (st) st.textContent = "Enregistrement impossible : " + e.message; }
+}
+$("materiel-stock-form")?.addEventListener("submit", (ev) => ajouterMateriel(ev, "stock"));
+$("materiel-achat-form")?.addEventListener("submit", (ev) => ajouterMateriel(ev, "ravitailler"));
+["materiel-stock-liste", "materiel-achat-liste"].forEach(zone => $(zone)?.addEventListener("click", async (ev) => {
+  const st = $("maison-status"), uid = fb?.auth.currentUser?.uid;
+  const sup = ev.target.closest("[data-materiel-supprimer]"), ach = ev.target.closest("[data-materiel-achete]");
+  try {
+    if (sup) {
+      if (!confirm("Supprimer ce matériel ?")) return;
+      await walletDeleteDoc("houseItems", sup.dataset.materielSupprimer);
+      materielItems = materielItems.filter(i => i.id !== sup.dataset.materielSupprimer); rendreMateriel();
+      if (st) st.textContent = "Matériel supprimé.";
+    } else if (ach) {
+      const item = materielItems.find(i => i.id === ach.dataset.materielAchete); if (!item || !uid) return;
+      await google(urlFirestore(firebaseConfig.projectId, walletPath(uid, "houseItems", item.id)) + "?updateMask.fieldPaths=kind&updateMask.fieldPaths=state&updateMask.fieldPaths=place", { method: "PATCH", body: JSON.stringify(walletFields({ kind: "stock", state: "Neuf", place: item.place || "Autre" })) });
+      Object.assign(item, { kind: "stock", state: "Neuf", place: item.place || "Autre" });
+      let note = "";
+      const total = Math.round(item.price * item.qty * 100) / 100;
+      if (total > 0) {
+        const entree = { section: "depense", category: "Autre", amount: total, currency: item.currency === "USD" ? "USD" : "FC", date: new Date().toISOString().slice(0, 10), note: "Achat de matériel : " + item.name, createdAt: new Date().toISOString() };
+        const id = walletId(); await walletCreate("houseEntries", id, entree); maisonEntrees.unshift({ ...entree, id });
+        note = " La dépense de " + walletMoney(total, entree.currency) + " est suivie dans « Ma maison ».";
+      }
+      rendreMateriel(); rendreMaison();
+      if (st) st.textContent = "« " + item.name + " » acheté : il rejoint le matériel de la maison." + note;
+    }
+  } catch (e) { if (st) st.textContent = "Action impossible : " + e.message; }
+}));
 async function chargerRistourne(force = false, silencieux = false) {
   const statut = $("wallet-ristourne-status");
   const base = bases.ese;

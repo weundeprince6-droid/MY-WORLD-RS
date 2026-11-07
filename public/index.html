@@ -314,6 +314,31 @@
               </div>
               <section class="carte wallet-card maison-card"><div class="card-heading"><h3>Détail du mois et du chantier</h3></div><div id="maison-detail"></div></section>
               <section class="carte wallet-card maison-card"><div class="card-heading"><h3>Historique</h3><label class="maison-filtre">Afficher<select id="maison-filtre"><option value="all">Tout</option><option value="depense">Dépenses de la maison</option><option value="revenu">Revenus du foyer</option><option value="chantier">Projet de construction</option></select></label></div><div id="maison-liste"></div></section>
+              <div class="maison-grille maison-materiel">
+                <section class="carte wallet-card maison-card"><h3>Matériel de la maison</h3><p class="meta" id="materiel-total">Aucun matériel répertorié.</p>
+                  <form id="materiel-stock-form" class="wallet-form" autocomplete="off">
+                    <label>Nom du matériel<input name="name" type="text" maxlength="80" placeholder="Ex. Table à manger" required></label>
+                    <label>Quantité<input name="qty" type="text" inputmode="decimal" value="1"></label>
+                    <label>Prix unitaire<input name="price" type="text" inputmode="decimal" placeholder="Facultatif"></label>
+                    <label>Devise<select name="currency"><option value="FC" selected>Franc congolais (FC)</option><option value="USD">Dollar américain (USD)</option></select></label>
+                    <label>Pièce<select name="place"><option>Salon</option><option>Cuisine</option><option>Chambre</option><option>Salle de bain</option><option>Extérieur</option><option>Autre</option></select></label>
+                    <label>État<select name="state"><option>Neuf</option><option selected>Bon</option><option>Usé</option><option>À réparer</option></select></label>
+                    <button class="btn btn-primary" type="submit">Ajouter au répertoire</button>
+                  </form>
+                  <div id="materiel-stock-liste"></div>
+                </section>
+                <section class="carte wallet-card maison-card"><h3>Matériel à ravitailler</h3><p class="meta" id="materiel-achat-total">Rien à acheter pour le moment.</p>
+                  <form id="materiel-achat-form" class="wallet-form" autocomplete="off">
+                    <label>Nom du matériel<input name="name" type="text" maxlength="80" placeholder="Ex. Casseroles" required></label>
+                    <label>Quantité<input name="qty" type="text" inputmode="decimal" value="1"></label>
+                    <label>Prix estimé (unitaire)<input name="price" type="text" inputmode="decimal" placeholder="Facultatif"></label>
+                    <label>Devise<select name="currency"><option value="FC" selected>Franc congolais (FC)</option><option value="USD">Dollar américain (USD)</option></select></label>
+                    <label>Priorité<select name="priority"><option>Urgent</option><option selected>Normal</option><option>Plus tard</option></select></label>
+                    <button class="btn btn-primary" type="submit">Ajouter à la liste d'achats</button>
+                  </form>
+                  <div id="materiel-achat-liste"></div>
+                </section>
+              </div>
               <p id="maison-status" class="meta" role="status"></p>
             </div>
           </section>
@@ -398,6 +423,6 @@
       setTimeout(function(){if(!window.__appPret)montrer("L'application n'a pas démarré. Vérifiez votre connexion internet (les composants Firebase se chargent depuis Google), désactivez un éventuel bloqueur de publicités, puis rechargez. Appuyez sur F12 > Console pour voir le détail.");},6000);
     })();
   </script>
-  <script type="module" src="app.js?v=20261107-108"></script>
+  <script type="module" src="app.js?v=20261107-109"></script>
 </body>
 </html>

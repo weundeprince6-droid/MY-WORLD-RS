@@ -70,3 +70,35 @@ export function normaliserEntreeMaison(s) {
   if (!date) return { erreur: "Choisissez une date." };
   return { entree: { section, category: String(s.category || "Autre").slice(0, 60), amount: Math.round(montant * 100) / 100, currency: s.currency === "USD" ? "USD" : "FC", date, note: String(s.note || "").trim().slice(0, 200) } };
 }
+
+// ---------- Matériel de la maison (répertorié) et matériel à ravitailler ----------
+export const PIECES_MAISON = ["Salon", "Cuisine", "Chambre", "Salle de bain", "Extérieur", "Autre"];
+export const ETATS_MATERIEL = ["Neuf", "Bon", "Usé", "À réparer"];
+export const PRIORITES_MATERIEL = ["Urgent", "Normal", "Plus tard"];
+
+/** items : [{kind:'stock'|'ravitailler', name, qty, price, currency, place, state, priority}] */
+export function calculerMateriel(items = []) {
+  const stock = { FC: 0, USD: 0 }, achat = { FC: 0, USD: 0 };
+  let nbStock = 0, nbAchat = 0, urgents = 0;
+  for (const it of items) {
+    const q = Number(it.qty) > 0 ? Number(it.qty) : 1, p = Number(it.price) > 0 ? Number(it.price) : 0, d = it.currency === "USD" ? "USD" : "FC";
+    if (it.kind === "stock") { stock[d] += q * p; nbStock += q; }
+    else if (it.kind === "ravitailler") { achat[d] += q * p; nbAchat++; if (it.priority === "Urgent") urgents++; }
+  }
+  const r2 = (n) => Math.round(n * 100) / 100;
+  return { valeurStock: { FC: r2(stock.FC), USD: r2(stock.USD) }, nbArticlesStock: nbStock, coutAchats: { FC: r2(achat.FC), USD: r2(achat.USD) }, nbAchats: nbAchat, urgents };
+}
+
+/** Valide la saisie d'un matériel. Renvoie {erreur} ou {item}. */
+export function normaliserMateriel(s) {
+  const kind = s?.kind === "ravitailler" ? "ravitailler" : s?.kind === "stock" ? "stock" : "";
+  if (!kind) return { erreur: "Type de matériel inconnu." };
+  const name = String(s.name || "").trim().slice(0, 80);
+  if (!name) return { erreur: "Indiquez le nom du matériel." };
+  const nombre = (v) => Number(String(v ?? "").replace(/\s/g, "").replace(",", "."));
+  const qty = s.qty === "" || s.qty == null ? 1 : nombre(s.qty);
+  if (!Number.isFinite(qty) || qty <= 0) return { erreur: "La quantité doit être supérieure à zéro." };
+  const price = s.price === "" || s.price == null ? 0 : nombre(s.price);
+  if (!Number.isFinite(price) || price < 0) return { erreur: "Le prix doit être un nombre positif." };
+  return { item: { kind, name, qty, price, currency: s.currency === "USD" ? "USD" : "FC", place: String(s.place || "").slice(0, 40), state: String(s.state || "").slice(0, 30), priority: String(s.priority || "").slice(0, 30), note: String(s.note || "").trim().slice(0, 200) } };
+}

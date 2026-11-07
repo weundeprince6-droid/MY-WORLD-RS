@@ -23,3 +23,17 @@ assert.ok(normaliserEntreeMaison({ section: "depense", amount: "0", date: "2026-
 assert.ok(normaliserEntreeMaison({ section: "x", amount: "5", date: "2026-11-07" }).erreur);
 assert.ok(normaliserEntreeMaison({ section: "depense", amount: "5", date: "" }).erreur);
 console.log("maison OK");
+import { calculerMateriel, normaliserMateriel } from "../public/maison.js";
+{
+  const t = calculerMateriel([
+    { kind: "stock", name: "Table", qty: 2, price: 50000, currency: "FC" }, { kind: "stock", name: "TV", qty: 1, price: 150, currency: "USD" },
+    { kind: "ravitailler", name: "Casserole", qty: 3, price: 10000, currency: "FC", priority: "Urgent" }, { kind: "ravitailler", name: "Lampe", qty: 1, price: 0, currency: "FC" }]);
+  assert.equal(t.valeurStock.FC, 100000); assert.equal(t.valeurStock.USD, 150); assert.equal(t.nbArticlesStock, 3);
+  assert.equal(t.coutAchats.FC, 30000); assert.equal(t.nbAchats, 2); assert.equal(t.urgents, 1);
+  assert.equal(normaliserMateriel({ kind: "stock", name: " Lit ", qty: "2", price: "1 500,5" }).item.price, 1500.5);
+  assert.equal(normaliserMateriel({ kind: "stock", name: "Lit" }).item.qty, 1);
+  assert.ok(normaliserMateriel({ kind: "stock", name: "" }).erreur);
+  assert.ok(normaliserMateriel({ kind: "ravitailler", name: "x", qty: "0" }).erreur);
+  assert.ok(normaliserMateriel({ kind: "x", name: "x" }).erreur);
+  console.log("matériel OK");
+}
