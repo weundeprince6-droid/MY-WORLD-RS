@@ -336,6 +336,7 @@
                     <label>Priorité<select name="priority"><option>Urgent</option><option selected>Normal</option><option>Plus tard</option></select></label>
                     <button class="btn btn-primary" type="submit">Ajouter à la liste d'achats</button>
                   </form>
+                  <label class="maison-filtre maison-compte-achat">Compte débité à l'achat<select id="materiel-compte"><option value="">Choisir un compte…</option></select></label>
                   <div id="materiel-achat-liste"></div>
                 </section>
               </div>
@@ -423,6 +424,6 @@
       setTimeout(function(){if(!window.__appPret)montrer("L'application n'a pas démarré. Vérifiez votre connexion internet (les composants Firebase se chargent depuis Google), désactivez un éventuel bloqueur de publicités, puis rechargez. Appuyez sur F12 > Console pour voir le détail.");},6000);
     })();
   </script>
-  <script type="module" src="app.js?v=20261107-109"></script>
+  <script type="module" src="app.js?v=20261107-110"></script>
 </body>
 </html>

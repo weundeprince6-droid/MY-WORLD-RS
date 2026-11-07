@@ -1890,8 +1890,15 @@ async function chargerMateriel() {
   catch (e) { const st = $("maison-status"); if (st) st.textContent = "Chargement du matériel impossible : " + e.message; }
   rendreMateriel();
 }
+function majComptesAchat() {
+  const sel = $("materiel-compte"); if (!sel) return;
+  const prec = sel.value;
+  sel.innerHTML = '<option value="">Choisir un compte…</option>' + walletAccounts.map(a => `<option value="${echapper(a.id)}">${echapper(a.name)} (${echapper(a.currency)}) · ${walletMoney(a.balance, a.currency)}</option>`).join("");
+  if (walletAccounts.some(a => a.id === prec)) sel.value = prec;
+}
 function rendreMateriel() {
   if (!$("materiel-stock-liste")) return;
+  majComptesAchat();
   const t = calculerMateriel(materielItems);
   const dv = (o) => [o.FC ? walletMoney(o.FC, "FC") : "", o.USD ? walletMoney(o.USD, "USD") : ""].filter(Boolean).join(" · ") || "0 FC";
   const stock = materielItems.filter(i => i.kind === "stock"), achats = materielItems.filter(i => i.kind === "ravitailler");
@@ -1930,14 +1937,30 @@ $("materiel-achat-form")?.addEventListener("submit", (ev) => ajouterMateriel(ev,
       if (st) st.textContent = "Matériel supprimé.";
     } else if (ach) {
       const item = materielItems.find(i => i.id === ach.dataset.materielAchete); if (!item || !uid) return;
+      const totalPrevu = Math.round(item.price * item.qty * 100) / 100, devItem = item.currency === "USD" ? "USD" : "FC";
+      const compte = walletAccounts.find(a => a.id === $("materiel-compte")?.value);
+      if (totalPrevu > 0) {
+        if (!compte) { if (st) st.textContent = "Choisissez d'abord le compte du porte-monnaie à débiter pour cet achat."; return; }
+        if (compte.currency !== devItem) { if (st) st.textContent = "« " + item.name + " » est en " + devItem + " : choisissez un compte en " + devItem + "."; return; }
+      }
       await google(urlFirestore(firebaseConfig.projectId, walletPath(uid, "houseItems", item.id)) + "?updateMask.fieldPaths=kind&updateMask.fieldPaths=state&updateMask.fieldPaths=place", { method: "PATCH", body: JSON.stringify(walletFields({ kind: "stock", state: "Neuf", place: item.place || "Autre" })) });
       Object.assign(item, { kind: "stock", state: "Neuf", place: item.place || "Autre" });
       let note = "";
       const total = Math.round(item.price * item.qty * 100) / 100;
       if (total > 0) {
         const entree = { section: "depense", category: "Autre", amount: total, currency: item.currency === "USD" ? "USD" : "FC", date: new Date().toISOString().slice(0, 10), note: "Achat de matériel : " + item.name, createdAt: new Date().toISOString() };
+        if (compte) {
+          const txId = walletId();
+          const tx = { kind: "expense", accountId: compte.id, accountName: compte.name, accountType: compte.type, currency: entree.currency, amount: total, category: "Ma maison · Achat de matériel", description: "Achat de matériel : " + item.name, paymentMethod: "", date: entree.date, createdAt: entree.createdAt, source: "maison" };
+          await walletCreate("walletTransactions", txId, tx);
+          await walletPatchAccount(compte, walletEffet(tx));
+          compte.balance = Number(compte.balance || 0) + walletEffet(tx);
+          walletTransactions.unshift({ ...tx, id: txId });
+          entree.accountId = compte.id; entree.txId = txId;
+          walletRender();
+        }
         const id = walletId(); await walletCreate("houseEntries", id, entree); maisonEntrees.unshift({ ...entree, id });
-        note = " La dépense de " + walletMoney(total, entree.currency) + " est suivie dans « Ma maison ».";
+        note = " " + walletMoney(total, entree.currency) + " déduit du compte « " + compte.name + " ».";
       }
       rendreMateriel(); rendreMaison();
       if (st) st.textContent = "« " + item.name + " » acheté : il rejoint le matériel de la maison." + note;

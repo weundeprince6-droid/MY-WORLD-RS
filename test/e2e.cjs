@@ -478,11 +478,18 @@ srv.listen(8765, async () => {
     await p.fill('#materiel-achat-form input[name=name]', 'Casserole'); await p.fill('#materiel-achat-form input[name=qty]', '3'); await p.fill('#materiel-achat-form input[name=price]', '10000');
     await p.click('#materiel-achat-form button[type=submit]'); await p.waitForTimeout(1000);
     const t1 = (await p.textContent('#materiel-total')).replace(/\s+/g, ' '), t2 = (await p.textContent('#materiel-achat-total')).replace(/\s+/g, ' ');
-    await p.click('[data-materiel-achete]'); await p.waitForTimeout(1500);
+    await p.click('[data-materiel-achete]'); await p.waitForTimeout(800);
+    const sansCompte = (await p.textContent('#maison-status')).trim();
+    await p.selectOption('#materiel-compte', 'a1'); await p.click('[data-materiel-achete]'); await p.waitForTimeout(800);
+    const refuse = (await p.textContent('#maison-status')).trim();
+    await p.fill('#materiel-achat-form input[name=name]', 'Verre'); await p.selectOption('#materiel-achat-form select[name=currency]', 'USD'); await p.fill('#materiel-achat-form input[name=price]', '2');
+    await p.click('#materiel-achat-form button[type=submit]'); await p.waitForTimeout(800);
+    await p.click('#materiel-achat-liste .maison-liste-ligne:has-text("Verre") [data-materiel-achete]'); await p.waitForTimeout(1500);
     const t3 = (await p.textContent('#materiel-total')).replace(/\s+/g, ' '), vide = (await p.textContent('#materiel-achat-total')).trim();
     const crees = (etat.wallet.crees || []).filter((c) => c.url.includes('houseItems') || c.url.includes('houseEntries'));
-    const ok = /100\s?000\s?FC/.test(t1) && /30\s?000\s?FC/.test(t2) && /2 matériel/.test(t3) && vide.includes('Rien') && crees.length === 3;
-    return { ok, detail: [t1, t2, t3, vide, crees.length].join(' | ') };
+    const txV = (etat.wallet.crees || []).find((c) => c.url.includes('walletTransactions') && JSON.stringify(c.corps).includes('Verre'));
+    const ok = /100\s?000\s?FC/.test(t1) && /30\s?000\s?FC/.test(t2) && sansCompte.includes('Choisissez') && refuse.includes('en FC') && /2 matériel/.test(t3) && !!txV && JSON.stringify(txV.corps).includes('expense') && JSON.stringify(etat.wallet.patchs).includes('68');
+    return { ok, detail: [t1, t2, t3, vide, sansCompte, refuse, crees.length].join(' | ') };
   }));
   res.push(await scenario('Domaine non autorisé : message clair', { mode: 'auth/unauthorized-domain' }, async (p) => {
     await p.click('#bouton-connexion'); await p.waitForTimeout(800);
