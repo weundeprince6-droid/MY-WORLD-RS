@@ -14,6 +14,7 @@ export const RAPPORT_APPLI = [
     "Bases de données : AVEC LA SAGESSE et ESE DB, synthèses et indicateurs.",
     "Notes : notes et projets dans l'application, import de Google Keep par export Takeout (Keep n'a pas d'API pour un compte Google personnel).",
     "Porte-monnaie : comptes, mouvements, prévisions, rapport financier PDF avec graphiques hebdomadaires et mensuels, compte « Mes parts de ristourne » (50 % de la ristourne, retirable et réinitialisable).",
+    "Assistant IA : dans Porte-monnaie, Ma maison et Projet pro, une zone de questions répond sur vos finances grâce à l'API Claude (clé personnelle conservée sur l'appareil, données envoyées seulement au moment de la question).",
     "Profil : informations personnelles et téléchargement de ce rapport."] },
   { titre: "Connexion Google", paragraphes: [
     "La connexion utilise Firebase Auth (fenêtre Google) puis un jeton d'accès valable une heure, conservé sur l'appareil et renouvelé automatiquement avant son expiration. Si le navigateur bloque le renouvellement, un bouton « Reprendre ma session Google » le rétablit en un clic.",

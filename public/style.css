@@ -970,3 +970,15 @@ html[data-theme="light"] .section-icon.green,html[data-theme="light"] .feature-g
 html[data-theme="light"] .section-icon.orange,html[data-theme="light"] .feature-orange .feature-icon{background:#d3e5da}
 html[data-theme="light"] .section-icon.blue,html[data-theme="light"] .feature-blue .feature-icon,
 html[data-theme="light"] .section-icon.purple,html[data-theme="light"] .feature-purple .feature-icon{background:#d9e4ee}
+
+.ia-carte{margin-bottom:14px}
+.ia-ligne{display:flex;gap:10px;align-items:flex-end;margin:8px 0}
+.ia-ligne input,.ia-ligne textarea{flex:1;min-width:0}
+.ia-suggestions{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 10px}
+.ia-chip{border:1px solid var(--border);background:var(--primary-soft);color:var(--primary-dark);border-radius:999px;padding:7px 12px;font-size:12.5px;font-weight:600}
+.ia-fil{display:flex;flex-direction:column;gap:8px;max-height:340px;overflow:auto;margin:6px 0}
+.ia-msg{padding:10px 12px;border-radius:12px;font-size:14px;line-height:1.5;white-space:pre-wrap;max-width:92%;border:1px solid var(--border)}
+.ia-user{align-self:flex-end;background:var(--primary-soft)}
+.ia-assistant{align-self:flex-start;background:var(--surface)}
+.ia-erreur{border-color:#c0392b;color:#8b1e16}
+.ia-lien{background:none;border:0;padding:0;color:var(--primary);text-decoration:underline;font-size:inherit}

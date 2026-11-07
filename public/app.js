@@ -15,6 +15,7 @@ import {
   calculerCreditsAvec, MESURES_CREDITS_AVEC, calculerEse, MESURES_ESE, calculerRistourne, calculerCaisseEse, decoderChamps,
 } from "./firestore.js";
 import { calculerRapport, dessinerRapport } from "./rapport.js";
+import { construireContexteFinances, preparerRequeteAssistant, extraireReponseAssistant, messageErreurAssistant } from "./assistant.js";
 import { calculerMateriel, normaliserMateriel, calculerMaison, normaliserEntreeMaison, moisDe, CATEGORIES_PRO, CATEGORIES_REVENU_PRO, CATEGORIES_PROJET_PRO, CATEGORIES_MAISON, CATEGORIES_REVENU, CATEGORIES_CHANTIER } from "./maison.js";
 import { dessinerRapportAppli } from "./rapport-appli.js";
 import { lireFichiersKeep } from "./notes.js";
@@ -1800,7 +1801,7 @@ $("materiel-achat-form")?.addEventListener("submit", (ev) => ajouterMateriel(ev,
     }
   } catch (e) { if (st) st.textContent = "Action impossible : " + e.message; }
 }));
-  return { ouvrir: ouvrirMaison };
+  return { ouvrir: ouvrirMaison, donnees: () => ({ nom: cfg.nom, charge: maisonCharge, calc: calculerMaison(maisonEntrees, maisonReglages, moisDe()), entrees: maisonEntrees, materiel: calculerMateriel(materielItems), articles: materielItems }) };
 }
 const ESPACE_MAISON = creerEspaceProjet({ p: "maison", m: "materiel", tab: "maison", nom: "Ma maison", c: { entries: "houseEntries", settings: "houseSettings", items: "houseItems" },
   cat: { depense: CATEGORIES_MAISON, revenu: CATEGORIES_REVENU, chantier: CATEGORIES_CHANTIER },
@@ -1810,6 +1811,64 @@ const ESPACE_PRO = creerEspaceProjet({ p: "pro", m: "promat", tab: "pro", nom: "
   cat: { depense: CATEGORIES_PRO, revenu: CATEGORIES_REVENU_PRO, chantier: CATEGORIES_PROJET_PRO },
   lib: { depense: "Dépense pro", revenu: "Revenu de l'activité", chantier: "Investissement" },
   t: { solde: "Solde de l'activité", projet: "Investissement du projet", budget: "Budget professionnel", rejoint: "le matériel du projet." } });
+
+// ---------- Assistant IA (clé de l'API Claude conservée uniquement sur cet appareil) ----------
+const IA_CLE = "mwrs_cle_claude";
+const iaAfficheurs = [];
+const iaMajTous = () => iaAfficheurs.forEach(f => f());
+const iaLireCle = () => { try { return localStorage.getItem(IA_CLE) || ""; } catch { return ""; } };
+const iaEcrireCle = (c) => { try { if (c) localStorage.setItem(IA_CLE, c); else localStorage.removeItem(IA_CLE); } catch {} };
+async function iaPreparerDonnees() {
+  if (!walletLoaded) await chargerWallet(false);
+  if (!ESPACE_MAISON.donnees().charge) await ESPACE_MAISON.ouvrir();
+  if (!ESPACE_PRO.donnees().charge) await ESPACE_PRO.ouvrir();
+}
+function iaContexte() {
+  return construireContexteFinances({ comptes: walletAccounts, mouvements: walletTransactions, caisse: caisseEse, espaces: [ESPACE_MAISON.donnees(), ESPACE_PRO.donnees()] });
+}
+function monterAssistant(cle, paneId, rubrique, suggestions) {
+  const entete = document.querySelector("#" + paneId + " .section-heading"); if (!entete) return;
+  const id = (x) => "ia-" + cle + "-" + x;
+  entete.insertAdjacentHTML("afterend", `<section class="carte ia-carte" id="${id("carte")}"><div class="card-heading"><div><p class="eyebrow">ASSISTANT IA</p><h3>Posez une question sur vos finances</h3></div></div>
+    <form id="${id("cle-form")}" class="ia-cle" autocomplete="off"><p class="meta">Pour activer l'assistant, collez votre clé de l'API Claude. Elle reste uniquement sur cet appareil (navigateur) et n'est envoyée qu'à Anthropic. Utilisez une clé réservée à cet usage et dont la dépense est plafonnée.</p><div class="ia-ligne"><input id="${id("cle")}" type="password" placeholder="Clé de l'API Claude" autocomplete="off"><button class="btn btn-primary" type="submit">Enregistrer la clé</button></div></form>
+    <div id="${id("zone")}" hidden><div class="ia-suggestions">${suggestions.map(q => `<button type="button" class="ia-chip" data-ia-question="${echapper(q)}">${echapper(q)}</button>`).join("")}</div>
+      <div id="${id("fil")}" class="ia-fil" aria-live="polite"></div>
+      <form id="${id("form")}" class="ia-ligne"><textarea id="${id("question")}" rows="2" maxlength="2000" placeholder="Ex. Combien ai-je dépensé ce mois-ci ?"></textarea><button class="btn btn-primary" type="submit" id="${id("envoyer")}">Demander</button></form>
+      <p class="meta">Seules vos données financières utiles sont envoyées à l'IA, au moment où vous posez la question. Les réponses peuvent contenir des erreurs : vérifiez les montants importants. <button type="button" class="ia-lien" id="${id("effacer")}">Effacer la conversation</button> · <button type="button" class="ia-lien" id="${id("oublier")}">Supprimer la clé</button></p></div></section>`);
+  const historique = []; let occupe = false;
+  const fil = $(id("fil")), zone = $(id("zone")), cleForm = $(id("cle-form"));
+  const afficher = () => { const a = !!iaLireCle(); zone.hidden = !a; cleForm.hidden = a; };
+  const bulle = (role, texte) => { const d = document.createElement("div"); d.className = "ia-msg ia-" + role; d.textContent = texte; fil.appendChild(d); fil.scrollTop = fil.scrollHeight; return d; };
+  cleForm.addEventListener("submit", (ev) => { ev.preventDefault(); const v = $(id("cle")).value.trim(); if (v.length < 20) { return; } iaEcrireCle(v); $(id("cle")).value = ""; iaMajTous(); });
+  $(id("oublier")).addEventListener("click", () => { if (confirm("Supprimer la clé enregistrée sur cet appareil ?")) { iaEcrireCle(""); iaMajTous(); } });
+  $(id("effacer")).addEventListener("click", () => { historique.length = 0; fil.innerHTML = ""; });
+  async function poser(question) {
+    question = String(question || "").trim(); if (!question || occupe) return;
+    occupe = true; $(id("envoyer")).disabled = true;
+    bulle("user", question);
+    const attente = bulle("assistant", "Réflexion en cours…");
+    try {
+      await iaPreparerDonnees();
+      const req = preparerRequeteAssistant({ cle: iaLireCle(), contexte: iaContexte(), rubrique, historique, question });
+      const rep = await fetch(req.url, req.options);
+      let json = null; try { json = await rep.json(); } catch {}
+      if (!rep.ok) throw new Error(messageErreurAssistant(rep.status, json));
+      const texte = extraireReponseAssistant(json) || "Je n'ai pas pu formuler de réponse.";
+      attente.textContent = texte;
+      historique.push({ role: "user", content: question }, { role: "assistant", content: texte });
+    } catch (e) {
+      attente.textContent = e.message && !/Failed to fetch|NetworkError/i.test(e.message) ? e.message : "Connexion à l'IA impossible : vérifiez votre connexion internet.";
+      attente.classList.add("ia-erreur");
+    } finally { occupe = false; $(id("envoyer")).disabled = false; }
+  }
+  $(id("form")).addEventListener("submit", (ev) => { ev.preventDefault(); const q = $(id("question")).value; $(id("question")).value = ""; poser(q); });
+  zone.addEventListener("click", (ev) => { const b = ev.target.closest("[data-ia-question]"); if (b) poser(b.dataset.iaQuestion); });
+  iaAfficheurs.push(afficher);
+  afficher();
+}
+monterAssistant("wallet", "pane-wallet", "Mon Porte-Monnaie", ["Quel est l'état de mes comptes ?", "Où est parti mon argent ce mois-ci ?", "Compare ce mois avec le mois dernier"]);
+monterAssistant("maison", "pane-maison", "Ma maison", ["Où en suis-je dans mon budget familial ?", "Que dois-je acheter en priorité ?", "Résume l'avancement de mon projet de construction"]);
+monterAssistant("pro", "pane-pro", "Projet pro", ["Quel est le résultat de mon activité ce mois-ci ?", "Quels équipements dois-je acquérir en premier ?", "Mon budget professionnel est-il respecté ?"]);
 async function chargerRistourne(force = false, silencieux = false) {
   const statut = $("wallet-ristourne-status");
   const base = bases.ese;

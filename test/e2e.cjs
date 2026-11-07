@@ -39,6 +39,7 @@ async function scenario(nom, { mode = 'ok', sdkBloque = false, quotaGmail = fals
     if (m === 'OPTIONS') return route.fulfill({ status: 204, headers: CORS });
     if (u.includes('accounts.google.com/gsi/client')) return route.fulfill(js("window.google={accounts:{oauth2:{initTokenClient:function(o){return{requestAccessToken:function(){setTimeout(function(){if(localStorage.getItem('gis_ok')==='1')o.callback({access_token:'tok-gis',expires_in:3600});else o.error_callback({type:'popup_failed_to_open'});},50);}};}}}};"));
     if (u.includes('gstatic.com')) { if (sdkBloque) return route.abort(); return route.fulfill(js(u.includes('firebase-app') ? stubApp : stubAuth(mode))); }
+    if (u.includes('api.anthropic.com')) { etat.ia = etat.ia || []; const hd = route.request().headers(); etat.ia.push({ cle: hd['x-api-key'], direct: hd['anthropic-dangerous-direct-browser-access'], corps: route.request().postData() }); const dernier = JSON.parse(route.request().postData()).messages.at(-1).content; if (dernier.includes('ERREUR')) return route.fulfill({ status: 401, headers: CORS, contentType: 'application/json', body: JSON.stringify({ error: { message: 'invalid x-api-key' } }) }); return route.fulfill({ status: 200, headers: CORS, contentType: 'application/json', body: JSON.stringify({ content: [{ type: 'text', text: 'Votre caisse contient 70 USD.' }] }) }); }
     if (u.includes('api.telegram.org')) {
       if (u.includes('BADBAD')) return route.fulfill(json({ ok: false, error_code: 401, description: 'Unauthorized' }));
       if (u.includes('/getMe')) return route.fulfill(json({ ok: true, result: { username: 'MonRS_bot' } }));
@@ -505,6 +506,22 @@ srv.listen(8765, async () => {
     const crees = (etat.wallet.crees || []).map((c) => c.url);
     const ok = nav.includes('Projet pro') && /100\s?000\s?FC/.test(resume) && /20 %/.test(resume) && /300\s?000\s?FC/.test(total) && sansTasks && yDetail < yForm && crees.some((u) => u.includes('proEntries')) && crees.some((u) => u.includes('proItems')) && !crees.some((u) => u.includes('houseEntries'));
     return { ok, detail: [nav, resume.slice(0, 120), total, sansTasks, yDetail, yForm].join(' | ') };
+  }));
+  res.push(await scenario('Assistant IA : clé, question sur les finances, réponse et erreur', { }, async (p, appels, logs, etat) => {
+    p.on('dialog', (d) => d.accept());
+    await p.click('#bouton-connexion'); await p.waitForTimeout(3000);
+    await p.click('[data-tab="wallet"]'); await p.waitForTimeout(2500);
+    const formVisible = await p.isVisible('#ia-wallet-cle-form'), zoneCachee = !(await p.isVisible('#ia-wallet-zone'));
+    await p.fill('#ia-wallet-cle', 'sk-ant-test-0123456789abcdef'); await p.click('#ia-wallet-cle-form button[type=submit]'); await p.waitForTimeout(400);
+    await p.click('#ia-wallet-zone [data-ia-question]:first-child'); await p.waitForTimeout(3500);
+    const rep = (await p.textContent('#ia-wallet-fil')).replace(/\s+/g, ' ');
+    const appel = (etat.ia || [])[0] || {}; const corps = appel.corps ? JSON.parse(appel.corps) : {};
+    await p.fill('#ia-wallet-question', 'ERREUR test'); await p.click('#ia-wallet-envoyer'); await p.waitForTimeout(2500);
+    const fil2 = (await p.textContent('#ia-wallet-fil')).replace(/\s+/g, ' ');
+    await p.click('[data-tab="maison"]'); await p.waitForTimeout(800);
+    const autreRubrique = await p.isVisible('#ia-maison-zone');
+    const ok = formVisible && zoneCachee && rep.includes('70 USD') && appel.cle === 'sk-ant-test-0123456789abcdef' && appel.direct === 'true' && corps.model === 'claude-sonnet-5-5' && corps.system.includes('comptes_porte_monnaie') && corps.system.includes('Ma maison') && fil2.includes('Clé refusée') && autreRubrique;
+    return { ok, detail: [formVisible, zoneCachee, rep.slice(0, 80), appel.cle, corps.model, fil2.slice(-90), autreRubrique].join(' | ') };
   }));
   res.push(await scenario('Domaine non autorisé : message clair', { mode: 'auth/unauthorized-domain' }, async (p) => {
     await p.click('#bouton-connexion'); await p.waitForTimeout(800);
