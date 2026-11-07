@@ -435,7 +435,7 @@ srv.listen(8765, async () => {
   res.push(await scenario('Porte-monnaie : onglet « Ma maison » (dépense, budget, chantier)', { }, async (p, appels, logs, etat) => {
     await p.click('#bouton-connexion'); await p.waitForTimeout(3000);
     await p.click('[data-tab="wallet"]'); await p.waitForTimeout(2500);
-    await p.click('[data-wvue="maison"]'); await p.waitForTimeout(1500);
+    await p.click('[data-tab="maison"]'); await p.waitForTimeout(1500);
     const visible = await p.isVisible('#wallet-vue-maison') && !(await p.isVisible('#wallet-vue-finances'));
     await p.fill('#maison-reglages input[name=budgetFC]', '200000');
     await p.click('#maison-reglages button[type=submit]'); await p.waitForTimeout(800);
@@ -455,7 +455,7 @@ srv.listen(8765, async () => {
     p.on('dialog', (d) => d.accept());
     await p.click('#bouton-connexion'); await p.waitForTimeout(3000);
     await p.click('[data-tab="wallet"]'); await p.waitForTimeout(2500);
-    await p.click('[data-wvue="maison"]'); await p.waitForTimeout(1200);
+    await p.click('[data-tab="maison"]'); await p.waitForTimeout(1200);
     await p.selectOption('#maison-form select[name=currency]', 'USD'); await p.waitForTimeout(300);
     const options = (await p.textContent('#maison-compte')).replace(/\s+/g, ' ');
     await p.selectOption('#maison-compte', 'a1');

@@ -1814,13 +1814,12 @@ function rendreMaison() {
   }
 }
 function majAvancementMaison() { const r = $("maison-avancement"), v = $("maison-avancement-val"); if (r && v) v.textContent = r.value + " %"; }
-function basculerVueWallet(vue) {
-  document.querySelectorAll(".wallet-sous-onglet").forEach(b => { const on = b.dataset.wvue === vue; b.classList.toggle("actif", on); b.setAttribute("aria-selected", String(on)); });
-  const f = $("wallet-vue-finances"), m = $("wallet-vue-maison");
-  if (f) f.hidden = vue !== "finances"; if (m) m.hidden = vue !== "maison";
-  if (vue === "maison") { const d = document.querySelector("#maison-form input[name=date]"); if (d && !d.value) d.value = new Date().toISOString().slice(0, 10); if (!maisonCharge) chargerMaison(); else rendreMaison(); }
+async function ouvrirMaison() {
+  const d = document.querySelector("#maison-form input[name=date]"); if (d && !d.value) d.value = new Date().toISOString().slice(0, 10);
+  if (!walletLoaded) await chargerWallet(false);
+  if (!maisonCharge) await chargerMaison(); else rendreMaison();
 }
-document.querySelectorAll(".wallet-sous-onglet").forEach(b => b.addEventListener("click", () => basculerVueWallet(b.dataset.wvue)));
+document.querySelector('[data-tab="maison"]')?.addEventListener("click", ouvrirMaison);
 $("maison-section")?.addEventListener("change", majCategoriesMaison);
 $("maison-form")?.elements.namedItem("currency")?.addEventListener("change", majComptesMaison);
 $("maison-filtre")?.addEventListener("change", rendreMaison);

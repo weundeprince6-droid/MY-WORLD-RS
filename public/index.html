@@ -60,6 +60,7 @@
             <button class="nav-item" role="tab" aria-selected="false" data-tab="tasks"><span class="nav-icon">☑</span><span>Google Tasks</span><span class="nav-arrow">›</span></button>
             <button class="nav-item" role="tab" aria-selected="false" data-tab="notes"><span class="nav-icon">📝</span><span>Notes & Projets</span><span class="nav-arrow">›</span></button>
             <button class="nav-item" role="tab" aria-selected="false" data-tab="wallet"><span class="nav-icon">💰</span><span>Mon Porte-Monnaie</span><span class="nav-arrow">›</span></button>
+            <button class="nav-item" role="tab" aria-selected="false" data-tab="maison"><span class="nav-icon">🏠</span><span>Ma maison</span><span class="nav-arrow">›</span></button>
             <button class="nav-item" role="tab" aria-selected="false" data-tab="profile"><span class="nav-icon">♙</span><span>Profil</span><span class="nav-arrow">›</span></button>
           </nav>
           <div class="sidebar-note"><span class="note-icon">✦</span><strong>Un espace, plusieurs univers.</strong><p>Vos informations essentielles réunies pour vous aider à garder le cap.</p></div>
@@ -207,8 +208,6 @@
           </section>
           <section class="tab-pane" id="pane-wallet" role="tabpanel" data-pane="wallet" hidden>
             <div class="section-heading wallet-page-heading"><div><p class="eyebrow">GESTION FINANCIÈRE</p><h2>Mon Porte-Monnaie</h2><p>Suivez vos comptes, vos entrées, vos dépenses et vos transferts en USD et en FC.</p></div><span class="section-icon green">💰</span></div>
-            <div class="wallet-sous-onglets" role="tablist" aria-label="Sections du porte-monnaie"><button type="button" class="wallet-sous-onglet actif" data-wvue="finances" role="tab" aria-selected="true">Finances</button><button type="button" class="wallet-sous-onglet" data-wvue="maison" role="tab" aria-selected="false">Ma maison</button></div>
-            <div id="wallet-vue-finances">
             <div class="wallet-block-heading"><div><p class="eyebrow">SITUATION FINANCIÈRE</p><h3>Vue d'ensemble</h3><p>Un aperçu rapide de vos soldes et de votre activité.</p></div></div>
             <div class="wallet-summary" id="wallet-summary">
               <article class="wallet-total"><span>Solde personnel</span><strong id="wallet-personal-usd">0 USD</strong><b id="wallet-personal-fc">0 FC</b></article>
@@ -282,9 +281,11 @@
               <div class="wallet-history-wrap"><table class="wallet-history"><thead><tr><th>Date</th><th>Compte</th><th>Opération</th><th>Description</th><th>Montant</th><th></th></tr></thead><tbody id="wallet-history"><tr><td colspan="6" class="vide">Vos opérations apparaîtront ici.</td></tr></tbody></table></div>
             </section>
             <p id="wallet-status" class="meta" role="status">Les données du porte-monnaie sont privées et synchronisées dans votre Firebase My World RS.</p>
-            </div>
-            <div id="wallet-vue-maison" hidden>
-              <div class="wallet-block-heading"><div><p class="eyebrow">MON FOYER</p><h3>Ma maison</h3><p>Dépenses du foyer, budget familial et projet de construction, en franc congolais (FC) par défaut.</p></div></div>
+
+          </section>
+          <section class="tab-pane" id="pane-maison" role="tabpanel" data-pane="maison" hidden>
+            <div class="section-heading wallet-page-heading"><div><p class="eyebrow">MON FOYER</p><h2>Ma maison</h2><p>Dépenses du foyer, budget familial et projet de construction.</p></div><span class="section-icon">🏠</span></div>
+            <div id="wallet-vue-maison">
               <div class="maison-resume" id="maison-resume"></div>
               <div class="maison-grille">
                 <section class="carte wallet-card maison-card"><h3>Ajouter une opération</h3>
@@ -397,6 +398,6 @@
       setTimeout(function(){if(!window.__appPret)montrer("L'application n'a pas démarré. Vérifiez votre connexion internet (les composants Firebase se chargent depuis Google), désactivez un éventuel bloqueur de publicités, puis rechargez. Appuyez sur F12 > Console pour voir le détail.");},6000);
     })();
   </script>
-  <script type="module" src="app.js?v=20261107-107"></script>
+  <script type="module" src="app.js?v=20261107-108"></script>
 </body>
 </html>
