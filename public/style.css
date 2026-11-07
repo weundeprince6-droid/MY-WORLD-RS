@@ -942,3 +942,31 @@ html[data-theme="light"] #pane-wallet .wallet-ristourne .rist-part{background:li
 .maison-liste-ligne{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
 .maison-liste-ligne small{display:block;color:var(--muted)}
 .maison-filtre{display:flex;gap:6px;align-items:center;font-size:12px;font-weight:700;color:var(--muted)}
+
+/* Mode clair, version reposante : fond et cartes ni blancs ni éclatants, contrastes adoucis */
+html[data-theme="light"]{
+  --bg:#dfe4de;
+  --surface:#edf0ea;
+  --text:#27323a;
+  --muted:#53616c;
+  --border:#c4cdc5;
+  --primary:#1d6a53;
+  --primary-dark:#145241;
+  --primary-soft:#d6e6dc;
+  --shadow:0 2px 10px rgba(30,44,38,.07);
+}
+html[data-theme="light"] body{background:var(--bg)}
+html[data-theme="light"] .entete,
+html[data-theme="light"] .sidebar{background:#e8ece6}
+html[data-theme="light"] input,
+html[data-theme="light"] select,
+html[data-theme="light"] textarea{background:#f4f6f1;color:var(--text);border-color:#bcc6be}
+html[data-theme="light"] .date-chip,
+html[data-theme="light"] .agenda-cal-jour,
+html[data-theme="light"] .agenda-anniversaire{background:#edf0ea!important;border-color:#c4cdc5;color:#27323a}
+html[data-theme="light"] .nav-item.actif,
+html[data-theme="light"] .nav-item[aria-selected="true"]{background:#d6e6dc}
+html[data-theme="light"] .section-icon.green,html[data-theme="light"] .feature-green .feature-icon,
+html[data-theme="light"] .section-icon.orange,html[data-theme="light"] .feature-orange .feature-icon{background:#d3e5da}
+html[data-theme="light"] .section-icon.blue,html[data-theme="light"] .feature-blue .feature-icon,
+html[data-theme="light"] .section-icon.purple,html[data-theme="light"] .feature-purple .feature-icon{background:#d9e4ee}
