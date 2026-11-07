@@ -15,7 +15,7 @@ import {
   calculerCreditsAvec, MESURES_CREDITS_AVEC, calculerEse, MESURES_ESE, calculerRistourne, calculerCaisseEse, decoderChamps,
 } from "./firestore.js";
 import { calculerRapport, dessinerRapport } from "./rapport.js";
-import { calculerMateriel, normaliserMateriel, calculerMaison, normaliserEntreeMaison, moisDe, CATEGORIES_MAISON, CATEGORIES_REVENU, CATEGORIES_CHANTIER } from "./maison.js";
+import { calculerMateriel, normaliserMateriel, calculerMaison, normaliserEntreeMaison, moisDe, CATEGORIES_PRO, CATEGORIES_REVENU_PRO, CATEGORIES_PROJET_PRO, CATEGORIES_MAISON, CATEGORIES_REVENU, CATEGORIES_CHANTIER } from "./maison.js";
 import { dessinerRapportAppli } from "./rapport-appli.js";
 import { lireFichiersKeep } from "./notes.js";
 
@@ -1761,21 +1761,23 @@ async function reinitialiserPartsCaisse() {
 }
 $("caisse-part-reinit")?.addEventListener("click", reinitialiserPartsCaisse);
 
-// ---------- Ma maison : dépenses du foyer, budget familial, projet de construction ----------
+// ---------- Espaces « Ma maison » et « Projet pro » : dépenses, budgets, projet, matériel (même modèle) ----------
+function creerEspaceProjet(cfg) {
+  const $ = (id) => document.getElementById(id.replace(/^maison-/, cfg.p + "-").replace(/^materiel-/, cfg.m + "-"));
 let maisonEntrees = [], maisonReglages = {}, maisonCharge = false;
-const MAISON_LIBELLES = { depense: "Dépense maison", revenu: "Revenu du foyer", chantier: "Chantier" };
+const MAISON_LIBELLES = cfg.lib;
 async function chargerMaison() {
   try {
-    const [entrees, reglages] = await Promise.all([walletReadCollection("houseEntries"), walletReadCollection("houseSettings")]);
+    const [entrees, reglages] = await Promise.all([walletReadCollection(cfg.c.entries), walletReadCollection(cfg.c.settings)]);
     maisonEntrees = entrees.map(e => ({ ...e, amount: Number(e.amount || 0) })).sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")) || String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
     maisonReglages = reglages.find(r => r.id === "main") || {};
     maisonCharge = true;
   } catch (e) {
-    const st = $("maison-status"); if (st) st.textContent = "Chargement de « Ma maison » impossible : " + e.message;
+    const st = $("maison-status"); if (st) st.textContent = "Chargement de « " + cfg.nom + " » impossible : " + e.message;
   }
   rendreMaison();
 }
-function maisonCategories(section) { return section === "revenu" ? CATEGORIES_REVENU : section === "chantier" ? CATEGORIES_CHANTIER : CATEGORIES_MAISON; }
+function maisonCategories(section) { return section === "revenu" ? cfg.cat.revenu : section === "chantier" ? cfg.cat.chantier : cfg.cat.depense; }
 function majComptesMaison() {
   const sel = $("maison-compte"), f = $("maison-form"); if (!sel || !f) return;
   const dev = f.elements.namedItem("currency")?.value === "USD" ? "USD" : "FC", precedent = sel.value;
@@ -1796,13 +1798,13 @@ function rendreMaison() {
   const pct = (o) => ["FC", "USD"].filter(d => o[d] !== null).map(d => `${o[d]} %${d === "USD" ? " (USD)" : ""}`).join(" · ") || "Budget non défini";
   $("maison-resume").innerHTML =
     `<article><span>Dépenses du mois</span><strong>${dv(m.depensesMois)}</strong><b>Budget utilisé : ${pct(m.budgetUtilise)}</b></article>` +
-    `<article><span>Revenus du mois</span><strong>${dv(m.revenusMois)}</strong><b>Solde du foyer : ${dv(m.soldeMois)}</b></article>` +
-    `<article><span>Projet de construction</span><strong>${dv(m.chantier.depense)}</strong><b>Budget utilisé : ${pct(m.chantier.utilise)} · avancement ${m.chantier.avancement} %</b></article>`;
+    `<article><span>Revenus du mois</span><strong>${dv(m.revenusMois)}</strong><b>${cfg.t.solde} : ${dv(m.soldeMois)}</b></article>` +
+    `<article><span>${cfg.t.projet}</span><strong>${dv(m.chantier.depense)}</strong><b>Budget utilisé : ${pct(m.chantier.utilise)} · avancement ${m.chantier.avancement} %</b></article>`;
   const barre = (p) => p === null ? "" : `<div class="maison-barre${p > 100 ? " depasse" : ""}"><i style="width:${Math.min(100, p)}%"></i></div>`;
   const lignes = (arr) => arr.length ? arr.map(c => `<div class="maison-ligne"><span>${echapper(c.nom)}</span><b>${dv(c)}</b></div>`).join("") : '<p class="meta">Rien d\'enregistré.</p>';
   const restant = (o, bud) => ["FC", "USD"].filter(d => o[d] !== null).map(d => `${o[d] < 0 ? "Dépassement" : "Reste"} : ${walletMoney(Math.abs(o[d]), d)}`).join(" · ");
-  $("maison-detail").innerHTML = `<div class="maison-detail-grille"><div><h4>Budget familial · ${echapper(m.mois)}</h4>${barre(m.budgetUtilise.FC)}${barre(m.budgetUtilise.USD)}<p class="meta">${restant(m.budgetRestant) || "Définissez un budget mensuel pour suivre ce qu'il reste."}</p>${lignes(m.parCategorie)}</div>`
-    + `<div><h4>Projet de construction</h4>${barre(m.chantier.utilise.FC)}${barre(m.chantier.utilise.USD)}<p class="meta">${restant(m.chantier.reste) || "Définissez le budget du projet pour suivre ce qu'il reste."}</p><div class="maison-barre"><i style="width:${m.chantier.avancement}%"></i></div><p class="meta">Avancement du chantier : ${m.chantier.avancement} %</p>${lignes(m.chantier.parCategorie)}</div></div>`;
+  $("maison-detail").innerHTML = `<div class="maison-detail-grille"><div><h4>${cfg.t.budget} · ${echapper(m.mois)}</h4>${barre(m.budgetUtilise.FC)}${barre(m.budgetUtilise.USD)}<p class="meta">${restant(m.budgetRestant) || "Définissez un budget mensuel pour suivre ce qu'il reste."}</p>${lignes(m.parCategorie)}</div>`
+    + `<div><h4>${cfg.t.projet}</h4>${barre(m.chantier.utilise.FC)}${barre(m.chantier.utilise.USD)}<p class="meta">${restant(m.chantier.reste) || "Définissez le budget du projet pour suivre ce qu'il reste."}</p><div class="maison-barre"><i style="width:${m.chantier.avancement}%"></i></div><p class="meta">Avancement du chantier : ${m.chantier.avancement} %</p>${lignes(m.chantier.parCategorie)}</div></div>`;
   const f = $("maison-filtre")?.value || "all";
   const liste = maisonEntrees.filter(e => f === "all" || e.section === f);
   $("maison-liste").innerHTML = liste.length ? liste.slice(0, 80).map(e => `<div class="maison-liste-ligne"><div><strong>${echapper(e.category || "Autre")}</strong> · ${echapper(MAISON_LIBELLES[e.section] || "")}<small>${echapper(e.date || "")}${e.accountId ? " · " + echapper(walletAccountName(e.accountId)) : ""}${e.note ? " · " + echapper(e.note) : ""}</small></div><b>${e.section === "revenu" ? "+" : "−"} ${walletMoney(e.amount, e.currency === "USD" ? "USD" : "FC")}</b><button class="btn btn-secondary" type="button" data-maison-supprimer="${echapper(e.id)}">Supprimer</button></div>`).join("") : '<p class="meta">Aucune opération pour le moment.</p>';
@@ -1815,12 +1817,12 @@ function rendreMaison() {
 }
 function majAvancementMaison() { const r = $("maison-avancement"), v = $("maison-avancement-val"); if (r && v) v.textContent = r.value + " %"; }
 async function ouvrirMaison() {
-  const d = document.querySelector("#maison-form input[name=date]"); if (d && !d.value) d.value = new Date().toISOString().slice(0, 10);
+  const d = document.querySelector("#" + cfg.p + "-form input[name=date]"); if (d && !d.value) d.value = new Date().toISOString().slice(0, 10);
   if (!walletLoaded) await chargerWallet(false);
   if (!maisonCharge) await chargerMaison(); else rendreMaison();
   await chargerMateriel();
 }
-document.querySelector('[data-tab="maison"]')?.addEventListener("click", ouvrirMaison);
+document.querySelector('[data-tab="' + cfg.tab + '"]')?.addEventListener("click", ouvrirMaison);
 $("maison-section")?.addEventListener("change", majCategoriesMaison);
 $("maison-form")?.elements.namedItem("currency")?.addEventListener("change", majComptesMaison);
 $("maison-filtre")?.addEventListener("change", rendreMaison);
@@ -1837,7 +1839,7 @@ $("maison-form")?.addEventListener("submit", async (ev) => {
     let note = "";
     if (compte) {
       const txId = walletId();
-      const tx = { kind: entree.section === "revenu" ? "income" : "expense", accountId: compte.id, accountName: compte.name, accountType: compte.type, currency: entree.currency, amount: entree.amount, category: "Ma maison · " + entree.category, description: entree.note || (MAISON_LIBELLES[entree.section] + " : " + entree.category), paymentMethod: "", date: entree.date, createdAt: entree.createdAt, source: "maison" };
+      const tx = { kind: entree.section === "revenu" ? "income" : "expense", accountId: compte.id, accountName: compte.name, accountType: compte.type, currency: entree.currency, amount: entree.amount, category: cfg.nom + " · " + entree.category, description: entree.note || (MAISON_LIBELLES[entree.section] + " : " + entree.category), paymentMethod: "", date: entree.date, createdAt: entree.createdAt, source: "maison" };
       await walletCreate("walletTransactions", txId, tx);
       await walletPatchAccount(compte, walletEffet(tx));
       compte.balance = Number(compte.balance || 0) + walletEffet(tx);
@@ -1846,12 +1848,12 @@ $("maison-form")?.addEventListener("submit", async (ev) => {
       note = entree.section === "revenu" ? " Ajouté au compte « " + compte.name + " »." : " Déduit du compte « " + compte.name + " ».";
       walletRender();
     }
-    await walletCreate("houseEntries", id, entree);
+    await walletCreate(cfg.c.entries, id, entree);
     maisonEntrees.unshift({ ...entree, id });
     maisonEntrees.sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
     f.elements.namedItem("amount").value = ""; f.elements.namedItem("note").value = "";
     rendreMaison();
-    if (st) st.textContent = "Opération enregistrée dans « Ma maison »." + note;
+    if (st) st.textContent = "Opération enregistrée dans « " + cfg.nom + " »." + note;
   } catch (e) { if (st) st.textContent = "Enregistrement impossible : " + e.message; }
 });
 $("maison-reglages")?.addEventListener("submit", async (ev) => {
@@ -1862,7 +1864,7 @@ $("maison-reglages")?.addEventListener("submit", async (ev) => {
   try {
     if (!uid) throw new Error("Connectez-vous à votre compte Google.");
     const masque = Object.keys(reg).map(k => "updateMask.fieldPaths=" + k).join("&");
-    await google(urlFirestore(firebaseConfig.projectId, walletPath(uid, "houseSettings", "main")) + "?" + masque, { method: "PATCH", body: JSON.stringify(walletFields(reg)) });
+    await google(urlFirestore(firebaseConfig.projectId, walletPath(uid, cfg.c.settings, "main")) + "?" + masque, { method: "PATCH", body: JSON.stringify(walletFields(reg)) });
     maisonReglages = { ...reg, id: "main" }; rendreMaison();
     if (st) st.textContent = "Budgets enregistrés.";
   } catch (e) { if (st) st.textContent = "Enregistrement des budgets impossible : " + e.message; }
@@ -1879,14 +1881,14 @@ $("maison-liste")?.addEventListener("click", async (ev) => {
       await walletDeleteDoc("walletTransactions", e.txId); walletTransactions = walletTransactions.filter(x => x.id !== e.txId);
       walletRender();
     }
-    await walletDeleteDoc("houseEntries", id); maisonEntrees = maisonEntrees.filter(x => x.id !== id); rendreMaison(); if (st) st.textContent = "Opération supprimée." + note; }
+    await walletDeleteDoc(cfg.c.entries, id); maisonEntrees = maisonEntrees.filter(x => x.id !== id); rendreMaison(); if (st) st.textContent = "Opération supprimée." + note; }
   catch (e) { if (st) st.textContent = "Suppression impossible : " + e.message; }
 });
 
 // ---------- Ma maison : matériel répertorié et matériel à ravitailler ----------
 let materielItems = [];
 async function chargerMateriel() {
-  try { materielItems = (await walletReadCollection("houseItems")).map(i => ({ ...i, qty: Number(i.qty || 1), price: Number(i.price || 0) })).sort((a, b) => String(a.name || "").localeCompare(String(b.name || ""), "fr")); }
+  try { materielItems = (await walletReadCollection(cfg.c.items)).map(i => ({ ...i, qty: Number(i.qty || 1), price: Number(i.price || 0) })).sort((a, b) => String(a.name || "").localeCompare(String(b.name || ""), "fr")); }
   catch (e) { const st = $("maison-status"); if (st) st.textContent = "Chargement du matériel impossible : " + e.message; }
   rendreMateriel();
 }
@@ -1917,7 +1919,7 @@ async function ajouterMateriel(ev, kind) {
   if (res.erreur) { if (st) st.textContent = res.erreur; return; }
   try {
     const id = walletId(), item = { ...res.item, createdAt: new Date().toISOString() };
-    await walletCreate("houseItems", id, item);
+    await walletCreate(cfg.c.items, id, item);
     materielItems.push({ ...item, id });
     f.elements.namedItem("name").value = ""; f.elements.namedItem("qty").value = "1"; f.elements.namedItem("price").value = "";
     rendreMateriel();
@@ -1932,7 +1934,7 @@ $("materiel-achat-form")?.addEventListener("submit", (ev) => ajouterMateriel(ev,
   try {
     if (sup) {
       if (!confirm("Supprimer ce matériel ?")) return;
-      await walletDeleteDoc("houseItems", sup.dataset.materielSupprimer);
+      await walletDeleteDoc(cfg.c.items, sup.dataset.materielSupprimer);
       materielItems = materielItems.filter(i => i.id !== sup.dataset.materielSupprimer); rendreMateriel();
       if (st) st.textContent = "Matériel supprimé.";
     } else if (ach) {
@@ -1943,7 +1945,7 @@ $("materiel-achat-form")?.addEventListener("submit", (ev) => ajouterMateriel(ev,
         if (!compte) { if (st) st.textContent = "Choisissez d'abord le compte du porte-monnaie à débiter pour cet achat."; return; }
         if (compte.currency !== devItem) { if (st) st.textContent = "« " + item.name + " » est en " + devItem + " : choisissez un compte en " + devItem + "."; return; }
       }
-      await google(urlFirestore(firebaseConfig.projectId, walletPath(uid, "houseItems", item.id)) + "?updateMask.fieldPaths=kind&updateMask.fieldPaths=state&updateMask.fieldPaths=place", { method: "PATCH", body: JSON.stringify(walletFields({ kind: "stock", state: "Neuf", place: item.place || "Autre" })) });
+      await google(urlFirestore(firebaseConfig.projectId, walletPath(uid, cfg.c.items, item.id)) + "?updateMask.fieldPaths=kind&updateMask.fieldPaths=state&updateMask.fieldPaths=place", { method: "PATCH", body: JSON.stringify(walletFields({ kind: "stock", state: "Neuf", place: item.place || "Autre" })) });
       Object.assign(item, { kind: "stock", state: "Neuf", place: item.place || "Autre" });
       let note = "";
       const total = Math.round(item.price * item.qty * 100) / 100;
@@ -1951,7 +1953,7 @@ $("materiel-achat-form")?.addEventListener("submit", (ev) => ajouterMateriel(ev,
         const entree = { section: "depense", category: "Autre", amount: total, currency: item.currency === "USD" ? "USD" : "FC", date: new Date().toISOString().slice(0, 10), note: "Achat de matériel : " + item.name, createdAt: new Date().toISOString() };
         if (compte) {
           const txId = walletId();
-          const tx = { kind: "expense", accountId: compte.id, accountName: compte.name, accountType: compte.type, currency: entree.currency, amount: total, category: "Ma maison · Achat de matériel", description: "Achat de matériel : " + item.name, paymentMethod: "", date: entree.date, createdAt: entree.createdAt, source: "maison" };
+          const tx = { kind: "expense", accountId: compte.id, accountName: compte.name, accountType: compte.type, currency: entree.currency, amount: total, category: cfg.nom + " · Achat de matériel", description: "Achat de matériel : " + item.name, paymentMethod: "", date: entree.date, createdAt: entree.createdAt, source: "maison" };
           await walletCreate("walletTransactions", txId, tx);
           await walletPatchAccount(compte, walletEffet(tx));
           compte.balance = Number(compte.balance || 0) + walletEffet(tx);
@@ -1959,14 +1961,24 @@ $("materiel-achat-form")?.addEventListener("submit", (ev) => ajouterMateriel(ev,
           entree.accountId = compte.id; entree.txId = txId;
           walletRender();
         }
-        const id = walletId(); await walletCreate("houseEntries", id, entree); maisonEntrees.unshift({ ...entree, id });
+        const id = walletId(); await walletCreate(cfg.c.entries, id, entree); maisonEntrees.unshift({ ...entree, id });
         note = " " + walletMoney(total, entree.currency) + " déduit du compte « " + compte.name + " ».";
       }
       rendreMateriel(); rendreMaison();
-      if (st) st.textContent = "« " + item.name + " » acheté : il rejoint le matériel de la maison." + note;
+      if (st) st.textContent = "« " + item.name + " » acheté : il rejoint " + cfg.t.rejoint + note;
     }
   } catch (e) { if (st) st.textContent = "Action impossible : " + e.message; }
 }));
+  return { ouvrir: ouvrirMaison };
+}
+const ESPACE_MAISON = creerEspaceProjet({ p: "maison", m: "materiel", tab: "maison", nom: "Ma maison", c: { entries: "houseEntries", settings: "houseSettings", items: "houseItems" },
+  cat: { depense: CATEGORIES_MAISON, revenu: CATEGORIES_REVENU, chantier: CATEGORIES_CHANTIER },
+  lib: { depense: "Dépense maison", revenu: "Revenu du foyer", chantier: "Chantier" },
+  t: { solde: "Solde du foyer", projet: "Projet de construction", budget: "Budget familial", rejoint: "le matériel de la maison." } });
+const ESPACE_PRO = creerEspaceProjet({ p: "pro", m: "promat", tab: "tasks", nom: "Projet pro", c: { entries: "proEntries", settings: "proSettings", items: "proItems" },
+  cat: { depense: CATEGORIES_PRO, revenu: CATEGORIES_REVENU_PRO, chantier: CATEGORIES_PROJET_PRO },
+  lib: { depense: "Dépense pro", revenu: "Revenu de l'activité", chantier: "Investissement" },
+  t: { solde: "Solde de l'activité", projet: "Investissement du projet", budget: "Budget professionnel", rejoint: "le matériel du projet." } });
 async function chargerRistourne(force = false, silencieux = false) {
   const statut = $("wallet-ristourne-status");
   const base = bases.ese;

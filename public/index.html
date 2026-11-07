@@ -57,7 +57,7 @@
             <button class="nav-item" role="tab" aria-selected="false" data-tab="bases"><span class="nav-icon">▤</span><span>Mes bases</span><span class="nav-arrow">›</span></button>
             <button class="nav-item" role="tab" aria-selected="false" data-tab="social"><span class="nav-icon">◎</span><span>Réseaux sociaux</span><span class="nav-arrow">›</span></button>
             <button class="nav-item" role="tab" aria-selected="false" data-tab="drive"><span class="nav-icon">▣</span><span>Google Drive</span><span class="nav-arrow">›</span></button>
-            <button class="nav-item" role="tab" aria-selected="false" data-tab="tasks"><span class="nav-icon">☑</span><span>Google Tasks</span><span class="nav-arrow">›</span></button>
+            <button class="nav-item" role="tab" aria-selected="false" data-tab="tasks"><span class="nav-icon">☑</span><span>Projet pro</span><span class="nav-arrow">›</span></button>
             <button class="nav-item" role="tab" aria-selected="false" data-tab="notes"><span class="nav-icon">📝</span><span>Notes & Projets</span><span class="nav-arrow">›</span></button>
             <button class="nav-item" role="tab" aria-selected="false" data-tab="wallet"><span class="nav-icon">💰</span><span>Mon Porte-Monnaie</span><span class="nav-arrow">›</span></button>
             <button class="nav-item" role="tab" aria-selected="false" data-tab="maison"><span class="nav-icon">🏠</span><span>Ma maison</span><span class="nav-arrow">›</span></button>
@@ -199,7 +199,65 @@
             </section>
           </section>
           <section class="tab-pane" id="pane-tasks" role="tabpanel" data-pane="tasks" hidden>
-            <div class="section-heading"><div><p class="eyebrow">VOTRE ORGANISATION</p><h2>Google Tasks</h2><p>Créez et gérez vos listes, ajoutez des tâches, modifiez-les et cochez celles qui sont terminées.</p></div><span class="section-icon blue">☑</span></div>
+            <div class="section-heading"><div><p class="eyebrow">MON ACTIVITÉ</p><h2>Projet pro</h2><p>Dépenses et revenus de l'activité, budget professionnel, investissement du projet, équipements et tâches.</p></div><span class="section-icon blue">☑</span></div>
+            <div id="pro-vue">
+              <div class="maison-resume" id="pro-resume"></div>
+              <div class="maison-grille">
+                <section class="carte wallet-card maison-card"><h3>Ajouter une opération</h3>
+                  <form id="pro-form" class="wallet-form" autocomplete="off">
+                    <label>Type<select name="section" id="pro-section"><option value="depense">Dépense professionnelle</option><option value="revenu">Revenu de l'activité</option><option value="chantier">Investissement du projet</option></select></label>
+                    <label>Catégorie<select name="category" id="pro-categorie"></select></label>
+                    <label>Montant<input name="amount" type="text" inputmode="decimal" placeholder="Ex. 25000" required></label>
+                    <label>Devise<select name="currency"><option value="FC" selected>Franc congolais (FC)</option><option value="USD">Dollar américain (USD)</option></select></label>
+                    <label>Date<input name="date" type="date" required></label>
+                    <label>Compte du porte-monnaie<select name="accountId" id="pro-compte"><option value="">Aucun (suivi seulement)</option></select></label>
+                    <p class="meta" id="pro-compte-aide">Choisissez un compte pour que la dépense soit déduite de son solde (ou le revenu ajouté).</p>
+                    <label>Note<input name="note" type="text" maxlength="200" placeholder="Facultatif"></label>
+                    <button class="btn btn-primary" type="submit">Enregistrer</button>
+                  </form>
+                </section>
+                <section class="carte wallet-card maison-card"><h3>Budgets</h3>
+                  <form id="pro-reglages" class="wallet-form" autocomplete="off">
+                    <label>Budget professionnel par mois (FC)<input name="budgetFC" type="text" inputmode="decimal" placeholder="0"></label>
+                    <label>Budget professionnel par mois (USD)<input name="budgetUSD" type="text" inputmode="decimal" placeholder="0"></label>
+                    <label>Budget d'investissement du projet (FC)<input name="chantierFC" type="text" inputmode="decimal" placeholder="0"></label>
+                    <label>Budget d'investissement du projet (USD)<input name="chantierUSD" type="text" inputmode="decimal" placeholder="0"></label>
+                    <label>Avancement du projet : <b id="pro-avancement-val">0 %</b><input name="avancement" id="pro-avancement" type="range" min="0" max="100" step="5" value="0"></label>
+                    <button class="btn btn-secondary" type="submit">Enregistrer les budgets</button>
+                  </form>
+                </section>
+              </div>
+              <section class="carte wallet-card maison-card"><div class="card-heading"><h3>Détail du mois et du projet</h3></div><div id="pro-detail"></div></section>
+              <section class="carte wallet-card maison-card"><div class="card-heading"><h3>Historique</h3><label class="maison-filtre">Afficher<select id="pro-filtre"><option value="all">Tout</option><option value="depense">Dépenses professionnelles</option><option value="revenu">Revenus de l'activité</option><option value="chantier">Investissement du projet</option></select></label></div><div id="pro-liste"></div></section>
+              <div class="maison-grille maison-materiel">
+                <section class="carte wallet-card maison-card"><h3>Matériel et équipements</h3><p class="meta" id="promat-total">Aucun équipement répertorié.</p>
+                  <form id="promat-stock-form" class="wallet-form" autocomplete="off">
+                    <label>Nom du matériel<input name="name" type="text" maxlength="80" placeholder="Ex. Ordinateur portable" required></label>
+                    <label>Quantité<input name="qty" type="text" inputmode="decimal" value="1"></label>
+                    <label>Prix unitaire<input name="price" type="text" inputmode="decimal" placeholder="Facultatif"></label>
+                    <label>Devise<select name="currency"><option value="FC" selected>Franc congolais (FC)</option><option value="USD">Dollar américain (USD)</option></select></label>
+                    <label>Lieu<select name="place"><option>Bureau</option><option>Atelier</option><option>Boutique</option><option>Entrepôt</option><option>Extérieur</option><option>Autre</option></select></label>
+                    <label>État<select name="state"><option>Neuf</option><option selected>Bon</option><option>Usé</option><option>À réparer</option></select></label>
+                    <button class="btn btn-primary" type="submit">Ajouter à l'inventaire</button>
+                  </form>
+                  <div id="promat-stock-liste"></div>
+                </section>
+                <section class="carte wallet-card maison-card"><h3>Équipements à acquérir</h3><p class="meta" id="promat-achat-total">Rien à acquérir pour le moment.</p>
+                  <form id="promat-achat-form" class="wallet-form" autocomplete="off">
+                    <label>Nom du matériel<input name="name" type="text" maxlength="80" placeholder="Ex. Imprimante" required></label>
+                    <label>Quantité<input name="qty" type="text" inputmode="decimal" value="1"></label>
+                    <label>Prix estimé (unitaire)<input name="price" type="text" inputmode="decimal" placeholder="Facultatif"></label>
+                    <label>Devise<select name="currency"><option value="FC" selected>Franc congolais (FC)</option><option value="USD">Dollar américain (USD)</option></select></label>
+                    <label>Priorité<select name="priority"><option>Urgent</option><option selected>Normal</option><option>Plus tard</option></select></label>
+                    <button class="btn btn-primary" type="submit">Ajouter aux acquisitions</button>
+                  </form>
+                  <label class="maison-filtre maison-compte-achat">Compte débité à l'acquisition<select id="promat-compte"><option value="">Choisir un compte…</option></select></label>
+                  <div id="promat-achat-liste"></div>
+                </section>
+              </div>
+              <p id="pro-status" class="meta" role="status"></p>
+            </div>
+            <div class="wallet-block-heading"><div><p class="eyebrow">TÂCHES</p><h3>Tâches du projet (Google Tasks)</h3><p>Créez et gérez vos listes, ajoutez des tâches, modifiez-les et cochez celles qui sont terminées.</p></div></div>
             <section class="carte">
               <div class="tasks-toolbar"><form id="tasks-creer-liste" class="task-ajout task-ajout-liste"><input name="title" required maxlength="100" placeholder="Nom de la nouvelle liste…" aria-label="Nom de la nouvelle liste"><button class="btn btn-primary" type="submit">Créer une liste</button></form><button class="btn btn-light" id="tasks-actualiser" type="button">Actualiser</button></div>
               <p id="tasks-statut" class="meta" role="status">Ouvrez cette rubrique pour charger vos tâches.</p>
@@ -424,6 +482,6 @@
       setTimeout(function(){if(!window.__appPret)montrer("L'application n'a pas démarré. Vérifiez votre connexion internet (les composants Firebase se chargent depuis Google), désactivez un éventuel bloqueur de publicités, puis rechargez. Appuyez sur F12 > Console pour voir le détail.");},6000);
     })();
   </script>
-  <script type="module" src="app.js?v=20261107-110"></script>
+  <script type="module" src="app.js?v=20261107-111"></script>
 </body>
 </html>

@@ -6,7 +6,9 @@ export const RAPPORT_APPLI = [
   { titre: "Les onglets", puces: [
     "Tableau de bord : synthèse des messages importants, des rendez-vous, des tâches et des bases.",
     "Messages : Gmail avec lecture dans l'application, envoi direct, pièces jointes, réponse, messages envoyés, messages importants (marquage depuis l'application), filtres comptes personnels et professionnels.",
-    "Agenda et Tâches : Google Agenda et Google Tasks, création et modification.",
+    "Agenda : Google Agenda, création et modification.",
+    "Ma maison : dépenses et revenus du foyer, budget familial, projet de construction, matériel répertorié et matériel à ravitailler, avec déduction du compte choisi.",
+    "Projet pro : même modèle côté professionnel (dépenses, revenus, budget, investissement du projet, équipements) et tâches Google Tasks.",
     "Drive : accès aux fichiers récents.",
     "Réseaux sociaux : Telegram et Facebook raccordés. WhatsApp n'est pas encore raccordé.",
     "Bases de données : AVEC LA SAGESSE et ESE DB, synthèses et indicateurs.",

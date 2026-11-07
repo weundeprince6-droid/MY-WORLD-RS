@@ -84,7 +84,7 @@ async function scenario(nom, { mode = 'ok', sdkBloque = false, quotaGmail = fals
       if (m === 'POST') { etat.notes.crees.push(JSON.parse(route.request().postData()).fields); return route.fulfill(json({})); }
       return route.fulfill(json({ documents: [{ name: 'x/notesProjects/n0', fields: { type: { stringValue: 'note' }, title: { stringValue: 'Ancienne note' }, body: { stringValue: 'x' }, updatedAt: { stringValue: '2026-10-01T00:00:00.000Z' } } }] }));
     }
-    if (u.includes('/walletTransactions') || u.includes('/walletAccounts') || u.includes('/houseEntries') || u.includes('/houseSettings') || u.includes('/houseItems')) {
+    if (u.includes('/walletTransactions') || u.includes('/walletAccounts') || u.includes('/houseEntries') || u.includes('/houseSettings') || u.includes('/houseItems') || u.includes('/proEntries') || u.includes('/proSettings') || u.includes('/proItems')) {
       etat.wallet = etat.wallet || { supprimes: [], patchs: [] };
       if (m === 'DELETE') { etat.wallet.supprimes.push(decodeURIComponent(u.split('/walletTransactions/')[1] || '')); return route.fulfill(json({})); }
       if (m === 'PATCH') { etat.wallet.patchs.push(JSON.parse(route.request().postData())); return route.fulfill(json({})); }
@@ -490,6 +490,20 @@ srv.listen(8765, async () => {
     const txV = (etat.wallet.crees || []).find((c) => c.url.includes('walletTransactions') && JSON.stringify(c.corps).includes('Verre'));
     const ok = /100\s?000\s?FC/.test(t1) && /30\s?000\s?FC/.test(t2) && sansCompte.includes('Choisissez') && refuse.includes('en FC') && /2 matériel/.test(t3) && !!txV && JSON.stringify(txV.corps).includes('expense') && JSON.stringify(etat.wallet.patchs).includes('68');
     return { ok, detail: [t1, t2, t3, vide, sansCompte, refuse, crees.length].join(' | ') };
+  }));
+  res.push(await scenario('Projet pro : dépenses, budget, équipements et tâches Google', { }, async (p, appels, logs, etat) => {
+    p.on('dialog', (d) => d.accept());
+    await p.click('#bouton-connexion'); await p.waitForTimeout(3000);
+    const nav = (await p.textContent('[data-tab="tasks"]')).trim();
+    await p.click('[data-tab="tasks"]'); await p.waitForTimeout(2500);
+    await p.fill('#pro-reglages input[name=budgetFC]', '500000'); await p.click('#pro-reglages button[type=submit]'); await p.waitForTimeout(700);
+    await p.selectOption('#pro-categorie', 'Fournitures'); await p.fill('#pro-form input[name=amount]', '100000'); await p.click('#pro-form button[type=submit]'); await p.waitForTimeout(1000);
+    await p.fill('#promat-stock-form input[name=name]', 'Ordinateur'); await p.fill('#promat-stock-form input[name=price]', '300000'); await p.click('#promat-stock-form button[type=submit]'); await p.waitForTimeout(1000);
+    const resume = (await p.textContent('#pro-resume')).replace(/\s+/g, ' '), total = (await p.textContent('#promat-total')).replace(/\s+/g, ' ');
+    const taches = await p.isVisible('#tasks-creer-liste');
+    const crees = (etat.wallet.crees || []).map((c) => c.url);
+    const ok = nav.includes('Projet pro') && /100\s?000\s?FC/.test(resume) && /20 %/.test(resume) && /300\s?000\s?FC/.test(total) && taches && crees.some((u) => u.includes('proEntries')) && crees.some((u) => u.includes('proItems')) && !crees.some((u) => u.includes('houseEntries'));
+    return { ok, detail: [nav, resume.slice(0, 120), total, taches].join(' | ') };
   }));
   res.push(await scenario('Domaine non autorisé : message clair', { mode: 'auth/unauthorized-domain' }, async (p) => {
     await p.click('#bouton-connexion'); await p.waitForTimeout(800);

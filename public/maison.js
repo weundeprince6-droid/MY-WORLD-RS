@@ -1,6 +1,9 @@
 // « Ma maison » : dépenses du foyer, budget familial et projet de construction (calculs purs, sans réseau)
 export const CATEGORIES_MAISON = ["Loyer", "Eau", "Électricité", "Internet et téléphone", "Courses", "Transport", "Santé", "Éducation", "Entretien", "Autre"];
 export const CATEGORIES_REVENU = ["Salaire", "Activité", "Aide familiale", "Autre"];
+export const CATEGORIES_PRO = ["Loyer du local", "Salaires et main-d'œuvre", "Transport et déplacements", "Fournitures", "Marketing et publicité", "Internet et téléphone", "Impôts et taxes", "Entretien", "Autre"];
+export const CATEGORIES_REVENU_PRO = ["Ventes", "Prestations de services", "Subvention ou financement", "Autre"];
+export const CATEGORIES_PROJET_PRO = ["Équipements", "Stock de départ", "Aménagement du local", "Frais administratifs", "Logiciels et outils", "Autre"];
 export const CATEGORIES_CHANTIER = ["Matériaux", "Main-d'œuvre", "Transport", "Terrain et papiers", "Outils", "Autre"];
 
 const mmNb = (n) => Number(n || 0);
