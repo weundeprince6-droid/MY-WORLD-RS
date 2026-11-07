@@ -520,7 +520,9 @@ srv.listen(8765, async () => {
     const fil2 = (await p.textContent('#ia-wallet-fil')).replace(/\s+/g, ' ');
     await p.click('[data-tab="maison"]'); await p.waitForTimeout(800);
     const autreRubrique = await p.isVisible('#ia-maison-zone');
-    const ok = formVisible && zoneCachee && rep.includes('70 USD') && appel.cle === 'sk-ant-test-0123456789abcdef' && appel.direct === 'true' && corps.model === 'claude-sonnet-5-5' && corps.system.includes('comptes_porte_monnaie') && corps.system.includes('Ma maison') && fil2.includes('Clé refusée') && autreRubrique;
+    const dash = await p.evaluate(() => document.querySelectorAll('.ia-carte').length === 1 && !!document.querySelector('#ia-wallet-carte'));
+    const sysMsg = JSON.parse((etat.ia || []).at(-1).corps).system;
+    const ok = dash && sysMsg.includes('comptes_porte_monnaie') && !sysMsg.includes('"messages"') && formVisible && zoneCachee && rep.includes('70 USD') && appel.cle === 'sk-ant-test-0123456789abcdef' && appel.direct === 'true' && corps.model === 'claude-sonnet-5-5' && corps.system.includes('comptes_porte_monnaie') && corps.system.includes('Ma maison') && fil2.includes('Clé refusée') && !autreRubrique;
     return { ok, detail: [formVisible, zoneCachee, rep.slice(0, 80), appel.cle, corps.model, fil2.slice(-90), autreRubrique].join(' | ') };
   }));
   res.push(await scenario('Domaine non autorisé : message clair', { mode: 'auth/unauthorized-domain' }, async (p) => {

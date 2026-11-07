@@ -15,7 +15,7 @@ import {
   calculerCreditsAvec, MESURES_CREDITS_AVEC, calculerEse, MESURES_ESE, calculerRistourne, calculerCaisseEse, decoderChamps,
 } from "./firestore.js";
 import { calculerRapport, dessinerRapport } from "./rapport.js";
-import { construireContexteFinances, preparerRequeteAssistant, extraireReponseAssistant, messageErreurAssistant } from "./assistant.js";
+import { construireContexteGlobal, preparerRequeteAssistant, extraireReponseAssistant, messageErreurAssistant } from "./assistant.js";
 import { calculerMateriel, normaliserMateriel, calculerMaison, normaliserEntreeMaison, moisDe, CATEGORIES_PRO, CATEGORIES_REVENU_PRO, CATEGORIES_PROJET_PRO, CATEGORIES_MAISON, CATEGORIES_REVENU, CATEGORIES_CHANTIER } from "./maison.js";
 import { dessinerRapportAppli } from "./rapport-appli.js";
 import { lireFichiersKeep } from "./notes.js";
@@ -741,6 +741,7 @@ function urlDrive(q, pageToken) {
   return DRIVE_API + "?" + params.toString();
 }
 function afficherFichiersDrive(fichiers, ajouter = false) {
+  driveFichiersIA = (ajouter ? driveFichiersIA : []).concat(fichiers.map(f => ({ name: f.name, mimeType: f.mimeType || "", modifiedTime: f.modifiedTime || "" })));
   const liste = $("drive-fichiers");
   const lignes = fichiers.map((f) => {
     const dossier = f.mimeType === "application/vnd.google-apps.folder";
@@ -1818,23 +1819,30 @@ const iaAfficheurs = [];
 const iaMajTous = () => iaAfficheurs.forEach(f => f());
 const iaLireCle = () => { try { return localStorage.getItem(IA_CLE) || ""; } catch { return ""; } };
 const iaEcrireCle = (c) => { try { if (c) localStorage.setItem(IA_CLE, c); else localStorage.removeItem(IA_CLE); } catch {} };
-async function iaPreparerDonnees() {
-  if (!walletLoaded) await chargerWallet(false);
-  if (!ESPACE_MAISON.donnees().charge) await ESPACE_MAISON.ouvrir();
-  if (!ESPACE_PRO.donnees().charge) await ESPACE_PRO.ouvrir();
+let driveFichiersIA = [];
+async function iaPreparerDonnees(portee) {
+  if (portee.includes("finances")) {
+    if (!walletLoaded) await chargerWallet(false);
+    if (!ESPACE_MAISON.donnees().charge) await ESPACE_MAISON.ouvrir();
+    if (!ESPACE_PRO.donnees().charge) await ESPACE_PRO.ouvrir();
+  }
+  if (portee.includes("notes") && !notesLoaded) await notesLoad();
+  if (portee.includes("drive") && !driveFichiersIA.length && jetonGoogle) { try { await chargerDrive({ nouvelleRecherche: true }); } catch {} }
 }
-function iaContexte() {
-  return construireContexteFinances({ comptes: walletAccounts, mouvements: walletTransactions, caisse: caisseEse, espaces: [ESPACE_MAISON.donnees(), ESPACE_PRO.donnees()] });
+function iaContexte(portee) {
+  return construireContexteGlobal(portee, {
+    finances: { comptes: walletAccounts, mouvements: walletTransactions, caisse: caisseEse, espaces: [ESPACE_MAISON.donnees(), ESPACE_PRO.donnees()] },
+    messages: { importants: etat.messages, recents: etat.recents }, agenda: etat.agenda, bases: etat.kpis, social: etat.social, notes: notesItems, drive: driveFichiersIA });
 }
-function monterAssistant(cle, paneId, rubrique, suggestions) {
+function monterAssistant(cle, paneId, rubrique, suggestions, portee = ["finances"]) {
   const entete = document.querySelector("#" + paneId + " .section-heading"); if (!entete) return;
   const id = (x) => "ia-" + cle + "-" + x;
-  entete.insertAdjacentHTML("afterend", `<section class="carte ia-carte" id="${id("carte")}"><div class="card-heading"><div><p class="eyebrow">ASSISTANT IA</p><h3>Posez une question sur vos finances</h3></div></div>
+  entete.insertAdjacentHTML("afterend", `<section class="carte ia-carte" id="${id("carte")}"><div class="card-heading"><div><p class="eyebrow">ASSISTANT IA</p><h3>Posez une question à l'assistant</h3></div></div>
     <form id="${id("cle-form")}" class="ia-cle" autocomplete="off"><p class="meta">Pour activer l'assistant, collez votre clé de l'API Claude. Elle reste uniquement sur cet appareil (navigateur) et n'est envoyée qu'à Anthropic. Utilisez une clé réservée à cet usage et dont la dépense est plafonnée.</p><div class="ia-ligne"><input id="${id("cle")}" type="password" placeholder="Clé de l'API Claude" autocomplete="off"><button class="btn btn-primary" type="submit">Enregistrer la clé</button></div></form>
     <div id="${id("zone")}" hidden><div class="ia-suggestions">${suggestions.map(q => `<button type="button" class="ia-chip" data-ia-question="${echapper(q)}">${echapper(q)}</button>`).join("")}</div>
       <div id="${id("fil")}" class="ia-fil" aria-live="polite"></div>
-      <form id="${id("form")}" class="ia-ligne"><textarea id="${id("question")}" rows="2" maxlength="2000" placeholder="Ex. Combien ai-je dépensé ce mois-ci ?"></textarea><button class="btn btn-primary" type="submit" id="${id("envoyer")}">Demander</button></form>
-      <p class="meta">Seules vos données financières utiles sont envoyées à l'IA, au moment où vous posez la question. Les réponses peuvent contenir des erreurs : vérifiez les montants importants. <button type="button" class="ia-lien" id="${id("effacer")}">Effacer la conversation</button> · <button type="button" class="ia-lien" id="${id("oublier")}">Supprimer la clé</button></p></div></section>`);
+      <form id="${id("form")}" class="ia-ligne"><textarea id="${id("question")}" rows="2" maxlength="2000" placeholder="Posez votre question…"></textarea><button class="btn btn-primary" type="submit" id="${id("envoyer")}">Demander</button></form>
+      <p class="meta">Seules les données de cette rubrique sont envoyées à l'IA, au moment où vous posez la question. Les réponses peuvent contenir des erreurs : vérifiez les montants importants. <button type="button" class="ia-lien" id="${id("effacer")}">Effacer la conversation</button> · <button type="button" class="ia-lien" id="${id("oublier")}">Supprimer la clé</button></p></div></section>`);
   const historique = []; let occupe = false;
   const fil = $(id("fil")), zone = $(id("zone")), cleForm = $(id("cle-form"));
   const afficher = () => { const a = !!iaLireCle(); zone.hidden = !a; cleForm.hidden = a; };
@@ -1848,8 +1856,8 @@ function monterAssistant(cle, paneId, rubrique, suggestions) {
     bulle("user", question);
     const attente = bulle("assistant", "Réflexion en cours…");
     try {
-      await iaPreparerDonnees();
-      const req = preparerRequeteAssistant({ cle: iaLireCle(), contexte: iaContexte(), rubrique, historique, question });
+      await iaPreparerDonnees(portee);
+      const req = preparerRequeteAssistant({ cle: iaLireCle(), contexte: iaContexte(portee), rubrique, historique, question });
       const rep = await fetch(req.url, req.options);
       let json = null; try { json = await rep.json(); } catch {}
       if (!rep.ok) throw new Error(messageErreurAssistant(rep.status, json));
@@ -1866,9 +1874,22 @@ function monterAssistant(cle, paneId, rubrique, suggestions) {
   iaAfficheurs.push(afficher);
   afficher();
 }
-monterAssistant("wallet", "pane-wallet", "Mon Porte-Monnaie", ["Quel est l'état de mes comptes ?", "Où est parti mon argent ce mois-ci ?", "Compare ce mois avec le mois dernier"]);
-monterAssistant("maison", "pane-maison", "Ma maison", ["Où en suis-je dans mon budget familial ?", "Que dois-je acheter en priorité ?", "Résume l'avancement de mon projet de construction"]);
-monterAssistant("pro", "pane-pro", "Projet pro", ["Quel est le résultat de mon activité ce mois-ci ?", "Quels équipements dois-je acquérir en premier ?", "Mon budget professionnel est-il respecté ?"]);
+// Rubriques où l'assistant est affiché : pour l'étendre à d'autres onglets, ajoutez leur clé à IA_RUBRIQUES_ACTIVES.
+const IA_RUBRIQUES_ACTIVES = ["wallet"];
+const IA_RUBRIQUES = {
+  wallet: ["pane-wallet", "Mon Porte-Monnaie", ["Quel est l'état de mes comptes ?", "Où est parti mon argent ce mois-ci ?", "Compare ce mois avec le mois dernier"], ["finances"]],
+  maison: ["pane-maison", "Ma maison", ["Où en suis-je dans mon budget familial ?", "Que dois-je acheter en priorité ?", "Résume l'avancement de mon projet de construction"], ["finances"]],
+  dashboard: ["pane-dashboard", "Tableau de bord", ["Que dois-je faire aujourd'hui ?", "Fais-moi un résumé de ma journée", "Qu'est-ce qui est urgent ?"], ["finances", "messages", "agenda", "bases", "social"]],
+  messages: ["pane-messages", "Messages", ["Résume mes messages importants", "Quels messages demandent une réponse ?", "Y a-t-il des factures ou des paiements à régler ?"], ["messages"]],
+  agenda: ["pane-agenda", "Agenda", ["Quel est mon programme aujourd'hui ?", "Quels rendez-vous arrivent cette semaine ?", "Y a-t-il des conflits d'horaire ?"], ["agenda"]],
+  bases: ["pane-bases", "Mes bases de données", ["Explique-moi ces indicateurs", "Qu'est-ce qui mérite mon attention ?", "Compare AVEC LA SAGESSE et ESE DB"], ["bases"]],
+  social: ["pane-social", "Réseaux sociaux", ["Résume les derniers messages reçus", "Y a-t-il des messages auxquels répondre ?"], ["social"]],
+  drive: ["pane-drive", "Google Drive", ["Quels sont mes fichiers récents ?", "Aide-moi à retrouver un document sur le budget"], ["drive"]],
+  notes: ["pane-notes", "Notes et projets", ["Résume mes notes", "Quelles notes sont épinglées ?", "Propose-moi un plan à partir de mes projets"], ["notes"]],
+  pro: ["pane-pro", "Projet pro", ["Quel est le résultat de mon activité ce mois-ci ?", "Quels équipements dois-je acquérir en premier ?", "Mon budget professionnel est-il respecté ?"], ["finances"]],
+};
+IA_RUBRIQUES_ACTIVES.forEach(k => { const r = IA_RUBRIQUES[k]; if (r) monterAssistant(k, r[0], r[1], r[2], r[3]); });
+
 async function chargerRistourne(force = false, silencieux = false) {
   const statut = $("wallet-ristourne-status");
   const base = bases.ese;

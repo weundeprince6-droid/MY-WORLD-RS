@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { construireContexteFinances, preparerRequeteAssistant, extraireReponseAssistant, messageErreurAssistant, iaTotauxParMois, IA_MODELE } from "../public/assistant.js";
+import { construireContexteGlobal, construireContexteFinances, preparerRequeteAssistant, extraireReponseAssistant, messageErreurAssistant, iaTotauxParMois, IA_MODELE } from "../public/assistant.js";
 const mv = [
   { kind: "expense", amount: 30000, currency: "FC", date: "2026-11-02", accountName: "Caisse", category: "Courses", description: "riz" },
   { kind: "income", amount: 100000, currency: "FC", date: "2026-11-01", accountName: "Caisse" },
@@ -20,3 +20,19 @@ assert.ok(messageErreurAssistant(401, {}).includes("Clé refusée")); assert.ok(
 const gros = construireContexteFinances({ mouvements: Array.from({ length: 300 }, (_, i) => ({ kind: "expense", amount: i, currency: "FC", date: "2026-11-01", description: "x".repeat(60), category: "y".repeat(40), accountName: "z".repeat(30) })), aujourdhui: "2026-11-07" });
 assert.ok(gros.length < 16000);
 console.log("assistant OK");
+
+{
+  const g = JSON.parse(construireContexteGlobal(["messages", "agenda", "bases", "social", "notes", "drive"], {
+    messages: { importants: [{ de: "A", sujet: "Facture", date: 1730000000000, extrait: "x".repeat(400), etoile: true }], recents: [] },
+    agenda: { aujourdhui: [{ titre: "RDV", debut: new Date("2026-11-07T10:00:00Z"), fin: new Date("2026-11-07T11:00:00Z"), lieu: "Bureau" }], aVenir: [] },
+    bases: [{ base: "ESE DB", nom: "Ventes", valeur: 12, unite: "$" }, { nom: "X", erreur: true }],
+    social: [{ date: 0, de: "Paul", texte: "Salut" }], notes: [{ title: "Idée", body: "b".repeat(500), pinned: true }], drive: [{ name: "Budget.xlsx", mimeType: "application/vnd.ms-excel", modifiedTime: "2026-11-01" }],
+    finances: { comptes: [{ name: "Caisse", currency: "FC", balance: 1 }] } }, "2026-11-07"));
+  assert.equal(g.messages.importants[0].extrait.length, 150); assert.equal(g.messages.importants[0].important_etoile, true);
+  assert.equal(g.agenda.aujourdhui[0].titre, "RDV"); assert.equal(g.bases_de_donnees[1].valeur, "indisponible"); assert.equal(g.reseaux_sociaux[0].de, "Paul");
+  assert.equal(g.notes_et_projets[0].contenu.length, 200); assert.equal(g.fichiers_drive[0].nom, "Budget.xlsx");
+  assert.ok(!("comptes_porte_monnaie" in g)); // finances hors portée : non envoyées
+  const f = JSON.parse(construireContexteGlobal(["finances"], { finances: { comptes: [{ name: "Caisse", currency: "FC", balance: 5 }] }, messages: { importants: [{ sujet: "secret" }] } }, "2026-11-07"));
+  assert.equal(f.comptes_porte_monnaie[0].solde, 5); assert.ok(!("messages" in f));
+  console.log("assistant global OK");
+}
