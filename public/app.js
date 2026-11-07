@@ -1717,7 +1717,7 @@ function walletFilteredTransactions() {
 function walletRender() {
   rendrePartRistourne();
   if (!$("wallet-accounts")) return;
-  const sum = (type,currency) => walletAccounts.filter(a => a.type === type && a.currency === currency).reduce((s,a)=>s+Number(a.balance||0),0) + (type === "professional" && caisseEse ? Number(caisseEse[currency] || 0) : 0);
+  const sum = (type,currency) => walletAccounts.filter(a => a.type === type && a.currency === currency).reduce((s,a)=>s+Number(a.balance||0),0);
   $("wallet-personal-usd").textContent = walletMoney(sum("personal","USD"),"USD");
   $("wallet-personal-fc").textContent = walletMoney(sum("personal","FC"),"FC");
   $("wallet-pro-usd").textContent = walletMoney(sum("professional","USD"),"USD");
