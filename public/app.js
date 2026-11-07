@@ -1776,12 +1776,21 @@ async function chargerMaison() {
   rendreMaison();
 }
 function maisonCategories(section) { return section === "revenu" ? CATEGORIES_REVENU : section === "chantier" ? CATEGORIES_CHANTIER : CATEGORIES_MAISON; }
+function majComptesMaison() {
+  const sel = $("maison-compte"), f = $("maison-form"); if (!sel || !f) return;
+  const dev = f.elements.namedItem("currency")?.value === "USD" ? "USD" : "FC", precedent = sel.value;
+  const comptes = walletAccounts.filter(a => a.currency === dev);
+  sel.innerHTML = '<option value="">Aucun (suivi seulement)</option>' + comptes.map(a => `<option value="${echapper(a.id)}">${echapper(a.name)} · ${walletMoney(a.balance, a.currency)}</option>`).join("");
+  if (comptes.some(a => a.id === precedent)) sel.value = precedent;
+  const aide = $("maison-compte-aide"); if (aide) aide.textContent = comptes.length ? "Choisissez un compte pour que la dépense soit déduite de son solde (ou le revenu ajouté)." : "Aucun compte en " + dev + " dans votre porte-monnaie : l'opération sera seulement suivie ici.";
+}
 function majCategoriesMaison() {
   const sel = $("maison-categorie"), sec = $("maison-section")?.value || "depense";
   if (sel) sel.innerHTML = maisonCategories(sec).map(c => `<option>${echapper(c)}</option>`).join("");
 }
 function rendreMaison() {
   if (!$("maison-resume")) return;
+  majComptesMaison();
   const m = calculerMaison(maisonEntrees, maisonReglages, moisDe());
   const dv = (o) => `${walletMoney(o.FC, "FC")}${o.USD ? " · " + walletMoney(o.USD, "USD") : ""}`;
   const pct = (o) => ["FC", "USD"].filter(d => o[d] !== null).map(d => `${o[d]} %${d === "USD" ? " (USD)" : ""}`).join(" · ") || "Budget non défini";
@@ -1796,7 +1805,7 @@ function rendreMaison() {
     + `<div><h4>Projet de construction</h4>${barre(m.chantier.utilise.FC)}${barre(m.chantier.utilise.USD)}<p class="meta">${restant(m.chantier.reste) || "Définissez le budget du projet pour suivre ce qu'il reste."}</p><div class="maison-barre"><i style="width:${m.chantier.avancement}%"></i></div><p class="meta">Avancement du chantier : ${m.chantier.avancement} %</p>${lignes(m.chantier.parCategorie)}</div></div>`;
   const f = $("maison-filtre")?.value || "all";
   const liste = maisonEntrees.filter(e => f === "all" || e.section === f);
-  $("maison-liste").innerHTML = liste.length ? liste.slice(0, 80).map(e => `<div class="maison-liste-ligne"><div><strong>${echapper(e.category || "Autre")}</strong> · ${echapper(MAISON_LIBELLES[e.section] || "")}<small>${echapper(e.date || "")}${e.note ? " · " + echapper(e.note) : ""}</small></div><b>${e.section === "revenu" ? "+" : "−"} ${walletMoney(e.amount, e.currency === "USD" ? "USD" : "FC")}</b><button class="btn btn-secondary" type="button" data-maison-supprimer="${echapper(e.id)}">Supprimer</button></div>`).join("") : '<p class="meta">Aucune opération pour le moment.</p>';
+  $("maison-liste").innerHTML = liste.length ? liste.slice(0, 80).map(e => `<div class="maison-liste-ligne"><div><strong>${echapper(e.category || "Autre")}</strong> · ${echapper(MAISON_LIBELLES[e.section] || "")}<small>${echapper(e.date || "")}${e.accountId ? " · " + echapper(walletAccountName(e.accountId)) : ""}${e.note ? " · " + echapper(e.note) : ""}</small></div><b>${e.section === "revenu" ? "+" : "−"} ${walletMoney(e.amount, e.currency === "USD" ? "USD" : "FC")}</b><button class="btn btn-secondary" type="button" data-maison-supprimer="${echapper(e.id)}">Supprimer</button></div>`).join("") : '<p class="meta">Aucune opération pour le moment.</p>';
   const form = $("maison-reglages");
   if (form && !form.dataset.rempli) {
     for (const k of ["budgetFC", "budgetUSD", "chantierFC", "chantierUSD", "avancement"]) { const el = form.elements.namedItem(k); if (el && maisonReglages[k] !== undefined && maisonReglages[k] !== "") el.value = maisonReglages[k]; }
@@ -1813,6 +1822,7 @@ function basculerVueWallet(vue) {
 }
 document.querySelectorAll(".wallet-sous-onglet").forEach(b => b.addEventListener("click", () => basculerVueWallet(b.dataset.wvue)));
 $("maison-section")?.addEventListener("change", majCategoriesMaison);
+$("maison-form")?.elements.namedItem("currency")?.addEventListener("change", majComptesMaison);
 $("maison-filtre")?.addEventListener("change", rendreMaison);
 $("maison-avancement")?.addEventListener("input", majAvancementMaison);
 majCategoriesMaison();
@@ -1823,12 +1833,25 @@ $("maison-form")?.addEventListener("submit", async (ev) => {
   if (res.erreur) { if (st) st.textContent = res.erreur; return; }
   try {
     const id = walletId(), entree = { ...res.entree, createdAt: new Date().toISOString() };
+    const compte = walletAccounts.find(a => a.id === f.elements.namedItem("accountId")?.value && a.currency === entree.currency);
+    let note = "";
+    if (compte) {
+      const txId = walletId();
+      const tx = { kind: entree.section === "revenu" ? "income" : "expense", accountId: compte.id, accountName: compte.name, accountType: compte.type, currency: entree.currency, amount: entree.amount, category: "Ma maison · " + entree.category, description: entree.note || (MAISON_LIBELLES[entree.section] + " : " + entree.category), paymentMethod: "", date: entree.date, createdAt: entree.createdAt, source: "maison" };
+      await walletCreate("walletTransactions", txId, tx);
+      await walletPatchAccount(compte, walletEffet(tx));
+      compte.balance = Number(compte.balance || 0) + walletEffet(tx);
+      walletTransactions.unshift({ ...tx, id: txId });
+      entree.accountId = compte.id; entree.txId = txId;
+      note = entree.section === "revenu" ? " Ajouté au compte « " + compte.name + " »." : " Déduit du compte « " + compte.name + " ».";
+      walletRender();
+    }
     await walletCreate("houseEntries", id, entree);
     maisonEntrees.unshift({ ...entree, id });
     maisonEntrees.sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
     f.elements.namedItem("amount").value = ""; f.elements.namedItem("note").value = "";
     rendreMaison();
-    if (st) st.textContent = "Opération enregistrée dans « Ma maison ».";
+    if (st) st.textContent = "Opération enregistrée dans « Ma maison »." + note;
   } catch (e) { if (st) st.textContent = "Enregistrement impossible : " + e.message; }
 });
 $("maison-reglages")?.addEventListener("submit", async (ev) => {
@@ -1848,7 +1871,15 @@ $("maison-liste")?.addEventListener("click", async (ev) => {
   const b = ev.target.closest("[data-maison-supprimer]"); if (!b) return;
   const id = b.dataset.maisonSupprimer, st = $("maison-status");
   if (!confirm("Supprimer cette opération ?")) return;
-  try { await walletDeleteDoc("houseEntries", id); maisonEntrees = maisonEntrees.filter(e => e.id !== id); rendreMaison(); if (st) st.textContent = "Opération supprimée."; }
+  try {
+    const e = maisonEntrees.find(x => x.id === id); let note = "";
+    if (e?.txId) {
+      const tx = walletTransactions.find(x => x.id === e.txId), compte = walletAccounts.find(a => a.id === e.accountId);
+      if (tx && compte) { const effet = walletEffet(tx); await walletPatchAccount(compte, -effet); compte.balance = Number(compte.balance || 0) - effet; note = " Le solde du compte « " + compte.name + " » a été rétabli."; }
+      await walletDeleteDoc("walletTransactions", e.txId); walletTransactions = walletTransactions.filter(x => x.id !== e.txId);
+      walletRender();
+    }
+    await walletDeleteDoc("houseEntries", id); maisonEntrees = maisonEntrees.filter(x => x.id !== id); rendreMaison(); if (st) st.textContent = "Opération supprimée." + note; }
   catch (e) { if (st) st.textContent = "Suppression impossible : " + e.message; }
 });
 async function chargerRistourne(force = false, silencieux = false) {

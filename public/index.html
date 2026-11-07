@@ -294,6 +294,8 @@
                     <label>Montant<input name="amount" type="text" inputmode="decimal" placeholder="Ex. 25000" required></label>
                     <label>Devise<select name="currency"><option value="FC" selected>Franc congolais (FC)</option><option value="USD">Dollar américain (USD)</option></select></label>
                     <label>Date<input name="date" type="date" required></label>
+                    <label>Compte du porte-monnaie<select name="accountId" id="maison-compte"><option value="">Aucun (suivi seulement)</option></select></label>
+                    <p class="meta" id="maison-compte-aide">Choisissez un compte pour que la dépense soit déduite de son solde (ou le revenu ajouté).</p>
                     <label>Note<input name="note" type="text" maxlength="200" placeholder="Facultatif"></label>
                     <button class="btn btn-primary" type="submit">Enregistrer</button>
                   </form>
@@ -395,6 +397,6 @@
       setTimeout(function(){if(!window.__appPret)montrer("L'application n'a pas démarré. Vérifiez votre connexion internet (les composants Firebase se chargent depuis Google), désactivez un éventuel bloqueur de publicités, puis rechargez. Appuyez sur F12 > Console pour voir le détail.");},6000);
     })();
   </script>
-  <script type="module" src="app.js?v=20261107-106"></script>
+  <script type="module" src="app.js?v=20261107-107"></script>
 </body>
 </html>

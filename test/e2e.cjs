@@ -451,6 +451,24 @@ srv.listen(8765, async () => {
     const ok = visible && /50\s?000\s?FC/.test(resume) && /25 %/.test(resume) && /10\s?000\s?FC/.test(resume) && liste.includes('Loyer') && liste.includes('Matériaux'.slice(0,0) + 'Chantier') && crees.length === 2;
     return { ok, detail: resume.slice(0, 200) + ' | ' + crees.length };
   }));
+  res.push(await scenario('Ma maison : la dépense se déduit du compte choisi puis se rétablit à la suppression', { }, async (p, appels, logs, etat) => {
+    p.on('dialog', (d) => d.accept());
+    await p.click('#bouton-connexion'); await p.waitForTimeout(3000);
+    await p.click('[data-tab="wallet"]'); await p.waitForTimeout(2500);
+    await p.click('[data-wvue="maison"]'); await p.waitForTimeout(1200);
+    await p.selectOption('#maison-form select[name=currency]', 'USD'); await p.waitForTimeout(300);
+    const options = (await p.textContent('#maison-compte')).replace(/\s+/g, ' ');
+    await p.selectOption('#maison-compte', 'a1');
+    await p.fill('#maison-form input[name=amount]', '5');
+    await p.click('#maison-form button[type=submit]'); await p.waitForTimeout(1500);
+    const tx = (etat.wallet.crees || []).find((c) => c.url.includes('walletTransactions') && JSON.stringify(c.corps).includes('Ma maison'));
+    const patch = JSON.stringify(etat.wallet.patchs);
+    const statut = (await p.textContent('#maison-status')).trim();
+    await p.click('[data-maison-supprimer]'); await p.waitForTimeout(1500);
+    const patch2 = etat.wallet.patchs.length;
+    const ok = /Caisse/.test(options) && !!tx && JSON.stringify(tx.corps).includes('expense') && patch.includes('65') && statut.includes('Déduit') && patch2 >= 2 && etat.wallet.supprimes.length >= 1;
+    return { ok, detail: options.slice(0, 60) + ' | ' + statut.slice(0, 80) + ' | ' + patch.slice(0, 80) + ' | ' + patch2 };
+  }));
   res.push(await scenario('Domaine non autorisé : message clair', { mode: 'auth/unauthorized-domain' }, async (p) => {
     await p.click('#bouton-connexion'); await p.waitForTimeout(800);
     const t = (await p.textContent('#erreur')).trim(); const actif = !(await p.isDisabled('#bouton-connexion'));
