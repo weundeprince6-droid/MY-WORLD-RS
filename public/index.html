@@ -267,7 +267,7 @@
               <section class="carte wallet-stat-card"><div class="card-heading"><div><p class="eyebrow">ANALYSE</p><h2>Statistiques</h2></div></div>
                 <div class="wallet-filters"><label>Période<select id="wallet-period"><option value="month">Ce mois</option><option value="year">Cette année</option><option value="all">Tout l'historique</option></select></label><label>Type<select id="wallet-type-filter"><option value="all">Personnel + professionnel</option><option value="personal">Personnel</option><option value="professional">Professionnel</option></select></label></div>
                 <div id="wallet-statistics" class="wallet-statistics"></div>
-                <label class="wallet-chart-currency">Devise des graphiques<select id="wallet-chart-currency"><option value="USD">Dollar américain (USD)</option><option value="FC">Franc congolais (FC)</option></select></label>
+                <label class="wallet-chart-currency">Devise des graphiques<select id="wallet-chart-currency"><option value="FC" selected>Franc congolais (FC)</option><option value="USD">Dollar américain (USD)</option></select></label>
                 <div class="wallet-chart-grid">
                   <div class="wallet-chart-panel"><h3>Entrées et sorties par mois</h3><div class="wallet-chart-wrap"><canvas id="wallet-chart" width="700" height="260" aria-label="Graphique mensuel des entrées et sorties"></canvas></div></div>
                   <div class="wallet-chart-panel"><h3>Évolution du solde net mensuel</h3><div class="wallet-chart-wrap"><canvas id="wallet-net-chart" width="700" height="260" aria-label="Graphique de l'évolution du solde net mensuel"></canvas></div></div>
@@ -362,6 +362,6 @@
       setTimeout(function(){if(!window.__appPret)montrer("L'application n'a pas démarré. Vérifiez votre connexion internet (les composants Firebase se chargent depuis Google), désactivez un éventuel bloqueur de publicités, puis rechargez. Appuyez sur F12 > Console pour voir le détail.");},6000);
     })();
   </script>
-  <script type="module" src="app.js?v=20261107-104"></script>
+  <script type="module" src="app.js?v=20261107-105"></script>
 </body>
 </html>

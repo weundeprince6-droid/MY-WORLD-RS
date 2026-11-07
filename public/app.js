@@ -1828,7 +1828,7 @@ function walletRender() {
   const filter=$("wallet-history-account"), old=filter.value;
   filter.innerHTML='<option value="all">Tous les comptes</option>'+options;
   if(walletAccounts.some(a=>a.id===old))filter.value=old;
-  const selectedCurrency=$("wallet-chart-currency")?.value || "USD";
+  const selectedCurrency=$("wallet-chart-currency")?.value || "FC";
   const tx=walletFilteredTransactions();
   const currencyTx=tx.filter(t=>t.currency===selectedCurrency&&t.kind!=="transfer");
   const income=currencyTx.filter(t=>t.kind==="income").reduce((s,t)=>s+Number(t.amount||0),0);
@@ -1842,7 +1842,7 @@ function walletDrawChart(tx) {
   const canvas=$("wallet-chart"); if(!canvas)return;
   const ctx=canvas.getContext("2d"), w=canvas.width, h=canvas.height;
   ctx.clearRect(0,0,w,h);
-  const currency=$("wallet-chart-currency")?.value || "USD";
+  const currency=$("wallet-chart-currency")?.value || "FC";
   tx=tx.filter(t => t.currency===currency && t.kind!=="transfer");
   const months=[];
   for(let i=5;i>=0;i--){const d=new Date();d.setDate(1);d.setMonth(d.getMonth()-i);months.push({key:d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"),label:new Intl.DateTimeFormat("fr-FR",{month:"short"}).format(d)});}
@@ -1857,7 +1857,7 @@ function walletDrawNetChart(tx) {
   const canvas=$("wallet-net-chart"); if(!canvas)return;
   const ctx=canvas.getContext("2d"),w=canvas.width,h=canvas.height;
   ctx.clearRect(0,0,w,h);
-  const currency=$("wallet-chart-currency")?.value || "USD";
+  const currency=$("wallet-chart-currency")?.value || "FC";
   tx=tx.filter(t=>t.currency===currency&&t.kind!=="transfer");
   const months=[];
   for(let i=5;i>=0;i--){const d=new Date();d.setDate(1);d.setMonth(d.getMonth()-i);months.push({key:d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"),label:new Intl.DateTimeFormat("fr-FR",{month:"short"}).format(d)});}
