@@ -1565,9 +1565,8 @@ function comptesCaisseEse() {
 }
 function htmlCaisseEse() {
   const c = caisseEse; if (!c) return "";
-  const m = (n, d) => walletMoney(n, d === "USD" ? "$" : "FC");
   const dev = c.cur === "USD" ? "$" : "FC";
-  return `<article class="wallet-account wallet-account-ese"><div><strong>Caisse ESE DB</strong><small>Professionnel · synchronisé depuis ESE DB (lecture seule)</small><small>Francs : ${m(c.FC,"FC")} · Dollars : ${m(c.USD,"USD")} (1 $ = ${walletMoney(c.taux,"FC")})</small><small>Recettes ${m(c.recettes,c.cur)} · Dépenses ${m(c.depenses,c.cur)}</small></div><b class="${c.total<0?"neg":""}">${m(c.total,c.cur)}</b></article>`;
+  return `<article class="wallet-account wallet-account-ese"><div><strong>Caisse ESE DB</strong><small>Somme restante en caisse · synchronisé depuis ESE DB (lecture seule)</small></div><b class="${c.total<0?"neg":""}">${walletMoney(c.total,dev)}</b></article>`;
 }
 
 // ---------- Mes parts de ristourne : 50 % du solde des ristournes, versés dans un compte du porte-monnaie ----------
