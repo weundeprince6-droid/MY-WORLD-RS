@@ -84,12 +84,13 @@ async function scenario(nom, { mode = 'ok', sdkBloque = false, quotaGmail = fals
       if (m === 'POST') { etat.notes.crees.push(JSON.parse(route.request().postData()).fields); return route.fulfill(json({})); }
       return route.fulfill(json({ documents: [{ name: 'x/notesProjects/n0', fields: { type: { stringValue: 'note' }, title: { stringValue: 'Ancienne note' }, body: { stringValue: 'x' }, updatedAt: { stringValue: '2026-10-01T00:00:00.000Z' } } }] }));
     }
-    if (u.includes('/walletTransactions') || u.includes('/walletAccounts')) {
+    if (u.includes('/walletTransactions') || u.includes('/walletAccounts') || u.includes('/houseEntries') || u.includes('/houseSettings')) {
       etat.wallet = etat.wallet || { supprimes: [], patchs: [] };
       if (m === 'DELETE') { etat.wallet.supprimes.push(decodeURIComponent(u.split('/walletTransactions/')[1] || '')); return route.fulfill(json({})); }
       if (m === 'PATCH') { etat.wallet.patchs.push(JSON.parse(route.request().postData())); return route.fulfill(json({})); }
       if (m === 'POST') { (etat.wallet.crees = etat.wallet.crees || []).push({ url: u, corps: JSON.parse(route.request().postData()) }); return route.fulfill(json({})); }
       const S = (v) => ({ stringValue: v });
+      if (u.includes('/houseEntries') || u.includes('/houseSettings')) return route.fulfill(json({}));
       if (u.includes('/walletAccounts')) return route.fulfill(json({ documents: [{ name: 'x/walletAccounts/a1', fields: { name: S('Caisse'), type: S('personal'), currency: S('USD'), balance: { doubleValue: 70 }, createdAt: S('2026-11-01') } }] }));
       return route.fulfill(json({ documents: [{ name: 'x/walletTransactions/t1', fields: { kind: S('expense'), accountId: S('a1'), accountName: S('Caisse'), currency: S('USD'), amount: { doubleValue: 30 }, date: S('2026-11-03'), description: S('Transport') } }] }));
     }
@@ -430,6 +431,25 @@ srv.listen(8765, async () => {
     const tx = crees.find((c) => c.url.includes('walletTransactions') && JSON.stringify(c.corps).includes('Caisse ESE'));
     const ok = /1\s?500\s?FC/.test(info) && !!compte && JSON.stringify(compte.corps).includes('professional') && !!tx && JSON.stringify(tx.corps).includes('1500');
     return { ok, detail: info.slice(0, 120) + ' | ' + crees.length };
+  }));
+  res.push(await scenario('Porte-monnaie : onglet « Ma maison » (dépense, budget, chantier)', { }, async (p, appels, logs, etat) => {
+    await p.click('#bouton-connexion'); await p.waitForTimeout(3000);
+    await p.click('[data-tab="wallet"]'); await p.waitForTimeout(2500);
+    await p.click('[data-wvue="maison"]'); await p.waitForTimeout(1500);
+    const visible = await p.isVisible('#wallet-vue-maison') && !(await p.isVisible('#wallet-vue-finances'));
+    await p.fill('#maison-reglages input[name=budgetFC]', '200000');
+    await p.click('#maison-reglages button[type=submit]'); await p.waitForTimeout(800);
+    await p.selectOption('#maison-categorie', 'Loyer');
+    await p.fill('#maison-form input[name=amount]', '50000');
+    await p.click('#maison-form button[type=submit]'); await p.waitForTimeout(1200);
+    await p.selectOption('#maison-section', 'chantier');
+    await p.fill('#maison-form input[name=amount]', '10000');
+    await p.click('#maison-form button[type=submit]'); await p.waitForTimeout(1200);
+    const resume = (await p.textContent('#maison-resume')).replace(/\s+/g, ' ');
+    const liste = (await p.textContent('#maison-liste')).replace(/\s+/g, ' ');
+    const crees = (etat.wallet.crees || []).filter((c) => c.url.includes('houseEntries'));
+    const ok = visible && /50\s?000\s?FC/.test(resume) && /25 %/.test(resume) && /10\s?000\s?FC/.test(resume) && liste.includes('Loyer') && liste.includes('Matériaux'.slice(0,0) + 'Chantier') && crees.length === 2;
+    return { ok, detail: resume.slice(0, 200) + ' | ' + crees.length };
   }));
   res.push(await scenario('Domaine non autorisé : message clair', { mode: 'auth/unauthorized-domain' }, async (p) => {
     await p.click('#bouton-connexion'); await p.waitForTimeout(800);

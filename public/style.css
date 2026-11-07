@@ -923,3 +923,22 @@ html[data-theme="light"] #pane-wallet .wallet-ristourne .rist-part{background:li
 @media(max-width:600px){.messages-barre{width:100%}.messages-barre .btn{flex:1 1 45%}}
 .messages-comptes{margin:4px 0 14px}.compteur{opacity:.7;font-weight:600;margin-left:4px}.compteur:not(:empty)::before{content:"("}.compteur:not(:empty)::after{content:")"}
 .btn-important.actif{color:#b45309;font-weight:800}
+
+.wallet-sous-onglets{display:flex;gap:8px;margin:4px 0 14px}
+.wallet-sous-onglet{padding:9px 16px;border:1px solid var(--border);border-radius:999px;background:var(--card,transparent);color:var(--muted);font:inherit;font-weight:700;font-size:13px;cursor:pointer}
+.wallet-sous-onglet.actif{background:var(--accent,#0b5c3e);border-color:var(--accent,#0b5c3e);color:#fff}
+.maison-resume{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:14px}
+.maison-resume article{border:1px solid var(--border);border-radius:12px;padding:12px;display:grid;gap:4px}
+.maison-resume span{font-size:12px;color:var(--muted);font-weight:700}
+.maison-resume strong{font-size:18px}
+.maison-resume b{font-size:13px;font-weight:600;color:var(--muted)}
+.maison-grille{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:14px}
+.maison-card{margin-bottom:14px}
+.maison-barre{height:10px;border-radius:999px;background:var(--border);overflow:hidden;margin:6px 0}
+.maison-barre i{display:block;height:100%;background:var(--accent,#0b5c3e)}
+.maison-barre.depasse i{background:#c0392b}
+.maison-detail-grille{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.maison-ligne{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px}
+.maison-liste-ligne{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
+.maison-liste-ligne small{display:block;color:var(--muted)}
+.maison-filtre{display:flex;gap:6px;align-items:center;font-size:12px;font-weight:700;color:var(--muted)}

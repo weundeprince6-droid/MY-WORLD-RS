@@ -15,6 +15,7 @@ import {
   calculerCreditsAvec, MESURES_CREDITS_AVEC, calculerEse, MESURES_ESE, calculerRistourne, calculerCaisseEse, decoderChamps,
 } from "./firestore.js";
 import { calculerRapport, dessinerRapport } from "./rapport.js";
+import { calculerMaison, normaliserEntreeMaison, moisDe, CATEGORIES_MAISON, CATEGORIES_REVENU, CATEGORIES_CHANTIER } from "./maison.js";
 import { dessinerRapportAppli } from "./rapport-appli.js";
 import { lireFichiersKeep } from "./notes.js";
 
@@ -1759,6 +1760,97 @@ async function reinitialiserPartsCaisse() {
   } finally { partCaisseEnCours = false; rendrePartCaisse(); }
 }
 $("caisse-part-reinit")?.addEventListener("click", reinitialiserPartsCaisse);
+
+// ---------- Ma maison : dépenses du foyer, budget familial, projet de construction ----------
+let maisonEntrees = [], maisonReglages = {}, maisonCharge = false;
+const MAISON_LIBELLES = { depense: "Dépense maison", revenu: "Revenu du foyer", chantier: "Chantier" };
+async function chargerMaison() {
+  try {
+    const [entrees, reglages] = await Promise.all([walletReadCollection("houseEntries"), walletReadCollection("houseSettings")]);
+    maisonEntrees = entrees.map(e => ({ ...e, amount: Number(e.amount || 0) })).sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")) || String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
+    maisonReglages = reglages.find(r => r.id === "main") || {};
+    maisonCharge = true;
+  } catch (e) {
+    const st = $("maison-status"); if (st) st.textContent = "Chargement de « Ma maison » impossible : " + e.message;
+  }
+  rendreMaison();
+}
+function maisonCategories(section) { return section === "revenu" ? CATEGORIES_REVENU : section === "chantier" ? CATEGORIES_CHANTIER : CATEGORIES_MAISON; }
+function majCategoriesMaison() {
+  const sel = $("maison-categorie"), sec = $("maison-section")?.value || "depense";
+  if (sel) sel.innerHTML = maisonCategories(sec).map(c => `<option>${echapper(c)}</option>`).join("");
+}
+function rendreMaison() {
+  if (!$("maison-resume")) return;
+  const m = calculerMaison(maisonEntrees, maisonReglages, moisDe());
+  const dv = (o) => `${walletMoney(o.FC, "FC")}${o.USD ? " · " + walletMoney(o.USD, "USD") : ""}`;
+  const pct = (o) => ["FC", "USD"].filter(d => o[d] !== null).map(d => `${o[d]} %${d === "USD" ? " (USD)" : ""}`).join(" · ") || "Budget non défini";
+  $("maison-resume").innerHTML =
+    `<article><span>Dépenses du mois</span><strong>${dv(m.depensesMois)}</strong><b>Budget utilisé : ${pct(m.budgetUtilise)}</b></article>` +
+    `<article><span>Revenus du mois</span><strong>${dv(m.revenusMois)}</strong><b>Solde du foyer : ${dv(m.soldeMois)}</b></article>` +
+    `<article><span>Projet de construction</span><strong>${dv(m.chantier.depense)}</strong><b>Budget utilisé : ${pct(m.chantier.utilise)} · avancement ${m.chantier.avancement} %</b></article>`;
+  const barre = (p) => p === null ? "" : `<div class="maison-barre${p > 100 ? " depasse" : ""}"><i style="width:${Math.min(100, p)}%"></i></div>`;
+  const lignes = (arr) => arr.length ? arr.map(c => `<div class="maison-ligne"><span>${echapper(c.nom)}</span><b>${dv(c)}</b></div>`).join("") : '<p class="meta">Rien d\'enregistré.</p>';
+  const restant = (o, bud) => ["FC", "USD"].filter(d => o[d] !== null).map(d => `${o[d] < 0 ? "Dépassement" : "Reste"} : ${walletMoney(Math.abs(o[d]), d)}`).join(" · ");
+  $("maison-detail").innerHTML = `<div class="maison-detail-grille"><div><h4>Budget familial · ${echapper(m.mois)}</h4>${barre(m.budgetUtilise.FC)}${barre(m.budgetUtilise.USD)}<p class="meta">${restant(m.budgetRestant) || "Définissez un budget mensuel pour suivre ce qu'il reste."}</p>${lignes(m.parCategorie)}</div>`
+    + `<div><h4>Projet de construction</h4>${barre(m.chantier.utilise.FC)}${barre(m.chantier.utilise.USD)}<p class="meta">${restant(m.chantier.reste) || "Définissez le budget du projet pour suivre ce qu'il reste."}</p><div class="maison-barre"><i style="width:${m.chantier.avancement}%"></i></div><p class="meta">Avancement du chantier : ${m.chantier.avancement} %</p>${lignes(m.chantier.parCategorie)}</div></div>`;
+  const f = $("maison-filtre")?.value || "all";
+  const liste = maisonEntrees.filter(e => f === "all" || e.section === f);
+  $("maison-liste").innerHTML = liste.length ? liste.slice(0, 80).map(e => `<div class="maison-liste-ligne"><div><strong>${echapper(e.category || "Autre")}</strong> · ${echapper(MAISON_LIBELLES[e.section] || "")}<small>${echapper(e.date || "")}${e.note ? " · " + echapper(e.note) : ""}</small></div><b>${e.section === "revenu" ? "+" : "−"} ${walletMoney(e.amount, e.currency === "USD" ? "USD" : "FC")}</b><button class="btn btn-secondary" type="button" data-maison-supprimer="${echapper(e.id)}">Supprimer</button></div>`).join("") : '<p class="meta">Aucune opération pour le moment.</p>';
+  const form = $("maison-reglages");
+  if (form && !form.dataset.rempli) {
+    for (const k of ["budgetFC", "budgetUSD", "chantierFC", "chantierUSD", "avancement"]) { const el = form.elements.namedItem(k); if (el && maisonReglages[k] !== undefined && maisonReglages[k] !== "") el.value = maisonReglages[k]; }
+    if (maisonCharge) form.dataset.rempli = "1";
+    majAvancementMaison();
+  }
+}
+function majAvancementMaison() { const r = $("maison-avancement"), v = $("maison-avancement-val"); if (r && v) v.textContent = r.value + " %"; }
+function basculerVueWallet(vue) {
+  document.querySelectorAll(".wallet-sous-onglet").forEach(b => { const on = b.dataset.wvue === vue; b.classList.toggle("actif", on); b.setAttribute("aria-selected", String(on)); });
+  const f = $("wallet-vue-finances"), m = $("wallet-vue-maison");
+  if (f) f.hidden = vue !== "finances"; if (m) m.hidden = vue !== "maison";
+  if (vue === "maison") { const d = document.querySelector("#maison-form input[name=date]"); if (d && !d.value) d.value = new Date().toISOString().slice(0, 10); if (!maisonCharge) chargerMaison(); else rendreMaison(); }
+}
+document.querySelectorAll(".wallet-sous-onglet").forEach(b => b.addEventListener("click", () => basculerVueWallet(b.dataset.wvue)));
+$("maison-section")?.addEventListener("change", majCategoriesMaison);
+$("maison-filtre")?.addEventListener("change", rendreMaison);
+$("maison-avancement")?.addEventListener("input", majAvancementMaison);
+majCategoriesMaison();
+$("maison-form")?.addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const st = $("maison-status"), f = ev.target;
+  const res = normaliserEntreeMaison(Object.fromEntries(new FormData(f)));
+  if (res.erreur) { if (st) st.textContent = res.erreur; return; }
+  try {
+    const id = walletId(), entree = { ...res.entree, createdAt: new Date().toISOString() };
+    await walletCreate("houseEntries", id, entree);
+    maisonEntrees.unshift({ ...entree, id });
+    maisonEntrees.sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
+    f.elements.namedItem("amount").value = ""; f.elements.namedItem("note").value = "";
+    rendreMaison();
+    if (st) st.textContent = "Opération enregistrée dans « Ma maison ».";
+  } catch (e) { if (st) st.textContent = "Enregistrement impossible : " + e.message; }
+});
+$("maison-reglages")?.addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const st = $("maison-status"), f = ev.target, uid = fb?.auth.currentUser?.uid;
+  const nbr = (k) => { const n = Number(String(f.elements.namedItem(k).value || "0").replace(/\s/g, "").replace(",", ".")); return Number.isFinite(n) && n >= 0 ? n : 0; };
+  const reg = { budgetFC: nbr("budgetFC"), budgetUSD: nbr("budgetUSD"), chantierFC: nbr("chantierFC"), chantierUSD: nbr("chantierUSD"), avancement: Math.max(0, Math.min(100, nbr("avancement"))) };
+  try {
+    if (!uid) throw new Error("Connectez-vous à votre compte Google.");
+    const masque = Object.keys(reg).map(k => "updateMask.fieldPaths=" + k).join("&");
+    await google(urlFirestore(firebaseConfig.projectId, walletPath(uid, "houseSettings", "main")) + "?" + masque, { method: "PATCH", body: JSON.stringify(walletFields(reg)) });
+    maisonReglages = { ...reg, id: "main" }; rendreMaison();
+    if (st) st.textContent = "Budgets enregistrés.";
+  } catch (e) { if (st) st.textContent = "Enregistrement des budgets impossible : " + e.message; }
+});
+$("maison-liste")?.addEventListener("click", async (ev) => {
+  const b = ev.target.closest("[data-maison-supprimer]"); if (!b) return;
+  const id = b.dataset.maisonSupprimer, st = $("maison-status");
+  if (!confirm("Supprimer cette opération ?")) return;
+  try { await walletDeleteDoc("houseEntries", id); maisonEntrees = maisonEntrees.filter(e => e.id !== id); rendreMaison(); if (st) st.textContent = "Opération supprimée."; }
+  catch (e) { if (st) st.textContent = "Suppression impossible : " + e.message; }
+});
 async function chargerRistourne(force = false, silencieux = false) {
   const statut = $("wallet-ristourne-status");
   const base = bases.ese;

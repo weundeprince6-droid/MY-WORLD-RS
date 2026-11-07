@@ -207,6 +207,8 @@
           </section>
           <section class="tab-pane" id="pane-wallet" role="tabpanel" data-pane="wallet" hidden>
             <div class="section-heading wallet-page-heading"><div><p class="eyebrow">GESTION FINANCIÈRE</p><h2>Mon Porte-Monnaie</h2><p>Suivez vos comptes, vos entrées, vos dépenses et vos transferts en USD et en FC.</p></div><span class="section-icon green">💰</span></div>
+            <div class="wallet-sous-onglets" role="tablist" aria-label="Sections du porte-monnaie"><button type="button" class="wallet-sous-onglet actif" data-wvue="finances" role="tab" aria-selected="true">Finances</button><button type="button" class="wallet-sous-onglet" data-wvue="maison" role="tab" aria-selected="false">Ma maison</button></div>
+            <div id="wallet-vue-finances">
             <div class="wallet-block-heading"><div><p class="eyebrow">SITUATION FINANCIÈRE</p><h3>Vue d'ensemble</h3><p>Un aperçu rapide de vos soldes et de votre activité.</p></div></div>
             <div class="wallet-summary" id="wallet-summary">
               <article class="wallet-total"><span>Solde personnel</span><strong id="wallet-personal-usd">0 USD</strong><b id="wallet-personal-fc">0 FC</b></article>
@@ -280,6 +282,37 @@
               <div class="wallet-history-wrap"><table class="wallet-history"><thead><tr><th>Date</th><th>Compte</th><th>Opération</th><th>Description</th><th>Montant</th><th></th></tr></thead><tbody id="wallet-history"><tr><td colspan="6" class="vide">Vos opérations apparaîtront ici.</td></tr></tbody></table></div>
             </section>
             <p id="wallet-status" class="meta" role="status">Les données du porte-monnaie sont privées et synchronisées dans votre Firebase My World RS.</p>
+            </div>
+            <div id="wallet-vue-maison" hidden>
+              <div class="wallet-block-heading"><div><p class="eyebrow">MON FOYER</p><h3>Ma maison</h3><p>Dépenses du foyer, budget familial et projet de construction, en franc congolais (FC) par défaut.</p></div></div>
+              <div class="maison-resume" id="maison-resume"></div>
+              <div class="maison-grille">
+                <section class="carte wallet-card maison-card"><h3>Ajouter une opération</h3>
+                  <form id="maison-form" class="wallet-form" autocomplete="off">
+                    <label>Type<select name="section" id="maison-section"><option value="depense">Dépense de la maison</option><option value="revenu">Revenu du foyer</option><option value="chantier">Projet de construction</option></select></label>
+                    <label>Catégorie<select name="category" id="maison-categorie"></select></label>
+                    <label>Montant<input name="amount" type="text" inputmode="decimal" placeholder="Ex. 25000" required></label>
+                    <label>Devise<select name="currency"><option value="FC" selected>Franc congolais (FC)</option><option value="USD">Dollar américain (USD)</option></select></label>
+                    <label>Date<input name="date" type="date" required></label>
+                    <label>Note<input name="note" type="text" maxlength="200" placeholder="Facultatif"></label>
+                    <button class="btn btn-primary" type="submit">Enregistrer</button>
+                  </form>
+                </section>
+                <section class="carte wallet-card maison-card"><h3>Budgets</h3>
+                  <form id="maison-reglages" class="wallet-form" autocomplete="off">
+                    <label>Budget familial par mois (FC)<input name="budgetFC" type="text" inputmode="decimal" placeholder="0"></label>
+                    <label>Budget familial par mois (USD)<input name="budgetUSD" type="text" inputmode="decimal" placeholder="0"></label>
+                    <label>Budget du projet de construction (FC)<input name="chantierFC" type="text" inputmode="decimal" placeholder="0"></label>
+                    <label>Budget du projet de construction (USD)<input name="chantierUSD" type="text" inputmode="decimal" placeholder="0"></label>
+                    <label>Avancement du chantier : <b id="maison-avancement-val">0 %</b><input name="avancement" id="maison-avancement" type="range" min="0" max="100" step="5" value="0"></label>
+                    <button class="btn btn-secondary" type="submit">Enregistrer les budgets</button>
+                  </form>
+                </section>
+              </div>
+              <section class="carte wallet-card maison-card"><div class="card-heading"><h3>Détail du mois et du chantier</h3></div><div id="maison-detail"></div></section>
+              <section class="carte wallet-card maison-card"><div class="card-heading"><h3>Historique</h3><label class="maison-filtre">Afficher<select id="maison-filtre"><option value="all">Tout</option><option value="depense">Dépenses de la maison</option><option value="revenu">Revenus du foyer</option><option value="chantier">Projet de construction</option></select></label></div><div id="maison-liste"></div></section>
+              <p id="maison-status" class="meta" role="status"></p>
+            </div>
           </section>
           <section class="tab-pane" id="pane-notes" role="tabpanel" data-pane="notes" hidden>
             <div class="section-heading"><div><p class="eyebrow">VOTRE ESPACE PERSONNEL</p><h2>Notes & Projets</h2><p>Consultez vos notes et projets en mode aperçu. Ouvrez la modification seulement si nécessaire.</p></div><button class="btn btn-primary" id="notes-new" type="button">＋ Nouvelle note / projet</button></div>
@@ -362,6 +395,6 @@
       setTimeout(function(){if(!window.__appPret)montrer("L'application n'a pas démarré. Vérifiez votre connexion internet (les composants Firebase se chargent depuis Google), désactivez un éventuel bloqueur de publicités, puis rechargez. Appuyez sur F12 > Console pour voir le détail.");},6000);
     })();
   </script>
-  <script type="module" src="app.js?v=20261107-105"></script>
+  <script type="module" src="app.js?v=20261107-106"></script>
 </body>
 </html>
