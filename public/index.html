@@ -33,6 +33,14 @@
       <h2>Configuration à terminer</h2>
       <p>Le fichier <code>public/config.js</code> est introuvable ou illisible. Vérifiez qu'il est bien publié avec le site, puis rechargez la page. Les étapes complètes sont dans le fichier <code>README.md</code>.</p>
     </section>
+    <section id="tv-seule" class="carte accueil" hidden>
+      <div class="accueil-contenu">
+        <h2>📴 Pas de connexion internet</h2>
+        <p>Sans internet, seule la <strong>Télévision</strong> est disponible. Vos autres espaces se rouvriront (avec votre PIN) dès que la connexion reviendra.</p>
+        <button type="button" class="primary-button" id="tv-seule-ouvrir">📺 Ouvrir la télévision</button>
+        <p class="muted" id="tv-seule-etat">En attente du retour d'internet…</p>
+      </div>
+    </section>
     <section id="zone-connexion" class="carte accueil">
       <div class="welcome-mark">MW</div>
       <p class="eyebrow">Bienvenue dans votre espace</p>
@@ -477,10 +485,10 @@
       if(location.protocol==="file:")montrer("Cette page est ouverte comme un simple fichier (file://). Google refuse la connexion dans ce cas. Ouvrez-la avec http://localhost:8000/ (commande « python -m http.server 8000 » dans le dossier) ou depuis votre site Firebase.");
       window.addEventListener("error",function(e){montrer("Erreur dans la page : "+(e.message||"inconnue"));});
       window.addEventListener("unhandledrejection",function(e){montrer("Erreur : "+((e.reason&&e.reason.message)||e.reason||"inconnue"));});
-      setTimeout(function(){if(!window.__appPret)montrer("L'application n'a pas démarré. Vérifiez votre connexion internet (les composants Firebase se chargent depuis Google), désactivez un éventuel bloqueur de publicités, puis rechargez. Appuyez sur F12 > Console pour voir le détail.");},6000);
+      setTimeout(function(){if(!window.__appPret)montrer("L'application n'a pas démarré. Vérifiez votre connexion internet (les composants Firebase se chargent depuis Google), désactivez un éventuel bloqueur de publicités, puis rechargez. Sans internet : l'application doit d'abord avoir été ouverte deux fois avec internet sur cet appareil pour s'installer hors ligne. Appuyez sur F12 > Console pour voir le détail.");},6000);
     })();
   </script>
-  <script type="module" src="app.js?v=20261108-121"></script>
+  <script type="module" src="app.js?v=20261108-123"></script>
   <div id="tv-fenetre" class="tv-fenetre" hidden><div class="tv-barre"><strong>📺 Télévision</strong><button type="button" id="tv-fermer">✕ Fermer</button></div><div id="tv-zone" class="tv-zone"></div></div>
 </body>
 </html>

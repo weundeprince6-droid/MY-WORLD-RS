@@ -14,7 +14,7 @@ export const RAPPORT_APPLI = [
     "Bases de données : AVEC LA SAGESSE et ESE DB, synthèses et indicateurs.",
     "Notes : notes et projets dans l'application, import de Google Keep par export Takeout (Keep n'a pas d'API pour un compte Google personnel).",
     "Porte-monnaie : comptes, mouvements, prévisions, rapport financier PDF avec graphiques hebdomadaires et mensuels, compte « Mes parts de ristourne » (50 % de la ristourne, retirable et réinitialisable).",
-    "Mode hors ligne : l'application s'ouvre sans internet (version en ligne installée dans le navigateur), affiche les dernières données enregistrées sur l'appareil, met vos modifications du porte-monnaie, de Ma maison et de Projet pro en attente, puis les envoie automatiquement au retour d'internet.",
+    "Mode hors ligne : sans connexion internet au démarrage, seule la Télévision (Ma maison) s'ouvre, sans PIN ; les autres espaces reviennent avec le PIN dès que la connexion est retrouvée. Si la connexion coupe en cours d'utilisation, vos modifications (porte-monnaie, Ma maison, Projet pro) sont mises en attente puis envoyées automatiquement au retour d'internet.",
     "Assistant IA : onglet dédié, en bas du menu. Vous cochez les données qu'il peut consulter (finances, messages, agenda, bases, réseaux, notes, Drive) et il répond grâce à l'API Claude (clé personnelle conservée sur l'appareil, données envoyées seulement au moment de la question).",
     "Profil : informations personnelles et téléchargement de ce rapport."] },
   { titre: "Connexion Google", paragraphes: [

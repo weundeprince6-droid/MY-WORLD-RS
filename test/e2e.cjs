@@ -450,55 +450,40 @@ srv.listen(8765, async () => {
     const ok = r[0].includes('"vis":true') && r[0].includes('"ifr":1') && r[0].includes('Lecteur Pro') && r[1] === 'true' && r[2].includes('"ifr":1') && r[3] === 'true';
     return { ok, detail: r.join(' | ') };
   }));
-  res.push(await scenario('Hors ligne : ouverture sans internet, données gardées, modification mise en attente puis synchronisée', { sw: true }, async (p, appels, logs, etat, ctx) => {
+  res.push(await scenario('Hors ligne : coupure en cours d\'utilisation, modification mise en attente puis synchronisée', { }, async (p, appels, logs, etat, ctx) => {
     await p.click('#bouton-connexion'); await p.waitForTimeout(3000);
-    await p.click('[data-tab="wallet"]'); await p.waitForTimeout(2500);
-    const avant = await p.textContent('#pane-wallet').then((x) => x.includes('Caisse'));
-    const swPret = await p.evaluate(async () => { const r = await navigator.serviceWorker.getRegistration(); return !!r; });
-    // le service worker de test n'atteint pas le vrai gstatic : on lui met en mémoire les faux modules Firebase
-    await p.evaluate(async ([a, b]) => { await navigator.serviceWorker.ready; const c = await caches.open('mwrs-sw-v1'); const S = 'https://www.gstatic.com/firebasejs/10.14.1/'; await c.put(S + 'firebase-app.js', new Response(a, { headers: { 'content-type': 'text/javascript' } })); await c.put(S + 'firebase-auth.js', new Response(b, { headers: { 'content-type': 'text/javascript' } })); }, [stubApp, stubAuth('ok')]);
-    await p.reload({ waitUntil: 'load' }); await p.waitForTimeout(2500); // la page est maintenant contrôlée par le service worker
-    // --- coupure réelle du réseau, puis réouverture de l'application ---
-    etat.coupure = true; await ctx.setOffline(true);
-    await p.reload({ waitUntil: 'load' }); await p.waitForTimeout(4500);
-    const ouverte = await p.isVisible('#tableau');
-    if (!ouverte) { console.log('DEBUG', (await p.textContent('body')).replace(/\s+/g, ' ').slice(0, 400), logs.join('|')); return { ok: false, detail: 'tableau non visible hors ligne' }; }
-    const bandeau = (await p.textContent('#bandeau-reseau').catch(() => '')) || '';
-    await p.click('[data-tab="wallet"]'); await p.waitForTimeout(2500);
-    const walletHors = await p.textContent('#pane-wallet');
-    const donneesGardees = walletHors.includes('Caisse');
-    // --- une modification faite hors ligne : mise en file ---
-    await p.click('[data-tab="maison"]'); await p.waitForTimeout(1200);
+    await p.click('[data-tab="maison"]'); await p.waitForTimeout(1500);
+    etat.coupure = true; await ctx.setOffline(true); await p.evaluate(() => window.dispatchEvent(new Event('offline'))); await p.waitForTimeout(500);
     await p.selectOption('#maison-categorie', 'Loyer');
     await p.fill('#maison-form input[name=amount]', '12000');
     await p.click('#maison-form button[type=submit]'); await p.waitForTimeout(1500);
     const file = await p.evaluate(() => JSON.parse(localStorage.getItem('mwrs.hl.file') || '[]'));
-    const bandeau2 = (await p.textContent('#bandeau-reseau').catch(() => '')) || '';
+    const bandeau = (await p.textContent('#bandeau-reseau').catch(() => '')) || '';
     const creesAvant = (etat.wallet && etat.wallet.crees || []).length;
-    // --- retour d'internet ---
     etat.coupure = false; await ctx.setOffline(false); await p.waitForTimeout(500);
     await p.evaluate(() => window.dispatchEvent(new Event('online'))); await p.waitForTimeout(5000);
     const fileApres = await p.evaluate(() => JSON.parse(localStorage.getItem('mwrs.hl.file') || '[]'));
     const crees = (etat.wallet && etat.wallet.crees || []);
     const envoye = crees.slice(creesAvant).find((c) => c.url.includes('/houseEntries') && JSON.stringify(c.corps).includes('12000'));
-    const ok = avant && swPret && ouverte && bandeau.includes('hors ligne') && donneesGardees && file.length === 1 && file[0].col.endsWith('/houseEntries') && bandeau2.includes('1 modification') && fileApres.length === 0 && !!envoye;
-    return { ok, detail: [avant, swPret, ouverte, bandeau.slice(0, 40), donneesGardees, file.length, bandeau2.slice(0, 90), fileApres.length, !!envoye].join(' | ') };
+    const ok = file.length === 1 && file[0].col.endsWith('/houseEntries') && bandeau.includes('hors ligne') && bandeau.includes('1 modification') && fileApres.length === 0 && !!envoye;
+    return { ok, detail: [file.length, bandeau.slice(0, 90), fileApres.length, !!envoye].join(' | ') };
   }));
-  res.push(await scenario('Hors ligne : Wi-Fi sans internet (le navigateur se croit en ligne), PIN accepté, application ouverte', { }, async (p, appels, logs, etat) => {
+  res.push(await scenario('Hors ligne : sans connexion au démarrage, seule la télévision s\'ouvre (sans PIN), retour d\'internet = rechargement', { }, async (p, appels, logs, etat) => {
     await p.click('#bouton-connexion'); await p.waitForTimeout(3000);
-    await p.click('[data-tab="wallet"]'); await p.waitForTimeout(2500);
-    await p.evaluate(() => localStorage.removeItem('mwrs.google.jeton')); 
-    etat.coupure = true;
-    const t0 = Date.now();
-    await p.reload({ waitUntil: 'load' }); await p.waitForTimeout(9000);
-    const pinVu = await p.evaluate(() => !!localStorage.getItem(Object.keys(localStorage).find((k) => k.includes('pin')) || ''));
-    const ouverte = await p.isVisible('#tableau');
-    const bandeau = (await p.textContent('#bandeau-reseau').catch(() => '')) || '';
-    const erreur = (await p.textContent('#erreur').catch(() => '')) || '';
-    let wallet = '';
-    if (ouverte) { await p.click('[data-tab="wallet"]'); await p.waitForTimeout(2500); wallet = await p.textContent('#pane-wallet'); }
-    const ok = pinVu && ouverte && bandeau.includes('hors ligne') && wallet.includes('Caisse') && !erreur.includes('expiré');
-    return { ok, detail: [pinVu, ouverte, bandeau.slice(0, 30), wallet.includes('Caisse'), erreur.slice(0, 80), Date.now() - t0].join(' | ') };
+    etat.coupure = true; // Wi-Fi sans internet : le navigateur se croit en ligne
+    await p.reload({ waitUntil: 'load' }); await p.waitForTimeout(7000);
+    const etatPage = await p.evaluate(() => ({
+      tv: !document.getElementById('tv-seule').hidden, tableau: !document.getElementById('tableau').hidden,
+      pin: !document.getElementById('pin-gate').hidden, connexion: !document.getElementById('zone-connexion').hidden,
+      fen: !document.getElementById('tv-fenetre').hidden, titre: document.querySelector('#tv-zone iframe')?.contentDocument?.title || '' }));
+    await p.click('#tv-fermer'); await p.waitForTimeout(300);
+    const ferme = await p.isHidden('#tv-fenetre'); const encoreTv = await p.isVisible('#tv-seule');
+    await p.click('#tv-seule-ouvrir'); await p.waitForTimeout(800);
+    const reouvert = await p.isVisible('#tv-fenetre');
+    etat.coupure = false; await p.waitForTimeout(12000); // le retour d'internet recharge la page : le PIN est redemandé
+    const pinRevenu = await p.evaluate(() => !document.getElementById('pin-gate').hidden || !document.getElementById('tableau').hidden);
+    const ok = etatPage.tv && !etatPage.tableau && !etatPage.pin && !etatPage.connexion && etatPage.fen && etatPage.titre.includes('Lecteur Pro') && ferme && encoreTv && reouvert && pinRevenu;
+    return { ok, detail: JSON.stringify(etatPage) + ' | ' + [ferme, encoreTv, reouvert, pinRevenu].join(',') };
   }));
   res.push(await scenario('Porte-monnaie : onglet « Ma maison » (dépense, budget, chantier)', { }, async (p, appels, logs, etat) => {
     await p.click('#bouton-connexion'); await p.waitForTimeout(3000);

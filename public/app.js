@@ -114,9 +114,10 @@ const sdkPret = (async () => {
 })();
 sdkPret.catch(() => {});
 window.__appPret = true;
-if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register("sw.js").catch((e) => console.info("Mode hors ligne : service worker indisponible", e?.message));
+if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register("sw.js").then(() => verifierPretHorsLigne()).catch((e) => console.info("Mode hors ligne : service worker indisponible", e?.message));
 
 function afficherSession(connecte, nom = "") {
+  if (modeTvSeule) return;
   if (connecte) demarrerSurveillanceSocial();
   $("zone-connexion").hidden = connecte;
   $("tableau").hidden = !connecte;
@@ -498,6 +499,8 @@ async function demanderPin(user) {
 }
 
 async function restaurerSessionGoogle(user) {
+  await sondeDemarrage;
+  if (modeTvSeule) return;
   if (connexionGoogleEnCours || uidSessionTraitee === user.uid) return;
   uidSessionTraitee = user.uid;
   if (!emailAutorise(user)) {
@@ -742,6 +745,35 @@ async function synchroniserFileHL(rafraichir = false) {
 }
 setInterval(() => { if (navigator.onLine && lireFileHL().length) synchroniserFileHL(); }, 30000);
 majBandeauReseau();
+// ---------- Sans connexion au démarrage : seule la Télévision s'ouvre, sans PIN ----------
+let modeTvSeule = false;
+function modeTelevisionSeule() {
+  if (modeTvSeule) return;
+  modeTvSeule = true;
+  ["zone-connexion", "tableau", "pin-gate", "bandeau-reseau", "erreur", "bouton-deconnexion"].forEach((id) => { const e = $(id); if (e) e.hidden = true; });
+  $("tv-seule").hidden = false;
+  tvOuvrir();
+  const retour = setInterval(async () => {
+    sondeReseau = { t: 0, ok: true };
+    if (await reseauAccessible()) { clearInterval(retour); $("tv-seule-etat").textContent = "Connexion retrouvée, rechargement…"; setTimeout(() => location.reload(), 600); }
+  }, 5000);
+}
+const sondeDemarrage = reseauAccessible().then((ok) => { if (!ok) modeTelevisionSeule(); return ok; });
+document.getElementById("tv-seule-ouvrir")?.addEventListener("click", () => tvOuvrir());
+
+// Vérifie que l'application et le kit Firebase sont bien gardés sur l'appareil, et le dit à l'utilisateur.
+async function verifierPretHorsLigne() {
+  try {
+    await navigator.serviceWorker.ready;
+    await new Promise((r) => setTimeout(r, 4000));
+    const noms = await caches.keys(); const nom = noms.find((n) => n.startsWith("mwrs-sw-")); const c = nom && await caches.open(nom);
+    const cles = c ? (await c.keys()).map((r) => r.url) : [];
+    const ok = ["/app.js", "/index.html", "/style.css", "firebase-app.js", "firebase-auth.js"].every((f) => cles.some((u) => u.includes(f))) || (cles.some((u) => u.endsWith("/")) && ["/app.js", "firebase-app.js", "firebase-auth.js"].every((f) => cles.some((u) => u.includes(f))));
+    let vu = false; try { vu = localStorage.getItem("mwrs.hl.pret") === "1"; } catch {}
+    if (ok) { try { localStorage.setItem("mwrs.hl.pret", "1"); } catch {} if (!vu && !horsLigne) { messageSynchro = "✅ Mode hors ligne prêt : l'application s'ouvrira désormais sans internet sur cet appareil."; majBandeauReseau(); setTimeout(() => { messageSynchro = ""; majBandeauReseau(); }, 8000); } }
+    else if (!horsLigne) { messageSynchro = "ℹ️ Mode hors ligne pas encore prêt : gardez la connexion internet et rechargez la page une fois."; majBandeauReseau(); setTimeout(() => { messageSynchro = ""; majBandeauReseau(); }, 8000); }
+  } catch { /* navigateur sans service worker */ }
+}
 async function servirHorsLigne(url, options, cause) {
   noterHorsLigne(true);
   const op = analyserEcriture(url, options);

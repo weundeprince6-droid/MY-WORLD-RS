@@ -1,5 +1,5 @@
 // sw.js — permet d'ouvrir My World RS sans internet : garde l'application et le kit Firebase en mémoire.
-const VERSION = "mwrs-sw-v1";
+const VERSION = "mwrs-sw-v2";
 const FICHIERS = ["./", "index.html", "style.css", "app.js", "config.js", "core.js", "firestore.js", "telegram.js", "facebook.js", "rapport.js", "assistant.js", "maison.js", "notes.js", "rapport-appli.js", "horsligne.js", "television.html"];
 const SDK = "https://www.gstatic.com/firebasejs/10.14.1/";
 const SDK_FICHIERS = ["firebase-app.js", "firebase-auth.js"].map((f) => SDK + f);
@@ -7,7 +7,20 @@ const SDK_FICHIERS = ["firebase-app.js", "firebase-auth.js"].map((f) => SDK + f)
 self.addEventListener("install", (e) => {
   e.waitUntil((async () => {
     const c = await caches.open(VERSION);
-    await Promise.all([...FICHIERS, ...SDK_FICHIERS].map((u) => c.add(new Request(u, { cache: "reload" })).catch(() => {})));
+    await Promise.all(FICHIERS.map((u) => c.add(new Request(u, { cache: "reload" })).catch(() => {})));
+    // Kit Firebase : on garde aussi les modules qu'il importe lui-même (récursif), sinon l'application ne démarre pas sans internet
+    const vus = new Set();
+    const garder = async (u, profondeur) => {
+      if (vus.has(u) || profondeur > 4) return; vus.add(u);
+      try {
+        const r = await fetch(new Request(u, { cache: "reload" })); if (!r.ok) return;
+        await c.put(u, r.clone());
+        const texte = await r.text();
+        const liens = [...texte.matchAll(/(?:from|import)\s*["']([^"']+\.js)["']/g)].map((m) => { try { return new URL(m[1], u).href; } catch { return null; } }).filter((x) => x && x.startsWith(SDK));
+        await Promise.all(liens.map((l) => garder(l, profondeur + 1)));
+      } catch { /* sera mis en mémoire à la prochaine ouverture en ligne */ }
+    };
+    await Promise.all(SDK_FICHIERS.map((u) => garder(u, 0)));
     await self.skipWaiting();
   })());
 });
