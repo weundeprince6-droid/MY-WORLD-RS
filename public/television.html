@@ -631,7 +631,9 @@ async function play(i) {
 }
 
 function nextIndex(dir) {
-  const pool = visible();
+  // On reste dans le même type : après un audio, seulement des audios (jamais de vidéo ou de photo d'office)
+  const typeCourant = items[current]?.type;
+  const pool = visible().filter((i) => !typeCourant || items[i].type === typeCourant);
   if (!pool.length) return -1;
   if (shuffle && pool.length > 1) { let r; do { r = pool[Math.floor(Math.random() * pool.length)]; } while (r === current); return r; }
   const pos = pool.indexOf(current);
@@ -1101,6 +1103,8 @@ $('btnRepeat').onclick = () => {
   repeat = repeat === 'off' ? 'all' : repeat === 'all' ? 'one' : 'off';
   $('btnRepeat').textContent = repeat === 'one' ? '🔂' : '🔁';
   $('btnRepeat').classList.toggle('on', repeat !== 'off');
+  osd(repeat === 'off' ? 'Fin de liste : le lecteur s\'arrête' : repeat === 'all' ? 'Fin de liste : la liste recommence' : 'Le titre en cours se répète');
+  $('btnRepeat').title = repeat === 'off' ? 'Fin de liste : arrêt (clic pour changer)' : repeat === 'all' ? 'Fin de liste : recommence la liste (clic pour changer)' : 'Répète le titre en cours (clic pour changer)';
   osd('Répétition : ' + { off: 'non', all: 'liste', one: 'un seul' }[repeat]);
 };
 const toggleFull = () => { document.fullscreenElement ? document.exitFullscreen() : stage.requestFullscreen(); };
@@ -1269,7 +1273,12 @@ window.addEventListener('keydown', (e) => {
   $('btnTheme') && 0;
   setMode('empty'); renderList();
   const lib = await DB.get('library');
-  if (Array.isArray(lib) && lib.length) { items = lib; regrouper(); renderList(); }
+  if (Array.isArray(lib) && lib.length) {
+    // Nettoyage : on retire les fichiers dont le format n'est plus accepté (audio : MP3 uniquement)
+    const propres = lib.filter((i) => typeOfName(i.name) === i.type);
+    items = propres; regrouper(); renderList();
+    if (propres.length !== lib.length) persist();
+  }
   renderResume();
 })();
 })();
