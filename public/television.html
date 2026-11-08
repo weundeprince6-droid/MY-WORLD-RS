@@ -678,9 +678,29 @@ for (const m of [audio, video]) {
   m.addEventListener('error', () => {
     if (!m.getAttribute('src')) return;
     const it = items[current]; if (it) { it.error = true; renderList(); }
-    $('nowPlaying').textContent = '⚠ Ce navigateur ne sait pas lire ce fichier (format ou codec) : ' + (it?.name || '') + (it && it.type === 'video' ? ' — essayez Chrome/Edge, ou convertissez-le en MP4 (H.264).' : '');
+    const base = '⚠ Lecture impossible : ' + (it?.name || '');
+    $('nowPlaying').textContent = base + ' — analyse du fichier…';
     osd('Format non lisible');
+    if (it && it.type === 'video') diagnostiquerVideo(it).then((d) => { if (items[current] === it) $('nowPlaying').textContent = base + ' — ' + d; });
+    else $('nowPlaying').textContent = base + ' — fichier audio illisible ou corrompu.';
   });
+}
+// Lit l'en-tête du fichier pour dire POURQUOI le navigateur ne sait pas le lire (codec audio ou vidéo non pris en charge)
+async function diagnostiquerVideo(it) {
+  const conseil = ' Solution : le lire avec VLC, ou le convertir en MP4 (H.264 + AAC) avec VLC / HandBrake.';
+  try {
+    const f = await ensureFile(it);
+    const txt = new TextDecoder('latin1').decode(new Uint8Array(await f.slice(0, 3 * 1024 * 1024).arrayBuffer()));
+    const ids = [...new Set(txt.match(/[AV]_[A-Z0-9_]+(?:\/[A-Z0-9_]+)*/g) || [])];
+    const quoi = [];
+    if (ids.some((c) => /^A_(E?AC3|DTS|TRUEHD|MLP)/.test(c))) quoi.push('le son (' + ids.filter((c) => /^A_(E?AC3|DTS|TRUEHD|MLP)/.test(c)).map((c) => c.slice(2)).join('/') + ') n\'est pas pris en charge par le navigateur');
+    if (ids.some((c) => /HEVC|V_MPEGH|V_MS\/VFW|V_REAL|V_VP9?$|V_AV1|V_MPEG[12]/.test(c)) && !ids.some((c) => /AVC/.test(c))) quoi.push('la vidéo (' + ids.filter((c) => /^V_/.test(c)).map((c) => c.slice(2)).join('/') + ') n\'est pas pris en charge par ce navigateur');
+    const e = extOf(it.name);
+    if (!quoi.length && ['avi', 'wmv', 'flv', 'rm', 'rmvb', 'asf', 'vob', 'mpg', 'mpeg', 'divx'].includes(e)) quoi.push('le conteneur .' + e.toUpperCase() + ' n\'est pas lu par les navigateurs');
+    if (!quoi.length && /hev1|hvc1|ec-3|ac-3/.test(txt)) quoi.push('codec HEVC (H.265) ou audio AC3/E-AC3 non pris en charge');
+    if (!quoi.length) quoi.push('codec non pris en charge' + (ids.length ? ' (' + ids.slice(0, 4).join(', ') + ')' : ''));
+    return 'cause : ' + quoi.join(' ; ') + '.' + conseil;
+  } catch (e) { return 'format ou codec non pris en charge.' + conseil; }
 }
 window.addEventListener('beforeunload', saveProg);
 window.addEventListener('pagehide', saveProg);
