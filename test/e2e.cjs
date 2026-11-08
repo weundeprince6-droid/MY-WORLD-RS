@@ -37,7 +37,7 @@ async function scenario(nom, { mode = 'ok', sdkBloque = false, quotaGmail = fals
   const appels = [];
   await ctx.route('**/*', async (route) => {
     const u = route.request().url(); const m = route.request().method();
-    if (etat.coupure && !u.startsWith('http://localhost')) return route.abort('internetdisconnected');
+    if (etat.coupure && !u.startsWith('http://localhost') && !u.includes('gstatic.com')) return route.abort('internetdisconnected');
     if (u.startsWith('http://localhost')) return route.continue();
     if (m === 'OPTIONS') return route.fulfill({ status: 204, headers: CORS });
     if (u.includes('accounts.google.com/gsi/client')) return route.fulfill(js("window.google={accounts:{oauth2:{initTokenClient:function(o){return{requestAccessToken:function(){setTimeout(function(){if(localStorage.getItem('gis_ok')==='1')o.callback({access_token:'tok-gis',expires_in:3600});else o.error_callback({type:'popup_failed_to_open'});},50);}};}}}};"));
@@ -483,6 +483,22 @@ srv.listen(8765, async () => {
     const envoye = crees.slice(creesAvant).find((c) => c.url.includes('/houseEntries') && JSON.stringify(c.corps).includes('12000'));
     const ok = avant && swPret && ouverte && bandeau.includes('hors ligne') && donneesGardees && file.length === 1 && file[0].col.endsWith('/houseEntries') && bandeau2.includes('1 modification') && fileApres.length === 0 && !!envoye;
     return { ok, detail: [avant, swPret, ouverte, bandeau.slice(0, 40), donneesGardees, file.length, bandeau2.slice(0, 90), fileApres.length, !!envoye].join(' | ') };
+  }));
+  res.push(await scenario('Hors ligne : Wi-Fi sans internet (le navigateur se croit en ligne), PIN accepté, application ouverte', { }, async (p, appels, logs, etat) => {
+    await p.click('#bouton-connexion'); await p.waitForTimeout(3000);
+    await p.click('[data-tab="wallet"]'); await p.waitForTimeout(2500);
+    await p.evaluate(() => localStorage.removeItem('mwrs.google.jeton')); 
+    etat.coupure = true;
+    const t0 = Date.now();
+    await p.reload({ waitUntil: 'load' }); await p.waitForTimeout(9000);
+    const pinVu = await p.evaluate(() => !!localStorage.getItem(Object.keys(localStorage).find((k) => k.includes('pin')) || ''));
+    const ouverte = await p.isVisible('#tableau');
+    const bandeau = (await p.textContent('#bandeau-reseau').catch(() => '')) || '';
+    const erreur = (await p.textContent('#erreur').catch(() => '')) || '';
+    let wallet = '';
+    if (ouverte) { await p.click('[data-tab="wallet"]'); await p.waitForTimeout(2500); wallet = await p.textContent('#pane-wallet'); }
+    const ok = pinVu && ouverte && bandeau.includes('hors ligne') && wallet.includes('Caisse') && !erreur.includes('expiré');
+    return { ok, detail: [pinVu, ouverte, bandeau.slice(0, 30), wallet.includes('Caisse'), erreur.slice(0, 80), Date.now() - t0].join(' | ') };
   }));
   res.push(await scenario('Porte-monnaie : onglet « Ma maison » (dépense, budget, chantier)', { }, async (p, appels, logs, etat) => {
     await p.click('#bouton-connexion'); await p.waitForTimeout(3000);

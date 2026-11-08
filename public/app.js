@@ -521,10 +521,11 @@ async function restaurerSessionGoogle(user) {
       afficherSession(true, user.displayName || user.email);
       return;
     }
-    try { await obtenirJetonGoogle(); }
-    catch (e) {
-      if (!navigator.onLine || erreurReseauHL(e)) { noterHorsLigne(true); jetonGoogle = "hors-ligne"; jetonGoogleExpireA = 0; }
-      else throw e;
+    const passerHorsLigne = () => { noterHorsLigne(true); jetonGoogle = "hors-ligne"; jetonGoogleExpireA = 0; };
+    if (!(await reseauAccessible())) passerHorsLigne();
+    else {
+      try { await obtenirJetonGoogle(); }
+      catch (e) { if (erreurReseauHL(e) || !(await reseauAccessible())) passerHorsLigne(); else throw e; }
     }
     afficherSession(true, user.displayName || user.email);
     chargerProfilGoogle(user);
@@ -678,6 +679,19 @@ let messageSynchro = "";
 function lireFileHL() { try { const f = JSON.parse(localStorage.getItem(CLE_FILE_HL) || "[]"); return Array.isArray(f) ? f : []; } catch { return []; } }
 function ecrireFileHL(f) { try { localStorage.setItem(CLE_FILE_HL, JSON.stringify(f)); } catch { /* stockage indisponible */ } majBandeauReseau(); }
 function erreurReseauHL(e) { return !!(e?.reseau || e instanceof TypeError || /failed to fetch|network|load failed/i.test(e?.message || "")); }
+// Vrai test de connexion : « navigator.onLine » dit parfois oui alors qu'aucune donnée ne passe (Wi-Fi sans internet).
+let sondeReseau = { t: 0, ok: true };
+async function reseauAccessible() {
+  if (!navigator.onLine) return false;
+  if (Date.now() - sondeReseau.t < 8000) return sondeReseau.ok;
+  let ok = true;
+  const c = new AbortController(); const tm = setTimeout(() => c.abort(), 3500);
+  try { await fetch("https://www.googleapis.com/generate_204?_=" + Date.now(), { mode: "no-cors", cache: "no-store", signal: c.signal }); }
+  catch { ok = false; }
+  clearTimeout(tm);
+  sondeReseau = { t: Date.now(), ok };
+  return ok;
+}
 function noterHorsLigne(v) { if (horsLigne !== v) { horsLigne = v; majBandeauReseau(); } }
 function majBandeauReseau() {
   const b = $("bandeau-reseau"); if (!b) return;
@@ -693,6 +707,8 @@ function majBandeauReseau() {
 window.addEventListener("offline", () => { noterHorsLigne(true); });
 window.addEventListener("online", () => { reprendreConnexion(); });
 async function reprendreConnexion() {
+  sondeReseau = { t: 0, ok: true };
+  if (!(await reseauAccessible())) return;
   noterHorsLigne(false);
   try { await obtenirJetonGoogle(); } catch { return; }
   await synchroniserFileHL(true);
@@ -754,9 +770,9 @@ async function google(url, options = {}) {
 }
 
 async function googleUneFois(url, options = {}, nouvelEssai = true) {
-  if (!navigator.onLine) return servirHorsLigne(url, options);
+  if (!navigator.onLine || (horsLigne && !(await reseauAccessible()))) return servirHorsLigne(url, options);
   try { await obtenirJetonGoogle(); }
-  catch (e) { if (erreurReseauHL(e)) return servirHorsLigne(url, options, e); throw e; }
+  catch (e) { if (erreurReseauHL(e) || !(await reseauAccessible())) return servirHorsLigne(url, options, e); throw e; }
   const envoyer = () => fetch(url, {
     ...options,
     headers: { Authorization: `Bearer ${jetonGoogle}`, "Content-Type": "application/json", ...(options.headers || {}) },
