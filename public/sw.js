@@ -1,6 +1,6 @@
 // sw.js — permet d'ouvrir My World RS sans internet : garde l'application et le kit Firebase en mémoire.
-const VERSION = "mwrs-sw-v2";
-const FICHIERS = ["./", "index.html", "style.css", "app.js", "config.js", "core.js", "firestore.js", "telegram.js", "facebook.js", "rapport.js", "assistant.js", "maison.js", "notes.js", "rapport-appli.js", "horsligne.js", "television.html"];
+const VERSION = "mwrs-sw-v3";
+const FICHIERS = ["./", "index.html", "style.css", "app.js", "config.js", "core.js", "firestore.js", "telegram.js", "facebook.js", "rapport.js", "assistant.js", "maison.js", "notes.js", "rapport-appli.js", "horsligne.js", "television.html", "manifest.webmanifest", "icone-192.png", "icone-512.png"];
 const SDK = "https://www.gstatic.com/firebasejs/10.14.1/";
 const SDK_FICHIERS = ["firebase-app.js", "firebase-auth.js"].map((f) => SDK + f);
 

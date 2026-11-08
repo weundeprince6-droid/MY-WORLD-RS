@@ -436,6 +436,14 @@ srv.listen(8765, async () => {
     const ok = /1\s?500\s?FC/.test(info) && !!compte && JSON.stringify(compte.corps).includes('professional') && !!tx && JSON.stringify(tx.corps).includes('1500');
     return { ok, detail: info.slice(0, 120) + ' | ' + crees.length };
   }));
+  res.push(await scenario('Tableau de bord : raccourci « Média » en premier, ouvre le lecteur', { }, async (p) => {
+    await p.click('#bouton-connexion'); await p.waitForTimeout(3000);
+    const premier = await p.evaluate(() => { const c = document.querySelector('#pane-dashboard .dashboard-grid .feature-card h3'); return c && c.textContent; });
+    await p.click('#dash-media'); await p.waitForTimeout(1200);
+    const n = await p.evaluate(() => ({ vis: !document.getElementById('tv-fenetre').hidden, titre: document.querySelector('#tv-zone iframe')?.contentDocument?.title || '' }));
+    const manifest = await p.evaluate(() => document.querySelector('link[rel=manifest]')?.getAttribute('href'));
+    return { ok: premier === 'Média' && n.vis && n.titre.includes('Lecteur Pro') && manifest === 'manifest.webmanifest', detail: [premier, JSON.stringify(n), manifest].join(' | ') };
+  }));
   res.push(await scenario('Ma maison : la télévision s\'ouvre à chaque clic et se ferme', { }, async (p) => {
     await p.click('#bouton-connexion'); await p.waitForTimeout(3000);
     await p.click('[data-tab="maison"]'); await p.waitForTimeout(1500);

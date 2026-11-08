@@ -1,0 +1,16 @@
+{
+  "name": "My World RS",
+  "short_name": "My World RS",
+  "description": "Votre espace personnel : messages, agenda, bases de données, porte-monnaie, média.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b1220",
+  "theme_color": "#0b1220",
+  "lang": "fr",
+  "icons": [
+    { "src": "icone-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icone-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icone-512-masquable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

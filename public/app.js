@@ -2054,6 +2054,7 @@ async function tvOuvrir() {
 }
 function tvFermer() { tvAfficher(); document.getElementById("tv-zone").innerHTML = ""; document.getElementById("tv-fenetre").hidden = true; }
 document.getElementById("tv-ouvrir")?.addEventListener("click", tvOuvrir);
+document.getElementById("dash-media")?.addEventListener("click", tvOuvrir);
 document.getElementById("tv-fermer")?.addEventListener("click", tvFermer);
 document.getElementById("tv-masquer")?.addEventListener("click", tvMasquer);
 document.getElementById("tv-mini-afficher")?.addEventListener("click", tvOuvrir);
