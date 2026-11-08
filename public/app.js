@@ -2031,19 +2031,34 @@ async function tvHtml() {
   const r = await fetch("television.html"); if (!r.ok) throw new Error("television.html introuvable");
   return r.text();
 }
+let tvMinuteur = null;
+function tvTitreEnCours() { try { const t = document.querySelector("#tv-zone iframe")?.contentDocument?.title || ""; return t.replace(/ — Lecteur Pro$/, "") || "Télévision en lecture"; } catch { return "Télévision en lecture"; } }
+// Masquer = le lecteur disparaît mais continue de jouer (son/vidéo) ; une petite pastille permet de le réafficher.
+function tvMasquer() {
+  const fen = document.getElementById("tv-fenetre"); if (fen.hidden || !document.querySelector("#tv-zone iframe")) return;
+  fen.classList.add("masque");
+  document.getElementById("tv-mini").hidden = false;
+  const maj = () => { document.getElementById("tv-mini-titre").textContent = tvTitreEnCours(); };
+  maj(); clearInterval(tvMinuteur); tvMinuteur = setInterval(maj, 2000);
+}
+function tvAfficher() { document.getElementById("tv-fenetre").classList.remove("masque"); document.getElementById("tv-mini").hidden = true; clearInterval(tvMinuteur); }
 async function tvOuvrir() {
   const fen = document.getElementById("tv-fenetre"), zone = document.getElementById("tv-zone");
-  zone.innerHTML = ""; fen.hidden = false;
+  if (zone.querySelector("iframe")) { fen.hidden = false; tvAfficher(); return; } // déjà lancé : on le réaffiche sans le relancer
+  zone.innerHTML = ""; fen.hidden = false; tvAfficher();
   try {
     const f = document.createElement("iframe");
     f.title = "Télévision"; f.allow = "fullscreen; autoplay; picture-in-picture"; f.setAttribute("allowfullscreen", "");
     f.srcdoc = await tvHtml(); zone.appendChild(f);
   } catch (e) { zone.textContent = "Impossible de charger la télévision : " + e.message; zone.style.color = "#fff"; zone.style.padding = "20px"; }
 }
-function tvFermer() { document.getElementById("tv-zone").innerHTML = ""; document.getElementById("tv-fenetre").hidden = true; }
+function tvFermer() { tvAfficher(); document.getElementById("tv-zone").innerHTML = ""; document.getElementById("tv-fenetre").hidden = true; }
 document.getElementById("tv-ouvrir")?.addEventListener("click", tvOuvrir);
 document.getElementById("tv-fermer")?.addEventListener("click", tvFermer);
-document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !document.getElementById("tv-fenetre").hidden) tvFermer(); });
+document.getElementById("tv-masquer")?.addEventListener("click", tvMasquer);
+document.getElementById("tv-mini-afficher")?.addEventListener("click", tvOuvrir);
+document.getElementById("tv-mini-arreter")?.addEventListener("click", tvFermer);
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !document.getElementById("tv-fenetre").hidden && !document.getElementById("tv-fenetre").classList.contains("masque")) tvMasquer(); });
 
 // L'assistant vit dans son propre onglet « Assistant IA » (en bas du menu) et n'apparaît dans aucun autre.
 monterAssistant("assistant", "pane-assistant", "Assistant IA", [

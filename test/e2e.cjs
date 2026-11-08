@@ -447,7 +447,19 @@ srv.listen(8765, async () => {
       await p.click('#tv-fermer'); await p.waitForTimeout(300);
       r.push(String(await p.isHidden('#tv-fenetre')));
     }
-    const ok = r[0].includes('"vis":true') && r[0].includes('"ifr":1') && r[0].includes('Lecteur Pro') && r[1] === 'true' && r[2].includes('"ifr":1') && r[3] === 'true';
+    // masquer : la lecture continue en arrière-plan (même lecteur, non relancé), la pastille permet de le réafficher
+    await p.click('#tv-ouvrir'); await p.waitForTimeout(1200);
+    await p.evaluate(() => { document.querySelector('#tv-zone iframe').__marque = 'vivant'; });
+    await p.click('#tv-masquer'); await p.waitForTimeout(300);
+    const masque = await p.evaluate(() => ({ cls: document.getElementById('tv-fenetre').classList.contains('masque'), vis: getComputedStyle(document.getElementById('tv-fenetre')).visibility, mini: !document.getElementById('tv-mini').hidden, ifr: document.querySelectorAll('#tv-zone iframe').length, marque: document.querySelector('#tv-zone iframe')?.__marque }));
+    await p.click('[data-tab="dashboard"]').catch(() => {}); await p.waitForTimeout(200);
+    await p.click('#tv-mini-afficher'); await p.waitForTimeout(300);
+    const affiche = await p.evaluate(() => ({ cls: document.getElementById('tv-fenetre').classList.contains('masque'), mini: !document.getElementById('tv-mini').hidden, marque: document.querySelector('#tv-zone iframe')?.__marque }));
+    await p.click('#tv-masquer'); await p.waitForTimeout(200); await p.click('#tv-mini-arreter'); await p.waitForTimeout(300);
+    const arrete = await p.evaluate(() => ({ fen: document.getElementById('tv-fenetre').hidden, mini: document.getElementById('tv-mini').hidden, ifr: document.querySelectorAll('#tv-zone iframe').length }));
+    r.push(JSON.stringify([masque, affiche, arrete]));
+    const bg = masque.cls && masque.vis === 'hidden' && masque.mini && masque.ifr === 1 && masque.marque === 'vivant' && !affiche.cls && !affiche.mini && affiche.marque === 'vivant' && arrete.fen && arrete.mini && arrete.ifr === 0;
+    const ok = bg && r[0].includes('"vis":true') && r[0].includes('"ifr":1') && r[0].includes('Lecteur Pro') && r[1] === 'true' && r[2].includes('"ifr":1') && r[3] === 'true';
     return { ok, detail: r.join(' | ') };
   }));
   res.push(await scenario('Hors ligne : coupure en cours d\'utilisation, modification mise en attente puis synchronisée', { }, async (p, appels, logs, etat, ctx) => {
