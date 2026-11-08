@@ -1834,16 +1834,20 @@ function iaContexte(portee) {
     finances: { comptes: walletAccounts, mouvements: walletTransactions, caisse: caisseEse, espaces: [ESPACE_MAISON.donnees(), ESPACE_PRO.donnees()] },
     messages: { importants: etat.messages, recents: etat.recents }, agenda: etat.agenda, bases: etat.kpis, social: etat.social, notes: notesItems, drive: driveFichiersIA });
 }
-function monterAssistant(cle, paneId, rubrique, suggestions, portee = ["finances"]) {
+const IA_PORTEES = [["finances", "Finances (porte-monnaie, Ma maison, Projet pro, caisse ESE)"], ["messages", "Messages Gmail"], ["agenda", "Agenda"], ["bases", "Bases de données"], ["social", "Réseaux sociaux"], ["notes", "Notes et projets"], ["drive", "Fichiers Drive"]];
+const IA_PORTEES_CLE = "mwrs_ia_portees";
+function iaPorteesEnregistrees() { try { const v = JSON.parse(localStorage.getItem(IA_PORTEES_CLE) || "null"); if (Array.isArray(v)) return v.filter(x => IA_PORTEES.some(p => p[0] === x)); } catch {} return ["finances"]; }
+function monterAssistant(cle, paneId, rubrique, suggestions, porteeFixe = null) {
   const entete = document.querySelector("#" + paneId + " .section-heading"); if (!entete) return;
   const id = (x) => "ia-" + cle + "-" + x;
   entete.insertAdjacentHTML("afterend", `<section class="carte ia-carte" id="${id("carte")}"><div class="card-heading"><div><p class="eyebrow">ASSISTANT IA</p><h3>Posez une question à l'assistant</h3></div></div>
     <form id="${id("cle-form")}" class="ia-cle" autocomplete="off"><p class="meta">Pour activer l'assistant, collez votre clé de l'API Claude. Elle reste uniquement sur cet appareil (navigateur) et n'est envoyée qu'à Anthropic. Utilisez une clé réservée à cet usage et dont la dépense est plafonnée.</p><div class="ia-ligne"><input id="${id("cle")}" type="password" placeholder="Clé de l'API Claude" autocomplete="off"><button class="btn btn-primary" type="submit">Enregistrer la clé</button></div></form>
-    <div id="${id("zone")}" hidden><div class="ia-suggestions">${suggestions.map(q => `<button type="button" class="ia-chip" data-ia-question="${echapper(q)}">${echapper(q)}</button>`).join("")}</div>
+    <div id="${id("zone")}" hidden>${porteeFixe ? "" : `<fieldset class="ia-portee"><legend>Données que l'assistant peut consulter pour répondre</legend>${IA_PORTEES.map(([k, l]) => `<label><input type="checkbox" data-ia-portee="${k}"${iaPorteesEnregistrees().includes(k) ? " checked" : ""}> ${echapper(l)}</label>`).join("")}</fieldset>`}<div class="ia-suggestions">${suggestions.map(([q, pt]) => `<button type="button" class="ia-chip" data-ia-question="${echapper(q)}" data-ia-pour="${echapper((pt || []).join(","))}">${echapper(q)}</button>`).join("")}</div>
       <div id="${id("fil")}" class="ia-fil" aria-live="polite"></div>
       <form id="${id("form")}" class="ia-ligne"><textarea id="${id("question")}" rows="2" maxlength="2000" placeholder="Posez votre question…"></textarea><button class="btn btn-primary" type="submit" id="${id("envoyer")}">Demander</button></form>
-      <p class="meta">Seules les données de cette rubrique sont envoyées à l'IA, au moment où vous posez la question. Les réponses peuvent contenir des erreurs : vérifiez les montants importants. <button type="button" class="ia-lien" id="${id("effacer")}">Effacer la conversation</button> · <button type="button" class="ia-lien" id="${id("oublier")}">Supprimer la clé</button></p></div></section>`);
+      <p class="meta">Seules les catégories cochées sont envoyées à l'IA, au moment où vous posez la question. Les réponses peuvent contenir des erreurs : vérifiez les montants importants. <button type="button" class="ia-lien" id="${id("effacer")}">Effacer la conversation</button> · <button type="button" class="ia-lien" id="${id("oublier")}">Supprimer la clé</button></p></div></section>`);
   const historique = []; let occupe = false;
+  const porteeCochee = () => porteeFixe || [...document.querySelectorAll("#" + id("zone") + " [data-ia-portee]:checked")].map(c => c.dataset.iaPortee);
   const fil = $(id("fil")), zone = $(id("zone")), cleForm = $(id("cle-form"));
   const afficher = () => { const a = !!iaLireCle(); zone.hidden = !a; cleForm.hidden = a; };
   const bulle = (role, texte) => { const d = document.createElement("div"); d.className = "ia-msg ia-" + role; d.textContent = texte; fil.appendChild(d); fil.scrollTop = fil.scrollHeight; return d; };
@@ -1852,6 +1856,8 @@ function monterAssistant(cle, paneId, rubrique, suggestions, portee = ["finances
   $(id("effacer")).addEventListener("click", () => { historique.length = 0; fil.innerHTML = ""; });
   async function poser(question) {
     question = String(question || "").trim(); if (!question || occupe) return;
+    const portee = porteeCochee();
+    if (!portee.length) { const d = document.createElement("div"); d.className = "ia-msg ia-assistant ia-erreur"; d.textContent = "Cochez au moins une catégorie de données que l'assistant peut consulter."; fil.appendChild(d); return; }
     occupe = true; $(id("envoyer")).disabled = true;
     bulle("user", question);
     const attente = bulle("assistant", "Réflexion en cours…");
@@ -1870,25 +1876,24 @@ function monterAssistant(cle, paneId, rubrique, suggestions, portee = ["finances
     } finally { occupe = false; $(id("envoyer")).disabled = false; }
   }
   $(id("form")).addEventListener("submit", (ev) => { ev.preventDefault(); const q = $(id("question")).value; $(id("question")).value = ""; poser(q); });
-  zone.addEventListener("click", (ev) => { const b = ev.target.closest("[data-ia-question]"); if (b) poser(b.dataset.iaQuestion); });
+  zone.addEventListener("change", (ev) => { if (ev.target.matches("[data-ia-portee]")) { try { localStorage.setItem(IA_PORTEES_CLE, JSON.stringify(porteeCochee())); } catch {} } });
+  zone.addEventListener("click", (ev) => {
+    const b = ev.target.closest("[data-ia-question]"); if (!b) return;
+    (b.dataset.iaPour || "").split(",").filter(Boolean).forEach(k => { const c = zone.querySelector(`[data-ia-portee="${k}"]`); if (c) c.checked = true; });
+    zone.dispatchEvent(new Event("change", { bubbles: false })); try { localStorage.setItem(IA_PORTEES_CLE, JSON.stringify(porteeCochee())); } catch {}
+    poser(b.dataset.iaQuestion);
+  });
   iaAfficheurs.push(afficher);
   afficher();
 }
-// Rubriques où l'assistant est affiché : pour l'étendre à d'autres onglets, ajoutez leur clé à IA_RUBRIQUES_ACTIVES.
-const IA_RUBRIQUES_ACTIVES = ["wallet"];
-const IA_RUBRIQUES = {
-  wallet: ["pane-wallet", "Mon Porte-Monnaie", ["Quel est l'état de mes comptes ?", "Où est parti mon argent ce mois-ci ?", "Compare ce mois avec le mois dernier"], ["finances"]],
-  maison: ["pane-maison", "Ma maison", ["Où en suis-je dans mon budget familial ?", "Que dois-je acheter en priorité ?", "Résume l'avancement de mon projet de construction"], ["finances"]],
-  dashboard: ["pane-dashboard", "Tableau de bord", ["Que dois-je faire aujourd'hui ?", "Fais-moi un résumé de ma journée", "Qu'est-ce qui est urgent ?"], ["finances", "messages", "agenda", "bases", "social"]],
-  messages: ["pane-messages", "Messages", ["Résume mes messages importants", "Quels messages demandent une réponse ?", "Y a-t-il des factures ou des paiements à régler ?"], ["messages"]],
-  agenda: ["pane-agenda", "Agenda", ["Quel est mon programme aujourd'hui ?", "Quels rendez-vous arrivent cette semaine ?", "Y a-t-il des conflits d'horaire ?"], ["agenda"]],
-  bases: ["pane-bases", "Mes bases de données", ["Explique-moi ces indicateurs", "Qu'est-ce qui mérite mon attention ?", "Compare AVEC LA SAGESSE et ESE DB"], ["bases"]],
-  social: ["pane-social", "Réseaux sociaux", ["Résume les derniers messages reçus", "Y a-t-il des messages auxquels répondre ?"], ["social"]],
-  drive: ["pane-drive", "Google Drive", ["Quels sont mes fichiers récents ?", "Aide-moi à retrouver un document sur le budget"], ["drive"]],
-  notes: ["pane-notes", "Notes et projets", ["Résume mes notes", "Quelles notes sont épinglées ?", "Propose-moi un plan à partir de mes projets"], ["notes"]],
-  pro: ["pane-pro", "Projet pro", ["Quel est le résultat de mon activité ce mois-ci ?", "Quels équipements dois-je acquérir en premier ?", "Mon budget professionnel est-il respecté ?"], ["finances"]],
-};
-IA_RUBRIQUES_ACTIVES.forEach(k => { const r = IA_RUBRIQUES[k]; if (r) monterAssistant(k, r[0], r[1], r[2], r[3]); });
+// L'assistant vit dans son propre onglet « Assistant IA » (en bas du menu) et n'apparaît dans aucun autre.
+monterAssistant("assistant", "pane-assistant", "Assistant IA", [
+  ["Fais-moi un résumé de ma situation", ["finances", "agenda", "messages"]],
+  ["Où est parti mon argent ce mois-ci ?", ["finances"]],
+  ["Que dois-je faire aujourd'hui ?", ["agenda", "messages"]],
+  ["Quels messages demandent une réponse ?", ["messages"]],
+  ["Explique-moi mes indicateurs", ["bases"]],
+  ["Résume mes notes et projets", ["notes"]]]);
 
 async function chargerRistourne(force = false, silencieux = false) {
   const statut = $("wallet-ristourne-status");

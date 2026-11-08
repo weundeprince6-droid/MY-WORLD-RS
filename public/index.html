@@ -61,6 +61,7 @@
             <button class="nav-item" role="tab" aria-selected="false" data-tab="wallet"><span class="nav-icon">💰</span><span>Mon Porte-Monnaie</span><span class="nav-arrow">›</span></button>
             <button class="nav-item" role="tab" aria-selected="false" data-tab="maison"><span class="nav-icon">🏠</span><span>Ma maison</span><span class="nav-arrow">›</span></button>
             <button class="nav-item" role="tab" aria-selected="false" data-tab="profile"><span class="nav-icon">♙</span><span>Profil</span><span class="nav-arrow">›</span></button>
+            <button class="nav-item" role="tab" aria-selected="false" data-tab="assistant"><span class="nav-icon">✦</span><span>Assistant IA</span><span class="nav-arrow">›</span></button>
           </nav>
           <div class="sidebar-note"><span class="note-icon">✦</span><strong>Un espace, plusieurs univers.</strong><p>Vos informations essentielles réunies pour vous aider à garder le cap.</p></div>
           <div class="sidebar-footer"><span class="status-dot"></span> Espace connecté</div>
@@ -428,6 +429,9 @@
               </form>
             </section>
           </section>
+          <section class="tab-pane" id="pane-assistant" role="tabpanel" data-pane="assistant" hidden>
+            <div class="section-heading"><div><p class="eyebrow">INTELLIGENCE ARTIFICIELLE</p><h2>Assistant IA</h2><p>Posez vos questions : l'assistant répond à partir des données que vous l'autorisez à consulter.</p></div><span class="section-icon green">✦</span></div>
+          </section>
         </div>
       </div>
     </div>
@@ -460,7 +464,7 @@
       function ouvrirOnglet(nom) {
         document.querySelectorAll("[data-pane]").forEach(function (p) { var actif=p.dataset.pane===nom; p.hidden=!actif; p.classList.toggle("active",actif); });
         document.querySelectorAll("[data-tab]").forEach(function (b) { var actif=b.dataset.tab===nom; b.classList.toggle("active",actif); b.setAttribute("aria-selected",actif?"true":"false"); });
-        var titres={dashboard:"Tableau de bord",messages:"Messages",agenda:"Agenda",bases:"Mes bases",social:"Réseaux sociaux",drive:"Google Drive",pro:"Projet pro",wallet:"Mon Porte-Monnaie",profile:"Mon profil",notes:"Notes & Projets"}; document.title=(titres[nom]||"My World RS")+" — My World RS";
+        var titres={dashboard:"Tableau de bord",messages:"Messages",agenda:"Agenda",bases:"Mes bases",social:"Réseaux sociaux",drive:"Google Drive",pro:"Projet pro",wallet:"Mon Porte-Monnaie",profile:"Mon profil",assistant:"Assistant IA",notes:"Notes & Projets"}; document.title=(titres[nom]||"My World RS")+" — My World RS";
       }
       document.querySelectorAll("[data-tab]").forEach(function(b){b.addEventListener("click",function(){ouvrirOnglet(b.dataset.tab);});});
       document.querySelectorAll("[data-go]").forEach(function(b){b.addEventListener("click",function(){ouvrirOnglet(b.dataset.go);});});
@@ -474,6 +478,6 @@
       setTimeout(function(){if(!window.__appPret)montrer("L'application n'a pas démarré. Vérifiez votre connexion internet (les composants Firebase se chargent depuis Google), désactivez un éventuel bloqueur de publicités, puis rechargez. Appuyez sur F12 > Console pour voir le détail.");},6000);
     })();
   </script>
-  <script type="module" src="app.js?v=20261107-117"></script>
+  <script type="module" src="app.js?v=20261108-118"></script>
 </body>
 </html>

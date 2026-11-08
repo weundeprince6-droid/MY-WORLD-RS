@@ -507,23 +507,23 @@ srv.listen(8765, async () => {
     const ok = nav.includes('Projet pro') && /100\s?000\s?FC/.test(resume) && /20 %/.test(resume) && /300\s?000\s?FC/.test(total) && sansTasks && yDetail < yForm && crees.some((u) => u.includes('proEntries')) && crees.some((u) => u.includes('proItems')) && !crees.some((u) => u.includes('houseEntries'));
     return { ok, detail: [nav, resume.slice(0, 120), total, sansTasks, yDetail, yForm].join(' | ') };
   }));
-  res.push(await scenario('Assistant IA : clé, question sur les finances, réponse et erreur', { }, async (p, appels, logs, etat) => {
+    res.push(await scenario('Assistant IA : onglet dédié, données choisies, réponse et erreur', { }, async (p, appels, logs, etat) => {
     p.on('dialog', (d) => d.accept());
     await p.click('#bouton-connexion'); await p.waitForTimeout(3000);
-    await p.click('[data-tab="wallet"]'); await p.waitForTimeout(2500);
-    const formVisible = await p.isVisible('#ia-wallet-cle-form'), zoneCachee = !(await p.isVisible('#ia-wallet-zone'));
-    await p.fill('#ia-wallet-cle', 'sk-ant-test-0123456789abcdef'); await p.click('#ia-wallet-cle-form button[type=submit]'); await p.waitForTimeout(400);
-    await p.click('#ia-wallet-zone [data-ia-question]:first-child'); await p.waitForTimeout(3500);
-    const rep = (await p.textContent('#ia-wallet-fil')).replace(/\s+/g, ' ');
+    const nav = (await p.textContent('[data-tab="assistant"]')).trim();
+    const dernierBouton = await p.evaluate(() => { const b = [...document.querySelectorAll('.nav-item')]; return b[b.length - 1].dataset.tab; });
+    const cartes = await p.evaluate(() => document.querySelectorAll('.ia-carte').length + '|' + !!document.querySelector('#pane-assistant #ia-assistant-carte'));
+    await p.click('[data-tab="assistant"]'); await p.waitForTimeout(1500);
+    const formVisible = await p.isVisible('#ia-assistant-cle-form'), zoneCachee = !(await p.isVisible('#ia-assistant-zone'));
+    await p.fill('#ia-assistant-cle', 'sk-ant-test-0123456789abcdef'); await p.click('#ia-assistant-cle-form button[type=submit]'); await p.waitForTimeout(400);
+    await p.click('#ia-assistant-zone [data-ia-question]:first-of-type'); await p.waitForTimeout(3500);
+    const coches = await p.evaluate(() => [...document.querySelectorAll('[data-ia-portee]:checked')].map((c) => c.dataset.iaPortee).join(','));
+    const rep = (await p.textContent('#ia-assistant-fil')).replace(/\s+/g, ' ');
     const appel = (etat.ia || [])[0] || {}; const corps = appel.corps ? JSON.parse(appel.corps) : {};
-    await p.fill('#ia-wallet-question', 'ERREUR test'); await p.click('#ia-wallet-envoyer'); await p.waitForTimeout(2500);
-    const fil2 = (await p.textContent('#ia-wallet-fil')).replace(/\s+/g, ' ');
-    await p.click('[data-tab="maison"]'); await p.waitForTimeout(800);
-    const autreRubrique = await p.isVisible('#ia-maison-zone');
-    const dash = await p.evaluate(() => document.querySelectorAll('.ia-carte').length === 1 && !!document.querySelector('#ia-wallet-carte'));
-    const sysMsg = JSON.parse((etat.ia || []).at(-1).corps).system;
-    const ok = dash && sysMsg.includes('comptes_porte_monnaie') && !sysMsg.includes('"messages"') && formVisible && zoneCachee && rep.includes('70 USD') && appel.cle === 'sk-ant-test-0123456789abcdef' && appel.direct === 'true' && corps.model === 'claude-sonnet-5-5' && corps.system.includes('comptes_porte_monnaie') && corps.system.includes('Ma maison') && fil2.includes('Clé refusée') && !autreRubrique;
-    return { ok, detail: [formVisible, zoneCachee, rep.slice(0, 80), appel.cle, corps.model, fil2.slice(-90), autreRubrique].join(' | ') };
+    await p.fill('#ia-assistant-question', 'ERREUR test'); await p.click('#ia-assistant-envoyer'); await p.waitForTimeout(2500);
+    const fil2 = (await p.textContent('#ia-assistant-fil')).replace(/\s+/g, ' ');
+    const ok = nav.includes('Assistant IA') && dernierBouton === 'assistant' && cartes === '1|true' && formVisible && zoneCachee && coches.includes('finances') && coches.includes('agenda') && rep.includes('70 USD') && appel.cle === 'sk-ant-test-0123456789abcdef' && appel.direct === 'true' && corps.model === 'claude-sonnet-5-5' && corps.system.includes('comptes_porte_monnaie') && corps.system.includes('"agenda"') && !corps.system.includes('reseaux_sociaux') && fil2.includes('invalid x-api-key');
+    return { ok, detail: [nav, dernierBouton, cartes, formVisible, zoneCachee, coches, rep.slice(0, 60), corps.model, fil2.slice(-70)].join(' | ') };
   }));
   res.push(await scenario('Domaine non autorisé : message clair', { mode: 'auth/unauthorized-domain' }, async (p) => {
     await p.click('#bouton-connexion'); await p.waitForTimeout(800);

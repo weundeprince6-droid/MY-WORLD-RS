@@ -982,3 +982,7 @@ html[data-theme="light"] .section-icon.purple,html[data-theme="light"] .feature-
 .ia-assistant{align-self:flex-start;background:var(--surface)}
 .ia-erreur{border-color:#c0392b;color:#8b1e16}
 .ia-lien{background:none;border:0;padding:0;color:var(--primary);text-decoration:underline;font-size:inherit}
+
+.ia-portee{border:1px solid var(--border);border-radius:12px;padding:10px 14px;margin:8px 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:6px 14px}
+.ia-portee legend{font-size:12px;font-weight:700;color:var(--muted);padding:0 6px}
+.ia-portee label{display:flex;gap:8px;align-items:center;font-size:13px}
