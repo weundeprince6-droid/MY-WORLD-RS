@@ -681,9 +681,68 @@ for (const m of [audio, video]) {
     const base = '⚠ Lecture impossible : ' + (it?.name || '');
     $('nowPlaying').textContent = base + ' — analyse du fichier…';
     osd('Format non lisible');
-    if (it && it.type === 'video') diagnostiquerVideo(it).then((d) => { if (items[current] === it) $('nowPlaying').textContent = base + ' — ' + d; });
+    if (it && it.type === 'video' && !it.converti && !it.convEchec) convertirEtLire(it, base);
+    else if (it && it.type === 'video') diagnostiquerVideo(it).then((d) => { if (items[current] === it) $('nowPlaying').textContent = base + ' — ' + d; });
     else $('nowPlaying').textContent = base + ' — fichier audio illisible ou corrompu.';
   });
+}
+// ----- Lecture des vidéos que le navigateur refuse (son AC3/E-AC3/DTS, conteneurs AVI/MKV/WMV…) -----
+// Le fichier est converti en mémoire par ffmpeg (WebAssembly, chargé une seule fois depuis internet) :
+// la vidéo est recopiée telle quelle, le son est recodé en AAC, puis le résultat est lu normalement.
+let ffmpegPret = null;
+const convertis = new Map(); // clé du fichier -> Blob MP4 déjà converti
+function chargerFFmpeg() {
+  if (ffmpegPret) return ffmpegPret;
+  const BASE = 'https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd/';
+  const CORE = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/';
+  const blobUrl = async (u, type) => { const r = await fetch(u); if (!r.ok) throw new Error('téléchargement ' + r.status); return URL.createObjectURL(new Blob([await r.arrayBuffer()], { type })); };
+  ffmpegPret = (async () => {
+    const src = await (await fetch(BASE + 'ffmpeg.js')).text();
+    const chunk = (src.match(/(\d+)\.ffmpeg\.js/) || [])[0] || '814.ffmpeg.js';
+    await new Promise((ok, ko) => { const s = document.createElement('script'); s.src = URL.createObjectURL(new Blob([src], { type: 'text/javascript' })); s.onload = ok; s.onerror = () => ko(new Error('script ffmpeg')); document.head.appendChild(s); });
+    const ff = new window.FFmpegWASM.FFmpeg();
+    await ff.load({ classWorkerURL: await blobUrl(BASE + chunk, 'text/javascript'), coreURL: await blobUrl(CORE + 'ffmpeg-core.js', 'text/javascript'), wasmURL: await blobUrl(CORE + 'ffmpeg-core.wasm', 'application/wasm') });
+    return ff;
+  })().catch((e) => { ffmpegPret = null; throw e; });
+  return ffmpegPret;
+}
+async function convertirEtLire(it, base) {
+  const info = (t) => { if (items[current] === it) $('nowPlaying').textContent = base + ' — ' + t; };
+  try {
+    const file = await ensureFile(it);
+    if (file.size > 1.8 * 1024 * 1024 * 1024) throw new Error('fichier trop gros pour une conversion en mémoire (> 1,8 Go)');
+    let blob = convertis.get(it.key);
+    if (!blob) {
+      info('préparation de la conversion (téléchargement du convertisseur, une seule fois, ~30 Mo)…');
+      const ff = await chargerFFmpeg();
+      const ext = extOf(it.name) || 'mkv';
+      const entree = new File([file], 'entree.' + ext);
+      try { await ff.createDir('/src'); } catch {}
+      await ff.mount('WORKERFS', { files: [entree] }, '/src');
+      const journal = []; const surLog = ({ message }) => { journal.push(message); if (journal.length > 40) journal.shift(); };
+      const surProgres = ({ progress }) => info('conversion du son pour la lecture… ' + Math.min(99, Math.round((progress || 0) * 100)) + ' %');
+      ff.on('log', surLog); ff.on('progress', surProgres);
+      try {
+        info('conversion du son pour la lecture…');
+        const code = await ff.exec(['-i', '/src/entree.' + ext, '-map', '0:v:0', '-map', '0:a:0?', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-ac', '2', '-sn', '-dn', '-movflags', '+faststart', '-y', 'sortie.mp4']);
+        if (code !== 0) throw new Error('conversion refusée : ' + (journal.filter((l) => /error|invalid|not supported|could not/i.test(l)).pop() || 'code ' + code));
+        const data = await ff.readFile('sortie.mp4');
+        blob = new Blob([data.buffer ? data.buffer : data], { type: 'video/mp4' });
+        try { await ff.deleteFile('sortie.mp4'); } catch {}
+      } finally { ff.off('log', surLog); ff.off('progress', surProgres); try { await ff.unmount('/src'); } catch {} }
+      convertis.set(it.key, blob);
+    }
+    if (items[current] !== it) return;
+    it.converti = true; it.error = false;
+    releaseUrl(); curUrl = URL.createObjectURL(blob);
+    video.src = curUrl; video.defaultPlaybackRate = video.playbackRate = speed;
+    $('nowPlaying').textContent = it.name; document.title = it.name + ' — Lecteur Pro';
+    video.play().catch(() => {}); renderList(); updatePlayBtn();
+  } catch (e) {
+    it.convEchec = true;
+    const d = await diagnostiquerVideo(it);
+    if (items[current] === it) $('nowPlaying').textContent = base + ' — conversion automatique impossible (' + (e?.message || 'erreur') + '). ' + d;
+  }
 }
 // Lit l'en-tête du fichier pour dire POURQUOI le navigateur ne sait pas le lire (codec audio ou vidéo non pris en charge)
 async function diagnostiquerVideo(it) {
