@@ -278,7 +278,7 @@ table.keys{width:100%;border-collapse:collapse}table.keys td{padding:3px 4px;bor
   </div></aside>
 </div>
 
-<input id="fileInput" type="file" multiple hidden accept="audio/*,video/*,image/*,.mkv,.flac,.opus,.m4a,.avif,.srt,.vtt" />
+<input id="fileInput" type="file" multiple hidden accept="audio/mpeg,.mp3,video/*,.mkv,.avi,.wmv,.flv,.f4v,.mpg,.mpeg,.mpe,.m2v,.3gp,.3g2,.ts,.m2ts,.mts,.vob,.divx,.asf,.rm,.rmvb,.mxf,.qt,image/*,.avif,.srt,.vtt" />
 <input id="folderInput" type="file" webkitdirectory multiple hidden />
 <input id="subInput" type="file" hidden accept=".srt,.vtt,text/vtt" />
 
@@ -291,8 +291,8 @@ const imageBox = $('imageBox'), image = $('image'), stage = $('stage'), subsEl =
 const audio = new Audio(); audio.preload = 'auto';
 
 const EXT = {
-  audio: ['mp3','wav','ogg','oga','flac','m4a','aac','opus','weba'],
-  video: ['mp4','m4v','webm','ogv','mov','mkv'],
+  audio: ['mp3'], // audio : MP3 uniquement
+  video: ['mp4','m4v','webm','ogv','mov','mkv','avi','wmv','flv','f4v','mpg','mpeg','mpe','m2v','3gp','3g2','ts','m2ts','mts','vob','divx','asf','rm','rmvb','mxf','qt'], // vidéo : tous les formats courants
   image: ['jpg','jpeg','png','gif','webp','bmp','svg','avif']
 };
 const SUB_EXT = ['srt','vtt'];
@@ -441,7 +441,7 @@ function itemsFromFiles(files) {
 async function addFilesDialog() {
   if (!FSA) return $('fileInput').click();
   try {
-    const accept = { 'audio/*': EXT.audio.map((e) => '.' + e), 'video/*': EXT.video.map((e) => '.' + e), 'image/*': EXT.image.map((e) => '.' + e) };
+    const accept = { 'audio/mpeg': EXT.audio.map((e) => '.' + e), 'video/*': EXT.video.map((e) => '.' + e), 'image/*': EXT.image.map((e) => '.' + e) };
     const hs = await window.showOpenFilePicker({ multiple: true, types: [{ description: 'Médias', accept }], excludeAcceptAllOption: false });
     const r = await itemsFromHandles(hs); addItems(r.list);
   } catch (e) { if (e.name !== 'AbortError') osd('Impossible d\'ouvrir'); }
@@ -677,7 +677,9 @@ for (const m of [audio, video]) {
   m.addEventListener('loadedmetadata', () => { if (m === activeMedia()) { $('durTime').textContent = fmt(m.duration); layoutVideo(); updateAB(); } });
   m.addEventListener('error', () => {
     if (!m.getAttribute('src')) return;
-    $('nowPlaying').textContent = '⚠ Format ou codec non pris en charge par le navigateur : ' + (items[current]?.name || '');
+    const it = items[current]; if (it) { it.error = true; renderList(); }
+    $('nowPlaying').textContent = '⚠ Ce navigateur ne sait pas lire ce fichier (format ou codec) : ' + (it?.name || '') + (it && it.type === 'video' ? ' — essayez Chrome/Edge, ou convertissez-le en MP4 (H.264).' : '');
+    osd('Format non lisible');
   });
 }
 window.addEventListener('beforeunload', saveProg);
