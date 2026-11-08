@@ -338,6 +338,7 @@
             <div class="section-heading wallet-page-heading"><div><p class="eyebrow">MON FOYER</p><h2>Ma maison</h2><p>Dépenses du foyer, budget familial et projet de construction.</p></div><span class="section-icon">🏠</span></div>
             <div id="wallet-vue-maison">
               <div class="maison-resume" id="maison-resume"></div>
+              <section class="carte wallet-card maison-card tv-carte"><div class="tv-ligne"><div><h3>📺 Télévision</h3><p class="muted">Lecteur audio, vidéo et photo de la maison.</p></div><button type="button" class="primary-button" id="tv-ouvrir">Ouvrir la télévision</button></div></section>
               <section class="carte wallet-card maison-card"><div class="card-heading"><h3>Détail du mois et du chantier</h3></div><div id="maison-detail"></div></section>
               <div class="maison-grille">
                 <section class="carte wallet-card maison-card"><h3>Ajouter une opération</h3>
@@ -478,6 +479,7 @@
       setTimeout(function(){if(!window.__appPret)montrer("L'application n'a pas démarré. Vérifiez votre connexion internet (les composants Firebase se chargent depuis Google), désactivez un éventuel bloqueur de publicités, puis rechargez. Appuyez sur F12 > Console pour voir le détail.");},6000);
     })();
   </script>
-  <script type="module" src="app.js?v=20261108-118"></script>
+  <script type="module" src="app.js?v=20261108-119"></script>
+  <div id="tv-fenetre" class="tv-fenetre" hidden><div class="tv-barre"><strong>📺 Télévision</strong><button type="button" id="tv-fermer">✕ Fermer</button></div><div id="tv-zone" class="tv-zone"></div></div>
 </body>
 </html>

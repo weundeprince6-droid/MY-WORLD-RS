@@ -31,7 +31,9 @@ const blocConfig = /let config;\ntry \{[\s\S]*?\n\}\nconst \{ firebaseConfig, re
 if (!blocConfig.test(app)) throw new Error("Bloc de configuration introuvable dans app.js : adaptez build-html.mjs");
 app = app.replace(blocConfig, "");
 
+const tvPage = lire("television.html");
 const script = [
+  `window.__TV_HTML__ = ${JSON.stringify(tvPage).replace(/<\//g, "<\\/")};`,
   importsCdn.join(""),
   "// ===== config.js =====", config,
   "// ===== core.js =====", core,

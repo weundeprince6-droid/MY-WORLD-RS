@@ -1886,6 +1886,26 @@ function monterAssistant(cle, paneId, rubrique, suggestions, porteeFixe = null) 
   iaAfficheurs.push(afficher);
   afficher();
 }
+// ===== Télévision (Ma maison) : le lecteur s'ouvre en plein écran à chaque clic =====
+async function tvHtml() {
+  if (typeof window.__TV_HTML__ === "string") return window.__TV_HTML__;
+  const r = await fetch("television.html"); if (!r.ok) throw new Error("television.html introuvable");
+  return r.text();
+}
+async function tvOuvrir() {
+  const fen = document.getElementById("tv-fenetre"), zone = document.getElementById("tv-zone");
+  zone.innerHTML = ""; fen.hidden = false;
+  try {
+    const f = document.createElement("iframe");
+    f.title = "Télévision"; f.allow = "fullscreen; autoplay; picture-in-picture"; f.setAttribute("allowfullscreen", "");
+    f.srcdoc = await tvHtml(); zone.appendChild(f);
+  } catch (e) { zone.textContent = "Impossible de charger la télévision : " + e.message; zone.style.color = "#fff"; zone.style.padding = "20px"; }
+}
+function tvFermer() { document.getElementById("tv-zone").innerHTML = ""; document.getElementById("tv-fenetre").hidden = true; }
+document.getElementById("tv-ouvrir")?.addEventListener("click", tvOuvrir);
+document.getElementById("tv-fermer")?.addEventListener("click", tvFermer);
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !document.getElementById("tv-fenetre").hidden) tvFermer(); });
+
 // L'assistant vit dans son propre onglet « Assistant IA » (en bas du menu) et n'apparaît dans aucun autre.
 monterAssistant("assistant", "pane-assistant", "Assistant IA", [
   ["Fais-moi un résumé de ma situation", ["finances", "agenda", "messages"]],

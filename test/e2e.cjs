@@ -433,6 +433,20 @@ srv.listen(8765, async () => {
     const ok = /1\s?500\s?FC/.test(info) && !!compte && JSON.stringify(compte.corps).includes('professional') && !!tx && JSON.stringify(tx.corps).includes('1500');
     return { ok, detail: info.slice(0, 120) + ' | ' + crees.length };
   }));
+  res.push(await scenario('Ma maison : la télévision s\'ouvre à chaque clic et se ferme', { }, async (p) => {
+    await p.click('#bouton-connexion'); await p.waitForTimeout(3000);
+    await p.click('[data-tab="maison"]'); await p.waitForTimeout(1500);
+    const r = [];
+    for (let i = 0; i < 2; i++) {
+      await p.click('#tv-ouvrir'); await p.waitForTimeout(1200);
+      const n = await p.evaluate(() => { const f = document.querySelector('#tv-zone iframe'); return { vis: !document.getElementById('tv-fenetre').hidden, ifr: document.querySelectorAll('#tv-zone iframe').length, titre: f && f.contentDocument.title }; });
+      r.push(JSON.stringify(n));
+      await p.click('#tv-fermer'); await p.waitForTimeout(300);
+      r.push(String(await p.isHidden('#tv-fenetre')));
+    }
+    const ok = r[0].includes('"vis":true') && r[0].includes('"ifr":1') && r[0].includes('Lecteur Pro') && r[1] === 'true' && r[2].includes('"ifr":1') && r[3] === 'true';
+    return { ok, detail: r.join(' | ') };
+  }));
   res.push(await scenario('Porte-monnaie : onglet « Ma maison » (dépense, budget, chantier)', { }, async (p, appels, logs, etat) => {
     await p.click('#bouton-connexion'); await p.waitForTimeout(3000);
     await p.click('[data-tab="wallet"]'); await p.waitForTimeout(2500);
