@@ -19,6 +19,7 @@ import { construireContexteGlobal, preparerRequeteAssistant, extraireReponseAssi
 import { calculerMateriel, normaliserMateriel, calculerMaison, normaliserEntreeMaison, moisDe, CATEGORIES_PRO, CATEGORIES_REVENU_PRO, CATEGORIES_PROJET_PRO, CATEGORIES_MAISON, CATEGORIES_REVENU, CATEGORIES_CHANTIER } from "./maison.js";
 import { dessinerRapportAppli } from "./rapport-appli.js";
 import { lireFichiersKeep } from "./notes.js";
+import { estLectureMemorisable, cleCache, analyserEcriture, reponseSimulee, superposerFile, ajouterALaFile, retirerDeLaFile, verdictRenvoi, ouvrirMemoire } from "./horsligne.js";
 
 const $ = (id) => document.getElementById(id);
 const SDK = "https://www.gstatic.com/firebasejs/10.14.1/";
@@ -68,6 +69,7 @@ $("bouton-deconnexion").addEventListener("click", async () => {
   minuterieVerrouillage = null;
   $("pin-gate").hidden = true;
   effacerJetonMemorise();
+  memoireHL.vider();
   afficherSession(false);
   afficherBoutonRenouveler(false);
   const bc = $("bouton-connexion"); if (bc) bc.textContent = "Se connecter avec Google";
@@ -112,6 +114,7 @@ const sdkPret = (async () => {
 })();
 sdkPret.catch(() => {});
 window.__appPret = true;
+if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register("sw.js").catch((e) => console.info("Mode hors ligne : service worker indisponible", e?.message));
 
 function afficherSession(connecte, nom = "") {
   if (connecte) demarrerSurveillanceSocial();
@@ -518,7 +521,11 @@ async function restaurerSessionGoogle(user) {
       afficherSession(true, user.displayName || user.email);
       return;
     }
-    await obtenirJetonGoogle();
+    try { await obtenirJetonGoogle(); }
+    catch (e) {
+      if (!navigator.onLine || erreurReseauHL(e)) { noterHorsLigne(true); jetonGoogle = "hors-ligne"; jetonGoogleExpireA = 0; }
+      else throw e;
+    }
     afficherSession(true, user.displayName || user.email);
     chargerProfilGoogle(user);
     await tout();
@@ -660,6 +667,81 @@ const heure = new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-dig
 const jourCourt = new Intl.DateTimeFormat("fr-FR", { weekday: "short", day: "numeric", month: "short" });
 const jourHeure = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
+// ---------- Mode sans internet ----------
+// Les dernières réponses de Google sont gardées sur l'appareil ; les modifications de vos données privées
+// (porte-monnaie, Ma maison, Projet pro…) faites sans connexion attendent dans une file et partent au retour d'internet.
+const memoireHL = ouvrirMemoire();
+const CLE_FILE_HL = "mwrs.hl.file";
+let horsLigne = !navigator.onLine;
+let synchroEnCours = false;
+let messageSynchro = "";
+function lireFileHL() { try { const f = JSON.parse(localStorage.getItem(CLE_FILE_HL) || "[]"); return Array.isArray(f) ? f : []; } catch { return []; } }
+function ecrireFileHL(f) { try { localStorage.setItem(CLE_FILE_HL, JSON.stringify(f)); } catch { /* stockage indisponible */ } majBandeauReseau(); }
+function erreurReseauHL(e) { return !!(e?.reseau || e instanceof TypeError || /failed to fetch|network|load failed/i.test(e?.message || "")); }
+function noterHorsLigne(v) { if (horsLigne !== v) { horsLigne = v; majBandeauReseau(); } }
+function majBandeauReseau() {
+  const b = $("bandeau-reseau"); if (!b) return;
+  const n = lireFileHL().length;
+  const attente = n ? ` · ${n} modification${n > 1 ? "s" : ""} en attente d'envoi` : "";
+  let texte = "";
+  if (horsLigne) texte = "📴 Mode hors ligne : vous voyez les dernières données enregistrées sur cet appareil" + attente + ". Tout sera synchronisé dès le retour d'internet.";
+  else if (synchroEnCours) texte = "🔄 Synchronisation en cours" + attente + "…";
+  else if (messageSynchro) texte = messageSynchro;
+  else if (n) texte = "⏳" + attente.replace(" · ", " ") + " : envoi dès que la connexion est stable.";
+  b.textContent = texte; b.hidden = !texte;
+}
+window.addEventListener("offline", () => { noterHorsLigne(true); });
+window.addEventListener("online", () => { reprendreConnexion(); });
+async function reprendreConnexion() {
+  noterHorsLigne(false);
+  try { await obtenirJetonGoogle(); } catch { return; }
+  await synchroniserFileHL(true);
+}
+async function synchroniserFileHL(rafraichir = false) {
+  if (synchroEnCours || !navigator.onLine || !jetonGoogle || jetonGoogle === "hors-ligne") return;
+  const depart = lireFileHL();
+  if (!depart.length && !rafraichir) return;
+  synchroEnCours = true; messageSynchro = ""; majBandeauReseau();
+  let envoyees = 0, abandonnees = 0, interrompu = false;
+  try {
+    await obtenirJetonGoogle();
+    for (const op of lireFileHL()) {
+      let r;
+      try {
+        r = await fetch(op.url, { method: op.methode, headers: { Authorization: `Bearer ${jetonGoogle}`, "Content-Type": "application/json" }, body: op.body || undefined });
+      } catch { interrompu = true; break; }
+      const v = verdictRenvoi(op, r.status);
+      if (v === "reseau") { interrompu = true; if (r.status === 401) { jetonGoogle = null; jetonGoogleExpireA = 0; } break; }
+      ecrireFileHL(retirerDeLaFile(lireFileHL(), op.n));
+      if (v === "ok") envoyees++; else abandonnees++;
+    }
+  } catch { interrompu = true; }
+  finally { synchroEnCours = false; }
+  if (!interrompu && (depart.length || rafraichir)) {
+    messageSynchro = depart.length ? `✅ Synchronisé : ${envoyees} modification${envoyees > 1 ? "s" : ""} envoyée${envoyees > 1 ? "s" : ""}${abandonnees ? ` · ${abandonnees} ignorée${abandonnees > 1 ? "s" : ""} (déjà prises en compte ou refusées)` : ""}.` : "";
+    majBandeauReseau();
+    if ($("tableau") && !$("tableau").hidden) { try { await tout(); await chargerWallet(true); } catch { /* sera réessayé à l'actualisation */ } }
+    if (messageSynchro) setTimeout(() => { messageSynchro = ""; majBandeauReseau(); }, 6000);
+  } else majBandeauReseau();
+}
+setInterval(() => { if (navigator.onLine && lireFileHL().length) synchroniserFileHL(); }, 30000);
+majBandeauReseau();
+async function servirHorsLigne(url, options, cause) {
+  noterHorsLigne(true);
+  const op = analyserEcriture(url, options);
+  if (op) { ecrireFileHL(ajouterALaFile(lireFileHL(), op)); return reponseSimulee(op); }
+  if (estLectureMemorisable(url, options)) {
+    const m = await memoireHL.lire(cleCache(url, options));
+    if (m) {
+      const r = superposerFile(url, m.v, lireFileHL());
+      if (r !== null) return r;
+      const e404 = new Error("Hors ligne : ce document a été supprimé."); e404.status = 404; throw e404;
+    }
+    const e = new Error("Hors ligne : cette section n'a pas encore été enregistrée sur cet appareil (ouvrez-la une fois avec internet)."); e.reseau = true; throw e;
+  }
+  const e = new Error("Hors ligne : cette action nécessite une connexion internet."); e.reseau = true; throw e;
+}
+
 // Appel Google avec un nouvel essai automatique si le quota est momentanément dépassé
 async function google(url, options = {}) {
   try {
@@ -672,7 +754,9 @@ async function google(url, options = {}) {
 }
 
 async function googleUneFois(url, options = {}, nouvelEssai = true) {
-  await obtenirJetonGoogle();
+  if (!navigator.onLine) return servirHorsLigne(url, options);
+  try { await obtenirJetonGoogle(); }
+  catch (e) { if (erreurReseauHL(e)) return servirHorsLigne(url, options, e); throw e; }
   const envoyer = () => fetch(url, {
     ...options,
     headers: { Authorization: `Bearer ${jetonGoogle}`, "Content-Type": "application/json", ...(options.headers || {}) },
@@ -690,9 +774,11 @@ async function googleUneFois(url, options = {}, nouvelEssai = true) {
     if (!r) {
       const erreur = new Error("Connexion internet interrompue : Google est injoignable pour le moment. Vérifiez votre connexion (ou un bloqueur de publicités / VPN), l'application réessaiera toute seule.");
       erreur.reseau = true;
+      if (analyserEcriture(url, options) || estLectureMemorisable(url, options)) return servirHorsLigne(url, options, erreur);
       throw erreur;
     }
   }
+  noterHorsLigne(false);
   if (r.status === 401 && nouvelEssai) {
     jetonGoogle = null; jetonGoogleExpireA = 0; effacerJetonMemorise();
     await obtenirJetonGoogle(true);
@@ -725,7 +811,12 @@ async function googleUneFois(url, options = {}, nouvelEssai = true) {
     throw erreur;
   }
   if (r.status === 204) return {};
-  return r.json();
+  const donnees = await r.json();
+  if (estLectureMemorisable(url, options)) {
+    memoireHL.ecrire(cleCache(url, options), { t: Date.now(), v: donnees });
+    return superposerFile(url, donnees, lireFileHL());
+  }
+  return donnees;
 }
 
 // ---------- Google Drive : consultation des fichiers et dossiers ----------

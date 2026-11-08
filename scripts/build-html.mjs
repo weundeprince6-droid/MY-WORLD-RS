@@ -17,6 +17,7 @@ const telegram = sansExport(lire("telegram.js")).replace(importsLocaux, "");
 const rapport = sansExport(lire("rapport.js")).replace(importsLocaux, "");
 const assistantMod = sansExport(lire("assistant.js")).replace(importsLocaux, "");
 const maisonMod = sansExport(lire("maison.js")).replace(importsLocaux, "");
+const horsligneMod = sansExport(lire("horsligne.js")).replace(importsLocaux, "");
 const notesKeep = sansExport(lire("notes.js")).replace(importsLocaux, "");
 const rapportAppli = sansExport(lire("rapport-appli.js")).replace(importsLocaux, "");
 const facebook = sansExport(lire("facebook.js")).replace(importsLocaux, "");
@@ -43,6 +44,7 @@ const script = [
   "// ===== rapport.js =====", rapport,
   "// ===== assistant.js =====", assistantMod,
   "// ===== maison.js =====", maisonMod,
+  "// ===== horsligne.js =====", horsligneMod,
   "// ===== notes.js =====", notesKeep,
   "// ===== rapport-appli.js =====", rapportAppli,
   "// ===== app.js =====", app,

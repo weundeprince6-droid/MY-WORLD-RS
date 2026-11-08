@@ -994,3 +994,5 @@ html[data-theme="light"] .section-icon.purple,html[data-theme="light"] .feature-
 .tv-barre{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;background:#1c1c25;color:#ececf3}
 .tv-barre button{background:#252532;color:#ececf3;border:1px solid #2f2f3f;border-radius:8px;padding:6px 12px;cursor:pointer}
 .tv-zone{flex:1;min-height:0}.tv-zone iframe{width:100%;height:100%;border:0;display:block}
+
+.reseau-hl{position:sticky;top:0;z-index:50;font-weight:600}
