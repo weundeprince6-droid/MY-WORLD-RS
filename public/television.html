@@ -598,7 +598,7 @@ async function play(i) {
     osd('Fichier inaccessible'); renderList(); return;
   }
   if (token !== playToken) return;
-  it.error = false;
+  it.error = false; it.convEchec = false;
   curUrl = URL.createObjectURL(file);
   try { localStorage.setItem('lp_last', it.key); } catch (e) {}
 
@@ -713,7 +713,12 @@ async function convertirEtLire(it, base) {
     if (file.size > 1.8 * 1024 * 1024 * 1024) throw new Error('fichier trop gros pour une conversion en mémoire (> 1,8 Go)');
     let blob = convertis.get(it.key);
     if (!blob) {
-      info('préparation de la conversion (téléchargement du convertisseur, une seule fois, ~30 Mo)…');
+      if (!ffmpegPret) {
+        info('conversion en attente de votre accord…');
+        const ok = window.confirm('Ce fichier ne peut pas être lu tel quel (son ou format non pris en charge).\n\nPour le lire, le lecteur doit télécharger un convertisseur d\'environ 30 Mo depuis internet (données mobiles consommées), puis convertir le son sur votre appareil.\n\nTélécharger et convertir maintenant ?');
+        if (!ok) { it.convEchec = true; const d = await diagnostiquerVideo(it); info('conversion refusée par vous (aucune donnée consommée). ' + d); return; }
+      }
+      info('préparation de la conversion (téléchargement du convertisseur, ~30 Mo)…');
       const ff = await chargerFFmpeg();
       const ext = extOf(it.name) || 'mkv';
       const entree = new File([file], 'entree.' + ext);
