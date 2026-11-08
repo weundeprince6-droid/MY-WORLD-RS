@@ -31,6 +31,10 @@ input[type=search]{width:100%;padding:8px 10px;border-radius:8px;border:1px soli
 #playlist li{position:relative;display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:13px}
 #playlist li:hover{background:var(--panel2)}
 #playlist li.current{background:color-mix(in srgb,var(--accent) 25%,transparent)}
+#playlist li.grp{position:sticky;top:0;z-index:2;background:var(--panel);font-weight:600;font-size:12px;letter-spacing:.3px;color:var(--accent2);border-bottom:1px solid var(--panel2);margin-top:6px;padding:7px 10px}
+#playlist li.grp:hover{background:var(--panel2)}
+#playlist li.grp .nm{color:var(--accent2)}
+#playlist li.sousgrp{padding-left:22px}
 #playlist li.over{outline:2px dashed var(--accent)}
 #playlist li .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #playlist li .st{font-size:11px;color:var(--accent2)}
@@ -359,6 +363,9 @@ function toast(msg, label, action) {
 
 // ================= Accès aux fichiers =================
 const FSA = 'showOpenFilePicker' in window;
+const SANS_DOSSIER = 'Fichiers isolés';
+// Dossier choisi dans le lecteur : sert à ranger et différencier les fichiers dans la liste
+const groupOf = (it) => it.dossier || it.dirHandle?.name || (it.path && it.path.includes('/') ? it.path.split('/')[0] : SANS_DOSSIER);
 const mkItem = (o) => ({ key: `${o.name}|${o.size}|${o.mod}`, path: o.name, subs: [], ...o });
 
 async function ensurePerm(h, request = true) {
@@ -398,7 +405,7 @@ async function scanDir(root) {
       let file; try { file = await m.h.getFile(); } catch (e) { continue; }
       const mine = m.type === 'video' ? subs.filter((s) => baseOf(s.name).toLowerCase().startsWith(baseOf(m.name).toLowerCase())) : [];
       const p = [...parts, m.name];
-      found.push(mkItem({ file, dirHandle: root, parts: p, name: m.name, path: p.join('/'), type: m.type, size: file.size, mod: file.lastModified, subs: mine }));
+      found.push(mkItem({ file, dirHandle: root, dossier: root.name, parts: p, name: m.name, path: p.join('/'), type: m.type, size: file.size, mod: file.lastModified, subs: mine }));
     }
   }
   await walk(root, [], 0);
@@ -411,7 +418,7 @@ async function itemsFromHandles(handles) {
     if (!h) continue;
     if (h.kind === 'directory') { out.push(...await scanDir(h)); continue; }
     const type = typeOfName(h.name);
-    if (type) { const file = await h.getFile(); out.push(mkItem({ file, handle: h, name: h.name, type, size: file.size, mod: file.lastModified })); }
+    if (type) { const file = await h.getFile(); out.push(mkItem({ file, handle: h, dossier: SANS_DOSSIER, name: h.name, type, size: file.size, mod: file.lastModified })); }
     else if (SUB_EXT.includes(extOf(h.name))) subFiles.push({ name: h.name, handle: h });
   }
   for (const it of out) if (it.type === 'video' && !it.dirHandle) it.subs = subFiles.filter((s) => baseOf(s.name).toLowerCase().startsWith(baseOf(it.name).toLowerCase()));
@@ -426,7 +433,7 @@ function itemsFromFiles(files) {
   for (const f of files) {
     const type = typeOfName(f.name); if (!type) continue;
     const subs = type === 'video' ? subFiles.filter((s) => dirOf(s) === dirOf(f) && baseOf(s.name).toLowerCase().startsWith(baseOf(f.name).toLowerCase())).map((s) => ({ name: s.name, file: s })) : [];
-    list.push(mkItem({ file: f, name: f.name, path: f.webkitRelativePath || f.name, type, size: f.size, mod: f.lastModified, subs }));
+    list.push(mkItem({ file: f, dossier: (f.webkitRelativePath || '').includes('/') ? f.webkitRelativePath.split('/')[0] : SANS_DOSSIER, name: f.name, path: f.webkitRelativePath || f.name, type, size: f.size, mod: f.lastModified, subs }));
   }
   return { list, subFiles };
 }
@@ -454,9 +461,24 @@ const visible = () => items.map((_, i) => i).filter((i) => (filter === 'all' || 
 function renderList() {
   const ul = $('playlist'); ul.innerHTML = '';
   const canDrag = filter === 'all' && !query;
-  for (const i of visible()) {
+  const vis = visible();
+  const nbParDossier = {}; for (const i of vis) { const g = groupOf(items[i]); nbParDossier[g] = (nbParDossier[g] || 0) + 1; }
+  const replies = collapsedGroups();
+  let groupeCourant = null;
+  for (const i of vis) {
     const it = items[i], li = document.createElement('li');
-    if (i === current) li.className = 'current';
+    const g = groupOf(it);
+    if (g !== groupeCourant) {
+      groupeCourant = g;
+      const t = document.createElement('li'); t.className = 'grp'; const ferme = replies.has(g) && !query;
+      t.innerHTML = '<span>' + (ferme ? '▸' : '▾') + ' 📁</span><span class="nm"></span><span class="st">' + nbParDossier[g] + '</span>';
+      t.querySelector('.nm').textContent = g; t.title = 'Dossier : ' + g + ' (clic = replier / déplier)';
+      t.onclick = () => { const s = collapsedGroups(); if (s.has(g)) s.delete(g); else s.add(g); saveCollapsed(s); renderList(); };
+      ul.appendChild(t);
+    }
+    if (replies.has(g) && !query) continue;
+    li.classList.add('sousgrp');
+    if (i === current) li.classList.add('current');
     const p = prog[it.key];
     li.innerHTML = '<span>' + ICONS[it.type] + '</span><span class="nm"></span><span class="st"></span><button class="rm" title="Retirer">✕</button>';
     li.querySelector('.nm').textContent = it.name;
@@ -480,8 +502,18 @@ function renderList() {
   $('count').textContent = items.length + (items.length > 1 ? ' éléments' : ' élément');
 }
 
+function collapsedGroups() { try { return new Set(JSON.parse(localStorage.getItem('lp.dossiersReplies') || '[]')); } catch { return new Set(); } }
+function saveCollapsed(s) { try { localStorage.setItem('lp.dossiersReplies', JSON.stringify([...s])); } catch {} }
+// Garde les fichiers d'un même dossier côte à côte (ordre des dossiers = ordre d'ajout)
+function regrouper() {
+  const ordre = []; for (const it of items) { const g = groupOf(it); if (!ordre.includes(g)) ordre.push(g); }
+  const cur = items[current];
+  items = ordre.flatMap((g) => items.filter((it) => groupOf(it) === g));
+  current = cur ? items.indexOf(cur) : -1;
+}
 function moveItem(from, to) {
   if (from === to || isNaN(from)) return;
+  if (groupOf(items[from]) !== groupOf(items[to])) { osd('Déplacement possible seulement dans le même dossier'); return; }
   const cur = items[current];
   const [x] = items.splice(from, 1); items.splice(to, 0, x);
   current = cur ? items.indexOf(cur) : -1;
@@ -492,7 +524,7 @@ let pT;
 function persist() {
   clearTimeout(pT);
   pT = setTimeout(() => {
-    DB.set('library', items.filter((i) => i.handle || i.dirHandle).map(({ key, name, path, type, size, mod, parts, handle, dirHandle, subs }) => ({ key, name, path, type, size, mod, parts, handle, dirHandle, subs })));
+    DB.set('library', items.filter((i) => i.handle || i.dirHandle).map(({ key, name, path, type, size, mod, parts, handle, dirHandle, subs, dossier }) => ({ key, name, path, type, size, mod, parts, handle, dirHandle, subs, dossier })));
   }, 400);
 }
 
@@ -501,7 +533,7 @@ function addItems(list) {
   const fresh = list.filter((i) => !known.has(i.key + '|' + i.path));
   if (!fresh.length) { osd('Rien de nouveau à ajouter'); return; }
   fresh.sort((a, b) => a.path.localeCompare(b.path, undefined, { numeric: true }));
-  items.push(...fresh);
+  items.push(...fresh); regrouper();
   renderList(); renderResume(); persist();
   osd(fresh.length + ' ajouté' + (fresh.length > 1 ? 's' : ''));
   if (current === -1) play(items.indexOf(fresh[0]));
@@ -520,7 +552,7 @@ $('sort').onchange = () => {
   const v = $('sort').value; if (v === 'manual') return;
   const cur = items[current];
   const cmp = { name: (a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }), date: (a, b) => b.mod - a.mod, size: (a, b) => b.size - a.size }[v];
-  items.sort(cmp); current = cur ? items.indexOf(cur) : -1;
+  items.sort(cmp); regrouper(); current = cur ? items.indexOf(cur) : -1;
   renderList(); persist();
 };
 
@@ -1151,7 +1183,7 @@ window.addEventListener('keydown', (e) => {
   $('btnTheme') && 0;
   setMode('empty'); renderList();
   const lib = await DB.get('library');
-  if (Array.isArray(lib) && lib.length) { items = lib; renderList(); }
+  if (Array.isArray(lib) && lib.length) { items = lib; regrouper(); renderList(); }
   renderResume();
 })();
 })();
