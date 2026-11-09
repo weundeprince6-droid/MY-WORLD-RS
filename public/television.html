@@ -70,6 +70,14 @@ input[type=search]{width:100%;padding:8px 10px;border-radius:8px;border:1px soli
 #docActions a,#docActions button{margin-left:8px;padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--panel2);color:var(--text);text-decoration:none;cursor:pointer;font-size:13px}
 #docFrame{flex:1;width:100%;border:0;background:#fff}
 #docCarte{display:none;flex:1;align-items:center;justify-content:center;text-align:center;padding:30px;flex-direction:column;gap:12px}
+#pdfVue{flex:1;overflow:auto;background:#3b3b46;padding:14px 0;text-align:center}
+#pdfVue[hidden]{display:none}
+#pdfVue .pdfPage{position:relative;margin:0 auto 14px;background:#fff;box-shadow:0 2px 14px rgba(0,0,0,.45)}
+#pdfVue canvas{display:block;width:100%;height:100%}
+#pdfOutils{display:flex;gap:6px;align-items:center;font-size:13px}#pdfOutils[hidden]{display:none}
+#pdfOutils button{padding:4px 10px;border-radius:8px;border:1px solid var(--border);background:var(--panel2);color:var(--text);cursor:pointer}
+#pdfPage{margin-left:8px;color:var(--muted)}
+#docBox.pdf-actif #docFrame{display:none}
 #docBox.sans-apercu #docFrame{display:none}#docBox.sans-apercu #docCarte{display:flex}
 #docCarte .big{font-size:64px}#docCarte a{padding:10px 18px;border-radius:10px;background:var(--accent);color:#fff;text-decoration:none;font-weight:600}
 #choixTypes{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:20px}
@@ -206,7 +214,7 @@ table.keys{width:100%;border-collapse:collapse}table.keys td{padding:3px 4px;bor
         <button id="imgBack" title="Retour à la galerie (Échap)">▦ Galerie</button><span id="imgCount"></span>
         <button id="imgPrev" class="imgArrow" title="Photo précédente (←)">‹</button><button id="imgNext" class="imgArrow" title="Photo suivante (→)">›</button>
       </div>
-      <div id="docBox" class="layer"><div id="docEntete"><strong id="docNom"></strong><span id="docActions"></span></div><iframe id="docFrame" title="Document"></iframe><div id="docCarte"></div></div>
+      <div id="docBox" class="layer"><div id="docEntete"><strong id="docNom"></strong><span id="pdfOutils" hidden><button id="pdfMoins" title="Zoom −">−</button><span id="pdfZoom">100 %</span><button id="pdfPlus" title="Zoom +">+</button><button id="pdfAjuster" title="Ajuster à la largeur">⤢</button><span id="pdfPage"></span></span><span id="docActions"></span></div><div id="pdfVue" hidden></div><iframe id="docFrame" title="Document"></iframe><div id="docCarte"></div></div>
       <div id="gallery" class="layer">
         <div id="galBar">
           <strong>🖼 Galerie</strong><span id="galCompte"></span>
@@ -1273,7 +1281,13 @@ function ouvrirDocument(it, file) {
   $('docNom').textContent = it.name;
   const actions = $('docActions'); actions.innerHTML = '';
   const dl = document.createElement('a'); dl.href = curUrl; dl.download = it.name; dl.textContent = '⬇ Télécharger'; actions.appendChild(dl);
-  if (AFFICHABLES.includes(e)) {
+  box.classList.remove('pdf-actif'); $('pdfVue').hidden = true; $('pdfOutils').hidden = true;
+  if (e === 'pdf') {
+    box.classList.remove('sans-apercu');
+    ouvrirPdf(it, file).then(() => {}, () => { // repli : lecteur PDF du navigateur
+      box.classList.remove('pdf-actif'); $('pdfVue').hidden = true; $('pdfOutils').hidden = true; frame.src = curUrl;
+    });
+  } else if (AFFICHABLES.includes(e)) {
     box.classList.remove('sans-apercu'); frame.src = curUrl;
     const nv = document.createElement('a'); nv.href = curUrl; nv.target = '_blank'; nv.rel = 'noopener'; nv.textContent = '↗ Nouvel onglet'; actions.prepend(nv);
   } else {
@@ -1284,6 +1298,72 @@ function ouvrirDocument(it, file) {
   }
   $('nowPlaying').textContent = it.name;
 }
+
+
+// ----- Lecteur PDF intégré (pdf.js, hébergé avec l'application : fonctionne sans internet) -----
+let pdfLib = null, pdfDoc = null, pdfEchelle = 1, pdfJeton = 0, pdfObs = null;
+async function chargerPdfLib() {
+  if (pdfLib) return pdfLib;
+  const m = await import('./pdfjs/pdf.min.mjs');
+  m.GlobalWorkerOptions.workerSrc = new URL('./pdfjs/pdf.worker.min.mjs', document.baseURI).href;
+  return (pdfLib = m);
+}
+async function ouvrirPdf(it, file) {
+  const jeton = ++pdfJeton, vue = $('pdfVue'), box = $('docBox');
+  const lib = await chargerPdfLib();
+  if (pdfDoc) { try { pdfDoc.destroy(); } catch {} pdfDoc = null; }
+  const doc = await lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+  if (jeton !== pdfJeton) { doc.destroy(); return; }
+  pdfDoc = doc;
+  const p1 = await doc.getPage(1), v1 = p1.getViewport({ scale: 1 });
+  pdfEchelle = Math.max(0.3, Math.min(3, (Math.max(vue.clientWidth || 800, 320) - 40) / v1.width));
+  box.classList.add('pdf-actif'); vue.hidden = false; $('pdfOutils').hidden = false;
+  vue.scrollTop = 0; dessinerPdf(v1.width, v1.height);
+}
+function dessinerPdf(largeurPage, hauteurPage) {
+  const vue = $('pdfVue'), doc = pdfDoc; if (!doc) return;
+  if (pdfObs) pdfObs.disconnect();
+  vue.querySelectorAll('.pdfPage').forEach((n) => n.remove());
+  $('pdfZoom').textContent = Math.round(pdfEchelle * 100) + ' %';
+  const dpr = Math.min(window.devicePixelRatio || 1, 2), jeton = pdfJeton;
+  pdfObs = new IntersectionObserver((ens) => {
+    for (const en of ens) {
+      const div = en.target;
+      if (en.isIntersecting && !div.dataset.fait) {
+        div.dataset.fait = '1';
+        doc.getPage(+div.dataset.n).then((page) => {
+          const vp = page.getViewport({ scale: pdfEchelle * dpr });
+          const c = document.createElement('canvas'); c.width = Math.floor(vp.width); c.height = Math.floor(vp.height);
+          div.style.width = Math.floor(vp.width / dpr) + 'px'; div.style.height = Math.floor(vp.height / dpr) + 'px';
+          div.textContent = ''; div.appendChild(c);
+          return page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+        }).catch(() => { div.dataset.fait = ''; });
+      }
+    }
+  }, { root: vue, rootMargin: '900px 0px' });
+  for (let n = 1; n <= doc.numPages; n++) {
+    const div = document.createElement('div'); div.className = 'pdfPage'; div.dataset.n = n;
+    div.style.width = Math.floor(largeurPage * pdfEchelle) + 'px'; div.style.height = Math.floor(hauteurPage * pdfEchelle) + 'px';
+    vue.appendChild(div); pdfObs.observe(div);
+  }
+  majPagePdf();
+}
+function majPagePdf() {
+  const vue = $('pdfVue'), doc = pdfDoc; if (!doc) return;
+  const milieu = vue.scrollTop + vue.clientHeight / 3; let n = 1;
+  for (const d of vue.querySelectorAll('.pdfPage')) { if (d.offsetTop <= milieu) n = +d.dataset.n; else break; }
+  $('pdfPage').textContent = 'Page ' + n + ' / ' + doc.numPages;
+}
+async function zoomPdf(f, ajuster) {
+  if (!pdfDoc) return;
+  const p1 = await pdfDoc.getPage(1), v1 = p1.getViewport({ scale: 1 }), vue = $('pdfVue');
+  const ratio = vue.scrollHeight ? vue.scrollTop / vue.scrollHeight : 0;
+  pdfEchelle = ajuster ? Math.max(0.3, Math.min(3, (vue.clientWidth - 40) / v1.width)) : Math.max(0.3, Math.min(4, pdfEchelle * f));
+  dessinerPdf(v1.width, v1.height); vue.scrollTop = ratio * vue.scrollHeight;
+}
+$('pdfPlus').onclick = () => zoomPdf(1.25); $('pdfMoins').onclick = () => zoomPdf(0.8); $('pdfAjuster').onclick = () => zoomPdf(1, true);
+$('pdfVue').addEventListener('scroll', majPagePdf, { passive: true });
+$('pdfVue').addEventListener('wheel', (e) => { if (e.ctrlKey) { e.preventDefault(); zoomPdf(e.deltaY < 0 ? 1.1 : 0.9); } }, { passive: false });
 
 // ================= Choix des types de fichiers à l'ajout d'un dossier =================
 const NOMS_TYPES = { video: ['🎞', 'Vidéos'], audio: ['🎵', 'Audio (MP3)'], image: ['🖼', 'Photos'], doc: ['📄', 'Documents'] };
