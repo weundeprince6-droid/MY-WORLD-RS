@@ -56,7 +56,7 @@ async function scenario(nom, { mode = 'ok', sdkBloque = false, quotaGmail = fals
         ] }));
       }
     }
-    if (u.includes('cloudfunctions.net')) return route.fulfill({ status: 404, headers: { ...CORS, 'content-type': 'application/json' }, body: JSON.stringify({ error: 'Fonction non déployée' }) });
+    if ((u.includes('cloudfunctions.net') || u.includes('workers.dev'))) return route.fulfill({ status: 404, headers: { ...CORS, 'content-type': 'application/json' }, body: JSON.stringify({ error: 'Fonction non déployée' }) });
     if (u.includes('graph.facebook.com')) {
       if (u.includes('MAUVAISJETON')) return route.fulfill(json({ error: { code: 190, message: 'Invalid OAuth access token.' } }));
       if (u.includes('/me/accounts')) return route.fulfill(json({ data: [{ id: '111', name: 'Ma Boutique', access_token: 'PAGETOKEN' + 'x'.repeat(60) }] }));
