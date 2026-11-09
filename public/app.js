@@ -114,7 +114,8 @@ const sdkPret = (async () => {
 })();
 sdkPret.catch(() => {});
 window.__appPret = true;
-if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register("sw.js").then(() => verifierPretHorsLigne()).catch((e) => console.info("Mode hors ligne : service worker indisponible", e?.message));
+if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) { const avait = !!navigator.serviceWorker.controller; navigator.serviceWorker.addEventListener("controllerchange", () => { if (avait) { majDispo = true; majBandeauReseau(); } }); }
+if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register("sw.js").then((reg) => { reg.update().catch(() => {}); return verifierPretHorsLigne(); }).catch((e) => console.info("Mode hors ligne : service worker indisponible", e?.message));
 
 function afficherSession(connecte, nom = "") {
   if (modeTvSeule) return;
@@ -679,6 +680,7 @@ const CLE_FILE_HL = "mwrs.hl.file";
 let horsLigne = !navigator.onLine;
 let synchroEnCours = false;
 let messageSynchro = "";
+let majDispo = false;
 function lireFileHL() { try { const f = JSON.parse(localStorage.getItem(CLE_FILE_HL) || "[]"); return Array.isArray(f) ? f : []; } catch { return []; } }
 function ecrireFileHL(f) { try { localStorage.setItem(CLE_FILE_HL, JSON.stringify(f)); } catch { /* stockage indisponible */ } majBandeauReseau(); }
 function erreurReseauHL(e) { return !!(e?.reseau || e instanceof TypeError || /failed to fetch|network|load failed/i.test(e?.message || "")); }
@@ -705,6 +707,7 @@ function majBandeauReseau() {
   else if (synchroEnCours) texte = "🔄 Synchronisation en cours" + attente + "…";
   else if (messageSynchro) texte = messageSynchro;
   else if (n) texte = "⏳" + attente.replace(" · ", " ") + " : envoi dès que la connexion est stable.";
+  if (majDispo) { texte = "🔄 Une nouvelle version de My World RS est installée : cliquez ici pour recharger."; b.style.cursor = "pointer"; b.onclick = () => location.reload(); }
   b.textContent = texte; b.hidden = !texte;
 }
 window.addEventListener("offline", () => { noterHorsLigne(true); });
@@ -2028,7 +2031,7 @@ function monterAssistant(cle, paneId, rubrique, suggestions, porteeFixe = null) 
 // ===== Télévision (Ma maison) : le lecteur s'ouvre en plein écran à chaque clic =====
 async function tvHtml() {
   if (typeof window.__TV_HTML__ === "string") return window.__TV_HTML__;
-  const r = await fetch("television.html"); if (!r.ok) throw new Error("television.html introuvable");
+  const r = await fetch("television.html", { cache: "no-cache" }); if (!r.ok) throw new Error("television.html introuvable");
   return r.text();
 }
 let tvMinuteur = null;
