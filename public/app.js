@@ -35,6 +35,8 @@ const SCOPES = [
   "https://www.googleapis.com/auth/datastore",
   // Métadonnées des fichiers et dossiers Google Drive (lecture seule)
   "https://www.googleapis.com/auth/drive.metadata.readonly",
+  // Création des documents et feuilles de calcul directement dans Drive.
+  "https://www.googleapis.com/auth/drive.file",
 ];
 
 let jetonGoogle = null;
@@ -927,6 +929,44 @@ $("drive-recherche")?.addEventListener("input", (event) => {
 });
 document.querySelector('[data-tab="drive"]')?.addEventListener("click", () => {
   if (!driveCharge) chargerDrive({ nouvelleRecherche: true });
+});
+
+// Création des fichiers Google Docs / Sheets dans le Drive de l'utilisateur.
+$("drive-create-form")?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const name = $("drive-create-name")?.value.trim();
+  const type = $("drive-create-type")?.value;
+  const status = $("drive-create-status");
+  const button = $("drive-create-submit");
+  if (!name || !["document", "spreadsheet"].includes(type)) return;
+  if (!fb?.auth.currentUser) { status.textContent = "Connectez-vous d'abord à My World RS."; return; }
+  button.disabled = true;
+  status.textContent = "Création dans Google Drive…";
+  const mimeType = type === "document" ? "application/vnd.google-apps.document" : "application/vnd.google-apps.spreadsheet";
+  try {
+    const created = await google("https://www.googleapis.com/drive/v3/files?fields=id,name,mimeType,webViewLink", {
+      method: "POST", body: JSON.stringify({ name, mimeType })
+    });
+    const url = created.webViewLink || "https://drive.google.com/open?id=" + encodeURIComponent(created.id);
+    status.textContent = "Document créé. Ouverture de Google…";
+    window.open(url, "_blank", "noopener,noreferrer");
+    $("drive-create-name").value = "";
+    driveCharge = false;
+    await chargerDrive({ nouvelleRecherche: true });
+    status.textContent = "Document créé dans votre Drive et ouvert dans un nouvel onglet.";
+  } catch (error) {
+    const message = error?.message || "Erreur inconnue";
+    status.textContent = /insufficient|scope|403/i.test(message)
+      ? "Autorisation Drive manquante. Cliquez sur « Autoriser Google Drive » pour accorder le nouvel accès."
+      : "Création impossible : " + message;
+  } finally { button.disabled = false; }
+});
+// Réautorisation Google Drive distincte de la connexion MY WORLD RS.
+$("drive-autoriser-google")?.addEventListener("click", async () => {
+  const user = fb?.auth.currentUser;
+  if (!user) { $("drive-create-status").textContent = "Connectez-vous d'abord à My World RS."; return; }
+  try { await lancerAutorisationGoogle(user); }
+  catch (error) { $("drive-create-status").textContent = "Autorisation Google impossible : " + (error?.message || "réessayez."); }
 });
 
 
