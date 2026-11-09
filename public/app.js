@@ -37,6 +37,8 @@ const SCOPES = [
   "https://www.googleapis.com/auth/drive.metadata.readonly",
   // Création des documents et feuilles de calcul directement dans Drive.
   "https://www.googleapis.com/auth/drive.file",
+  "https://www.googleapis.com/auth/documents",
+  "https://www.googleapis.com/auth/spreadsheets",
 ];
 
 let jetonGoogle = null;
@@ -892,7 +894,9 @@ function afficherFichiersDrive(fichiers, ajouter = false) {
     const icone = dossier ? "📁" : f.mimeType === "application/pdf" ? "📕" : f.mimeType.includes("spreadsheet") ? "📊" : f.mimeType.includes("document") ? "📄" : "📎";
     const date = f.modifiedTime ? jourHeure.format(new Date(f.modifiedTime)) : "";
     const lien = f.webViewLink || `https://drive.google.com/open?id=${encodeURIComponent(f.id)}`;
-    return `<li><div class="drive-file"><span class="drive-file-icon">${icone}</span><div class="drive-file-info"><strong>${echapper(f.name || "Sans nom")}</strong><span class="meta">${dossier ? "Dossier" : "Fichier"} · ${echapper(date)}</span></div><a class="btn btn-light" href="${echapper(lien)}" target="_blank" rel="noopener noreferrer">Ouvrir ↗</a></div></li>`;
+    const editable = !dossier && (f.mimeType === "application/vnd.google-apps.document" || f.mimeType === "application/vnd.google-apps.spreadsheet");
+    const editor = editable ? `<button class="btn btn-primary drive-edit-open" type="button" data-drive-id="${echapper(f.id)}" data-drive-name="${echapper(f.name || "Sans nom")}" data-drive-type="${f.mimeType.includes("spreadsheet") ? "spreadsheet" : "document"}">Modifier ici</button>` : "";
+    return `<li><div class="drive-file"><span class="drive-file-icon">${icone}</span><div class="drive-file-info"><strong>${echapper(f.name || "Sans nom")}</strong><span class="meta">${dossier ? "Dossier" : "Fichier"} · ${echapper(date)}</span></div>${editor}<a class="btn btn-light" href="${echapper(lien)}" target="_blank" rel="noopener noreferrer">Ouvrir dans Google ↗</a></div></li>`;
   }).join("");
   if (!ajouter) liste.innerHTML = "";
   liste.insertAdjacentHTML("beforeend", lignes);
@@ -927,9 +931,96 @@ $("drive-recherche")?.addEventListener("input", (event) => {
   clearTimeout(driveRechercheTimer);
   driveRechercheTimer = setTimeout(() => chargerDrive({ nouvelleRecherche: true }), 350);
 });
+
 document.querySelector('[data-tab="drive"]')?.addEventListener("click", () => {
   if (!driveCharge) chargerDrive({ nouvelleRecherche: true });
 });
+
+// Éditeur intégré MY WORLD RS : texte Docs et tableau Sheets en format TSV.
+let driveEditeur = { id: "", name: "", type: "document", original: "" };
+function fermerDriveEditeur() {
+  const zone = $("drive-editor-card");
+  if (zone) zone.hidden = true;
+  driveEditeur = { id: "", name: "", type: "document", original: "" };
+}
+function afficherTSV(values) {
+  return (values || []).map(row => (row || []).map(v => String(v ?? "").replace(/\\t/g, " ").replace(/\\r?\\n/g, " ")).join("\\t")).join("\\n");
+}
+function lireTSV(text) {
+  return text.split(/\\r?\\n/).map(line => line.split("\\t"));
+}
+async function ouvrirDriveDansEditeur(id, name, type) {
+  const zone = $("drive-editor-card"), titre = $("drive-editor-title"), champ = $("drive-editor-content"), status = $("drive-editor-status");
+  if (!zone || !champ) return;
+  driveEditeur = { id, name, type, original: "" };
+  zone.hidden = false;
+  titre.textContent = (type === "spreadsheet" ? "Google Sheets · " : "Google Docs · ") + name;
+  champ.value = "";
+  champ.placeholder = type === "spreadsheet" ? "Cellules séparées par des tabulations ; une ligne par rangée…" : "Écrivez votre document ici…";
+  status.textContent = "Chargement du document depuis Google Drive…";
+  $("drive-editor-save").disabled = true;
+  zone.scrollIntoView({ behavior: "smooth", block: "start" });
+  try {
+    let contenu = "";
+    if (type === "document") {
+      const doc = await google("https://docs.googleapis.com/v1/documents/" + encodeURIComponent(id));
+      const extraire = (elements) => (elements || []).map(e => {
+        if (e.paragraph) return (e.paragraph.elements || []).map(x => x.textRun?.content || "").join("");
+        if (e.table) return (e.table.tableRows || []).map(row => (row.tableCells || []).map(cell => extraire(cell.content).join("").trim()).join("\\t")).join("\\n");
+        return "";
+      }).join("");
+      contenu = extraire(doc.body?.content);
+    } else {
+      let values = [];
+      try {
+        const data = await google("https://sheets.googleapis.com/v4/spreadsheets/" + encodeURIComponent(id) + "/values/Sheet1!A1:Z1000");
+        values = data.values || [];
+      } catch (e) {
+        if (!/404|not found|Unable to parse range/i.test(e.message || "")) throw e;
+      }
+      contenu = afficherTSV(values);
+    }
+    driveEditeur.original = contenu;
+    champ.value = contenu;
+    status.textContent = type === "spreadsheet"
+      ? "Éditeur de feuille : tabulations entre colonnes, nouvelle ligne entre rangées. Les cellules sont enregistrées dans Google Sheets."
+      : "Éditeur de texte intégré. Enregistrez pour synchroniser le contenu dans Google Docs.";
+    $("drive-editor-save").disabled = false;
+  } catch (e) {
+    status.textContent = "Impossible de charger le document : " + (e.message || "erreur Google API") + " — vérifiez l'autorisation Docs/Sheets.";
+  }
+}
+$("drive-fichiers")?.addEventListener("click", (event) => {
+  const b = event.target.closest(".drive-edit-open");
+  if (b) ouvrirDriveDansEditeur(b.dataset.driveId, b.dataset.driveName, b.dataset.driveType);
+});
+$("drive-editor-close")?.addEventListener("click", fermerDriveEditeur);
+$("drive-editor-save")?.addEventListener("click", async () => {
+  const status = $("drive-editor-status"), button = $("drive-editor-save");
+  if (!driveEditeur.id) return;
+  const text = $("drive-editor-content").value;
+  button.disabled = true;
+  status.textContent = "Enregistrement dans Google Drive…";
+  try {
+    if (driveEditeur.type === "document") {
+      const doc = await google("https://docs.googleapis.com/v1/documents/" + encodeURIComponent(driveEditeur.id));
+      const end = Math.max(1, (doc.body?.content || []).reduce((n, el) => Math.max(n, el.endIndex || 1), 1) - 1);
+      const requests = [];
+      if (end > 1) requests.push({ deleteContentRange: { range: { startIndex: 1, endIndex: end } } });
+      if (text) requests.push({ insertText: { location: { index: 1 }, text } });
+      if (requests.length) await google("https://docs.googleapis.com/v1/documents/" + encodeURIComponent(driveEditeur.id) + ":batchUpdate", { method: "POST", body: JSON.stringify({ requests }) });
+    } else {
+      await google("https://sheets.googleapis.com/v4/spreadsheets/" + encodeURIComponent(driveEditeur.id) + "/values/Sheet1!A1:Z1000:clear", { method: "POST", body: JSON.stringify({}) });
+      const values = lireTSV(text);
+      if (text.trim()) await google("https://sheets.googleapis.com/v4/spreadsheets/" + encodeURIComponent(driveEditeur.id) + "/values/Sheet1!A1?valueInputOption=USER_ENTERED", { method: "PUT", body: JSON.stringify({ majorDimension: "ROWS", values }) });
+    }
+    driveEditeur.original = text;
+    status.textContent = "✓ Enregistré et synchronisé avec Google Drive.";
+  } catch (e) {
+    status.textContent = "Enregistrement impossible : " + (e.message || "erreur Google API");
+  } finally { button.disabled = false; }
+});
+
 
 // Création des fichiers Google Docs / Sheets dans le Drive de l'utilisateur.
 $("drive-create-form")?.addEventListener("submit", async (event) => {
