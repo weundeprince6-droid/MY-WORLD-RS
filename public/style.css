@@ -1005,3 +1005,11 @@ html[data-theme="light"] .section-icon.purple,html[data-theme="light"] .feature-
 .tv-mini button{background:#252532;color:#ececf3;border:1px solid #2f2f3f;border-radius:999px;padding:5px 12px;cursor:pointer;font-size:13px}
 .tv-mini-pastille{animation:tvpulse 1.4s ease-in-out infinite}
 @keyframes tvpulse{50%{opacity:.35}}
+
+/* Éditeur Docs/Sheets intégré à MY WORLD RS */
+.drive-editor-card { margin-top: 18px; scroll-margin-top: 90px; }
+.drive-editor-content { display:block; width:100%; min-height:360px; box-sizing:border-box; resize:vertical; padding:16px; border:1px solid var(--bordure, #cbd5e1); border-radius:12px; background:var(--surface, #fff); color:var(--texte, #172033); font:15px/1.65 ui-monospace, SFMono-Regular, Consolas, monospace; white-space:pre; overflow:auto; }
+.drive-editor-help { margin:8px 0 12px; }
+.drive-edit-open { white-space:nowrap; }
+.drive-file { flex-wrap:wrap; }
+@media(max-width:700px){ .drive-editor-content{min-height:260px;font-size:13px;} .drive-edit-open{width:100%;} }
