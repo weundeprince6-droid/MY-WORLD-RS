@@ -63,6 +63,33 @@ input[type=search]{width:100%;padding:8px 10px;border-radius:8px;border:1px soli
 #audioTitle{font-size:20px;font-weight:600;text-shadow:0 2px 10px #000}
 #imageBox{position:absolute;inset:0;align-items:center;justify-content:center;overflow:hidden;cursor:grab}
 #imageBox.dragging{cursor:grabbing}
+#viewer.mode-gallery #gallery{display:flex}
+#gallery{position:absolute;inset:0;flex-direction:column;background:var(--bg);color:var(--text)}
+#galBar{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--panel);font-size:13px}
+#galBar strong{font-size:15px}#galBar label{display:flex;gap:6px;align-items:center;color:var(--muted)}
+#galBar select,#galBar button{padding:5px 9px}#galBar input[type=range]{width:110px}
+#galCompte{color:var(--muted)}
+#galAutor[hidden]{display:none}
+#galAutor{margin:10px 14px 0;padding:10px 12px;border:1px solid var(--accent);border-radius:10px;background:var(--panel2);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+#galScroll{flex:1;overflow-y:auto;padding:6px 14px 30px}
+.galSec{content-visibility:auto;contain-intrinsic-size:auto 400px}
+.galSec h3{position:sticky;top:0;z-index:3;margin:0;padding:12px 2px 8px;background:var(--bg);font-size:14px;cursor:pointer;display:flex;gap:8px;align-items:baseline}
+.galSec h3 small{color:var(--muted);font-weight:400}
+.galGrille{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--gal,160px),1fr));gap:6px}
+.galCell{position:relative;aspect-ratio:1;border:0;padding:0;border-radius:8px;overflow:hidden;background:var(--panel2);cursor:pointer;display:grid;place-items:center;color:var(--muted);font-size:22px}
+.galCell img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .15s}
+.galCell:hover img{transform:scale(1.05)}
+.galCell.cur{outline:3px solid var(--accent2);outline-offset:-3px}
+.galCell .cap{position:absolute;left:0;right:0;bottom:0;padding:14px 6px 4px;font-size:10px;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.65));opacity:0;transition:opacity .15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left}
+.galCell:hover .cap{opacity:1}
+.galVide{padding:50px 20px;text-align:center;color:var(--muted)}
+.imgArrow,#imgBack,#imgCount{position:absolute;z-index:4;background:rgba(0,0,0,.55);color:#fff;border:0;border-radius:999px}
+.imgArrow{top:50%;transform:translateY(-50%);width:46px;height:46px;font-size:26px;cursor:pointer;opacity:0;transition:opacity .15s}
+#imageBox:hover .imgArrow{opacity:1}
+#imgPrev{left:14px}#imgNext{right:14px}
+#imgBack{top:14px;left:14px;padding:7px 14px;font-size:13px;cursor:pointer}
+#imgCount{top:14px;right:14px;padding:7px 14px;font-size:13px;pointer-events:none}
+
 #image{max-width:100%;max-height:100%;transform-origin:center;user-select:none}
 #subs{position:absolute;left:5%;right:5%;bottom:9%;text-align:center;pointer-events:none;z-index:3;color:#fff;font-size:calc(var(--sub,28)*1px);line-height:1.25;white-space:pre-line;text-shadow:0 0 4px #000,0 2px 6px #000}
 #subs span{padding:2px 10px;border-radius:6px}
@@ -89,8 +116,9 @@ input[type=search]{width:100%;padding:8px 10px;border-radius:8px;border:1px soli
 #stage:fullscreen #controls{bottom:0;background:linear-gradient(transparent,rgba(0,0,0,.85));color:#fff}
 #stage.idle #titleBar,#stage.idle #controls{opacity:0;pointer-events:none}
 #stage.idle{cursor:none}
-body[data-mode="image"] .avOnly,body[data-mode="empty"] .avOnly{display:none}
+body[data-mode="image"] .avOnly,body[data-mode="empty"] .avOnly,body[data-mode="gallery"] .avOnly,body[data-mode="gallery"] .vidOnly{display:none}
 body:not([data-mode="image"]) .imgOnly{display:none}
+body[data-mode="gallery"] #btnRow .group:first-child,body[data-mode="gallery"] #seekRow{visibility:hidden}
 body:not([data-mode="video"]) .vidOnly{display:none}
 body[data-mode="image"] #seekRow{visibility:hidden}
 
@@ -157,7 +185,21 @@ table.keys{width:100%;border-collapse:collapse}table.keys td{padding:3px 4px;bor
       <video id="video" class="layer" playsinline></video>
       <canvas id="visualizer" class="layer"></canvas>
       <div id="audioInfo" class="layer"><div id="audioIcon">🎵</div><div id="audioTitle"></div></div>
-      <div id="imageBox" class="layer"><img id="image" alt="" draggable="false" /></div>
+      <div id="imageBox" class="layer"><img id="image" alt="" draggable="false" />
+        <button id="imgBack" title="Retour à la galerie (Échap)">▦ Galerie</button><span id="imgCount"></span>
+        <button id="imgPrev" class="imgArrow" title="Photo précédente (←)">‹</button><button id="imgNext" class="imgArrow" title="Photo suivante (→)">›</button>
+      </div>
+      <div id="gallery" class="layer">
+        <div id="galBar">
+          <strong>🖼 Galerie</strong><span id="galCompte"></span>
+          <label>Regrouper <select id="galGroupe"><option value="dossier">par dossier</option><option value="mois">par mois</option><option value="aucun">tout ensemble</option></select></label>
+          <label>Tri <select id="galTri"><option value="nom">Nom</option><option value="dateDesc">Récentes d'abord</option><option value="dateAsc">Anciennes d'abord</option></select></label>
+          <label>Taille <input id="galTaille" type="range" min="90" max="340" value="160" /></label>
+          <button id="galDiapo">▶ Diaporama</button>
+        </div>
+        <div id="galAutor" hidden></div>
+        <div id="galScroll"><div id="galContenu"></div></div>
+      </div>
       <div id="subs"></div>
       <div id="osd"></div>
       <div id="toast"></div>
@@ -183,7 +225,9 @@ table.keys{width:100%;border-collapse:collapse}table.keys td{padding:3px 4px;bor
           <button id="btnZoomOut" class="imgOnly" title="Zoom −">➖</button>
           <button id="btnZoomIn" class="imgOnly" title="Zoom +">➕</button>
           <button id="btnZoomReset" class="imgOnly" title="Ajuster">⤢</button>
+          <button id="btnGalerie" class="imgOnly" title="Retour à la galerie (Échap)">▦ Galerie</button>
           <button id="btnSlide" class="imgOnly">⏯ Diaporama</button>
+          <select id="slideSec" class="imgOnly" title="Durée par photo"><option value="3">3 s</option><option value="4" selected>4 s</option><option value="7">7 s</option><option value="12">12 s</option><option value="20">20 s</option></select>
           <select id="speed" class="avOnly" title="Vitesse ( [ ] )"></select>
           <button id="btnAB" class="avOnly" title="Boucle A-B (L)">A-B</button>
           <button id="btnSubs" class="vidOnly" title="Sous-titres (V)">💬</button>
@@ -477,6 +521,7 @@ function renderList() {
       ul.appendChild(t);
     }
     if (replies.has(g) && !query) continue;
+    if (filter === 'image') continue; // onglet Photos : la galerie montre les photos, la liste ne garde que les dossiers
     li.classList.add('sousgrp');
     if (i === current) li.classList.add('current');
     const p = prog[it.key];
@@ -534,9 +579,10 @@ function addItems(list) {
   if (!fresh.length) { osd('Rien de nouveau à ajouter'); return; }
   fresh.sort((a, b) => a.path.localeCompare(b.path, undefined, { numeric: true }));
   items.push(...fresh); regrouper();
-  renderList(); renderResume(); persist();
+  renderList();
+  if (document.body.dataset.mode === 'gallery') renderGalerie(); renderResume(); persist();
   osd(fresh.length + ' ajouté' + (fresh.length > 1 ? 's' : ''));
-  if (current === -1) play(items.indexOf(fresh[0]));
+  if (current === -1) { if (fresh.length > 1 && fresh.every((f) => f.type === 'image')) ouvrirGalerie(); else play(items.indexOf(fresh[0])); }
 }
 
 function removeItem(i) {
@@ -603,7 +649,7 @@ async function play(i) {
   try { localStorage.setItem('lp_last', it.key); } catch (e) {}
 
   if (it.type === 'image') {
-    setMode('image'); resetZoom(); image.src = curUrl;
+    setMode('image'); resetZoom(); image.src = curUrl; majCompteurImage();
   } else {
     initGraph(); if (actx.state === 'suspended') actx.resume();
     const m = it.type === 'video' ? video : audio;
@@ -633,7 +679,7 @@ async function play(i) {
 function nextIndex(dir) {
   // On reste dans le même type : après un audio, seulement des audios (jamais de vidéo ou de photo d'office)
   const typeCourant = items[current]?.type;
-  const pool = visible().filter((i) => !typeCourant || items[i].type === typeCourant);
+  const pool = typeCourant === 'image' ? ordreImages() : visible().filter((i) => !typeCourant || items[i].type === typeCourant);
   if (!pool.length) return -1;
   if (shuffle && pool.length > 1) { let r; do { r = pool[Math.floor(Math.random() * pool.length)]; } while (r === current); return r; }
   const pos = pool.indexOf(current);
@@ -1077,10 +1123,10 @@ function toggleSlideshow() { slideTimer ? stopSlideshow() : startSlideshow(); }
 function startSlideshow() {
   if (items[current]?.type !== 'image') return;
   slideTimer = setInterval(() => {
-    const pool = visible().filter((i) => items[i].type === 'image');
+    const pool = ordreImages();
     if (!pool.length) return stopSlideshow();
     play(pool[(pool.indexOf(current) + 1) % pool.length]);
-  }, 4000);
+  }, (+$('slideSec').value || 4) * 1000);
   updatePlayBtn();
 }
 function stopSlideshow() { clearInterval(slideTimer); slideTimer = null; updatePlayBtn(); }
@@ -1142,8 +1188,10 @@ $('tabs').onclick = (e) => {
   filter = b.dataset.filter;
   document.querySelectorAll('#tabs button').forEach((x) => x.classList.toggle('active', x === b));
   renderList();
+  if (filter === 'image') { if (items.some((i) => i.type === 'image')) ouvrirGalerie(); }
+  else if (document.body.dataset.mode === 'gallery') { setMode(current === -1 ? 'empty' : items[current].type); if (current === -1) { $('nowPlaying').textContent = 'Aucun média'; renderResume(); } }
 };
-$('search').oninput = (e) => { query = e.target.value.toLowerCase(); renderList(); };
+$('search').oninput = (e) => { query = e.target.value.toLowerCase(); renderList(); if (document.body.dataset.mode === 'gallery') renderGalerie(); };
 
 // ================= Plein écran : masquage automatique =================
 let idleT;
@@ -1190,6 +1238,160 @@ window.addEventListener('drop', async (e) => {
   addItems(result.list);
 });
 
+
+// ================= Galerie photo =================
+const PREFS_GAL = (() => { try { return Object.assign({ groupe: 'dossier', tri: 'nom', taille: 160 }, JSON.parse(localStorage.getItem('lp.galerie') || '{}')); } catch { return { groupe: 'dossier', tri: 'nom', taille: 160 }; } })();
+const savePrefsGal = () => { try { localStorage.setItem('lp.galerie', JSON.stringify(PREFS_GAL)); } catch {} };
+const natCmp = new Intl.Collator('fr', { numeric: true, sensitivity: 'base' });
+// Dossier d'une photo : dossier choisi + sous-dossiers (ex. « Photos / Vacances 2025 »)
+function dossierPhoto(it) {
+  if (it.parts && it.parts.length > 1) return groupOf(it) + ' / ' + it.parts.slice(0, -1).join(' / ');
+  if (it.path && it.path.includes('/')) return it.path.split('/').slice(0, -1).join(' / ');
+  return groupOf(it);
+}
+const imagesVisibles = () => visible().filter((i) => items[i].type === 'image');
+function groupesGalerie() {
+  const idx = imagesVisibles();
+  const cmp = PREFS_GAL.tri === 'dateDesc' ? (a, b) => (items[b].mod || 0) - (items[a].mod || 0) || natCmp.compare(items[a].name, items[b].name)
+    : PREFS_GAL.tri === 'dateAsc' ? (a, b) => (items[a].mod || 0) - (items[b].mod || 0) || natCmp.compare(items[a].name, items[b].name)
+    : (a, b) => natCmp.compare(items[a].path || items[a].name, items[b].path || items[b].name);
+  if (PREFS_GAL.groupe === 'aucun') return [{ cle: '', titre: '', indices: idx.slice().sort(cmp) }];
+  const m = new Map();
+  for (const i of idx) {
+    let cle, titre, tri = 0;
+    if (PREFS_GAL.groupe === 'mois') { const d = new Date(items[i].mod || 0); cle = d.getFullYear() * 100 + d.getMonth(); titre = items[i].mod ? d.toLocaleDateString('fr', { month: 'long', year: 'numeric' }) : 'Date inconnue'; tri = cle; }
+    else { cle = dossierPhoto(items[i]); titre = '📁 ' + cle; }
+    if (!m.has(cle)) m.set(cle, { cle: String(cle), titre, tri, indices: [] });
+    m.get(cle).indices.push(i);
+  }
+  const gs = [...m.values()];
+  if (PREFS_GAL.groupe === 'mois') gs.sort((a, b) => PREFS_GAL.tri === 'dateAsc' ? a.tri - b.tri : b.tri - a.tri);
+  gs.forEach((g) => g.indices.sort(cmp));
+  return gs;
+}
+// ordre des photos tel qu'affiché dans la galerie : sert aux flèches et au diaporama
+const ordreImages = () => groupesGalerie().flatMap((g) => g.indices);
+
+// --- vignettes : créées à la demande, gardées sur l'appareil (IndexedDB) ---
+const vignettes = new Map(); // clé -> url
+let filVignettes = [], vignettesActives = 0, observateur = null, dossiersAAutoriser = new Map();
+const VIGNETTES_PARALLELES = 3, VIGNETTE_PX = 360;
+async function fichierSansDemander(it) {
+  if (it.file) return it.file;
+  const h0 = it.handle || it.dirHandle;
+  if (h0 && h0.queryPermission && (await h0.queryPermission({ mode: 'read' })) !== 'granted') { const e = new Error('permission'); e.permission = h0; throw e; }
+  return ensureFile(it);
+}
+async function creerVignette(it) {
+  const cle = 'th|' + it.key + '|' + (it.size || 0);
+  let blob = await DB.get(cle);
+  if (!blob) {
+    const file = await fichierSansDemander(it);
+    const bmp = await createImageBitmap(file, { resizeWidth: VIGNETTE_PX, resizeQuality: 'medium' });
+    const c = document.createElement('canvas'); c.width = bmp.width; c.height = bmp.height;
+    c.getContext('2d').drawImage(bmp, 0, 0); bmp.close && bmp.close();
+    blob = await new Promise((ok) => c.toBlob(ok, 'image/jpeg', 0.72));
+    if (blob) DB.set(cle, blob);
+  }
+  return blob;
+}
+function pomperVignettes() {
+  while (vignettesActives < VIGNETTES_PARALLELES && filVignettes.length) {
+    const t = filVignettes.pop(); // dernier arrivé = visible en premier
+    if (t.annule || vignettes.has(t.it.key)) { if (vignettes.has(t.it.key)) afficherVignette(t.cell, vignettes.get(t.it.key)); continue; }
+    vignettesActives++;
+    creerVignette(t.it).then((blob) => {
+      if (!blob) throw new Error('vide');
+      const url = URL.createObjectURL(blob); vignettes.set(t.it.key, url);
+      if (vignettes.size > 1800) { const k = vignettes.keys().next().value; URL.revokeObjectURL(vignettes.get(k)); vignettes.delete(k); }
+      afficherVignette(t.cell, url);
+    }).catch((e) => {
+      if (e.permission) { t.cell.dataset.perm = '1'; dossiersAAutoriser.set(e.permission.name || '?', e.permission); montrerAutorisation(); }
+      else { t.cell.textContent = '⚠'; t.cell.title = t.it.name + ' (aperçu impossible)'; }
+    }).finally(() => { vignettesActives--; pomperVignettes(); });
+  }
+}
+function afficherVignette(cell, url) {
+  if (cell.querySelector('img')) return;
+  const im = new Image(); im.src = url; im.alt = ''; im.loading = 'lazy'; im.draggable = false; cell.textContent = ''; cell.appendChild(im);
+  const cap = document.createElement('span'); cap.className = 'cap'; cap.textContent = baseOf(cell.title || ''); cell.appendChild(cap);
+}
+function montrerAutorisation() {
+  const box = $('galAutor'); if (!dossiersAAutoriser.size) { box.hidden = true; return; }
+  box.hidden = false; box.innerHTML = '<span>🔒 Le navigateur doit d\'abord vous laisser lire ces dossiers :</span>';
+  for (const [nom, hd] of dossiersAAutoriser) {
+    const b = document.createElement('button'); b.textContent = 'Autoriser « ' + nom + ' »';
+    b.onclick = async () => { try { if ((await hd.requestPermission({ mode: 'read' })) === 'granted') { dossiersAAutoriser.delete(nom); montrerAutorisation(); renderGalerie(); } } catch (e) { osd('Autorisation refusée'); } };
+    box.appendChild(b);
+  }
+}
+function observerCellules() {
+  if (observateur) observateur.disconnect();
+  observateur = new IntersectionObserver((entrees) => {
+    for (const en of entrees) {
+      const cell = en.target, it = items[+cell.dataset.i];
+      if (!it) continue;
+      if (en.isIntersecting) { if (!cell.querySelector('img') && !cell.dataset.file) { cell.dataset.file = '1'; filVignettes.push({ it, cell }); } }
+    }
+    pomperVignettes();
+  }, { root: $('galScroll'), rootMargin: '700px 0px' });
+  document.querySelectorAll('#galContenu .galCell').forEach((c) => observateur.observe(c));
+}
+function renderGalerie() {
+  const gs = groupesGalerie(), total = gs.reduce((n, g) => n + g.indices.length, 0);
+  filVignettes = []; // on repart de zéro : seules les cellules visibles sont (re)demandées
+  $('galCompte').textContent = total + ' photo' + (total > 1 ? 's' : '') + (query ? ' (filtrées)' : '');
+  $('galGroupe').value = PREFS_GAL.groupe; $('galTri').value = PREFS_GAL.tri; $('galTaille').value = PREFS_GAL.taille;
+  $('gallery').style.setProperty('--gal', PREFS_GAL.taille + 'px');
+  const box = $('galContenu'); box.innerHTML = '';
+  if (!total) { box.innerHTML = '<div class="galVide">Aucune photo à afficher.<br>Ajoutez un dossier de photos avec « Dossier ».</div>'; return; }
+  const replies = collapsedGroups();
+  for (const g of gs) {
+    const sec = document.createElement('section'); sec.className = 'galSec';
+    const cleRepli = 'gal:' + PREFS_GAL.groupe + ':' + g.cle, ferme = replies.has(cleRepli);
+    if (g.titre) {
+      const t = document.createElement('h3'); t.innerHTML = '<span></span><small>' + g.indices.length + ' photo' + (g.indices.length > 1 ? 's' : '') + '</small>';
+      t.firstChild.textContent = (ferme ? '▸ ' : '▾ ') + g.titre; t.title = 'Clic = replier / déplier';
+      t.onclick = () => { const s = collapsedGroups(); if (s.has(cleRepli)) s.delete(cleRepli); else s.add(cleRepli); saveCollapsed(s); renderGalerie(); };
+      sec.appendChild(t);
+    }
+    if (!ferme) {
+      const grille = document.createElement('div'); grille.className = 'galGrille';
+      for (const i of g.indices) {
+        const it = items[i], b = document.createElement('button'); b.className = 'galCell' + (i === current ? ' cur' : ''); b.dataset.i = i; b.title = it.name; b.textContent = '🖼';
+        if (vignettes.has(it.key)) afficherVignette(b, vignettes.get(it.key));
+        b.onclick = () => play(i);
+        grille.appendChild(b);
+      }
+      sec.appendChild(grille);
+    }
+    box.appendChild(sec);
+  }
+  observerCellules();
+  const cur = box.querySelector('.galCell.cur'); if (cur) cur.scrollIntoView({ block: 'center' });
+}
+function ouvrirGalerie() {
+  if (!items.some((i) => i.type === 'image')) { osd('Aucune photo dans la bibliothèque'); return; }
+  stopSlideshow(); saveProg(); stopAll();
+  if (filter !== 'image') { filter = 'image'; document.querySelectorAll('#tabs button').forEach((x) => x.classList.toggle('active', x.dataset.filter === 'image')); renderList(); }
+  setMode('gallery'); renderGalerie();
+  $('nowPlaying').textContent = 'Galerie photo'; document.title = 'Galerie — Lecteur Pro'; updatePlayBtn();
+}
+$('galGroupe').onchange = (e) => { PREFS_GAL.groupe = e.target.value; savePrefsGal(); renderGalerie(); };
+$('galTri').onchange = (e) => { PREFS_GAL.tri = e.target.value; savePrefsGal(); renderGalerie(); };
+$('galTaille').oninput = (e) => { PREFS_GAL.taille = +e.target.value; $('gallery').style.setProperty('--gal', PREFS_GAL.taille + 'px'); };
+$('galTaille').onchange = savePrefsGal;
+$('galDiapo').onclick = () => { const o = ordreImages(); if (!o.length) return; play(o[0]); setTimeout(startSlideshow, 300); };
+$('btnGalerie').onclick = ouvrirGalerie; $('imgBack').onclick = (e) => { e.stopPropagation(); ouvrirGalerie(); };
+$('imgPrev').onclick = (e) => { e.stopPropagation(); next(-1); }; $('imgNext').onclick = (e) => { e.stopPropagation(); next(1); };
+['imgBack', 'imgPrev', 'imgNext'].forEach((id) => $(id).addEventListener('mousedown', (e) => e.stopPropagation()));
+// balayage au doigt : photo suivante / précédente
+(() => { let x0 = null; imageBox.addEventListener('touchstart', (e) => { x0 = e.touches.length === 1 && zoom === 1 ? e.touches[0].clientX : null; }, { passive: true });
+  imageBox.addEventListener('touchend', (e) => { if (x0 === null) return; const dx = e.changedTouches[0].clientX - x0; x0 = null; if (Math.abs(dx) > 60) next(dx < 0 ? 1 : -1); }, { passive: true }); })();
+$('slideSec').value = localStorage.getItem('lp.diapoSec') || '4';
+$('slideSec').onchange = () => { try { localStorage.setItem('lp.diapoSec', $('slideSec').value); } catch {} if (slideTimer) { stopSlideshow(); startSlideshow(); } };
+function majCompteurImage() { const o = ordreImages(), p = o.indexOf(current); $('imgCount').textContent = p >= 0 ? (p + 1) + ' / ' + o.length : ''; }
+
 // ================= Reprise : carte d'accueil =================
 function renderResume() {
   const box = $('resume'); box.innerHTML = '';
@@ -1232,6 +1434,8 @@ window.addEventListener('keydown', (e) => {
   const k = e.key, m = activeMedia(), isImg = items[current]?.type === 'image';
   if (e.ctrlKey && k.toLowerCase() === 'o') { e.preventDefault(); addFilesDialog(); return; }
   if (e.altKey || (e.ctrlKey && !k.startsWith('Arrow'))) return;
+  if (k === 'Escape' && isImg && filter === 'image') { e.preventDefault(); ouvrirGalerie(); return; }
+  if (document.body.dataset.mode === 'gallery' && (k === ' ' || k.startsWith('Arrow'))) return;
   switch (k) {
     case ' ': case 'k': e.preventDefault(); togglePlay(); break;
     case 'ArrowRight': e.preventDefault(); e.ctrlKey ? next(1) : isImg ? next(1) : seekBy(e.shiftKey ? 30 : 5); break;
