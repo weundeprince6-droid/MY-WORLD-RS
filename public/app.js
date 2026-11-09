@@ -312,10 +312,15 @@ function expliquerErreur(e) {
 }
 
 async function appelerFonctionGoogle(nom, idToken) {
-  const response = await fetch(URL_FONCTIONS_GOOGLE + "/" + nom, {
-    method: "POST",
-    headers: { Authorization: "Bearer " + idToken, "Content-Type": "application/json" },
-  });
+  let response;
+  try {
+    response = await fetch(URL_FONCTIONS_GOOGLE + "/" + nom, {
+      method: "POST",
+      headers: { Authorization: "Bearer " + idToken, "Content-Type": "application/json" },
+    });
+  } catch {
+    throw new Error("le service de connexion Google (passerelle) est injoignable. Vérifiez votre internet ; s'il est bon, la passerelle n'est pas déployée (voir cloudflare/README.md).");
+  }
   let data = {};
   try { data = await response.json(); } catch { /* réponse non JSON */ }
   if (!response.ok) {
