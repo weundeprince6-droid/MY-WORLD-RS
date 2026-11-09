@@ -1,0 +1,22 @@
+# Déploie la passerelle Google (cloudflare/worker.js) sur Cloudflare Workers.
+# Prérequis : secret GitHub CLOUDFLARE_API_TOKEN (modèle « Edit Cloudflare Workers »).
+name: Déployer le Worker Cloudflare
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["cloudflare/**", ".github/workflows/deployer-cloudflare.yml"]
+
+jobs:
+  deployer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: 9202ebde97a78d0ec24797f2296f6d89
+          workingDirectory: cloudflare
+          wranglerVersion: "4"
+          command: deploy

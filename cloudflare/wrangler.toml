@@ -1,0 +1,13 @@
+name = "calm-flower-2f83"
+main = "worker.js"
+compatibility_date = "2025-01-01"
+account_id = "9202ebde97a78d0ec24797f2296f6d89"
+
+# Variables publiques (les secrets restent dans le tableau de bord Cloudflare)
+[vars]
+FIREBASE_API_KEY = "AIzaSyCmTqeg6EByQCns7HpVi9PV0EdVObRR4ck"
+GOOGLE_REDIRECT_URI = "https://calm-flower-2f83.weundeprince6.workers.dev/googleOAuthCallback"
+
+# Le stockage KV est créé automatiquement au premier déploiement
+[[kv_namespaces]]
+binding = "GOOGLE_TOKENS"
