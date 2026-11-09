@@ -7,7 +7,7 @@ export const RAPPORT_APPLI = [
     "Tableau de bord : synthèse des messages importants, des rendez-vous et des bases.",
     "Messages : Gmail avec lecture dans l'application, envoi direct, pièces jointes, réponse, messages envoyés, messages importants (marquage depuis l'application), filtres comptes personnels et professionnels.",
     "Agenda : Google Agenda, création et modification.",
-    "Ma maison : bouton « Télévision » (lecteur vidéo, MP3 et galerie photo avec vignettes, regroupement par dossier ou par mois, visionneuse et diaporama, en plein écran, qui peut être masqué et continuer à lire en arrière-plan), dépenses et revenus du foyer, budget familial, projet de construction, matériel répertorié et matériel à ravitailler, avec déduction du compte choisi.",
+    "Ma maison : bouton « Télévision » (lecteur vidéo, MP3, documents (PDF, Word, Excel…) et galerie photo avec vignettes, regroupement par dossier ou par mois, visionneuse et diaporama, en plein écran, qui peut être masqué et continuer à lire en arrière-plan), dépenses et revenus du foyer, budget familial, projet de construction, matériel répertorié et matériel à ravitailler, avec déduction du compte choisi.",
     "Projet pro : même modèle côté professionnel (dépenses, revenus, budget, investissement du projet, équipements) et équipements.",
     "Drive : accès aux fichiers récents.",
     "Réseaux sociaux : Telegram et Facebook raccordés. WhatsApp n'est pas encore raccordé.",

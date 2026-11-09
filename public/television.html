@@ -63,6 +63,22 @@ input[type=search]{width:100%;padding:8px 10px;border-radius:8px;border:1px soli
 #audioTitle{font-size:20px;font-weight:600;text-shadow:0 2px 10px #000}
 #imageBox{position:absolute;inset:0;align-items:center;justify-content:center;overflow:hidden;cursor:grab}
 #imageBox.dragging{cursor:grabbing}
+#viewer.mode-doc #docBox{display:flex}
+#docBox{position:absolute;inset:0;flex-direction:column;background:var(--bg);color:var(--text)}
+#docEntete{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--panel)}
+#docEntete strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#docActions a,#docActions button{margin-left:8px;padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--panel2);color:var(--text);text-decoration:none;cursor:pointer;font-size:13px}
+#docFrame{flex:1;width:100%;border:0;background:#fff}
+#docCarte{display:none;flex:1;align-items:center;justify-content:center;text-align:center;padding:30px;flex-direction:column;gap:12px}
+#docBox.sans-apercu #docFrame{display:none}#docBox.sans-apercu #docCarte{display:flex}
+#docCarte .big{font-size:64px}#docCarte a{padding:10px 18px;border-radius:10px;background:var(--accent);color:#fff;text-decoration:none;font-weight:600}
+#choixTypes{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:20px}
+#choixTypes[hidden]{display:none}
+#choixTypes .boite{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px 22px;max-width:440px;width:100%;color:var(--text)}
+#choixTypes h2{margin:0 0 4px;font-size:17px}#choixTypes p{margin:0 0 14px;color:var(--muted);font-size:13px}
+#choixTypes label{display:flex;gap:10px;align-items:center;padding:9px 6px;border-radius:8px;cursor:pointer}
+#choixTypes label:hover{background:var(--panel2)}#choixTypes label small{margin-left:auto;color:var(--muted)}
+#choixTypes .btns{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
 #viewer.mode-gallery #gallery{display:flex}
 #gallery{position:absolute;inset:0;flex-direction:column;background:var(--bg);color:var(--text)}
 #galBar{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--panel);font-size:13px}
@@ -116,9 +132,9 @@ input[type=search]{width:100%;padding:8px 10px;border-radius:8px;border:1px soli
 #stage:fullscreen #controls{bottom:0;background:linear-gradient(transparent,rgba(0,0,0,.85));color:#fff}
 #stage.idle #titleBar,#stage.idle #controls{opacity:0;pointer-events:none}
 #stage.idle{cursor:none}
-body[data-mode="image"] .avOnly,body[data-mode="empty"] .avOnly,body[data-mode="gallery"] .avOnly,body[data-mode="gallery"] .vidOnly{display:none}
+body[data-mode="image"] .avOnly,body[data-mode="empty"] .avOnly,body[data-mode="gallery"] .avOnly,body[data-mode="gallery"] .vidOnly,body[data-mode="doc"] .avOnly,body[data-mode="doc"] .vidOnly{display:none}
 body:not([data-mode="image"]) .imgOnly{display:none}
-body[data-mode="gallery"] #btnRow .group:first-child,body[data-mode="gallery"] #seekRow{visibility:hidden}
+body[data-mode="gallery"] #btnRow .group:first-child,body[data-mode="gallery"] #seekRow,body[data-mode="doc"] #seekRow{visibility:hidden}
 body:not([data-mode="video"]) .vidOnly{display:none}
 body[data-mode="image"] #seekRow{visibility:hidden}
 
@@ -162,6 +178,7 @@ table.keys{width:100%;border-collapse:collapse}table.keys td{padding:3px 4px;bor
         <button data-filter="audio">Audio</button>
         <button data-filter="video">Vidéo</button>
         <button data-filter="image">Photos</button>
+        <button data-filter="doc">Documents</button>
       </div>
       <div class="row2">
         <input id="search" type="search" placeholder="Rechercher…" />
@@ -189,6 +206,7 @@ table.keys{width:100%;border-collapse:collapse}table.keys td{padding:3px 4px;bor
         <button id="imgBack" title="Retour à la galerie (Échap)">▦ Galerie</button><span id="imgCount"></span>
         <button id="imgPrev" class="imgArrow" title="Photo précédente (←)">‹</button><button id="imgNext" class="imgArrow" title="Photo suivante (→)">›</button>
       </div>
+      <div id="docBox" class="layer"><div id="docEntete"><strong id="docNom"></strong><span id="docActions"></span></div><iframe id="docFrame" title="Document"></iframe><div id="docCarte"></div></div>
       <div id="gallery" class="layer">
         <div id="galBar">
           <strong>🖼 Galerie</strong><span id="galCompte"></span>
@@ -322,7 +340,8 @@ table.keys{width:100%;border-collapse:collapse}table.keys td{padding:3px 4px;bor
   </div></aside>
 </div>
 
-<input id="fileInput" type="file" multiple hidden accept="audio/mpeg,.mp3,video/*,.mkv,.avi,.wmv,.flv,.f4v,.mpg,.mpeg,.mpe,.m2v,.3gp,.3g2,.ts,.m2ts,.mts,.vob,.divx,.asf,.rm,.rmvb,.mxf,.qt,image/*,.avif,.srt,.vtt" />
+<input id="fileInput" type="file" multiple hidden accept="audio/mpeg,.mp3,video/*,.mkv,.avi,.wmv,.flv,.f4v,.mpg,.mpeg,.mpe,.m2v,.3gp,.3g2,.ts,.m2ts,.mts,.vob,.divx,.asf,.rm,.rmvb,.mxf,.qt,image/*,.avif,.srt,.vtt,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.ods,.odp,.rtf,.txt,.csv,.md,.epub" />
+<div id="choixTypes" hidden><div class="boite"><h2>Que voulez-vous ajouter ?</h2><p id="choixDossier"></p><div id="choixListe"></div><div class="btns"><button id="choixAnnuler">Annuler</button><button id="choixOk" class="primary">Ajouter</button></div></div></div>
 <input id="folderInput" type="file" webkitdirectory multiple hidden />
 <input id="subInput" type="file" hidden accept=".srt,.vtt,text/vtt" />
 
@@ -337,10 +356,13 @@ const audio = new Audio(); audio.preload = 'auto';
 const EXT = {
   audio: ['mp3'], // audio : MP3 uniquement
   video: ['mp4','m4v','webm','ogv','mov','mkv','avi','wmv','flv','f4v','mpg','mpeg','mpe','m2v','3gp','3g2','ts','m2ts','mts','vob','divx','asf','rm','rmvb','mxf','qt'], // vidéo : tous les formats courants
-  image: ['jpg','jpeg','png','gif','webp','bmp','svg','avif']
+  image: ['jpg','jpeg','png','gif','webp','bmp','svg','avif'],
+  doc: ['pdf','doc','docx','xls','xlsx','ppt','pptx','odt','ods','odp','rtf','txt','csv','md','epub']
 };
+const MIME_DOC = { pdf: 'application/pdf', txt: 'text/plain', csv: 'text/plain', md: 'text/plain', rtf: 'application/rtf' };
+const AFFICHABLES = ['pdf', 'txt', 'csv', 'md'];
 const SUB_EXT = ['srt','vtt'];
-const ICONS = { audio: '🎵', video: '🎞', image: '🖼' };
+const ICONS = { audio: '🎵', video: '🎞', image: '🖼', doc: '📄' };
 const extOf = (n) => n.includes('.') ? n.split('.').pop().toLowerCase() : '';
 const baseOf = (n) => n.replace(/\.[^.]+$/, '');
 const typeOfName = (n) => { const e = extOf(n); for (const t in EXT) if (EXT[t].includes(e)) return t; return null; };
@@ -485,7 +507,7 @@ function itemsFromFiles(files) {
 async function addFilesDialog() {
   if (!FSA) return $('fileInput').click();
   try {
-    const accept = { 'audio/mpeg': EXT.audio.map((e) => '.' + e), 'video/*': EXT.video.map((e) => '.' + e), 'image/*': EXT.image.map((e) => '.' + e) };
+    const accept = { 'audio/mpeg': EXT.audio.map((e) => '.' + e), 'video/*': EXT.video.map((e) => '.' + e), 'image/*': EXT.image.map((e) => '.' + e), 'application/pdf': ['.pdf'], 'text/plain': ['.txt', '.csv', '.md'], 'application/octet-stream': ['.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.odt', '.ods', '.odp', '.rtf', '.epub'] };
     const hs = await window.showOpenFilePicker({ multiple: true, types: [{ description: 'Médias', accept }], excludeAcceptAllOption: false });
     const r = await itemsFromHandles(hs); addItems(r.list);
   } catch (e) { if (e.name !== 'AbortError') osd('Impossible d\'ouvrir'); }
@@ -495,7 +517,7 @@ async function addFolderDialog() {
   try {
     const d = await window.showDirectoryPicker({ mode: 'read' });
     osd('Analyse du dossier…');
-    addItems(await scanDir(d));
+    await ajouterDossier(await scanDir(d), d.name);
   } catch (e) { if (e.name !== 'AbortError') osd('Impossible d\'ouvrir le dossier'); }
 }
 
@@ -648,7 +670,9 @@ async function play(i) {
   curUrl = URL.createObjectURL(file);
   try { localStorage.setItem('lp_last', it.key); } catch (e) {}
 
-  if (it.type === 'image') {
+  if (it.type === 'doc') {
+    setMode('doc'); ouvrirDocument(it, file);
+  } else if (it.type === 'image') {
     setMode('image'); resetZoom(); image.src = curUrl; majCompteurImage();
   } else {
     initGraph(); if (actx.state === 'suspended') actx.resume();
@@ -1178,7 +1202,7 @@ $('sleep').onchange = (e) => {
 $('btnFiles').onclick = addFilesDialog;
 $('btnFolder').onclick = addFolderDialog;
 $('fileInput').onchange = (e) => { addItems(itemsFromFiles(e.target.files).list); e.target.value = ''; };
-$('folderInput').onchange = (e) => { addItems(itemsFromFiles(e.target.files).list); e.target.value = ''; };
+$('folderInput').onchange = (e) => { const fs = [...e.target.files]; const nom = fs[0]?.webkitRelativePath?.split('/')[0] || 'dossier'; e.target.value = ''; ajouterDossier(itemsFromFiles(fs).list, nom); };
 $('btnClear').onclick = () => {
   saveProg(); stopAll(); stopSlideshow(); items = []; current = -1;
   setMode('empty'); $('nowPlaying').textContent = 'Aucun média'; renderList(); renderResume(); updatePlayBtn(); persist();
@@ -1235,9 +1259,60 @@ window.addEventListener('drop', async (e) => {
     await loadSubEntry(s.handle ? s : { name: s.name, file: s.file || s }, true);
     return;
   }
-  addItems(result.list);
+  const dossierDepose = entries.find((en) => en.isDirectory);
+  if (dossierDepose || (result.list.some((i) => i.dirHandle) && handleP.length)) await ajouterDossier(result.list, dossierDepose?.name || result.list[0]?.dossier || 'dossier'); else addItems(result.list);
 });
 
+
+
+// ================= Documents =================
+function ouvrirDocument(it, file) {
+  const e = extOf(it.name), box = $('docBox'), frame = $('docFrame');
+  releaseUrl();
+  curUrl = URL.createObjectURL(new Blob([file], { type: MIME_DOC[e] || file.type || 'application/octet-stream' }));
+  $('docNom').textContent = it.name;
+  const actions = $('docActions'); actions.innerHTML = '';
+  const dl = document.createElement('a'); dl.href = curUrl; dl.download = it.name; dl.textContent = '⬇ Télécharger'; actions.appendChild(dl);
+  if (AFFICHABLES.includes(e)) {
+    box.classList.remove('sans-apercu'); frame.src = curUrl;
+    const nv = document.createElement('a'); nv.href = curUrl; nv.target = '_blank'; nv.rel = 'noopener'; nv.textContent = '↗ Nouvel onglet'; actions.prepend(nv);
+  } else {
+    frame.removeAttribute('src'); box.classList.add('sans-apercu');
+    const c = $('docCarte'); c.innerHTML = '<div class="big">📄</div><div><b></b></div><div class="small">Ce type de document (.' + e.toUpperCase() + ') ne s\'affiche pas dans le navigateur.<br>Téléchargez-le pour l\'ouvrir avec Word, Excel, PowerPoint ou une autre application.</div>';
+    c.querySelector('b').textContent = it.name;
+    const a = document.createElement('a'); a.href = curUrl; a.download = it.name; a.textContent = '⬇ Télécharger / ouvrir'; c.appendChild(a);
+  }
+  $('nowPlaying').textContent = it.name;
+}
+
+// ================= Choix des types de fichiers à l'ajout d'un dossier =================
+const NOMS_TYPES = { video: ['🎞', 'Vidéos'], audio: ['🎵', 'Audio (MP3)'], image: ['🖼', 'Photos'], doc: ['📄', 'Documents'] };
+function choisirTypes(list, nomDossier) {
+  const nb = {}; for (const it of list) nb[it.type] = (nb[it.type] || 0) + 1;
+  const presents = Object.keys(NOMS_TYPES).filter((t) => nb[t]);
+  if (presents.length <= 1) return Promise.resolve(list); // un seul type : rien à choisir
+  let memo = null; try { memo = JSON.parse(localStorage.getItem('lp.typesChoisis') || 'null'); } catch {}
+  const box = $('choixTypes'), liste = $('choixListe'); liste.innerHTML = '';
+  $('choixDossier').textContent = 'Dans « ' + nomDossier + ' », cochez les types de fichiers à ajouter à la bibliothèque.';
+  for (const t of presents) {
+    const l = document.createElement('label');
+    l.innerHTML = '<input type="checkbox" data-t="' + t + '"><span>' + NOMS_TYPES[t][0] + '</span><span>' + NOMS_TYPES[t][1] + '</span><small>' + nb[t] + ' fichier' + (nb[t] > 1 ? 's' : '') + '</small>';
+    l.querySelector('input').checked = memo ? memo.includes(t) : true;
+    liste.appendChild(l);
+  }
+  box.hidden = false;
+  return new Promise((ok) => {
+    const fin = (res) => { box.hidden = true; $('choixOk').onclick = $('choixAnnuler').onclick = null; ok(res); };
+    $('choixOk').onclick = () => {
+      const t = [...liste.querySelectorAll('input:checked')].map((x) => x.dataset.t);
+      if (!t.length) { osd('Cochez au moins un type'); return; }
+      try { localStorage.setItem('lp.typesChoisis', JSON.stringify(t)); } catch {}
+      fin(list.filter((it) => t.includes(it.type)));
+    };
+    $('choixAnnuler').onclick = () => fin(null);
+  });
+}
+async function ajouterDossier(list, nom) { const r = await choisirTypes(list, nom); if (r) addItems(r); }
 
 // ================= Galerie photo =================
 const PREFS_GAL = (() => { try { return Object.assign({ groupe: 'dossier', tri: 'nom', taille: 160 }, JSON.parse(localStorage.getItem('lp.galerie') || '{}')); } catch { return { groupe: 'dossier', tri: 'nom', taille: 160 }; } })();
