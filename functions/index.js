@@ -71,7 +71,9 @@ exports.googleOAuthStart = onRequest(
           "https://www.googleapis.com/auth/calendar.events",
           "https://www.googleapis.com/auth/datastore",
           "https://www.googleapis.com/auth/drive.metadata.readonly",
-          "https://www.googleapis.com/auth/drive.file"
+          "https://www.googleapis.com/auth/drive.file",
+          "https://www.googleapis.com/auth/documents",
+          "https://www.googleapis.com/auth/spreadsheets"
         ].join(" "),
         access_type: "offline",
         prompt: "consent select_account",
