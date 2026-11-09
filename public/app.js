@@ -433,6 +433,12 @@ function emailAutorise(user) {
   return !!autorise && String(user?.email || "").trim().toLowerCase() === autorise;
 }
 function clePin(uid) { return CLE_PIN_PREFIXE + uid; }
+// Reconnaissance durable de ce navigateur après la première validation du PIN.
+// Le marqueur est local à ce navigateur et à ce compte Firebase (aucune date d'expiration).
+function cleNavigateurReconnu(uid) { return CLE_PIN_PREFIXE + "navigateur-reconnu." + uid; }
+function navigateurReconnu(uid) {
+  try { return localStorage.getItem(cleNavigateurReconnu(uid)) === "1"; } catch { return false; }
+}
 async function hacherPin(pin, sel) {
   const enc = new TextEncoder();
   const materiel = await crypto.subtle.importKey("raw", enc.encode(pin), "PBKDF2", false, ["deriveBits"]);
@@ -440,7 +446,7 @@ async function hacherPin(pin, sel) {
   return Array.from(new Uint8Array(bits), b=>b.toString(16).padStart(2,"0")).join("");
 }
 function verrouillerApplication() {
-  if (!utilisateurConnecte || pinGateEnCours) return;
+  if (!utilisateurConnecte || pinGateEnCours || navigateurReconnu(utilisateurConnecte.uid)) return;
   if (minuterieVerrouillage) clearTimeout(minuterieVerrouillage);
   minuterieVerrouillage = null;
   demanderPin(utilisateurConnecte).then(() => {
@@ -449,6 +455,9 @@ function verrouillerApplication() {
 }
 function programmerVerrouillage() {
   if (minuterieVerrouillage) clearTimeout(minuterieVerrouillage);
+  minuterieVerrouillage = null;
+  // Une fois le navigateur reconnu, le PIN n'est plus redemandé sur ce navigateur.
+  if (utilisateurConnecte && navigateurReconnu(utilisateurConnecte.uid)) return;
   minuterieVerrouillage = setTimeout(verrouillerApplication, DELAI_VERROUILLAGE);
 }
 function activerSurveillanceInactivite() {
@@ -463,6 +472,8 @@ function activerSurveillanceInactivite() {
 activerSurveillanceInactivite();
 
 async function demanderPin(user) {
+  // PIN demandé une seule fois par compte et par navigateur; le marqueur persiste sans expiration.
+  if (navigateurReconnu(user.uid)) return true;
   if (pinGateEnCours) return pinGateEnCours;
   pinGateEnCours = new Promise((resolve,reject)=>{
     const gate=$("pin-gate"),form=$("pin-gate-form"),input=$("pin-gate-input"),confirm=$("pin-confirmation");
@@ -494,6 +505,9 @@ async function demanderPin(user) {
             $("pin-gate-erreur").textContent="PIN incorrect. Réessayez.";input.value="";return;
           }
         }
+        // Le navigateur devient reconnu après création ou vérification correcte du PIN.
+        // localStorage conserve ce choix jusqu'à l'effacement des données du site.
+        localStorage.setItem(cleNavigateurReconnu(user.uid), "1");
         gate.hidden=true;
         programmerVerrouillage();
         resolve(true);
