@@ -109,7 +109,7 @@ async function scenario(nom, { mode = 'ok', sdkBloque = false, quotaGmail = fals
   });
   const logs = []; p.on('pageerror', e => logs.push('PAGEERROR ' + e.message)); p.on('console', (m) => { if (process.env.DBG) console.log('CONSOLE', m.text().slice(0, 200)); });
   await p.goto('http://localhost:8765/', { waitUntil: 'load' }); await p.waitForTimeout(1500);
-  const r = await verifier(p, appels, logs, etat, ctx);
+  let r; try { r = await verifier(p, appels, logs, etat, ctx); } catch (e) { r = { ok: false, detail: 'EXCEPTION ' + String(e.message || e).split('\n')[0].slice(0, 160) }; }
   console.log((r.ok ? 'OK    ' : 'ECHEC ') + nom + (r.detail ? ' -> ' + r.detail : '') + (logs.length ? '  [' + logs.join(' | ') + ']' : ''));
   await b.close(); return r.ok;
 }
@@ -125,6 +125,21 @@ srv.listen(8765, async () => {
     const ok = visible && msgs.includes('Marie Dupont') && !msgs.includes('Promotion') && agenda.includes('Réunion du comité')
       && kpis.includes('AVEC LA SAGESSE') && kpis.includes('ESE DB') && kpis.includes('Ventes aujourd') && alertes.includes('crédit(s) en retard') && alertes.includes('Réunion du comité') && scopes.some(s => s.includes('datastore'));
     return { ok, detail: ok ? 'résumé : ' + resume.trim() + ' | appels Google : ' + appels.length : 'erreur=' + erreur + ' | msgs=' + msgs.slice(0, 80) + ' | kpis=' + kpis.slice(0, 120) };
+  }));
+  res.push(await scenario('Agenda : présentation comme la messagerie (liste, détail, filtres, recherche)', {}, async (p) => {
+    await p.click('#bouton-connexion'); await p.waitForTimeout(2500);
+    await p.click('[data-tab="agenda"]'); await p.waitForTimeout(400);
+    const avant = await p.evaluate(() => ({ lignes: document.querySelectorAll('#agenda-liste-evenements [data-agenda-evt]').length, cal: !document.getElementById('agenda-vue-calendrier').hidden, detail: document.getElementById('agenda-vue-detail').hidden }));
+    await p.click('#agenda-liste-evenements [data-agenda-evt]'); await p.waitForTimeout(300);
+    const apres = await p.evaluate(() => ({ titre: document.getElementById('agenda-titre').textContent, detail: !document.getElementById('agenda-vue-detail').hidden, cal: document.getElementById('agenda-vue-calendrier').hidden, modif: !document.getElementById('agenda-evt-modifier').hidden, corps: document.getElementById('agenda-vue-detail').textContent }));
+    await p.click('[data-agenda-filtre="avenir"]'); const auj = await p.evaluate(() => document.getElementById('agenda-groupe-auj').hidden);
+    await p.click('[data-agenda-filtre="tous"]'); await p.fill('#agenda-recherche', 'zzzintrouvable'); await p.waitForTimeout(200);
+    const vide = await p.evaluate(() => document.querySelectorAll('#agenda-liste-evenements [data-agenda-evt]').length);
+    await p.fill('#agenda-recherche', ''); await p.click('#agenda-retour-calendrier'); await p.waitForTimeout(200);
+    const retour = await p.evaluate(() => !document.getElementById('agenda-vue-calendrier').hidden);
+    await p.click('#agenda-evt-modifier').catch(() => {});
+    const ok = avant.lignes > 0 && avant.cal && avant.detail && apres.detail && apres.cal && apres.modif && apres.titre.length > 0 && apres.corps.includes(apres.titre) && auj && vide === 0 && retour;
+    return { ok, detail: JSON.stringify({ avant, apres: { ...apres, corps: apres.corps.slice(0, 40) }, auj, vide, retour }) };
   }));
   res.push(await scenario('Quota Gmail dépassé : nouvel essai automatique', { quotaGmail: true }, async (p) => {
     await p.click('#bouton-connexion'); await p.waitForTimeout(6000);
@@ -283,7 +298,7 @@ srv.listen(8765, async () => {
     const envoi = (etat.mails || []).find((x) => x.url.includes('/messages/send'));
     const brut = envoi ? Buffer.from(envoi.corps.raw.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8') : '';
     const pj = brut.includes('multipart/mixed') && brut.includes('Content-Disposition: attachment') && brut.includes(Buffer.from('Contenu du fichier é').toString('base64'));
-    await p.click('#liste-envoyes [data-lire]'); await p.waitForTimeout(1200);
+    await p.$eval('#liste-envoyes [data-lire]', (e) => e.click()); await p.waitForTimeout(1200);
     const dlg = await p.isVisible('#mail-lecture'); const sujet = (await p.textContent('#mail-lecture-sujet')).trim();
     return { ok: boutonsVues.length === 3 && prochesDuBouton && lectures.length > 0 && envoyes.includes('À :') && liste.includes('note é.txt') && pj && dlg && sujet.length > 0 && sujet !== 'Chargement…', detail: JSON.stringify({ n: lectures.length, liste: liste.slice(0, 30), pj, dlg, sujet: sujet.slice(0, 40) }) };
   }));
@@ -339,7 +354,7 @@ srv.listen(8765, async () => {
     await p.fill('#agenda-form [name=debut]', '14:00'); await p.fill('#agenda-form [name=fin]', '15:30'); await p.fill('#agenda-form [name=lieu]', 'Bureau');
     await p.click('#agenda-ajouter'); await p.waitForTimeout(1500);
     const retour = (await p.textContent('#agenda-retour')).trim(); const ev = (etat.evenements || [])[0];
-    await p.click('[data-supprimer-evenement]'); await p.waitForTimeout(1200);
+    await p.click('#agenda-liste-evenements [data-agenda-evt]'); await p.waitForTimeout(200); await p.click('#agenda-evt-supprimer'); await p.waitForTimeout(1200);
     const ok = retour.includes('enregistré') && ev && ev.summary === 'Réunion AVEC' && ev.start.dateTime === '2026-11-05T14:00:00' && ev.end.dateTime === '2026-11-05T15:30:00' && ev.location === 'Bureau' && etat.supprime === 'e1';
     return { ok, detail: JSON.stringify({ retour, supprime: etat.supprime, debut: ev && ev.start.dateTime }) };
   }));

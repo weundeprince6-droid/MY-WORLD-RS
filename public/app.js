@@ -1400,14 +1400,60 @@ function afficherAnniversaireAgenda(){
   if(detailEl)detailEl.textContent=days===0?"Joyeux anniversaire !": "Prochain anniversaire : "+prochainTexte+" · Vous aurez "+age+" ans.";
 }
 
+let agendaFiltre = "tous", agendaSel = null;
+const jourComplet = new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+function agendaQuand(e) {
+  if (e.toutLeJour) return "Journée entière";
+  return heure.format(e.debut) + (e.fin && !isNaN(e.fin) ? " – " + heure.format(e.fin) : "");
+}
+function agendaLigne(e) {
+  const jour = new Intl.DateTimeFormat("fr-FR", { day: "numeric" }).format(e.debut), mois = new Intl.DateTimeFormat("fr-FR", { month: "short" }).format(e.debut);
+  return '<li><button type="button" class="gmail-conversation'+(agendaSel===e.id?" selectionnee":"")+'" data-agenda-evt="'+echapper(e.id)+'"><span class="gmail-avatar agenda-avatar"><b>'+jour+'</b><small>'+echapper(mois)+'</small></span><span class="gmail-conversation-texte"><span class="gmail-conversation-haut"><strong>'+echapper(e.titre)+'</strong><time>'+(e.toutLeJour?"Journée":heure.format(e.debut))+'</time></span><span class="gmail-conversation-sujet">'+echapper(jourCourt.format(e.debut))+'</span><span class="gmail-conversation-extrait">'+echapper(e.lieu||e.description||"")+'</span></span></button></li>';
+}
+function agendaTousEvenements() { return [...etat.agenda.aujourdhui, ...etat.agenda.aVenir]; }
+function agendaAfficherDetail(e) {
+  const detail = $("agenda-vue-detail"), cal = $("agenda-vue-calendrier");
+  const montrer = !!e;
+  detail.hidden = !montrer; cal.hidden = montrer;
+  ["agenda-retour-calendrier", "agenda-evt-modifier", "agenda-evt-supprimer"].forEach((id) => { $(id).hidden = !montrer; });
+  const lien = $("agenda-evt-ouvrir"); lien.hidden = !(montrer && e.lien); if (montrer && e.lien) lien.href = e.lien;
+  if (!montrer) {
+    $("agenda-titre").textContent = "Mon calendrier"; $("agenda-sous-titre").textContent = "Choisissez un rendez-vous dans la liste";
+    $("agenda-avatar").textContent = "📅"; detail.innerHTML = ""; return;
+  }
+  $("agenda-evt-modifier").dataset.modifierEvenement = e.id; $("agenda-evt-supprimer").dataset.supprimerEvenement = e.id;
+  $("agenda-titre").textContent = e.titre; $("agenda-sous-titre").textContent = jourComplet.format(e.debut) + " · " + agendaQuand(e);
+  $("agenda-avatar").textContent = "📅";
+  const lignes = [["🕒", agendaQuand(e)], ...(e.lieu ? [["📍", e.lieu]] : []), ...(e.description ? [["📝", e.description]] : [])];
+  detail.innerHTML = '<div class="gmail-date-separateur">'+echapper(jourComplet.format(e.debut))+'</div>'
+    + '<article class="gmail-bulle-wrap autre"><div class="gmail-bulle"><div class="gmail-bulle-expediteur">Rendez-vous</div><div class="gmail-bulle-corps"><strong>'+echapper(e.titre)+'</strong>\n'+lignes.map(([i,t])=>i+" "+echapper(t)).join("\n")+'</div><time>'+echapper(agendaQuand(e))+'</time></div></article>';
+}
 function rendreAgenda() {
-  const ligne = (e) => '<li><div class="ligne"><strong>'+echapper(e.titre)+'</strong><span class="meta">'+(e.toutLeJour ? "Journée entière" : heure.format(e.debut))+'</span></div>'+(e.lieu ? '<div class="extrait">'+echapper(e.lieu)+'</div>' : '')+'<div class="actions"><button type="button" data-modifier-evenement="'+echapper(e.id)+'">Modifier</button><button type="button" data-supprimer-evenement="'+echapper(e.id)+'">Supprimer</button></div></li>';
-  const auj = etat.agenda.aujourdhui.slice(0,2);
-  $("liste-agenda").innerHTML = auj.length ? auj.map(ligne).join("") : '<li class="vide">Aucun rendez-vous aujourd’hui.</li>';
-  const suite = etat.agenda.aVenir.slice(0,2);
-  $("liste-avenir").innerHTML = suite.length ? suite.map(e=>'<li><div class="ligne"><strong>'+echapper(e.titre)+'</strong><span class="meta">'+jourCourt.format(e.debut)+(e.toutLeJour ? "" : " · "+heure.format(e.debut))+'</span></div><div class="actions"><button type="button" data-modifier-evenement="'+echapper(e.id)+'">Modifier</button><button type="button" data-supprimer-evenement="'+echapper(e.id)+'">Supprimer</button></div></li>').join("") : '<li class="vide">Rien de prévu dans les prochains jours.</li>';
+  const tous = agendaTousEvenements();
+  if (agendaSel && !tous.some((e) => e.id === agendaSel)) agendaSel = null;
+  const q = ($("agenda-recherche")?.value || "").trim().toLocaleLowerCase("fr");
+  const ok = (e) => !q || [e.titre, e.lieu, e.description].join(" ").toLocaleLowerCase("fr").includes(q);
+  const auj = etat.agenda.aujourdhui.filter(ok), suite = etat.agenda.aVenir.filter(ok);
+  $("liste-agenda").innerHTML = auj.length ? auj.map(agendaLigne).join("") : '<li class="vide">Aucun rendez-vous aujourd’hui.</li>';
+  $("liste-avenir").innerHTML = suite.length ? suite.map(agendaLigne).join("") : '<li class="vide">Aucun rendez-vous à venir.</li>';
+  $("agenda-groupe-auj").hidden = agendaFiltre === "avenir";
+  $("agenda-groupe-avenir").hidden = agendaFiltre === "aujourdhui";
+  agendaAfficherDetail(agendaSel ? tous.find((e) => e.id === agendaSel) : null);
   rendreCalendrierAgenda();
 }
+$("agenda-recherche")?.addEventListener("input", () => rendreAgenda());
+document.querySelectorAll("[data-agenda-filtre]").forEach((b) => b.addEventListener("click", () => {
+  agendaFiltre = b.dataset.agendaFiltre;
+  document.querySelectorAll("[data-agenda-filtre]").forEach((x) => x.classList.toggle("actif", x === b));
+  rendreAgenda();
+}));
+$("agenda-liste-evenements")?.addEventListener("click", (ev) => {
+  const b = ev.target.closest("[data-agenda-evt]"); if (!b) return;
+  agendaSel = b.dataset.agendaEvt; rendreAgenda();
+});
+$("agenda-retour-calendrier")?.addEventListener("click", () => { agendaSel = null; rendreAgenda(); });
+$("agenda-composer-btn")?.addEventListener("click", () => ouvrirFormAgenda());
+$("agenda-composer-input")?.addEventListener("click", () => ouvrirFormAgenda());
 // ---------- Agenda : ajouter et supprimer des rendez-vous ----------
 
 let agendaEvenementEnEdition=null;

@@ -9,7 +9,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#0b1220">
   <link rel="icon" type="image/png" href="icone-192.png">
-  <link rel="stylesheet" href="style.css?v=20261110-gmail-contact-chat-v3-q1">
+  <link rel="stylesheet" href="style.css?v=20261110-agenda-chat-v1">
 </head>
 <body>
   <header class="entete">
@@ -137,7 +137,20 @@
           </section>
           <section class="tab-pane" id="pane-agenda" role="tabpanel" data-pane="agenda" hidden>
             <div class="section-heading"><div><p class="eyebrow">ORGANISATION</p><h2>Mon agenda</h2><p>Consultez vos rendez-vous en aperçu, puis ajoutez ou modifiez au besoin.</p></div><button class="btn btn-primary" id="agenda-nouveau" type="button">＋ Nouveau rendez-vous</button></div>
-            <div class="agenda-grid"><section class="carte"><div class="card-heading"><h2>Aujourd'hui</h2><span class="heading-icon">☀</span></div><ul id="liste-agenda" class="liste"></ul></section><section class="carte"><div class="card-heading"><h2>À venir</h2><span class="heading-icon">↗</span></div><ul id="liste-avenir" class="liste"></ul></section></div>
+            <section class="gmail-desktop agenda-desktop" aria-label="Agenda">
+              <aside class="gmail-conversations">
+                <div class="gmail-search"><span>⌕</span><input id="agenda-recherche" type="search" placeholder="Rechercher un rendez-vous…" aria-label="Rechercher un rendez-vous"></div>
+                <div class="gmail-filtres"><button type="button" class="actif" data-agenda-filtre="tous">Tous</button><button type="button" data-agenda-filtre="aujourdhui">Aujourd'hui</button><button type="button" data-agenda-filtre="avenir">À venir</button></div>
+                <div class="gmail-liste-conversations" id="agenda-liste-evenements">
+                  <div id="agenda-groupe-auj"><p class="agenda-groupe">☀ Aujourd'hui</p><ul id="liste-agenda" class="agenda-ul"></ul></div>
+                  <div id="agenda-groupe-avenir"><p class="agenda-groupe">↗ À venir</p><ul id="liste-avenir" class="agenda-ul"></ul></div>
+                </div>
+              </aside>
+              <section class="gmail-discussion" aria-label="Rendez-vous sélectionné">
+                <header class="gmail-discussion-entete"><div class="gmail-discussion-identite"><span class="gmail-avatar" id="agenda-avatar">📅</span><div><strong id="agenda-titre">Mon calendrier</strong><small id="agenda-sous-titre">Choisissez un rendez-vous dans la liste</small></div></div><div class="gmail-discussion-actions"><button type="button" id="agenda-retour-calendrier" title="Voir le calendrier" hidden>📅</button><button type="button" id="agenda-evt-modifier" title="Modifier" hidden>✎</button><button type="button" id="agenda-evt-supprimer" title="Supprimer" hidden>🗑</button><a id="agenda-evt-ouvrir" class="agenda-lien-google" title="Ouvrir dans Google Agenda" target="_blank" rel="noopener noreferrer" hidden>↗</a></div></header>
+                <div id="agenda-fil" class="gmail-fil-messages">
+                  <div id="agenda-vue-detail" hidden></div>
+                  <div id="agenda-vue-calendrier">
             <div class="agenda-cal-anniversaire-wrap">
             <section class="carte agenda-calendrier"><div class="card-heading"><div><p class="eyebrow">VUE MENSUELLE</p><h2>Calendrier</h2></div><div class="agenda-cal-nav"><button type="button" id="agenda-mois-precedent" aria-label="Mois précédent">‹</button><strong id="agenda-mois-titre"></strong><button type="button" id="agenda-mois-suivant" aria-label="Mois suivant">›</button></div></div><div class="agenda-cal-grille" id="agenda-calendrier" aria-label="Calendrier mensuel"></div><p class="meta">Clique sur une date pour la choisir dans le formulaire.</p></section><section class="carte agenda-anniversaire" id="agenda-anniversaire" aria-live="polite">
               <div class="agenda-anniversaire-icon" aria-hidden="true">🎂</div>
@@ -149,7 +162,11 @@
               </div>
             </section>
             </div>
-            
+                  </div>
+                </div>
+                <footer class="gmail-compositeur"><button type="button" id="agenda-composer-btn" title="Nouveau rendez-vous">＋</button><input id="agenda-composer-input" type="text" readonly placeholder="Ajouter un rendez-vous…" aria-label="Ajouter un rendez-vous"></footer>
+              </section>
+            </section>
             <section class="carte agenda-editor" id="agenda-editor-card" hidden><div class="card-heading"><h2 id="agenda-form-title">Nouveau rendez-vous</h2><span class="heading-icon">＋</span></div>
               <form id="agenda-form" class="agenda-form">
                 <input name="titre" required maxlength="150" placeholder="Titre du rendez-vous" aria-label="Titre">
@@ -525,7 +542,7 @@
       setTimeout(function(){if(!window.__appPret)montrer("L'application n'a pas démarré. Vérifiez votre connexion internet (les composants Firebase se chargent depuis Google), désactivez un éventuel bloqueur de publicités, puis rechargez. Sans internet : l'application doit d'abord avoir été ouverte deux fois avec internet sur cet appareil pour s'installer hors ligne. Appuyez sur F12 > Console pour voir le détail.");},6000);
     })();
   </script>
-  <script type="module" src="app.js?v=20261110-gmail-contact-chat-v3-q1"></script>
+  <script type="module" src="app.js?v=20261110-agenda-chat-v1"></script>
   <div id="tv-fenetre" class="tv-fenetre" hidden><div class="tv-barre"><strong>📺 Télévision</strong><span class="tv-actions"><button type="button" id="tv-masquer" title="Masquer le lecteur : la lecture continue en arrière-plan">▾ Masquer (lecture en arrière-plan)</button><button type="button" id="tv-fermer" title="Arrêter la lecture et fermer">✕ Fermer</button></span></div><div id="tv-zone" class="tv-zone"></div></div>
   <div id="tv-mini" class="tv-mini" hidden><span class="tv-mini-pastille">🎵</span><span id="tv-mini-titre" class="tv-mini-titre">Télévision en lecture</span><button type="button" id="tv-mini-afficher">Afficher</button><button type="button" id="tv-mini-arreter" title="Arrêter la lecture">✕</button></div>
 </body>

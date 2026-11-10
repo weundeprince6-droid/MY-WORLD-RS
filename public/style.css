@@ -1385,3 +1385,16 @@ body:has(#tableau:not([hidden])) .entete-date{display:flex}
  .drive-actions .btn{width:100%;padding:6px 7px}
  .drive-contenu{padding:9px}
 }
+
+/* ---------- Agenda : même présentation que la messagerie ---------- */
+#pane-agenda .gmail-desktop{margin-top:14px;height:calc(100vh - 250px);min-height:520px}
+#pane-agenda .agenda-ul{list-style:none;margin:0;padding:0}
+#pane-agenda .agenda-ul .vide{padding:14px 18px;color:var(--muted);font-size:12px}
+.agenda-groupe{margin:0;padding:10px 14px 6px;font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);background:var(--surface);position:sticky;top:0;z-index:1}
+.agenda-avatar{flex-direction:column;gap:0;line-height:1}
+.agenda-avatar b{font-size:16px}.agenda-avatar small{font-size:9px;text-transform:uppercase;opacity:.9}
+.gmail-discussion-actions .agenda-lien-google{width:36px;height:36px;border:1px solid var(--border);border-radius:50%;display:grid;place-items:center;background:var(--bg);color:var(--text);text-decoration:none}
+.gmail-discussion-actions button[hidden],.gmail-discussion-actions a[hidden]{display:none}
+#agenda-vue-calendrier .agenda-cal-anniversaire-wrap{display:flex;flex-direction:column;gap:16px}
+#agenda-vue-calendrier[hidden],#agenda-vue-detail[hidden]{display:none}
+@media(max-width:900px){#pane-agenda .gmail-desktop{height:auto;min-height:0}}
