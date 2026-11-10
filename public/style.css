@@ -1327,3 +1327,14 @@ body:has(#tableau:not([hidden])) .entete-date{display:flex}
   .entete-bienvenue{width:100%;box-sizing:border-box}
   .entete-date{margin-left:auto}
 }
+
+
+/* Bouton d'actualisation déplacé dans le résumé, hors de l'entête */
+.resume-actions{display:flex;align-items:center;justify-content:flex-end;gap:12px;flex:0 0 auto}
+.resume-actions .direct{padding:7px 12px;border-color:var(--border);background:var(--primary-soft);color:var(--primary);font-size:11px}
+.resume-actions .direct[data-etat="pause"]{color:#b7791f}
+.resume-actions .direct[data-etat="off"]{color:var(--muted)}
+@media(max-width:650px){
+ .resume-jour{align-items:flex-start;flex-wrap:wrap}
+ .resume-actions{width:100%;justify-content:space-between}
+}
