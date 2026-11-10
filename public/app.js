@@ -1267,7 +1267,7 @@ const domainesPerso = () => reglages.gmail?.domainesPersonnels || [];
 const compteDe = (m, envoye = false) => typeCompte(envoye ? m.a : m.deBrut, domainesPerso());
 const gardeCompte = (m, envoye = false) => filtreCompte === "tous" || compteDe(m, envoye) === filtreCompte;
 function majCompteurs() {
-  const vue = ["importants", "recus", "envoyes"].find((v) => !$("vue-" + v).hidden) || "importants";
+  const vue = document.querySelector("[data-vue-messages].vue-actif")?.dataset.vueMessages || "recus";
   const liste = vue === "importants" ? etat.messages : vue === "recus" ? etat.recents : listeEnvoyes;
   const envoye = vue === "envoyes";
   const n = { tous: liste.length, personnel: 0, professionnel: 0 };
@@ -2648,6 +2648,7 @@ async function chargerEnvoyes() {
       .sort((x, y) => y.date - x.date);
     envoyesCharges = true;
     rendreEnvoyes();
+    rendreGmailConversations();
   } catch (e) {
     zone.innerHTML = `<li class="vide">Mails envoyés indisponibles : ${echapper(e.message)}</li>`;
   } finally { envoyesEnCours = false; }
