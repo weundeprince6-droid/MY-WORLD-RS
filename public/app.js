@@ -3401,7 +3401,7 @@ function gmailVueSource(){
   if(vue==="envoyes")return typeof listeEnvoyes!=="undefined"?listeEnvoyes:[];
   return [...etat.recents,...(typeof listeEnvoyes!=="undefined"&&envoyesCharges?listeEnvoyes:[])];
 }
-function gmailAdresse(raw){return (String(raw||"").match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/i)||[])[0]?.toLowerCase()||"";}
+function gmailAdresse(raw){return (String(raw||"").match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)||[])[0]?.toLowerCase()||"";}
 function gmailContactPourMessage(m,envoye=false){
   const brut=envoye?(m.a||""):(m.deBrut||m.de||"");const adresse=gmailAdresse(brut);if(!adresse)return null;
   return {adresse,nom:String(brut).replace(/<[^>]*>/g,"").replace(/["']/g,"").trim()||adresse};
