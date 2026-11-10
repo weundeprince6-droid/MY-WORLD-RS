@@ -1178,3 +1178,27 @@ html[data-theme="light"] .section-icon.purple,html[data-theme="light"] .feature-
   .gmail-commandes .messages-barre .btn{flex:1 1 auto;padding:7px 8px;font-size:11px}
   .gmail-commandes .messages-comptes>.meta{flex:0 0 100%}
 }
+
+
+/* Messagerie : démarrer juste sous le résumé et compacter les commandes */
+#pane-messages{margin-top:0;padding-top:0;gap:0;min-height:0}
+#pane-messages .gmail-desktop{margin-top:0;height:calc(100vh - 205px);min-height:520px}
+.gmail-commandes{padding:6px 10px;gap:5px}
+.gmail-commandes .messages-barre{display:flex;flex-wrap:nowrap;gap:5px;min-width:0;overflow-x:auto;scrollbar-width:thin}
+.gmail-commandes .messages-barre .btn{flex:0 0 auto;padding:5px 9px;font-size:11px;line-height:1.25;border-radius:8px}
+.gmail-commandes .messages-comptes{padding-top:4px;border-top:1px solid var(--border)}
+.gmail-commandes .messages-comptes>.meta{flex:0 0 auto;font-size:10px}
+.gmail-commandes .messages-comptes .btn{padding:4px 8px}
+@media(max-width:900px){
+  #pane-messages .gmail-desktop{height:calc(100vh - 190px);min-height:500px}
+}
+@media(max-width:650px){
+  #pane-messages .gmail-desktop{height:auto;min-height:0}
+  .gmail-commandes{padding:6px 8px;gap:4px}
+  .gmail-commandes .messages-barre{width:100%;overflow-x:auto;flex-wrap:nowrap;padding-bottom:2px}
+  .gmail-commandes .messages-barre .btn{flex:0 0 auto;white-space:nowrap;font-size:10px;padding:5px 8px}
+  .gmail-commandes .messages-comptes>.meta{flex:0 0 auto}
+  .gmail-conversations{height:330px;max-height:42vh}
+  .gmail-discussion{min-height:480px}
+  .gmail-fil-messages{min-height:290px}
+}
