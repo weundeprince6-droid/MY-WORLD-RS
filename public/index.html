@@ -28,7 +28,7 @@
     <div class="outils">
       <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Passer au mode sombre" title="Changer le thème"><span class="theme-toggle-icon" id="theme-toggle-icon" aria-hidden="true">🌙</span><span class="theme-toggle-label" id="theme-toggle-label">Sombre</span></button>
       
-      <button id="direct" class="direct" type="button" hidden title="Actualisation automatique : cliquez pour arrêter ou reprendre">● En direct</button>
+      
       <span id="utilisateur" class="meta"></span>
       <button id="bouton-renouveler" class="btn btn-light" type="button" hidden title="Votre accès Google va expirer : un clic pour le renouveler">Renouveler l'accès Google</button>
       <button id="bouton-actualiser" class="btn btn-light btn-icon-header" type="button" hidden title="Actualiser les données" aria-label="Actualiser les données"><span aria-hidden="true">↻</span></button>
@@ -83,7 +83,7 @@
           <div class="sidebar-footer"><span class="status-dot"></span> Espace connecté</div>
         </aside>
         <div class="content-area">
-          <section class="resume-jour"><div><span class="summary-label">VOTRE RÉSUMÉ</span><p id="resume" aria-live="polite">Chargement…</p></div><span id="derniere-maj" class="meta"></span></section>
+          <section class="resume-jour"><div class="resume-contenu"><span class="summary-label">VOTRE RÉSUMÉ</span><p id="resume" aria-live="polite">Chargement…</p></div><div class="resume-actions"><button id="direct" class="direct" type="button" hidden title="Actualisation automatique : cliquez pour arrêter ou reprendre">● En direct</button><span id="derniere-maj" class="meta"></span></div></section>
           <section class="tab-pane active" id="pane-dashboard" role="tabpanel" data-pane="dashboard">
             <div class="section-heading"><div><p class="eyebrow">APERÇU GÉNÉRAL</p><h2>Vue d'ensemble</h2><p>Les informations importantes à portée de main.</p></div></div>
             <div class="dashboard-metrics" aria-label="Résumé des données">
