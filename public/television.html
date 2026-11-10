@@ -196,6 +196,33 @@ table.keys{width:100%;border-collapse:collapse}table.keys td{padding:3px 4px;bor
 ::-webkit-scrollbar{width:8px}::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
 @media(max-width:820px){#app{flex-direction:column}#sidebar{width:100%;height:38%;border-right:none;border-bottom:1px solid var(--border)}#app.panel-open #panel{position:fixed;right:0;top:0;bottom:0;z-index:20}}
 </style>
+
+<script>
+/* Le lecteur reprend automatiquement les couleurs et le thème de MY WORLD RS */
+(function(){
+  function synchroniserThemeParent(){
+    try{
+      var racineParent=parent.document.documentElement;
+      var styles=parent.getComputedStyle(racineParent);
+      var correspondances={
+        "--bg":"--bg","--panel":"--surface","--panel2":"--primary-soft",
+        "--text":"--text","--muted":"--muted","--accent":"--primary",
+        "--accent2":"--green","--border":"--border"
+      };
+      Object.keys(correspondances).forEach(function(cible){
+        var valeur=styles.getPropertyValue(correspondances[cible]).trim();
+        if(valeur)document.body.style.setProperty(cible,valeur);
+      });
+      document.body.classList.toggle("light",racineParent.dataset.theme!=="dark");
+    }catch(e){}
+  }
+  synchroniserThemeParent();
+  try{
+    new MutationObserver(synchroniserThemeParent).observe(parent.document.documentElement,{attributes:true,attributeFilter:["data-theme","class"]});
+  }catch(e){}
+})();
+</script>
+
 </head>
 <body data-mode="empty">
 <div id="app">
