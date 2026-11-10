@@ -1202,3 +1202,39 @@ html[data-theme="light"] .section-icon.purple,html[data-theme="light"] .feature-
   .gmail-discussion{min-height:480px}
   .gmail-fil-messages{min-height:290px}
 }
+
+
+/* Accueil : fusion visuelle de la bienvenue et de la date avec l'entête */
+#tableau .welcome-row{
+  margin:-20px -13px 14px;
+  padding:9px clamp(16px,3vw,42px);
+  min-height:56px;
+  box-sizing:border-box;
+  align-items:center;
+  flex-direction:row;
+  gap:12px;
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+}
+#tableau .welcome-row>div:first-child{min-width:0}
+#tableau .welcome-row .eyebrow{margin:0 0 2px;font-size:9px;letter-spacing:1px}
+#tableau .welcome-row h1{margin:0;font-size:18px;line-height:1.25;letter-spacing:-.35px}
+#tableau .welcome-row .welcome-sub{display:none}
+#tableau .welcome-row .date-chip{
+  flex:0 0 auto;
+  padding:6px 10px;
+  border-radius:9px;
+  font-size:11px;
+  background:var(--bg);
+}
+@media(max-width:650px){
+  #tableau .welcome-row{
+    margin:-20px -13px 12px;
+    padding:8px 13px;
+    min-height:50px;
+    gap:8px;
+  }
+  #tableau .welcome-row h1{font-size:15px}
+  #tableau .welcome-row .eyebrow{font-size:8px}
+  #tableau .welcome-row .date-chip{padding:5px 7px;font-size:10px;gap:5px}
+}
