@@ -1293,6 +1293,7 @@ function rendreMessages() {
   }
   if (typeof listeEnvoyes !== "undefined" && envoyesCharges) rendreEnvoyes();
   majCompteurs();
+  rendreGmailConversations();
 }
 
 let agendaMoisAffiche = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
@@ -3384,3 +3385,91 @@ $("keep-fichiers")?.addEventListener("change", async (e) => {
   applyTheme(root.dataset.theme==="dark"?"dark":"light",false);
   button.addEventListener("click",()=>applyTheme(root.dataset.theme==="dark"?"light":"dark"));
 })();
+
+
+// ---------- Messagerie Gmail en trois panneaux, style WhatsApp Web ----------
+let gmailThreadActif = null;
+let gmailMessageActif = null;
+let gmailFiltreActif = "tous";
+let gmailThreadsAffiches = [];
+const gmailInitiales = (nom) => String(nom || "?").replace(/<[^>]+>/g,"").trim().split(/\\s+/).slice(0,2).map(x=>x[0]||"").join("").toUpperCase() || "✉";
+function gmailVueSource(){
+  const vue = document.querySelector("[data-vue-messages].vue-actif")?.dataset.vueMessages || "importants";
+  return vue === "envoyes" ? (typeof listeEnvoyes !== "undefined" ? listeEnvoyes : []) : vue === "recus" ? etat.recents : etat.messages;
+}
+function gmailConstruireThreads(){
+  const source = gmailVueSource().filter(m=>gardeCompte(m, document.querySelector("[data-vue-messages].vue-actif")?.dataset.vueMessages==="envoyes"));
+  const groupes = new Map();
+  source.forEach(m=>{
+    const id=m.threadId||m.id;
+    if(!id)return;
+    if(!groupes.has(id))groupes.set(id,{id,dernier:m,nombre:0,nonLu:false,important:false});
+    const t=groupes.get(id);t.nombre++;
+    if(Number(m.date||0)>=Number(t.dernier.date||0))t.dernier=m;
+    t.nonLu=t.nonLu||!!m.nonLu;t.important=t.important||!!m.etoile||!!m.important;
+  });
+  return [...groupes.values()].sort((a,b)=>Number(b.dernier.date||0)-Number(a.dernier.date||0));
+}
+function rendreGmailConversations(){
+  const zone=$("gmail-liste-conversations");if(!zone)return;
+  const recherche=String($("gmail-recherche")?.value||"").trim().toLocaleLowerCase("fr");
+  let threads=gmailConstruireThreads();
+  if(gmailFiltreActif==="nonlus")threads=threads.filter(t=>t.nonLu);
+  if(gmailFiltreActif==="importants")threads=threads.filter(t=>t.important);
+  if(recherche)threads=threads.filter(t=>[t.dernier.de,t.dernier.sujet,t.dernier.extrait].join(" ").toLocaleLowerCase("fr").includes(recherche));
+  gmailThreadsAffiches=threads;
+  if(!threads.length){zone.innerHTML='<div class="gmail-liste-vide">Aucune conversation à afficher.</div>';return;}
+  zone.innerHTML=threads.map(t=>{
+    const m=t.dernier,nom=echapper(expediteurLisible(m.de||m.a||"Contact")),extrait=echapper(m.extrait||m.sujet||"(sans objet)");
+    const date=m.date?new Intl.DateTimeFormat("fr-FR",{hour:"2-digit",minute:"2-digit",day:"2-digit",month:"2-digit"}).format(new Date(m.date)):"";
+    return '<button type="button" class="gmail-conversation'+(t.id===gmailThreadActif?' selectionnee':'')+(t.nonLu?' non-lue':'')+'" data-gmail-thread="'+echapper(t.id)+'"><span class="gmail-avatar">'+echapper(gmailInitiales(nom))+'</span><span class="gmail-conversation-texte"><span class="gmail-conversation-haut"><strong>'+nom+'</strong><time>'+date+'</time></span><span class="gmail-conversation-sujet">'+echapper(m.sujet||"(sans objet)")+'</span><span class="gmail-conversation-extrait">'+extrait+'</span></span>'+(t.nombre>1?'<span class="gmail-thread-count">'+t.nombre+'</span>':'')+(t.nonLu?'<i class="gmail-unread-dot"></i>':'')+'</button>';
+  }).join("");
+  zone.querySelectorAll("[data-gmail-thread]").forEach(b=>b.addEventListener("click",()=>ouvrirGmailThread(b.dataset.gmailThread)));
+}
+function gmailAjouterBulle(m,moi){
+  const nom=expediteurLisible(m.de||"Contact"),heure=m.date?new Intl.DateTimeFormat("fr-FR",{hour:"2-digit",minute:"2-digit"}).format(new Date(m.date)):"";
+  const contenu=echapper(m.corps||"(Ce message ne contient pas de texte.)");
+  const pj=(m.pieces||[]).map(f=>'<div class="gmail-piece">📎 '+echapper(f.nom)+' · '+tailleLisible(f.taille)+'</div>').join("");
+  return '<article class="gmail-bulle-wrap '+(moi?'moi':'autre')+'"><div class="gmail-bulle"><div class="gmail-bulle-expediteur">'+echapper(nom)+'</div><div class="gmail-bulle-corps">'+contenu+'</div>'+pj+'<time>'+heure+(moi?' <span class="gmail-check">✓✓</span>':'')+'</time></div></article>';
+}
+async function ouvrirGmailThread(id){
+  gmailThreadActif=id;
+  rendreGmailConversations();
+  const fil=$("gmail-fil-messages"),repondre=$("gmail-repondre");
+  fil.innerHTML='<div class="gmail-chargement">Chargement de la conversation…</div>';
+  repondre.disabled=true;gmailMessageActif=null;
+  try{
+    const thread=await google(URL_GMAIL+"threads/"+encodeURIComponent(id)+"?format=full");
+    const messages=(thread.messages||[]).map(x=>lireMessageComplet(x)).sort((a,b)=>Number(a.date||0)-Number(b.date||0));
+    if(!messages.length)throw new Error("Cette conversation ne contient aucun message lisible.");
+    const moi=String(fb?.auth.currentUser?.email||"").toLowerCase();
+    gmailMessageActif=messages[messages.length-1];mailLu=gmailMessageActif;
+    const dernier=messages[messages.length-1],contact=messages.find(x=>!moi||!String(x.de||"").toLowerCase().includes(moi))||dernier;
+    $("gmail-contact-nom").textContent=expediteurLisible(contact.de||contact.a||"Conversation");
+    $("gmail-contact-adresse").textContent=contact.de||"Conversation Gmail";
+    $("gmail-contact-avatar").textContent=gmailInitiales(expediteurLisible(contact.de||contact.a||""));
+    $("gmail-ouvrir-web").onclick=()=>window.open("https://mail.google.com/mail/u/0/#all/"+(thread.id||id),"_blank","noopener");
+    fil.innerHTML='<div class="gmail-date-separateur">Conversation · '+messages.length+' message'+(messages.length>1?'s':'')+'</div>'+messages.map(m=>gmailAjouterBulle(m,moi&&String(m.de||"").toLowerCase().includes(moi))).join("");
+    fil.scrollTop=fil.scrollHeight;repondre.disabled=false;
+    const t=gmailThreadsAffiches.find(x=>x.id===id);if(t)t.nonLu=false;
+    rendreGmailConversations();
+  }catch(e){
+    fil.innerHTML='<div class="gmail-liste-vide">Impossible de charger cette conversation : '+echapper(e.message)+'</div>';
+  }
+}
+$("gmail-recherche")?.addEventListener("input",rendreGmailConversations);
+document.querySelectorAll("[data-gmail-filtre]").forEach(b=>b.addEventListener("click",()=>{
+  gmailFiltreActif=b.dataset.gmailFiltre;
+  document.querySelectorAll("[data-gmail-filtre]").forEach(x=>x.classList.toggle("actif",x===b));
+  rendreGmailConversations();
+}));
+$("gmail-actualiser")?.addEventListener("click",async()=>{
+  const b=$("gmail-actualiser");b.disabled=true;b.textContent="…";
+  try{const g=await chargerGmail();etat.messages=g.importants;etat.recents=g.recents;rendreMessages();if(gmailThreadActif)await ouvrirGmailThread(gmailThreadActif);}
+  catch(e){afficherErreur("Actualisation Gmail impossible : "+e.message);}
+  finally{b.disabled=false;b.textContent="↻";}
+});
+$("gmail-repondre")?.addEventListener("click",()=>{
+  if(!gmailMessageActif)return;
+  mailLu=gmailMessageActif;repondreAuMail();
+});
