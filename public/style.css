@@ -1240,6 +1240,33 @@ html[data-theme="light"] .section-icon.purple,html[data-theme="light"] .feature-
 }
 
 
+
+/* Finition visuelle : bienvenue et date/heure reprennent le style encadré des commandes */
+.entete-bienvenue{
+  padding:8px 13px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:var(--surface);
+  box-shadow:0 2px 8px rgba(0,0,0,.045);
+}
+.entete-date{
+  min-height:38px;
+  padding:8px 13px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:var(--surface);
+  box-shadow:0 2px 8px rgba(0,0,0,.045);
+}
+.entete-date-point{flex:0 0 7px}
+@media(max-width:760px){
+  .entete-bienvenue{padding:6px 10px;border-radius:10px}
+  .entete-date{min-height:32px;padding:6px 9px;border-radius:10px}
+}
+@media(max-width:480px){
+  .entete-bienvenue{width:100%;box-sizing:border-box}
+  .entete-date{margin-left:auto}
+}
+
 /* Entête unifiée : identité, bienvenue et date/heure sur une seule ligne */
 .entete{display:flex;align-items:center;gap:clamp(10px,2vw,26px)}
 .entete-bienvenue{display:none;flex:1;min-width:0;flex-direction:column;gap:2px}
