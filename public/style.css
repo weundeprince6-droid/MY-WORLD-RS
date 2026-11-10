@@ -39,6 +39,12 @@ dialog{border:1px solid var(--border);border-radius:16px;background:var(--surfac
 #telegram-retour.erreur,#telegram-statut.erreur-texte{color:#c0392b}
 
 /* Google Drive */
+
+/* Regroupement des fichiers Google Drive par type */
+.drive-list .drive-groupe-titre{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:13px 0 4px;padding:8px 10px;border:1px solid var(--border);border-radius:9px;background:var(--primary-soft);color:var(--text);font-size:12px;font-weight:750;list-style:none}
+.drive-list .drive-groupe-titre:first-child{margin-top:4px}
+.drive-groupe-compte{display:inline-flex;align-items:center;justify-content:center;min-width:23px;height:21px;padding:0 6px;border-radius:20px;background:var(--surface);color:var(--primary);font-size:10px;font-weight:800}
+
 .drive-toolbar{display:flex;gap:10px;align-items:center;margin-bottom:12px}
 .drive-toolbar input{flex:1;min-width:0;padding:11px 13px;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);font:inherit}
 .drive-file{display:flex;align-items:center;gap:12px;min-width:0}
