@@ -106,8 +106,8 @@
             <div class="section-heading messages-heading"><div><p class="eyebrow">COMMUNICATION</p><h2>Messages</h2><p id="messages-vue-texte">Les messages qui méritent votre attention.</p></div>
               <div class="messages-barre" role="group" aria-label="Affichage des messages">
                 <button id="nouveau-mail" class="btn btn-primary" type="button">✉ Nouveau mail</button>
-                <button class="btn btn-light vue-actif" type="button" data-vue-messages="importants" aria-pressed="true">Messages importants</button>
-                <button class="btn btn-light" type="button" data-vue-messages="recus" aria-pressed="false">Boîte de réception</button>
+                <button class="btn btn-light" type="button" data-vue-messages="importants" aria-pressed="false">Messages importants</button>
+                <button class="btn btn-light vue-actif" type="button" data-vue-messages="recus" aria-pressed="true">Boîte de réception</button>
                 <button class="btn btn-light" type="button" data-vue-messages="envoyes" aria-pressed="false">Messages envoyés</button>
               </div></div>
             <div class="messages-barre messages-comptes" role="group" aria-label="Type de compte">
@@ -125,7 +125,7 @@
               <section class="gmail-discussion" aria-label="Conversation sélectionnée">
                 <header class="gmail-discussion-entete"><div class="gmail-discussion-identite"><span class="gmail-avatar" id="gmail-contact-avatar">✉</span><div><strong id="gmail-contact-nom">Sélectionnez une conversation</strong><small id="gmail-contact-adresse">Vos messages Gmail apparaîtront ici</small></div></div><div class="gmail-discussion-actions"><button type="button" id="gmail-ouvrir-web" title="Ouvrir dans Gmail">↗</button><button type="button" id="gmail-actualiser" title="Actualiser">↻</button></div></header>
                 <div id="gmail-fil-messages" class="gmail-fil-messages"><div class="gmail-bienvenue"><span>✉</span><h3>Vos conversations</h3><p>Choisissez un message dans la liste pour afficher l'échange complet.</p></div></div>
-                <footer class="gmail-compositeur"><button type="button" id="gmail-repondre" title="Répondre à cette conversation" disabled>↩</button><span>Pour répondre, utilisez le bouton Répondre : votre réponse sera envoyée via Gmail.</span></footer>
+                <footer class="gmail-compositeur"><button type="button" id="gmail-repondre" title="Répondre à cette conversation" disabled>➤</button><input id="gmail-composer-input" type="text" readonly placeholder="Écrire une réponse…" aria-label="Écrire une réponse" disabled></footer>
               </section>
             </section>
             <div class="gmail-anciens-vues" hidden><section class="carte" id="vue-importants"><ul id="liste-messages" class="liste"></ul></section><section class="carte" id="vue-recus" hidden><ul id="liste-recents" class="liste"></ul></section><section class="carte" id="vue-envoyes" hidden><div class="card-heading"><div><h2>Mails envoyés</h2></div><button id="envoyes-actualiser" class="btn btn-light" type="button">↻ Actualiser</button></div><ul id="liste-envoyes" class="liste"><li class="vide">Chargement des mails envoyés…</li></ul></section></div>
