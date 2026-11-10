@@ -1102,18 +1102,28 @@ $("drive-autoriser-google")?.addEventListener("click", async () => {
 
 
 // ---------- Sources ----------
-async function chargerGmail() {
+// Économie de quota Google : les en-têtes d'un message déjà lu sont gardés en mémoire.
+// Une actualisation automatique ne lit que les NOUVEAUX messages (1 requête de liste + les nouveaux),
+// au lieu de relire les 40 messages chaque minute. Relecture complète : bouton Actualiser, ou toutes les 15 min.
+const cacheGmail = new Map();
+let gmailRelu = 0;
+async function chargerGmail(forcer = false) {
   const g = reglages.gmail;
+  if (forcer || Date.now() - gmailRelu > 15 * 60000) { cacheGmail.clear(); gmailRelu = Date.now(); }
   const liste = await google(
     `https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=${g.maxMessages}&q=${encodeURIComponent(g.requete)}`,
   );
   const ids = (liste.messages || []).map((m) => m.id);
   // 4 lectures à la fois : Gmail limite le nombre de requêtes par minute
-  const complets = await enLots(ids, 4, (id) =>
+  const manquants = ids.filter((id) => !cacheGmail.has(id));
+  const nouveaux = await enLots(manquants, 4, (id) =>
     google(
       `https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date`,
     ),
   );
+  nouveaux.forEach((m, i) => cacheGmail.set(manquants[i], m));
+  for (const id of [...cacheGmail.keys()]) if (!ids.includes(id)) cacheGmail.delete(id);
+  const complets = ids.map((id) => cacheGmail.get(id));
   const options = { contactsVip: g.contactsVip, motsImportants: g.motsImportants };
   return {
     importants: messagesImportants(complets, { ...options, seuil: g.seuilImportance }),
@@ -1605,7 +1615,7 @@ async function tout() {
   oublierCachesEse();
   afficherErreur("");
   $("resume").textContent = "Chargement…";
-  const [gm, ag, kp, so] = await Promise.allSettled([chargerGmail(), chargerAgenda(), chargerKpis(), chargerSocialComplet()]);
+  const [gm, ag, kp, so] = await Promise.allSettled([chargerGmail(true), chargerAgenda(), chargerKpis(), chargerSocialComplet()]);
   const erreurs = [];
   if (gm.status === "fulfilled") { etat.messages = gm.value.importants; etat.recents = gm.value.recents; } else erreurs.push(`Gmail : ${gm.reason.message}`);
   if (ag.status === "fulfilled") etat.agenda = ag.value; else erreurs.push(`Agenda : ${ag.reason.message}`);
@@ -2751,6 +2761,7 @@ $("pane-messages").addEventListener("click", (ev) => { const b = ev.target.close
 
 // ---------- Marquer un message important (étoile + libellé Important dans Gmail) ----------
 async function modifierMessageGmail(id, ajouter, retirer) {
+  cacheGmail.delete(id);
   const appel = () => google(URL_GMAIL + `messages/${encodeURIComponent(id)}/modify`, { method: "POST", body: JSON.stringify({ addLabelIds: ajouter, removeLabelIds: retirer }) });
   try { return await appel(); }
   catch (e) {
@@ -2996,7 +3007,7 @@ function tickAuto() {
   if (echu("ese", 2000)) lancer("ese", majEseSilencieuse);
   if (echu("avec", 30000)) lancer("avec", majAvecSilencieuse);
   if (echu("social", 8000) && (stockage.lire(CLE_TG_JETON) || stockage.lire(CLE_FB_JETON))) lancer("social", majSocialSilencieuse);
-  if (echu("google", 60000)) lancer("google", majGoogleSilencieuse);
+  if (echu("google", 120000)) lancer("google", majGoogleSilencieuse);
 }
 
 function demarrerSurveillanceSocial() {
