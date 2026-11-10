@@ -1294,6 +1294,7 @@ function rendreMessages() {
   if (typeof listeEnvoyes !== "undefined" && envoyesCharges) rendreEnvoyes();
   majCompteurs();
   rendreGmailConversations();
+  if (!envoyesCharges && !envoyesEnCours) chargerEnvoyes();
 }
 
 let agendaMoisAffiche = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
