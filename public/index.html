@@ -103,19 +103,7 @@
             <section class="carte dashboard-alerts"><div class="card-heading"><div><p class="eyebrow">À NE PAS MANQUER</p><h2>Alertes et rappels</h2></div><span class="heading-icon">⚑</span></div><ul id="liste-alertes" class="liste alertes"></ul></section>
           </section>
           <section class="tab-pane" id="pane-messages" role="tabpanel" data-pane="messages" hidden>
-            <div class="section-heading messages-heading"><div><p class="eyebrow">COMMUNICATION</p><h2>Messages</h2><p id="messages-vue-texte">Les messages qui méritent votre attention.</p></div>
-              <div class="messages-barre" role="group" aria-label="Affichage des messages">
-                <button id="nouveau-mail" class="btn btn-primary" type="button">✉ Nouveau mail</button>
-                <button class="btn btn-light" type="button" data-vue-messages="importants" aria-pressed="false">Messages importants</button>
-                <button class="btn btn-light vue-actif" type="button" data-vue-messages="recus" aria-pressed="true">Boîte de réception</button>
-                <button class="btn btn-light" type="button" data-vue-messages="envoyes" aria-pressed="false">Messages envoyés</button>
-              </div></div>
-            <div class="messages-barre messages-comptes" role="group" aria-label="Type de compte">
-              <span class="meta">Comptes :</span>
-              <button class="btn btn-light vue-actif" type="button" data-compte-messages="tous" aria-pressed="true">Tous <span class="compteur" data-compteur="tous"></span></button>
-              <button class="btn btn-light" type="button" data-compte-messages="personnel" aria-pressed="false">👤 Personnels <span class="compteur" data-compteur="personnel"></span></button>
-              <button class="btn btn-light" type="button" data-compte-messages="professionnel" aria-pressed="false">💼 Professionnels <span class="compteur" data-compteur="professionnel"></span></button>
-            </div>
+            <div class="section-heading messages-heading"><div><p class="eyebrow">COMMUNICATION</p><h2>Messages</h2><p id="messages-vue-texte">Les messages qui méritent votre attention.</p></div></div>
             <section class="gmail-desktop" aria-label="Messagerie Gmail">
               <aside class="gmail-conversations">
                 <div class="gmail-search"><span>⌕</span><input id="gmail-recherche" type="search" placeholder="Rechercher dans les conversations…" aria-label="Rechercher dans les conversations"></div>
@@ -123,6 +111,20 @@
                 <div id="gmail-liste-conversations" class="gmail-liste-conversations"><p class="vide">Chargement des conversations Gmail…</p></div>
               </aside>
               <section class="gmail-discussion" aria-label="Conversation sélectionnée">
+                <div class="gmail-commandes">
+                  <div class="messages-barre" role="group" aria-label="Affichage des messages">
+                    <button id="nouveau-mail" class="btn btn-primary" type="button">✉ Nouveau mail</button>
+                    <button class="btn btn-light" type="button" data-vue-messages="importants" aria-pressed="false">Messages importants</button>
+                    <button class="btn btn-light vue-actif" type="button" data-vue-messages="recus" aria-pressed="true">Boîte de réception</button>
+                    <button class="btn btn-light" type="button" data-vue-messages="envoyes" aria-pressed="false">Messages envoyés</button>
+                  </div>
+                  <div class="messages-barre messages-comptes" role="group" aria-label="Type de compte">
+                    <span class="meta">Comptes :</span>
+                    <button class="btn btn-light vue-actif" type="button" data-compte-messages="tous" aria-pressed="true">Tous <span class="compteur" data-compteur="tous"></span></button>
+                    <button class="btn btn-light" type="button" data-compte-messages="personnel" aria-pressed="false">👤 Personnels <span class="compteur" data-compteur="personnel"></span></button>
+                    <button class="btn btn-light" type="button" data-compte-messages="professionnel" aria-pressed="false">💼 Professionnels <span class="compteur" data-compteur="professionnel"></span></button>
+                  </div>
+                </div>
                 <header class="gmail-discussion-entete"><div class="gmail-discussion-identite"><span class="gmail-avatar" id="gmail-contact-avatar">✉</span><div><strong id="gmail-contact-nom">Sélectionnez une conversation</strong><small id="gmail-contact-adresse">Vos messages Gmail apparaîtront ici</small></div></div><div class="gmail-discussion-actions"><button type="button" id="gmail-ouvrir-web" title="Ouvrir dans Gmail">↗</button><button type="button" id="gmail-actualiser" title="Actualiser">↻</button></div></header>
                 <div id="gmail-fil-messages" class="gmail-fil-messages"><div class="gmail-bienvenue"><span>✉</span><h3>Vos conversations</h3><p>Choisissez un message dans la liste pour afficher l'échange complet.</p></div></div>
                 <footer class="gmail-compositeur"><button type="button" id="gmail-repondre" title="Répondre à cette conversation" disabled>➤</button><input id="gmail-composer-input" type="text" readonly placeholder="Écrire une réponse…" aria-label="Écrire une réponse" disabled></footer>
