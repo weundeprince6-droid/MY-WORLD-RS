@@ -40,10 +40,19 @@ dialog{border:1px solid var(--border);border-radius:16px;background:var(--surfac
 
 /* Google Drive */
 
-/* Regroupement des fichiers Google Drive par type */
-.drive-list .drive-groupe-titre{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:13px 0 4px;padding:8px 10px;border:1px solid var(--border);border-radius:9px;background:var(--primary-soft);color:var(--text);font-size:12px;font-weight:750;list-style:none}
-.drive-list .drive-groupe-titre:first-child{margin-top:4px}
-.drive-groupe-compte{display:inline-flex;align-items:center;justify-content:center;min-width:23px;height:21px;padding:0 6px;border-radius:20px;background:var(--surface);color:var(--primary);font-size:10px;font-weight:800}
+/* Présentation en blocs distincts et grille de fichiers */
+.drive-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:13px;padding:0;list-style:none}
+.drive-list>.drive-groupe-bloc{min-width:0;padding:12px;border:1px solid var(--border);border-radius:13px;background:var(--surface);box-shadow:0 3px 12px rgba(0,0,0,.045);list-style:none}
+.drive-groupe-entete{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;padding-bottom:9px;border-bottom:1px solid var(--border);color:var(--text);font-size:13px}
+.drive-groupe-compte{display:inline-flex;align-items:center;justify-content:center;min-width:25px;height:23px;padding:0 7px;border-radius:20px;background:var(--primary-soft);color:var(--primary);font-size:11px;font-weight:800}
+.drive-groupe-grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,190px),1fr));gap:9px}
+.drive-file-bloc{display:flex;flex-direction:column;align-items:flex-start;gap:8px;min-width:0;padding:11px;border:1px solid var(--border);border-radius:10px;background:var(--bg)}
+.drive-file-bloc .drive-file-icon{font-size:23px}
+.drive-file-bloc .drive-file-info{width:100%}
+.drive-file-bloc .drive-file-info strong{display:block;overflow-wrap:anywhere}
+.drive-file-actions{display:flex;flex-wrap:wrap;gap:6px;width:100%;margin-top:auto}
+.drive-file-actions .btn{padding:6px 9px;font-size:11px;text-decoration:none}
+@media(max-width:520px){.drive-list{grid-template-columns:1fr}.drive-groupe-grille{grid-template-columns:repeat(auto-fit,minmax(min(100%,145px),1fr))}.drive-file-actions .btn{flex:1;text-align:center}}
 
 .drive-toolbar{display:flex;gap:10px;align-items:center;margin-bottom:12px}
 .drive-toolbar input{flex:1;min-width:0;padding:11px 13px;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);font:inherit}
