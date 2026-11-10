@@ -1156,3 +1156,7 @@ html[data-theme="light"] .section-icon.purple,html[data-theme="light"] .feature-
   #pane-messages .messages-barre{width:100%}
   #pane-messages .messages-barre .btn{flex:1 1 auto}
 }
+
+.gmail-compositeur input{flex:1;min-width:0;height:42px;padding:0 15px;border:1px solid var(--border);border-radius:24px;background:var(--bg);color:var(--text);font:inherit;font-size:13px;cursor:pointer}
+.gmail-compositeur input:disabled{opacity:.55;cursor:not-allowed}
+.gmail-compositeur input:not(:disabled):hover{border-color:var(--primary)}
