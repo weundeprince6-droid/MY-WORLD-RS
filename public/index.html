@@ -116,9 +116,19 @@
               <button class="btn btn-light" type="button" data-compte-messages="personnel" aria-pressed="false">👤 Personnels <span class="compteur" data-compteur="personnel"></span></button>
               <button class="btn btn-light" type="button" data-compte-messages="professionnel" aria-pressed="false">💼 Professionnels <span class="compteur" data-compteur="professionnel"></span></button>
             </div>
-            <section class="carte" id="vue-importants"><ul id="liste-messages" class="liste"></ul></section>
-            <section class="carte" id="vue-recus" hidden><ul id="liste-recents" class="liste"></ul></section>
-            <section class="carte" id="vue-envoyes" hidden><div class="card-heading"><div><h2>Mails envoyés</h2></div><button id="envoyes-actualiser" class="btn btn-light" type="button">↻ Actualiser</button></div><ul id="liste-envoyes" class="liste"><li class="vide">Chargement des mails envoyés…</li></ul></section>
+            <section class="gmail-desktop" aria-label="Messagerie Gmail">
+              <aside class="gmail-conversations">
+                <div class="gmail-search"><span>⌕</span><input id="gmail-recherche" type="search" placeholder="Rechercher dans les conversations…" aria-label="Rechercher dans les conversations"></div>
+                <div class="gmail-filtres"><button type="button" class="actif" data-gmail-filtre="tous">Toutes</button><button type="button" data-gmail-filtre="nonlus">Non lus</button><button type="button" data-gmail-filtre="importants">Importants</button></div>
+                <div id="gmail-liste-conversations" class="gmail-liste-conversations"><p class="vide">Chargement des conversations Gmail…</p></div>
+              </aside>
+              <section class="gmail-discussion" aria-label="Conversation sélectionnée">
+                <header class="gmail-discussion-entete"><div class="gmail-discussion-identite"><span class="gmail-avatar" id="gmail-contact-avatar">✉</span><div><strong id="gmail-contact-nom">Sélectionnez une conversation</strong><small id="gmail-contact-adresse">Vos messages Gmail apparaîtront ici</small></div></div><div class="gmail-discussion-actions"><button type="button" id="gmail-ouvrir-web" title="Ouvrir dans Gmail">↗</button><button type="button" id="gmail-actualiser" title="Actualiser">↻</button></div></header>
+                <div id="gmail-fil-messages" class="gmail-fil-messages"><div class="gmail-bienvenue"><span>✉</span><h3>Vos conversations</h3><p>Choisissez un message dans la liste pour afficher l'échange complet.</p></div></div>
+                <footer class="gmail-compositeur"><button type="button" id="gmail-repondre" title="Répondre à cette conversation" disabled>↩</button><span>Pour répondre, utilisez le bouton Répondre : votre réponse sera envoyée via Gmail.</span></footer>
+              </section>
+            </section>
+            <div class="gmail-anciens-vues" hidden><section class="carte" id="vue-importants"><ul id="liste-messages" class="liste"></ul></section><section class="carte" id="vue-recus" hidden><ul id="liste-recents" class="liste"></ul></section><section class="carte" id="vue-envoyes" hidden><div class="card-heading"><div><h2>Mails envoyés</h2></div><button id="envoyes-actualiser" class="btn btn-light" type="button">↻ Actualiser</button></div><ul id="liste-envoyes" class="liste"><li class="vide">Chargement des mails envoyés…</li></ul></section></div>
           </section>
           <section class="tab-pane" id="pane-agenda" role="tabpanel" data-pane="agenda" hidden>
             <div class="section-heading"><div><p class="eyebrow">ORGANISATION</p><h2>Mon agenda</h2><p>Consultez vos rendez-vous en aperçu, puis ajoutez ou modifiez au besoin.</p></div><button class="btn btn-primary" id="agenda-nouveau" type="button">＋ Nouveau rendez-vous</button></div>
