@@ -3438,7 +3438,7 @@ async function ouvrirGmailThread(id){
   rendreGmailConversations();
   const fil=$("gmail-fil-messages"),repondre=$("gmail-repondre");
   fil.innerHTML='<div class="gmail-chargement">Chargement de la conversation…</div>';
-  repondre.disabled=true;gmailMessageActif=null;
+  repondre.disabled=true;$("gmail-composer-input").disabled=true;gmailMessageActif=null;
   try{
     const thread=await google(URL_GMAIL+"threads/"+encodeURIComponent(id)+"?format=full");
     const messages=(thread.messages||[]).map(x=>lireMessageComplet(x)).sort((a,b)=>Number(a.date||0)-Number(b.date||0));
@@ -3451,7 +3451,7 @@ async function ouvrirGmailThread(id){
     $("gmail-contact-avatar").textContent=gmailInitiales(expediteurLisible(contact.de||contact.a||""));
     $("gmail-ouvrir-web").onclick=()=>window.open("https://mail.google.com/mail/u/0/#all/"+(thread.id||id),"_blank","noopener");
     fil.innerHTML='<div class="gmail-date-separateur">Conversation · '+messages.length+' message'+(messages.length>1?'s':'')+'</div>'+messages.map(m=>gmailAjouterBulle(m,moi&&String(m.de||"").toLowerCase().includes(moi))).join("");
-    fil.scrollTop=fil.scrollHeight;repondre.disabled=false;
+    fil.scrollTop=fil.scrollHeight;repondre.disabled=false;$("gmail-composer-input").disabled=false;
     const t=gmailThreadsAffiches.find(x=>x.id===id);if(t)t.nonLu=false;
     rendreGmailConversations();
   }catch(e){
@@ -3473,4 +3473,11 @@ $("gmail-actualiser")?.addEventListener("click",async()=>{
 $("gmail-repondre")?.addEventListener("click",()=>{
   if(!gmailMessageActif)return;
   mailLu=gmailMessageActif;repondreAuMail();
+});
+$("gmail-composer-input")?.addEventListener("click",()=>{
+  if(!gmailMessageActif)return;
+  mailLu=gmailMessageActif;repondreAuMail();
+});
+$("gmail-composer-input")?.addEventListener("keydown",e=>{
+  if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();if(gmailMessageActif){mailLu=gmailMessageActif;repondreAuMail();}}
 });
