@@ -3396,18 +3396,24 @@ let gmailFiltreActif = "tous";
 let gmailThreadsAffiches = [];
 const gmailInitiales = (nom) => String(nom || "?").replace(/<[^>]+>/g,"").trim().split(/\\s+/).slice(0,2).map(x=>x[0]||"").join("").toUpperCase() || "✉";
 function gmailVueSource(){
-  const vue = document.querySelector("[data-vue-messages].vue-actif")?.dataset.vueMessages || "importants";
-  return vue === "envoyes" ? (typeof listeEnvoyes !== "undefined" ? listeEnvoyes : []) : vue === "recus" ? etat.recents : etat.messages;
+  const vue=document.querySelector("[data-vue-messages].vue-actif")?.dataset.vueMessages||"recus";
+  if(vue==="envoyes")return typeof listeEnvoyes!=="undefined"?listeEnvoyes:[];
+  return [...etat.recents,...(typeof listeEnvoyes!=="undefined"&&envoyesCharges?listeEnvoyes:[])];
+}
+function gmailAdresse(raw){return (String(raw||"").match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/i)||[])[0]?.toLowerCase()||"";}
+function gmailContactPourMessage(m,envoye=false){
+  const brut=envoye?(m.a||""):(m.deBrut||m.de||"");const adresse=gmailAdresse(brut);if(!adresse)return null;
+  return {adresse,nom:String(brut).replace(/<[^>]*>/g,"").replace(/["']/g,"").trim()||adresse};
 }
 function gmailConstruireThreads(){
-  const source = gmailVueSource().filter(m=>gardeCompte(m, document.querySelector("[data-vue-messages].vue-actif")?.dataset.vueMessages==="envoyes"));
-  const groupes = new Map();
-  source.forEach(m=>{
-    const id=m.threadId||m.id;
-    if(!id)return;
-    if(!groupes.has(id))groupes.set(id,{id,dernier:m,nombre:0,nonLu:false,important:false});
-    const t=groupes.get(id);t.nombre++;
-    if(Number(m.date||0)>=Number(t.dernier.date||0))t.dernier=m;
+  const vue=document.querySelector("[data-vue-messages].vue-actif")?.dataset.vueMessages||"recus";
+  const groupes=new Map();
+  gmailVueSource().forEach(m=>{
+    const envoye=vue==="envoyes"||!!(m.a&&!m.deBrut);if(!gardeCompte(m,envoye))return;
+    const contact=gmailContactPourMessage(m,envoye);if(!contact)return;
+    if(!groupes.has(contact.adresse))groupes.set(contact.adresse,{id:contact.adresse,adresse:contact.adresse,nom:contact.nom,dernier:m,nombre:0,nonLu:false,important:false});
+    const t=groupes.get(contact.adresse);t.nombre++;
+    if(Number(m.date||0)>=Number(t.dernier.date||0)){t.dernier=m;t.nom=contact.nom;}
     t.nonLu=t.nonLu||!!m.nonLu;t.important=t.important||!!m.etoile||!!m.important;
   });
   return [...groupes.values()].sort((a,b)=>Number(b.dernier.date||0)-Number(a.dernier.date||0));
@@ -3418,46 +3424,44 @@ function rendreGmailConversations(){
   let threads=gmailConstruireThreads();
   if(gmailFiltreActif==="nonlus")threads=threads.filter(t=>t.nonLu);
   if(gmailFiltreActif==="importants")threads=threads.filter(t=>t.important);
-  if(recherche)threads=threads.filter(t=>[t.dernier.de,t.dernier.sujet,t.dernier.extrait].join(" ").toLocaleLowerCase("fr").includes(recherche));
+  if(recherche)threads=threads.filter(t=>[t.nom,t.adresse,t.dernier.sujet,t.dernier.extrait].join(" ").toLocaleLowerCase("fr").includes(recherche));
   gmailThreadsAffiches=threads;
   if(!threads.length){zone.innerHTML='<div class="gmail-liste-vide">Aucune conversation à afficher.</div>';return;}
   zone.innerHTML=threads.map(t=>{
-    const m=t.dernier,nom=echapper(expediteurLisible(m.de||m.a||"Contact")),extrait=echapper(m.extrait||m.sujet||"(sans objet)");
+    const m=t.dernier,nom=echapper(t.nom||t.adresse),extrait=echapper(m.extrait||m.sujet||"(sans objet)");
     const date=m.date?new Intl.DateTimeFormat("fr-FR",{hour:"2-digit",minute:"2-digit",day:"2-digit",month:"2-digit"}).format(new Date(m.date)):"";
     return '<button type="button" class="gmail-conversation'+(t.id===gmailThreadActif?' selectionnee':'')+(t.nonLu?' non-lue':'')+'" data-gmail-thread="'+echapper(t.id)+'"><span class="gmail-avatar">'+echapper(gmailInitiales(nom))+'</span><span class="gmail-conversation-texte"><span class="gmail-conversation-haut"><strong>'+nom+'</strong><time>'+date+'</time></span><span class="gmail-conversation-sujet">'+echapper(m.sujet||"(sans objet)")+'</span><span class="gmail-conversation-extrait">'+extrait+'</span></span>'+(t.nombre>1?'<span class="gmail-thread-count">'+t.nombre+'</span>':'')+(t.nonLu?'<i class="gmail-unread-dot"></i>':'')+'</button>';
   }).join("");
   zone.querySelectorAll("[data-gmail-thread]").forEach(b=>b.addEventListener("click",()=>ouvrirGmailThread(b.dataset.gmailThread)));
 }
 function gmailAjouterBulle(m,moi){
-  const nom=expediteurLisible(m.de||"Contact"),heure=m.date?new Intl.DateTimeFormat("fr-FR",{hour:"2-digit",minute:"2-digit"}).format(new Date(m.date)):"";
+  const nom=expediteurLisible(m.de||"Contact"),heure=m.date?new Intl.DateTimeFormat("fr-FR",{hour:"2-digit",minute:"2-digit",day:"2-digit",month:"short"}).format(new Date(m.date)):"";
   const contenu=echapper(m.corps||"(Ce message ne contient pas de texte.)");
   const pj=(m.pieces||[]).map(f=>'<div class="gmail-piece">📎 '+echapper(f.nom)+' · '+tailleLisible(f.taille)+'</div>').join("");
-  return '<article class="gmail-bulle-wrap '+(moi?'moi':'autre')+'"><div class="gmail-bulle"><div class="gmail-bulle-expediteur">'+echapper(nom)+'</div><div class="gmail-bulle-corps">'+contenu+'</div>'+pj+'<time>'+heure+(moi?' <span class="gmail-check">✓✓</span>':'')+'</time></div></article>';
+  return '<article class="gmail-bulle-wrap '+(moi?'moi':'autre')+'"><div class="gmail-bulle"><div class="gmail-bulle-expediteur">'+echapper(nom)+'</div><div class="gmail-bulle-corps">'+contenu+'</div>'+pj+'<time>'+heure+'</time></div></article>';
 }
-async function ouvrirGmailThread(id){
-  gmailThreadActif=id;
-  rendreGmailConversations();
+async function ouvrirGmailThread(adresse){
+  gmailThreadActif=adresse;rendreGmailConversations();
   const fil=$("gmail-fil-messages"),repondre=$("gmail-repondre");
-  fil.innerHTML='<div class="gmail-chargement">Chargement de la conversation…</div>';
+  fil.innerHTML='<div class="gmail-chargement">Chargement des messages de cette conversation…</div>';
   repondre.disabled=true;$("gmail-composer-input").disabled=true;gmailMessageActif=null;
   try{
-    const thread=await google(URL_GMAIL+"threads/"+encodeURIComponent(id)+"?format=full");
-    const messages=(thread.messages||[]).map(x=>lireMessageComplet(x)).sort((a,b)=>Number(a.date||0)-Number(b.date||0));
-    if(!messages.length)throw new Error("Cette conversation ne contient aucun message lisible.");
+    const requete='from:'+adresse+' OR to:'+adresse;
+    const liste=await google(URL_GMAIL+"messages?maxResults=100&q="+encodeURIComponent(requete));
+    const ids=(liste.messages||[]).map(x=>x.id);
+    const messages=(await enLots(ids,4,id=>google(URL_GMAIL+"messages/"+encodeURIComponent(id)+"?format=full"))).map(lireMessageComplet).sort((a,b)=>Number(a.date||0)-Number(b.date||0));
+    if(!messages.length)throw new Error("Aucun message trouvé pour ce correspondant.");
     const moi=String(fb?.auth.currentUser?.email||"").toLowerCase();
     gmailMessageActif=messages[messages.length-1];mailLu=gmailMessageActif;
-    const dernier=messages[messages.length-1],contact=messages.find(x=>!moi||!String(x.de||"").toLowerCase().includes(moi))||dernier;
-    $("gmail-contact-nom").textContent=expediteurLisible(contact.de||contact.a||"Conversation");
-    $("gmail-contact-adresse").textContent=contact.de||"Conversation Gmail";
-    $("gmail-contact-avatar").textContent=gmailInitiales(expediteurLisible(contact.de||contact.a||""));
-    $("gmail-ouvrir-web").onclick=()=>window.open("https://mail.google.com/mail/u/0/#all/"+(thread.id||id),"_blank","noopener");
-    fil.innerHTML='<div class="gmail-date-separateur">Conversation · '+messages.length+' message'+(messages.length>1?'s':'')+'</div>'+messages.map(m=>gmailAjouterBulle(m,moi&&String(m.de||"").toLowerCase().includes(moi))).join("");
+    const contact=messages.find(x=>gmailAdresse(x.de)!==moi)||messages[0];
+    $("gmail-contact-nom").textContent=expediteurLisible(contact.de||contact.a||adresse);
+    $("gmail-contact-adresse").textContent=adresse;
+    $("gmail-contact-avatar").textContent=gmailInitiales(expediteurLisible(contact.de||contact.a||adresse));
+    $("gmail-ouvrir-web").onclick=()=>window.open("https://mail.google.com/mail/u/0/#search/"+encodeURIComponent(requete),"_blank","noopener");
+    fil.innerHTML='<div class="gmail-date-separateur">Échanges avec '+echapper(adresse)+' · '+messages.length+' message'+(messages.length>1?'s':'')+'</div>'+messages.map(m=>gmailAjouterBulle(m,moi&&gmailAdresse(m.de)===moi)).join("");
     fil.scrollTop=fil.scrollHeight;repondre.disabled=false;$("gmail-composer-input").disabled=false;
-    const t=gmailThreadsAffiches.find(x=>x.id===id);if(t)t.nonLu=false;
-    rendreGmailConversations();
-  }catch(e){
-    fil.innerHTML='<div class="gmail-liste-vide">Impossible de charger cette conversation : '+echapper(e.message)+'</div>';
-  }
+    const t=gmailThreadsAffiches.find(x=>x.id===adresse);if(t)t.nonLu=false;rendreGmailConversations();
+  }catch(e){fil.innerHTML='<div class="gmail-liste-vide">Impossible de charger cette conversation : '+echapper(e.message)+'</div>';}
 }
 $("gmail-recherche")?.addEventListener("input",rendreGmailConversations);
 document.querySelectorAll("[data-gmail-filtre]").forEach(b=>b.addEventListener("click",()=>{
