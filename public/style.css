@@ -1238,3 +1238,28 @@ html[data-theme="light"] .section-icon.purple,html[data-theme="light"] .feature-
   #tableau .welcome-row .eyebrow{font-size:8px}
   #tableau .welcome-row .date-chip{padding:5px 7px;font-size:10px;gap:5px}
 }
+
+
+/* Entête unifiée : identité, bienvenue et date/heure sur une seule ligne */
+.entete{display:flex;align-items:center;gap:clamp(10px,2vw,26px)}
+.entete-bienvenue{display:none;flex:1;min-width:0;flex-direction:column;gap:2px}
+body:has(#tableau:not([hidden])) .entete-bienvenue{display:flex}
+.entete-bienvenue-label{font-size:9px;line-height:1.2;letter-spacing:1.15px;font-weight:800;color:var(--primary)}
+.entete-bienvenue strong{font-size:17px;line-height:1.25;letter-spacing:-.3px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.entete-date{display:none;align-items:center;gap:8px;flex:0 0 auto;padding:8px 11px;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);font-size:12px;font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
+body:has(#tableau:not([hidden])) .entete-date{display:flex}
+.entete-date-point{width:7px;height:7px;border-radius:50%;background:var(--primary);box-shadow:0 0 0 3px color-mix(in srgb,var(--primary) 15%,transparent)}
+@media(max-width:760px){
+  .entete{gap:9px;padding:8px 11px;min-height:62px}
+  .entete-bienvenue{gap:1px}
+  .entete-bienvenue-label{font-size:7px;letter-spacing:.8px}
+  .entete-bienvenue strong{font-size:13px}
+  .entete-date{padding:6px 7px;font-size:10px;gap:6px}
+  .entete .marque-texte small{display:none}
+}
+@media(max-width:480px){
+  .entete{flex-wrap:wrap}
+  .entete-bienvenue{order:3;flex:1 1 100%;padding:2px 2px 0}
+  .entete-date{margin-left:auto}
+  .entete .outils{gap:5px}
+}
