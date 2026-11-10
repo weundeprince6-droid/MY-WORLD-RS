@@ -214,24 +214,26 @@
             <section class="carte"><ul id="liste-social" class="liste"></ul></section>
           </section>
           <section class="tab-pane" id="pane-drive" role="tabpanel" data-pane="drive" hidden>
-            <div class="section-heading"><div><p class="eyebrow">VOS DOCUMENTS</p><h2>Mes documents</h2><p>Retrouvez vos fichiers, créez des documents Google Docs et des feuilles Google Sheets dans votre Drive.</p></div><span class="section-icon blue">▣</span></div>
-            <section class="carte drive-card">
-              <div class="card-heading"><h3>Créer un document</h3><span class="meta">Les fichiers seront créés dans votre Google Drive.</span></div>
-              <form id="drive-create-form" class="form-ligne" autocomplete="off">
-                <input id="drive-create-name" type="text" maxlength="150" placeholder="Nom du nouveau document…" aria-label="Nom du document" required>
-                <select id="drive-create-type" aria-label="Type de document"><option value="document">Google Docs</option><option value="spreadsheet">Google Sheets</option></select>
-                <button class="btn btn-primary" id="drive-create-submit" type="submit">Créer</button>
-              </form>
-              <div class="drive-toolbar"><p id="drive-create-status" class="meta" role="status">Pour créer un fichier, autorisez d’abord l’accès Google Drive si nécessaire.</p><button class="btn btn-light" id="drive-autoriser-google" type="button">Autoriser Google Drive</button></div>
-            </section>
-            <section class="carte drive-card">
-              <div class="drive-toolbar">
-                <input id="drive-recherche" type="search" placeholder="Rechercher un document ou dossier…" aria-label="Rechercher dans Google Drive">
-                <button class="btn btn-primary" id="drive-actualiser" type="button">Actualiser</button>
+            <section class="drive-espace" aria-label="Espace Google Drive">
+              <div class="drive-commandes">
+                <form id="drive-create-form" class="drive-create-form" autocomplete="off">
+                  <input id="drive-create-name" type="text" maxlength="150" placeholder="Nom du nouveau document…" aria-label="Nom du document" required>
+                  <select id="drive-create-type" aria-label="Type de document"><option value="document">Google Docs</option><option value="spreadsheet">Google Sheets</option></select>
+                  <button class="btn btn-primary" id="drive-create-submit" type="submit">＋ Créer</button>
+                </form>
+                <div class="drive-actions">
+                  <input id="drive-recherche" type="search" placeholder="Rechercher un document ou dossier…" aria-label="Rechercher dans Google Drive">
+                  <button class="btn btn-light" id="drive-actualiser" type="button">↻ Actualiser</button>
+                  <button class="btn btn-light" id="drive-autoriser-google" type="button">Autoriser Google Drive</button>
+                </div>
+                <p id="drive-create-status" class="meta drive-create-status" role="status">Pour créer un fichier, autorisez d’abord l’accès Google Drive si nécessaire.</p>
               </div>
-              <p id="drive-statut" class="meta" role="status">Ouvrez cette rubrique pour charger vos fichiers Google Drive.</p>
-              <ul id="drive-fichiers" class="liste drive-list"></ul>
-              <button class="btn" id="drive-plus" type="button" hidden>Charger plus</button>
+              <div class="drive-contenu">
+                <div class="drive-contenu-entete"><strong>Vos fichiers et dossiers</strong><span class="meta">Google Drive</span></div>
+                <p id="drive-statut" class="meta" role="status">Ouvrez cette rubrique pour charger vos fichiers Google Drive.</p>
+                <ul id="drive-fichiers" class="liste drive-list"></ul>
+                <button class="btn" id="drive-plus" type="button" hidden>Charger plus</button>
+              </div>
             </section>
             <section class="carte drive-editor-card" id="drive-editor-card" hidden>
               <div class="card-heading"><div><p class="eyebrow">ÉDITION INTÉGRÉE</p><h3 id="drive-editor-title">Mon document</h3><p class="meta">Vous restez dans MY WORLD RS. Les modifications sont synchronisées avec Google Drive.</p></div><button class="btn btn-light" id="drive-editor-close" type="button">Fermer</button></div>
