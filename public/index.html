@@ -228,6 +228,12 @@
                 </div>
                 <p id="drive-create-status" class="meta drive-create-status" role="status">Pour créer un fichier, autorisez d’abord l’accès Google Drive si nécessaire.</p>
               </div>
+            <section class="carte drive-editor-card" id="drive-editor-card" hidden>
+              <div class="card-heading"><div><p class="eyebrow">ÉDITION INTÉGRÉE</p><h3 id="drive-editor-title">Mon document</h3><p class="meta">Vous restez dans MY WORLD RS. Les modifications sont synchronisées avec Google Drive.</p></div><button class="btn btn-light" id="drive-editor-close" type="button">Fermer</button></div>
+              <p class="meta drive-editor-help">Docs : éditeur de texte. Sheets : colonnes séparées par tabulations, lignes séparées par retours à la ligne.</p>
+              <textarea id="drive-editor-content" class="drive-editor-content" spellcheck="true" aria-label="Contenu du document" rows="18"></textarea>
+              <div class="drive-toolbar"><p id="drive-editor-status" class="meta" role="status">Chargement…</p><button class="btn btn-primary" id="drive-editor-save" type="button" disabled>Enregistrer dans Google Drive</button></div>
+            </section>
               <div class="drive-contenu">
                 <div class="drive-contenu-entete"><strong>Vos fichiers et dossiers</strong><span class="meta">Google Drive</span></div>
                 <p id="drive-statut" class="meta" role="status">Ouvrez cette rubrique pour charger vos fichiers Google Drive.</p>
@@ -235,12 +241,7 @@
                 <button class="btn" id="drive-plus" type="button" hidden>Charger plus</button>
               </div>
             </section>
-            <section class="carte drive-editor-card" id="drive-editor-card" hidden>
-              <div class="card-heading"><div><p class="eyebrow">ÉDITION INTÉGRÉE</p><h3 id="drive-editor-title">Mon document</h3><p class="meta">Vous restez dans MY WORLD RS. Les modifications sont synchronisées avec Google Drive.</p></div><button class="btn btn-light" id="drive-editor-close" type="button">Fermer</button></div>
-              <p class="meta drive-editor-help">Docs : éditeur de texte. Sheets : colonnes séparées par tabulations, lignes séparées par retours à la ligne.</p>
-              <textarea id="drive-editor-content" class="drive-editor-content" spellcheck="true" aria-label="Contenu du document" rows="18"></textarea>
-              <div class="drive-toolbar"><p id="drive-editor-status" class="meta" role="status">Chargement…</p><button class="btn btn-primary" id="drive-editor-save" type="button" disabled>Enregistrer dans Google Drive</button></div>
-            </section>
+
           </section>
           <section class="tab-pane" id="pane-pro" role="tabpanel" data-pane="pro" hidden>
             <div class="section-heading"><div><p class="eyebrow">MON ACTIVITÉ</p><h2>Projet pro</h2><p>Dépenses et revenus de l'activité, budget professionnel, investissement du projet et équipements.</p></div><span class="section-icon blue">☑</span></div>
