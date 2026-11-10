@@ -2660,6 +2660,7 @@ function choisirVueMessages(vue) {
   $("messages-vue-texte").textContent = TEXTES_VUES[vue];
   if (vue === "envoyes" && !envoyesCharges) chargerEnvoyes();
   majCompteurs();
+  rendreGmailConversations();
 }
 document.querySelectorAll("[data-compte-messages]").forEach((b) => b.addEventListener("click", () => {
   filtreCompte = b.dataset.compteMessages;
