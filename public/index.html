@@ -17,6 +17,14 @@
       <span class="logo" aria-hidden="true">MW</span>
       <span class="marque-texte"><strong>My World <span>RS</span></strong><small>Votre espace de pilotage</small></span>
     </a>
+    <div class="entete-bienvenue" aria-live="polite">
+      <span class="entete-bienvenue-label">VOTRE ESPACE PERSONNEL</span>
+      <strong>Bonjour et bienvenue 👋</strong>
+    </div>
+    <div class="entete-date" aria-label="Date et heure actuelles">
+      <span class="entete-date-point" aria-hidden="true"></span>
+      <span id="date-du-jour">Date et heure</span>
+    </div>
     <div class="outils">
       <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Passer au mode sombre" title="Changer le thème"><span class="theme-toggle-icon" id="theme-toggle-icon" aria-hidden="true">🌙</span><span class="theme-toggle-label" id="theme-toggle-label">Sombre</span></button>
       
@@ -54,10 +62,6 @@
       <p class="meta" id="adresse-page"></p>
     </section>
     <div id="tableau" hidden>
-      <div class="welcome-row">
-        <div><p class="eyebrow">VOTRE ESPACE PERSONNEL</p><h1>Bonjour et bienvenue 👋</h1><p class="welcome-sub">Voici ce qui se passe dans votre monde aujourd'hui.</p></div>
-        <div class="date-chip"><span class="date-dot"></span><span id="date-du-jour">Votre tableau de bord</span></div>
-      </div>
       <div class="workspace">
         <aside class="sidebar" aria-label="Navigation principale">
           <p class="nav-caption">MENU PRINCIPAL</p>
@@ -508,7 +512,7 @@
       }
       document.querySelectorAll("[data-tab]").forEach(function(b){b.addEventListener("click",function(){ouvrirOnglet(b.dataset.tab);});});
       document.querySelectorAll("[data-go]").forEach(function(b){b.addEventListener("click",function(){ouvrirOnglet(b.dataset.go);});});
-      var date=new Date(), el=document.getElementById("date-du-jour"); if(el)el.textContent=new Intl.DateTimeFormat("fr-FR",{weekday:"long",day:"numeric",month:"long"}).format(date);
+      function actualiserDateHeure(){var el=document.getElementById("date-du-jour");if(!el)return;var d=new Date();var dateTexte=new Intl.DateTimeFormat("fr-FR",{weekday:"short",day:"numeric",month:"short"}).format(d);var heureTexte=new Intl.DateTimeFormat("fr-FR",{hour:"2-digit",minute:"2-digit"}).format(d);el.textContent=dateTexte+" · "+heureTexte;} actualiserDateHeure(); window.setInterval(actualiserDateHeure,60000);
     })();
     (function () {
       function montrer(texte) { var b=document.getElementById("erreur"); if(b){b.textContent=texte;b.hidden=false;} }
