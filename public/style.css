@@ -1290,3 +1290,40 @@ body:has(#tableau:not([hidden])) .entete-date{display:flex}
   .entete-date{margin-left:auto}
   .entete .outils{gap:5px}
 }
+
+
+/* Harmonisation finale des deux éléments ajoutés à l'entête */
+.entete-bienvenue{
+  padding:8px 13px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:var(--surface);
+  box-shadow:0 2px 8px rgba(0,0,0,.045);
+}
+.entete-date{
+  display:none;
+  align-items:center;
+  gap:8px;
+  min-height:38px;
+  flex:0 0 auto;
+  padding:8px 13px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:var(--surface);
+  color:var(--text);
+  box-shadow:0 2px 8px rgba(0,0,0,.045);
+  font-size:12px;
+  font-weight:700;
+  white-space:nowrap;
+  font-variant-numeric:tabular-nums;
+}
+body:has(#tableau:not([hidden])) .entete-date{display:flex}
+.entete-date-point{flex:0 0 7px}
+@media(max-width:760px){
+  .entete-bienvenue{padding:6px 10px;border-radius:10px}
+  .entete-date{min-height:32px;padding:6px 9px;border-radius:10px;font-size:10px}
+}
+@media(max-width:480px){
+  .entete-bienvenue{width:100%;box-sizing:border-box}
+  .entete-date{margin-left:auto}
+}
