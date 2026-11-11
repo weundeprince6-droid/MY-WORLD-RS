@@ -2827,11 +2827,17 @@ function budgetStatut(t) { const el = $("budget-liaison-statut"); if (el) el.tex
 function budgetRendreLiaison() {
   const sel = $("budget-liaison-compte"); if (!sel) return;
   const lien = budgetLireLien();
-  const comptes = walletAccounts.filter((a) => String(a.currency || "").toUpperCase() === "EUR");
+  const comptes = walletAccounts;
   sel.innerHTML = '<option value="">— Aucun compte lié —</option>' + comptes.map((a) => `<option value="${echapper(a.id)}">${echapper(a.name)} (${echapper(walletMoney(a.balance, a.currency))})</option>`).join("");
   sel.value = lien && comptes.some((a) => a.id === lien.accountId) ? lien.accountId : "";
   const stop = $("budget-liaison-stop"); if (stop) stop.hidden = !lien;
   const sync = $("budget-liaison-sync"); if (sync) sync.disabled = !lien;
+}
+// Le budget s'affiche dans la devise du compte lié (pas de conversion : les montants sont recopiés tels quels)
+function budgetAppliquerDevise(devise) {
+  const d = String(devise || "EUR").toUpperCase();
+  let avant = "EUR"; try { avant = localStorage.getItem("budget_devise") || "EUR"; localStorage.setItem("budget_devise", d); } catch {}
+  if (avant !== d) budgetRechargerIframe();
 }
 function budgetRechargerIframe() {
   const f = $("budget-mensuel-frame");
@@ -2845,6 +2851,7 @@ async function budgetSynchroniser() {
     if (!walletLoaded) await chargerWallet(true);
     const compte = walletAccounts.find((a) => a.id === lien.accountId);
     if (!compte) { budgetStatut("Le compte lié n'existe plus : choisissez-en un autre."); return; }
+    budgetAppliquerDevise(compte.currency);
     let budget = budgetLireTx(), modifBudget = false, nbVersWallet = 0, nbVersBudget = 0, nbSuppr = 0;
     const map = lien.map; // idBudget -> idWallet
     const inverse = () => Object.fromEntries(Object.entries(map).map(([b, w]) => [w, b]));
@@ -2898,6 +2905,7 @@ $("budget-liaison-compte")?.addEventListener("change", async (ev) => {
   const nb = budgetLireTx().filter((t) => Number(t.amount) > 0).length;
   if (nb && !confirm(`Lier ce compte au budget ?\n${nb} opération(s) du budget seront ajoutées au compte (son solde changera) et les opérations du compte seront ajoutées au budget.`)) { budgetRendreLiaison(); return; }
   budgetEcrireLien({ accountId: id, map: {} });
+  budgetAppliquerDevise(walletAccounts.find((a) => a.id === id)?.currency);
   budgetRendreLiaison();
   await budgetSynchroniser();
 });

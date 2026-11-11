@@ -423,7 +423,7 @@ srv.listen(8765, async () => {
     return { ok, detail: JSON.stringify({ avantA: avant.slice(avant.indexOf('Ventes'), avant.indexOf('Ventes') + 40), apresA: apres.slice(apres.indexOf('Ventes'), apres.indexOf('Ventes') + 40), voyant, lectures }) };
   }));
   res.push(await scenario('Budget ↔ Porte-Monnaie : liaison dans les deux sens', {}, async (p, appels, logs, etat) => {
-    etat.devise = 'EUR';
+    etat.devise = 'FC';
     p.on('dialog', (d) => d.accept());
     await p.click('#bouton-connexion'); await p.waitForTimeout(3000);
     await p.evaluate(() => localStorage.setItem('budget_transactions', JSON.stringify([{ id: 11, type: 'income', desc: 'Prime', amount: 100, date: '2026-11-05', category: 'salaire' }])));
@@ -439,8 +439,9 @@ srv.listen(8765, async () => {
     await p.click('#budget-liaison-sync'); await p.waitForTimeout(2000);
     const supprime = (etat.wallet.supprimes || []).length >= 1;
     const statut = (await p.textContent('#budget-liaison-statut')).trim();
-    const ok = !!prime && prime.corps.fields.kind.stringValue === 'income' && !!patch && !!transport && transport.type === 'expense' && transport.amount === 30 && supprime;
-    return { ok, detail: JSON.stringify({ prime: !!prime, patch: !!patch, transport, supprime, statut }) };
+    const dev = await p.evaluate(() => localStorage.getItem('budget_devise')); const aff = await p.frames().find((f) => f.url().includes('budget-mensuel')).evaluate(() => formatCurrency(1500));
+    const ok = dev === 'FC' && /FC$/.test(aff) && !!prime && prime.corps.fields.kind.stringValue === 'income' && !!patch && !!transport && transport.type === 'expense' && transport.amount === 30 && supprime;
+    return { ok, detail: JSON.stringify({ dev, aff, prime: !!prime, patch: !!patch, transport, supprime, statut }) };
   }));
   res.push(await scenario('Porte-Monnaie : 50 % des ristournes versés dans « Mes parts de ristourne »', {}, async (p, appels, logs, etat) => {
     await p.click('#bouton-connexion'); await p.waitForTimeout(3000);

@@ -106,7 +106,7 @@
                         <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Solde Départ</p>
                         <div class="flex items-baseline mt-1">
                             <input type="number" id="initialBalance" value="1500" onchange="updateCalculations()" class="w-28 font-bold text-xl text-slate-800 bg-transparent border-b border-dashed border-slate-300 focus:outline-none focus:border-emerald-500">
-                            <span class="font-bold text-slate-800 ml-1">€</span>
+                            <span class="font-bold text-slate-800 ml-1 sym-devise">€</span>
                         </div>
                     </div>
                     <div class="p-2.5 bg-slate-100 text-slate-600 rounded-xl">
@@ -213,7 +213,7 @@
                     <!-- Montant & Date -->
                     <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-xs font-medium text-slate-600 mb-1">Montant (€)</label>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Montant (<span class="sym-devise">€</span>)</label>
                             <input type="number" id="amount" step="0.01" min="0.01" required placeholder="0.00" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
                         </div>
                         <div>
@@ -272,9 +272,9 @@
                         <tr>
                             <th class="py-3 px-4">Catégorie</th>
                             <th class="py-3 px-4">Type</th>
-                            <th class="py-3 px-4 text-right">Prévu (€)</th>
-                            <th class="py-3 px-4 text-right">Réel (€)</th>
-                            <th class="py-3 px-4 text-right">Écart (€)</th>
+                            <th class="py-3 px-4 text-right">Prévu (<span class="sym-devise">€</span>)</th>
+                            <th class="py-3 px-4 text-right">Réel (<span class="sym-devise">€</span>)</th>
+                            <th class="py-3 px-4 text-right">Écart (<span class="sym-devise">€</span>)</th>
                             <th class="py-3 px-4 text-center">Progression</th>
                         </tr>
                     </thead>
@@ -726,9 +726,17 @@
         }
 
         // Utilitaires
+        // Devise du budget : suit celle du compte Porte-Monnaie lié (EUR par défaut ; FC = franc congolais)
+        const DEVISE = (function () { try { return localStorage.getItem('budget_devise') || 'EUR'; } catch (e) { return 'EUR'; } })();
+        const SYMBOLES = { EUR: '€', USD: '$', FC: 'FC', CDF: 'FC' };
         function formatCurrency(val) {
-            return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(val);
+            if (DEVISE === 'FC' || DEVISE === 'CDF') return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2, minimumFractionDigits: 2 }).format(val) + ' FC';
+            try { return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: DEVISE }).format(val); }
+            catch (e) { return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 }).format(val) + ' ' + DEVISE; }
         }
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.sym-devise').forEach(function (n) { n.textContent = SYMBOLES[DEVISE] || DEVISE; });
+        });
 
         function escapeHtml(str) {
             return str.replace(/[&<>"']/g, function(m) {
