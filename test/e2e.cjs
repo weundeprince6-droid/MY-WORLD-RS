@@ -26,7 +26,7 @@ export const browserLocalPersistence={};
 export function onAuthStateChanged(a, cb){ if (localStorage.getItem('__stubuser')) { window.__u={uid:'u1',displayName:'Prince Test',email:'weundeprince6@gmail.com',getIdToken:async()=>'id'}; setTimeout(()=>cb(window.__u),0) } }`;
 
 const T0 = Math.floor(Date.now() / 1000) * 1000;
-async function scenario(nom, { mode = 'ok', sdkBloque = false, quotaGmail = false, sw = false }, verifier) {
+async function scenario(nom, { mode = 'ok', sdkBloque = false, quotaGmail = false, sw = false, driveRefus = false }, verifier) {
   if (process.argv[3] && !nom.includes(process.argv[3])) return { ok: true, saute: true };
   if (sw && quoi === 'dist') { console.log('SAUTÉ (service worker : version dossier seulement) ' + nom); return true; }
   const quota = { deja: false };
@@ -78,6 +78,8 @@ async function scenario(nom, { mode = 'ok', sdkBloque = false, quotaGmail = fals
     if (quotaGmail && u.includes('/messages/m1') && !quota.deja) { quota.deja = true; return route.fulfill({ status: 403, headers: { ...CORS, 'content-type': 'application/json' }, body: JSON.stringify({ error: { code: 403, message: "Quota exceeded for quota metric 'Total Query Cost' and limit 'Units per minute per user'" } }) }); }
     if (u.includes('/messages/m1')) return route.fulfill(json({ id: 'm1', threadId: 't1', labelIds: ['UNREAD', 'IMPORTANT'], snippet: 'Merci de régler avant le 5', internalDate: String(Date.now()), payload: { headers: [{ name: 'From', value: 'Marie Dupont <marie@ex.com>' }, { name: 'Subject', value: 'Rappel facture urgente' }] } }));
     if (u.includes('/messages/m2')) return route.fulfill(json({ id: 'm2', threadId: 't2', labelIds: ['CATEGORY_PROMOTIONS'], snippet: 'promo', internalDate: '1', payload: { headers: [{ name: 'From', value: 'Shop <no-reply@gmail.com>' }, { name: 'Subject', value: 'Promotion -50%' }] } }));
+    if (driveRefus && u.includes('drive/v3/files') && (u.includes('alt=media') || u.includes('/export'))) return route.fulfill({ status: 403, headers: { ...CORS, 'content-type': 'application/json' }, body: JSON.stringify({ error: { message: 'insufficient' } }) });
+    if (u.includes('drive/v3/files') && u.includes('/export')) return route.fulfill({ status: 200, headers: { ...CORS, 'Content-Type': 'application/pdf' }, body: 'PDFDATA' });
     if (u.includes('drive/v3/files') && u.includes('alt=media')) return route.fulfill({ status: 200, headers: { ...CORS, 'Content-Type': 'application/pdf' }, body: 'PDFDATA' });
     if (u.includes('drive/v3/files') && m === 'PATCH') { etat.drivePatch = etat.drivePatch || []; etat.drivePatch.push({ url: u, body: route.request().postData() }); return route.fulfill(json({ id: 'd4', parents: ['d3'] })); }
     if (u.includes('drive/v3/files') && m === 'GET') return route.fulfill(json({ files: [{ id: 'd1', name: 'Budget 2026', mimeType: 'application/vnd.google-apps.spreadsheet', modifiedTime: '2026-11-01T10:00:00Z' }, { id: 'd2', name: 'Compte rendu', mimeType: 'application/vnd.google-apps.document', modifiedTime: '2026-11-02T10:00:00Z' }, { id: 'd3', name: 'Contrats', mimeType: 'application/vnd.google-apps.folder', modifiedTime: '2026-10-02T10:00:00Z' }, { id: 'd4', name: 'Facture.pdf', mimeType: 'application/pdf', modifiedTime: '2026-10-12T10:00:00Z', size: '204800', parents: ['root1'] }] }));
@@ -170,10 +172,18 @@ srv.listen(8765, async () => {
     const patch = (etat.drivePatch || [])[0] || {};
     const barre = await p.evaluate(() => ['drive-plein', 'drive-telecharger', 'drive-deplacer-btn', 'drive-renommer', 'drive-lien', 'drive-corbeille'].every((id) => !!document.getElementById(id) && document.getElementById(id).offsetParent !== null));
     const ok = cats.length >= 10 && cats.some((c) => c.includes('PDF')) && cats.some((c) => c.includes('Photos')) && cats.some((c) => c.includes('Dossiers')) && cats.some((c) => c.includes('Word')) && nb === 4
-      && excel.length === 1 && excel[0] === 'd1' && pdf.titre === 'Facture.pdf' && pdf.src.includes('drive.google.com/file/d/d4/preview') && pdf.apercu && pdf.liste && pdf.modif && retour
-      && doc.src.includes('docs.google.com/document/d/d2/preview') && doc.modif && edit.carte && edit.apercu
+      && excel.length === 1 && excel[0] === 'd1' && pdf.titre === 'Facture.pdf' && pdf.src.startsWith('blob:') && pdf.apercu && pdf.liste && pdf.modif && retour
+      && doc.src.startsWith('blob:') && doc.modif && edit.carte && edit.apercu
       && dlNom === 'Facture.pdf' && dlg.ouvert && dlg.dossiers.some((x) => x.includes('Contrats')) && (patch.url || '').includes('addParents=d3') && (patch.url || '').includes('removeParents=root1') && barre;
     return { ok, detail: JSON.stringify({ cats: cats.length, nb, excel, pdf, retour, doc, edit, dlNom, dlg, patch: patch.url, barre }) };
+  }));
+  res.push(await scenario('Drive : lecture refusée -> aperçu Google Drive en secours', { driveRefus: true }, async (p) => {
+    await p.click('#bouton-connexion'); await p.waitForTimeout(2500);
+    await p.click('[data-tab="drive"]'); await p.waitForTimeout(1000);
+    await p.click('[data-drive-cat="pdf"]'); await p.waitForTimeout(500); await p.click('#drive-grille [data-drive-file="d4"]'); await p.waitForTimeout(800);
+    const r = await p.evaluate(() => ({ src: document.getElementById('drive-apercu').src, visible: !document.getElementById('drive-apercu').hidden, aide: document.getElementById('drive-apercu-aide').textContent }));
+    const ok = r.src.includes('drive.google.com/file/d/d4/preview') && r.visible && r.aide.includes('renouvelez');
+    return { ok, detail: JSON.stringify(r) };
   }));
   res.push(await scenario('Quota Gmail dépassé : nouvel essai automatique', { quotaGmail: true }, async (p) => {
     await p.click('#bouton-connexion'); await p.waitForTimeout(6000);

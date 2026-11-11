@@ -981,10 +981,10 @@ function rendreDrive() {
     const date = f.modifiedTime ? jourHeure.format(new Date(f.modifiedTime)) : "";
     $("drive-titre").textContent = f.name || "Sans nom"; $("drive-avatar").textContent = iconeFichierDrive(f);
     $("drive-sous-titre").textContent = driveCatDe(f).nom + (date ? " · modifié " + date : "") + (driveTaille(f.size) ? " · " + driveTaille(f.size) : "");
-    const src = driveUrlApercu(f), cadre = $("drive-apercu"); if (cadre.dataset.src !== src) { cadre.dataset.src = src; cadre.src = src; }
+    const cadre = $("drive-apercu"); if (cadre.dataset.src !== f.id) { cadre.dataset.src = f.id; driveChargerApercu(f); }
     return;
   }
-  const cadre = $("drive-apercu"); if (cadre.dataset.src) { cadre.dataset.src = ""; cadre.src = "about:blank"; }
+  const cadre = $("drive-apercu"); if (cadre.dataset.src) { cadre.dataset.src = ""; driveLibererApercu(); }
   lien.hidden = !dossier; if (dossier) lien.href = `https://drive.google.com/drive/folders/${encodeURIComponent(dossier.id)}`;
   $("drive-titre").textContent = dossier ? dossier.name : cat.nom; $("drive-avatar").textContent = dossier ? "📁" : cat.icone;
   const vus = driveFichiersVus();
@@ -1023,6 +1023,48 @@ $("drive-evt-modifier")?.addEventListener("click", () => {
 });
 rendreCategoriesDrive();
 
+// Lecture directe dans l'application : le fichier est téléchargé avec votre autorisation Google, puis affiché
+// par le lecteur du navigateur (PDF, images, vidéos, audio, texte). Docs/Sheets/Slides sont convertis en PDF.
+// Si la lecture directe échoue, l'aperçu Google Drive est affiché à la place.
+let driveBlobUrl = null, driveJetonApercu = 0;
+function driveLibererApercu() {
+  driveJetonApercu++;
+  if (driveBlobUrl) { URL.revokeObjectURL(driveBlobUrl); driveBlobUrl = null; }
+  const media = $("drive-media"), cadre = $("drive-apercu");
+  media.innerHTML = ""; media.hidden = true; cadre.hidden = false; cadre.src = "about:blank"; $("drive-apercu-aide").textContent = "";
+}
+async function driveChargerApercu(f) {
+  driveLibererApercu();
+  const n = driveJetonApercu, cadre = $("drive-apercu"), media = $("drive-media"), aide = $("drive-apercu-aide");
+  const mime = f.mimeType || "", estGoogle = [MIME_GDOC, MIME_GSHEET, MIME_GSLIDES].includes(mime);
+  const lisible = estGoogle || mime === "application/pdf" || mime.startsWith("image/") || mime.startsWith("video/") || mime.startsWith("audio/") || mime.startsWith("text/");
+  const repli = (raison) => {
+    if (n !== driveJetonApercu) return;
+    cadre.hidden = false; media.hidden = true; cadre.src = driveUrlApercu(f);
+    aide.textContent = (raison ? raison + " " : "") + "Aperçu Google Drive affiché. S'il reste vide, connectez-vous à Google dans ce navigateur ou utilisez ↗ pour ouvrir dans Google Drive.";
+  };
+  if (!lisible) return repli("Ce type de fichier ne se lit pas directement dans l'application.");
+  if (!estGoogle && Number(f.size) > 150 * 1048576) return repli("Fichier volumineux (plus de 150 Mo).");
+  aide.textContent = "Chargement du fichier…"; cadre.hidden = true;
+  try {
+    await obtenirJetonGoogle();
+    const id = encodeURIComponent(f.id);
+    const url = estGoogle ? `${DRIVE_API}/${id}/export?mimeType=application%2Fpdf` : `${DRIVE_API}/${id}?alt=media`;
+    const r = await fetch(url, { headers: { Authorization: `Bearer ${jetonGoogle}` } });
+    if (!r.ok) throw new Error(r.status === 403 || r.status === 404 ? "Lecture refusée : renouvelez l'autorisation Google Drive." : "Erreur Google " + r.status + ".");
+    let blob = await r.blob();
+    if (n !== driveJetonApercu) return;
+    const type = estGoogle || mime === "application/pdf" ? "application/pdf" : (blob.type || mime);
+    blob = new Blob([blob], { type });
+    driveBlobUrl = URL.createObjectURL(blob);
+    if (type.startsWith("image/")) media.innerHTML = `<img src="${driveBlobUrl}" alt="${echapper(f.name || "")}">`;
+    else if (type.startsWith("video/")) media.innerHTML = `<video src="${driveBlobUrl}" controls autoplay playsinline></video>`;
+    else if (type.startsWith("audio/")) media.innerHTML = `<audio src="${driveBlobUrl}" controls autoplay></audio>`;
+    if (media.innerHTML) { media.hidden = false; cadre.hidden = true; }
+    else { cadre.hidden = false; cadre.src = driveBlobUrl; }
+    aide.textContent = "";
+  } catch (e) { repli(e.message || "Lecture directe impossible."); }
+}
 // --- Actions sur le fichier ouvert : plein écran, télécharger, déplacer, renommer, lien, corbeille ---
 const driveFichierOuvert = () => driveListeAffichee.find((x) => x.id === driveSel);
 const driveMsg = (t) => { const e = $("drive-statut"); if (e) e.textContent = t; };
