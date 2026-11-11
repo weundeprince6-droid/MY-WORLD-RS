@@ -383,6 +383,15 @@
 
         // Initialisation de la page
         window.onload = function() {
+            // Compte Porte-Monnaie lié : le solde de départ est calculé à partir du solde du compte
+            try {
+                const dep = localStorage.getItem('budget_solde_depart');
+                if (dep !== null && dep !== '') {
+                    const champ = document.getElementById('initialBalance');
+                    champ.value = dep; champ.readOnly = true;
+                    champ.title = 'Calculé depuis le solde du compte Porte-Monnaie lié (solde du compte − opérations du budget)';
+                }
+            } catch (e) {}
             // Définir la date du jour par défaut
             document.getElementById('date').value = new Date().toISOString().split('T')[0];
             

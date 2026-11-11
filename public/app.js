@@ -2811,7 +2811,7 @@ $("wallet-history")?.addEventListener("click", (ev) => {
 
 
 // ---------- Liaison Budget mensuel ↔ Porte-Monnaie (dans les deux sens) ----------
-const BUDGET_CLE = "budget_transactions", BUDGET_LIEN = "mwrs_budget_liaison";
+const BUDGET_CLE = "budget_transactions", BUDGET_LIEN = "mwrs_budget_liaison", BUDGET_DEPART = "budget_solde_depart";
 const BUDGET_CATS = { logement: "Logement", alimentation: "Alimentation", transports: "Transports", loisirs: "Loisirs & Sorties", sante: "Santé & Assurance", factures: "Factures & Énergie", autre_depense: "Autres Dépenses", salaire: "Salaire & Revenus", freelance: "Freelance & Extra", investissements: "Investissements", autre_revenu: "Autres Revenus" };
 const budgetLireLien = () => { try { const l = JSON.parse(localStorage.getItem(BUDGET_LIEN) || "null"); return l && l.accountId ? { accountId: l.accountId, map: l.map || {} } : null; } catch { return null; } };
 const budgetEcrireLien = (l) => { try { l ? localStorage.setItem(BUDGET_LIEN, JSON.stringify(l)) : localStorage.removeItem(BUDGET_LIEN); } catch {} };
@@ -2890,7 +2890,12 @@ async function budgetSynchroniser() {
       map[String(idB)] = w.id; modifBudget = true; nbVersBudget++;
     }
     budgetEcrireLien({ accountId: compte.id, map });
-    if (modifBudget) { try { localStorage.setItem(BUDGET_CLE, JSON.stringify(budget)); } catch {} budgetRechargerIframe(); }
+    // Solde de départ du budget = solde du compte avant les opérations du budget, pour que le solde final du budget égale le solde du compte
+    const net = budget.reduce((n, t) => n + (t.type === "income" ? 1 : t.type === "expense" ? -1 : 0) * (Number(t.amount) || 0), 0);
+    const depart = String(Math.round((Number(compte.balance || 0) - net) * 100) / 100);
+    let departAvant = null; try { departAvant = localStorage.getItem(BUDGET_DEPART); localStorage.setItem(BUDGET_DEPART, depart); } catch {}
+    if (departAvant !== depart) modifBudget = modifBudget || "iframe";
+    if (modifBudget) { if (modifBudget === true) { try { localStorage.setItem(BUDGET_CLE, JSON.stringify(budget)); } catch {} } budgetRechargerIframe(); }
     walletRender(); budgetRendreLiaison();
     budgetStatut(nbVersWallet + nbVersBudget + nbSuppr
       ? `Synchronisé : ${nbVersWallet} ajoutée(s) au Porte-Monnaie, ${nbVersBudget} ajoutée(s) au budget, ${nbSuppr} suppression(s) répercutée(s).`
@@ -2901,7 +2906,7 @@ async function budgetSynchroniser() {
 }
 $("budget-liaison-compte")?.addEventListener("change", async (ev) => {
   const id = ev.target.value;
-  if (!id) { budgetEcrireLien(null); budgetRendreLiaison(); budgetStatut("Liaison désactivée."); return; }
+  if (!id) { budgetEcrireLien(null); try { localStorage.removeItem(BUDGET_DEPART); } catch {} budgetRechargerIframe(); budgetRendreLiaison(); budgetStatut("Liaison désactivée."); return; }
   const nb = budgetLireTx().filter((t) => Number(t.amount) > 0).length;
   if (nb && !confirm(`Lier ce compte au budget ?\n${nb} opération(s) du budget seront ajoutées au compte (son solde changera) et les opérations du compte seront ajoutées au budget.`)) { budgetRendreLiaison(); return; }
   budgetEcrireLien({ accountId: id, map: {} });
@@ -2910,7 +2915,7 @@ $("budget-liaison-compte")?.addEventListener("change", async (ev) => {
   await budgetSynchroniser();
 });
 $("budget-liaison-sync")?.addEventListener("click", () => budgetSynchroniser());
-$("budget-liaison-stop")?.addEventListener("click", () => { budgetEcrireLien(null); budgetRendreLiaison(); budgetStatut("Liaison désactivée : les opérations déjà copiées restent en place."); });
+$("budget-liaison-stop")?.addEventListener("click", () => { budgetEcrireLien(null); try { localStorage.removeItem(BUDGET_DEPART); } catch {} budgetRechargerIframe(); budgetRendreLiaison(); budgetStatut("Liaison désactivée : les opérations déjà copiées restent en place."); });
 document.querySelector('[data-tab="budget-mensuel"]')?.addEventListener("click", async () => {
   await chargerWallet(false); budgetRendreLiaison(); if (budgetLireLien()) budgetSynchroniser();
 });
