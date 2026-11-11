@@ -1511,12 +1511,22 @@ body:has(#tableau:not([hidden])) .entete-date{display:flex}
 #pane-profile>.profile-card{height:100%;margin:0;min-width:0;border-radius:15px;box-shadow:var(--shadow)}
 #pane-profile>.profile-card:first-of-type{display:flex;flex-direction:column;justify-content:center;min-height:220px}
 #pane-assistant>.section-heading{margin-bottom:14px}
-#pane-assistant:after{
-  content:"Votre espace d’assistance est prêt à accueillir vos questions.";
-  display:flex;align-items:center;justify-content:center;min-height:320px;padding:24px;
-  border:1px solid var(--border);border-radius:16px;background:var(--surface);
-  color:var(--muted);text-align:center;box-shadow:var(--shadow)
+#pane-assistant .ia-carte{
+  display:grid;grid-template-columns:minmax(250px,.72fr) minmax(0,1.28fr);
+  gap:14px;align-items:start;border-radius:15px;box-shadow:var(--shadow)
 }
+#pane-assistant .ia-carte>.card-heading{grid-column:1/-1}
+#pane-assistant .ia-cle{align-self:start;min-width:0;padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--bg)}
+#pane-assistant .ia-carte [id$="-zone"]{min-width:0}
+#pane-assistant .ia-portee{margin:0 0 12px;padding:12px;border:1px solid var(--border);border-radius:12px}
+#pane-assistant .ia-suggestions{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px}
+#pane-assistant .ia-fil{min-height:280px;max-height:calc(100vh - 430px);overflow:auto;padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--bg)}
+#pane-assistant .ia-ligne{display:flex;gap:8px;align-items:stretch;margin-top:10px}
+#pane-assistant .ia-ligne textarea{flex:1;min-width:0}
+#pane-assistant .ia-msg{max-width:88%;margin:0 0 10px;padding:10px 13px;border-radius:12px;background:var(--surface);overflow-wrap:anywhere}
+#pane-assistant .ia-msg.ia-user{margin-left:auto;background:var(--primary-soft)}
+#pane-assistant .ia-msg.ia-erreur{border:1px solid var(--danger);color:var(--danger)}
+
 @media(max-width:900px){
   #pane-dashboard .dashboard-detail-grid{grid-template-columns:1fr}
   #pane-dashboard .dashboard-detail-grid>.dashboard-detail{grid-column:1/-1}
@@ -1539,5 +1549,4 @@ body:has(#tableau:not([hidden])) .entete-date{display:flex}
   #pane-notes .notes-toolbar{grid-template-columns:1fr}
   #pane-profile{gap:10px}
   #pane-profile>.profile-card{min-height:0}
-  #pane-assistant:after{min-height:220px}
 }
