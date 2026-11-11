@@ -2343,6 +2343,45 @@ async function tvHtml() {
   const r = await fetch("television.html", { cache: "no-cache" }); if (!r.ok) throw new Error("television.html introuvable");
   return r.text();
 }
+
+let tvDriveIframe = null;
+function tvDriveRepondre(data) {
+  const frame = document.querySelector("#tv-zone iframe");
+  if (frame?.contentWindow) frame.contentWindow.postMessage({ source: "mwrs-drive", ...data }, "*");
+}
+window.addEventListener("message", async (event) => {
+  const frame = document.querySelector("#tv-zone iframe");
+  if (!frame || event.source !== frame.contentWindow || !event.data || event.data.source !== "mwrs-tv-drive") return;
+  const msg = event.data;
+  try {
+    if (msg.action === "list") {
+      if (!jetonGoogle) { tvDriveRepondre({ action: "list", error: "Connectez-vous à Google pour consulter votre Drive." }); return; }
+      const q = encodeURIComponent("trashed = false and (mimeType='application/vnd.google-apps.document' or mimeType='application/vnd.google-apps.spreadsheet' or mimeType='application/pdf' or mimeType contains 'image/')");
+      const data = await google("https://www.googleapis.com/drive/v3/files?pageSize=100&orderBy=name&fields=files(id,name,mimeType,modifiedTime,size)&q=" + q);
+      driveListeAffichee = data.files || [];
+      tvDriveRepondre({ action: "list", files: driveListeAffichee.map(f => ({ id:f.id, name:f.name, mimeType:f.mimeType, modifiedTime:f.modifiedTime })) });
+    } else if (msg.action === "open" && typeof msg.id === "string") {
+      const f = driveListeAffichee.find(x => x.id === msg.id);
+      if (!f) throw new Error("Fichier non trouvé. Actualisez la liste.");
+      let payload = { action: "content", id:f.id, name:f.name, mimeType:f.mimeType };
+      if (f.mimeType === "application/vnd.google-apps.document") {
+        const doc = await google("https://docs.googleapis.com/v1/documents/" + encodeURIComponent(f.id));
+        const walk = els => (els || []).map(e => e.paragraph ? (e.paragraph.elements || []).map(x => x.textRun?.content || "").join("") : e.table ? (e.table.tableRows || []).map(row => (row.tableCells || []).map(cell => walk(cell.content).join("").trim()).join(" | ")).join("\n") : "").join("");
+        payload.text = walk(doc.body?.content);
+      } else if (f.mimeType === "application/vnd.google-apps.spreadsheet") {
+        const sheet = await google("https://sheets.googleapis.com/v4/spreadsheets/" + encodeURIComponent(f.id) + "/values/A1:Z500");
+        payload.values = sheet.values || [];
+      } else {
+        const response = await google("https://www.googleapis.com/drive/v3/files/" + encodeURIComponent(f.id) + "?alt=media");
+        const blob = await response.blob();
+        if (blob.size > 18 * 1024 * 1024) throw new Error("Fichier trop volumineux pour la lecture dans la Télévision (maximum 18 Mo).");
+        payload.dataUrl = await new Promise((resolve,reject) => { const reader=new FileReader(); reader.onload=()=>resolve(reader.result); reader.onerror=()=>reject(new Error("Lecture du fichier impossible")); reader.readAsDataURL(blob); });
+      }
+      tvDriveRepondre(payload);
+    }
+  } catch (error) { tvDriveRepondre({ action: "error", message: error.message || "Lecture impossible." }); }
+});
+
 let tvMinuteur = null;
 function tvTitreEnCours() { try { const t = document.querySelector("#tv-zone iframe")?.contentDocument?.title || ""; return t.replace(/ — Lecteur Pro$/, "") || "Télévision en lecture"; } catch { return "Télévision en lecture"; } }
 // Masquer = le lecteur disparaît mais continue de jouer (son/vidéo) ; une petite pastille permet de le réafficher.
