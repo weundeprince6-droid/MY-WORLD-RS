@@ -9,7 +9,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#0b1220">
   <link rel="icon" type="image/png" href="icone-192.png">
-  <link rel="stylesheet" href="style.css?v=20261111-drive-types-v2">
+  <link rel="stylesheet" href="style.css?v=20261111-drive-lecteur-v3">
 </head>
 <body>
   <header class="entete">
@@ -242,7 +242,16 @@
                 <header class="gmail-discussion-entete"><div class="gmail-discussion-identite"><span class="gmail-avatar" id="drive-avatar">🗂</span><div><strong id="drive-titre">Tous les fichiers</strong><small id="drive-sous-titre">Choisissez un type de fichier à gauche</small></div></div><div class="gmail-discussion-actions"><button type="button" id="drive-retour" title="Retour" hidden>←</button><button type="button" id="drive-evt-modifier" title="Modifier ici" hidden>✎</button><a id="drive-evt-ouvrir" class="agenda-lien-google" title="Ouvrir dans Google Drive" target="_blank" rel="noopener noreferrer" hidden>↗</a></div></header>
                 <div id="drive-fil" class="drive-fil">
                   <div id="drive-vue-liste"><div id="drive-grille" class="drive-grille"></div><button class="btn drive-plus-btn" id="drive-plus" type="button" hidden>Charger plus</button></div>
-                  <div id="drive-vue-apercu" hidden><iframe id="drive-apercu" title="Aperçu du fichier" allow="autoplay; fullscreen" referrerpolicy="no-referrer"></iframe><p class="meta drive-apercu-aide">Si l’aperçu reste vide, connectez-vous à Google dans ce navigateur ou utilisez ↗ pour ouvrir dans Google Drive.</p></div>
+                  <div id="drive-vue-apercu" hidden>
+                    <div class="drive-barre" id="drive-barre">
+                      <button type="button" id="drive-plein" title="Lire en plein écran">⛶ Plein écran</button>
+                      <span class="drive-menu"><button type="button" id="drive-telecharger" title="Télécharger">⬇ Télécharger</button><span id="drive-formats" class="drive-formats" hidden></span></span>
+                      <button type="button" id="drive-deplacer-btn" title="Déplacer dans un dossier">📂 Déplacer</button>
+                      <button type="button" id="drive-renommer" title="Renommer">✎ Renommer</button>
+                      <button type="button" id="drive-lien" title="Copier le lien">🔗 Lien</button>
+                      <button type="button" id="drive-corbeille" title="Mettre à la corbeille">🗑 Corbeille</button>
+                    </div>
+                    <iframe id="drive-apercu" title="Aperçu du fichier" allow="autoplay; fullscreen" referrerpolicy="no-referrer"></iframe><p class="meta drive-apercu-aide">Si l’aperçu reste vide, connectez-vous à Google dans ce navigateur ou utilisez ↗ pour ouvrir dans Google Drive.</p></div>
                   <section class="carte drive-editor-card" id="drive-editor-card" hidden>
               <div class="card-heading"><div><p class="eyebrow">ÉDITION INTÉGRÉE</p><h3 id="drive-editor-title">Mon document</h3><p class="meta">Vous restez dans MY WORLD RS. Les modifications sont synchronisées avec Google Drive.</p></div><button class="btn btn-light" id="drive-editor-close" type="button">Fermer</button></div>
               <p class="meta drive-editor-help">Docs : éditeur de texte. Sheets : colonnes séparées par tabulations, lignes séparées par retours à la ligne.</p>
@@ -258,7 +267,8 @@
                   </form>
                   <p id="drive-create-status" class="meta drive-create-status" role="status">Pour créer un fichier, autorisez d’abord l’accès Google Drive si nécessaire.</p>
                 </footer>
-              </section>
+    <dialog id="drive-dialogue" class="drive-dialogue"><form method="dialog" class="drive-dialogue-corps"><h3>Déplacer vers un dossier</h3><p class="meta" id="drive-dialogue-fichier"></p><input id="drive-dialogue-recherche" type="search" placeholder="Rechercher un dossier…" aria-label="Rechercher un dossier"><div id="drive-dialogue-liste" class="drive-dialogue-liste"></div><p class="meta" id="drive-dialogue-statut" role="status"></p><div class="drive-dialogue-actions"><button class="btn btn-light" value="annuler">Annuler</button></div></form></dialog>
+          </section>
             </section>
           </section>
             </section>
@@ -547,7 +557,7 @@
       setTimeout(function(){if(!window.__appPret)montrer("L'application n'a pas démarré. Vérifiez votre connexion internet (les composants Firebase se chargent depuis Google), désactivez un éventuel bloqueur de publicités, puis rechargez. Sans internet : l'application doit d'abord avoir été ouverte deux fois avec internet sur cet appareil pour s'installer hors ligne. Appuyez sur F12 > Console pour voir le détail.");},6000);
     })();
   </script>
-  <script type="module" src="app.js?v=20261111-drive-types-v2"></script>
+  <script type="module" src="app.js?v=20261111-drive-lecteur-v3"></script>
   <div id="tv-fenetre" class="tv-fenetre" hidden><div class="tv-barre"><strong>📺 Télévision</strong><span class="tv-actions"><button type="button" id="tv-masquer" title="Masquer le lecteur : la lecture continue en arrière-plan">▾ Masquer (lecture en arrière-plan)</button><button type="button" id="tv-fermer" title="Arrêter la lecture et fermer">✕ Fermer</button></span></div><div id="tv-zone" class="tv-zone"></div></div>
   <div id="tv-mini" class="tv-mini" hidden><span class="tv-mini-pastille">🎵</span><span id="tv-mini-titre" class="tv-mini-titre">Télévision en lecture</span><button type="button" id="tv-mini-afficher">Afficher</button><button type="button" id="tv-mini-arreter" title="Arrêter la lecture">✕</button></div>
 </body>

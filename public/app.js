@@ -37,6 +37,8 @@ const SCOPES = [
   "https://www.googleapis.com/auth/drive.metadata.readonly",
   // Création des documents et feuilles de calcul directement dans Drive.
   "https://www.googleapis.com/auth/drive.file",
+  // Télécharger, déplacer, renommer et mettre à la corbeille n'importe quel fichier de Drive
+  "https://www.googleapis.com/auth/drive",
   "https://www.googleapis.com/auth/documents",
   "https://www.googleapis.com/auth/spreadsheets",
 ];
@@ -899,7 +901,7 @@ function urlDrive(q, pageToken) {
   const params = new URLSearchParams({
     pageSize: "50",
     orderBy: "folder,name",
-    fields: "nextPageToken,files(id,name,mimeType,modifiedTime,webViewLink,iconLink,size,thumbnailLink)",
+    fields: "nextPageToken,files(id,name,mimeType,modifiedTime,webViewLink,iconLink,size,thumbnailLink,parents)",
     q: q || "trashed = false",
   });
   if (pageToken) params.set("pageToken", pageToken);
@@ -1020,6 +1022,120 @@ $("drive-evt-modifier")?.addEventListener("click", () => {
   ouvrirDriveDansEditeur(f.id, f.name || "Sans nom", f.mimeType === MIME_GSHEET ? "spreadsheet" : "document");
 });
 rendreCategoriesDrive();
+
+// --- Actions sur le fichier ouvert : plein écran, télécharger, déplacer, renommer, lien, corbeille ---
+const driveFichierOuvert = () => driveListeAffichee.find((x) => x.id === driveSel);
+const driveMsg = (t) => { const e = $("drive-statut"); if (e) e.textContent = t; };
+const driveExplique = (e) => /403|insufficient|permission|scope/i.test(e.message || "") ? (e.message || "") + " — nouvelle permission nécessaire : déconnectez-vous puis autorisez de nouveau Google Drive." : (e.message || "erreur");
+$("drive-plein")?.addEventListener("click", () => {
+  const zone = $("drive-vue-apercu");
+  if (document.fullscreenElement) { document.exitFullscreen(); return; }
+  zone.requestFullscreen?.().catch(() => driveMsg("Le plein écran n'est pas disponible dans ce navigateur."));
+});
+document.addEventListener("fullscreenchange", () => { const b = $("drive-plein"); if (b) b.textContent = document.fullscreenElement === $("drive-vue-apercu") ? "✕ Quitter le plein écran" : "⛶ Plein écran"; });
+function driveFormats(f) {
+  const id = encodeURIComponent(f.id);
+  if (f.mimeType === MIME_GDOC) return [
+    { nom: "PDF", mime: "application/pdf", ext: "pdf", lien: `https://docs.google.com/document/d/${id}/export?format=pdf` },
+    { nom: "Word (.docx)", mime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", ext: "docx", lien: `https://docs.google.com/document/d/${id}/export?format=docx` },
+    { nom: "Texte (.txt)", mime: "text/plain", ext: "txt", lien: `https://docs.google.com/document/d/${id}/export?format=txt` },
+  ];
+  if (f.mimeType === MIME_GSHEET) return [
+    { nom: "Excel (.xlsx)", mime: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ext: "xlsx", lien: `https://docs.google.com/spreadsheets/d/${id}/export?format=xlsx` },
+    { nom: "PDF", mime: "application/pdf", ext: "pdf", lien: `https://docs.google.com/spreadsheets/d/${id}/export?format=pdf` },
+    { nom: "CSV", mime: "text/csv", ext: "csv", lien: `https://docs.google.com/spreadsheets/d/${id}/export?format=csv` },
+  ];
+  if (f.mimeType === MIME_GSLIDES) return [
+    { nom: "PowerPoint (.pptx)", mime: "application/vnd.openxmlformats-officedocument.presentationml.presentation", ext: "pptx", lien: `https://docs.google.com/presentation/d/${id}/export/pptx` },
+    { nom: "PDF", mime: "application/pdf", ext: "pdf", lien: `https://docs.google.com/presentation/d/${id}/export/pdf` },
+  ];
+  return [];
+}
+async function driveTelecharger(f, fmt) {
+  const id = encodeURIComponent(f.id);
+  const lienDirect = fmt ? fmt.lien : `https://drive.google.com/uc?export=download&id=${id}`;
+  const nom = (f.name || "fichier") + (fmt ? "." + fmt.ext : "");
+  try {
+    if (!fmt && Number(f.size) > 150 * 1048576) throw new Error("fichier volumineux");
+    await obtenirJetonGoogle();
+    const url = fmt ? `${DRIVE_API}/${id}/export?mimeType=${encodeURIComponent(fmt.mime)}` : `${DRIVE_API}/${id}?alt=media`;
+    driveMsg("Téléchargement de « " + nom + " »…");
+    const r = await fetch(url, { headers: { Authorization: `Bearer ${jetonGoogle}` } });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const blob = await r.blob(), a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = nom; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 30000);
+    driveMsg("« " + nom + " » téléchargé.");
+  } catch (e) {
+    window.open(lienDirect, "_blank", "noopener");
+    driveMsg("Téléchargement ouvert dans un nouvel onglet (" + (e.message || "erreur") + ").");
+  }
+}
+$("drive-telecharger")?.addEventListener("click", () => {
+  const f = driveFichierOuvert(); if (!f) return;
+  const formats = driveFormats(f), zone = $("drive-formats");
+  if (!formats.length) { driveTelecharger(f, null); return; }
+  zone.hidden = !zone.hidden;
+  zone.innerHTML = formats.map((x, i) => `<button type="button" data-drive-format="${i}">${echapper(x.nom)}</button>`).join("");
+});
+$("drive-formats")?.addEventListener("click", (ev) => {
+  const b = ev.target.closest("[data-drive-format]"), f = driveFichierOuvert(); if (!b || !f) return;
+  $("drive-formats").hidden = true; driveTelecharger(f, driveFormats(f)[Number(b.dataset.driveFormat)]);
+});
+$("drive-lien")?.addEventListener("click", async () => {
+  const f = driveFichierOuvert(); if (!f) return;
+  const lien = f.webViewLink || `https://drive.google.com/open?id=${encodeURIComponent(f.id)}`;
+  try { await navigator.clipboard.writeText(lien); driveMsg("Lien copié."); } catch { window.prompt("Copiez le lien :", lien); }
+});
+$("drive-renommer")?.addEventListener("click", async () => {
+  const f = driveFichierOuvert(); if (!f) return;
+  const nom = window.prompt("Nouveau nom :", f.name || ""); if (!nom || !nom.trim() || nom.trim() === f.name) return;
+  try {
+    await google(`${DRIVE_API}/${encodeURIComponent(f.id)}?fields=id,name`, { method: "PATCH", body: JSON.stringify({ name: nom.trim() }) });
+    f.name = nom.trim(); driveMsg("Renommé en « " + f.name + " »."); rendreDrive();
+  } catch (e) { driveMsg("Impossible de renommer : " + driveExplique(e)); }
+});
+$("drive-corbeille")?.addEventListener("click", async () => {
+  const f = driveFichierOuvert(); if (!f) return;
+  if (!window.confirm("Mettre « " + (f.name || "ce fichier") + " » à la corbeille Google Drive ?")) return;
+  try {
+    await google(`${DRIVE_API}/${encodeURIComponent(f.id)}?fields=id,trashed`, { method: "PATCH", body: JSON.stringify({ trashed: true }) });
+    driveListeAffichee = driveListeAffichee.filter((x) => x.id !== f.id); driveSel = null; driveMsg("« " + (f.name || "Fichier") + " » mis à la corbeille."); rendreDrive();
+  } catch (e) { driveMsg("Impossible de mettre à la corbeille : " + driveExplique(e)); }
+});
+// Déplacer vers un dossier
+let driveDlgTimer = null;
+async function driveChargerDossiers(f) {
+  const liste = $("drive-dialogue-liste"), recherche = $("drive-dialogue-recherche").value.trim(), statut = $("drive-dialogue-statut");
+  statut.textContent = "Chargement des dossiers…";
+  try {
+    let q = `mimeType = '${MIME_DOSSIER}' and trashed = false`;
+    if (recherche) q += " and name contains '" + recherche.replace(/\\/g, "\\\\").replace(/'/g, "\\'") + "'";
+    const res = await google(urlDrive(q, null));
+    const dossiers = (res.files || []).filter((d) => d.mimeType === MIME_DOSSIER && d.id !== f.id);
+    const courants = f.parents || [];
+    liste.innerHTML = (recherche ? "" : `<button type="button" class="drive-dossier" data-drive-dest="root">🏠 Mon Drive (racine)</button>`) + dossiers.map((d) => `<button type="button" class="drive-dossier" data-drive-dest="${echapper(d.id)}"${courants.includes(d.id) ? " disabled" : ""}>📁 ${echapper(d.name || "Dossier")}${courants.includes(d.id) ? " (dossier actuel)" : ""}</button>`).join("");
+    statut.textContent = dossiers.length ? "" : "Aucun dossier trouvé.";
+  } catch (e) { statut.textContent = "Impossible de lister les dossiers : " + driveExplique(e); }
+}
+$("drive-deplacer-btn")?.addEventListener("click", () => {
+  const f = driveFichierOuvert(); if (!f) return;
+  $("drive-dialogue-fichier").textContent = "Fichier : " + (f.name || "Sans nom"); $("drive-dialogue-recherche").value = "";
+  $("drive-dialogue").showModal(); driveChargerDossiers(f);
+});
+$("drive-dialogue-recherche")?.addEventListener("input", () => { clearTimeout(driveDlgTimer); driveDlgTimer = setTimeout(() => { const f = driveFichierOuvert(); if (f) driveChargerDossiers(f); }, 350); });
+$("drive-dialogue-liste")?.addEventListener("click", async (ev) => {
+  const b = ev.target.closest("[data-drive-dest]"), f = driveFichierOuvert(); if (!b || !f) return;
+  const dest = b.dataset.driveDest, statut = $("drive-dialogue-statut");
+  statut.textContent = "Déplacement en cours…";
+  try {
+    const retirer = (f.parents || []).join(",");
+    const res = await google(`${DRIVE_API}/${encodeURIComponent(f.id)}?addParents=${encodeURIComponent(dest)}${retirer ? "&removeParents=" + encodeURIComponent(retirer) : ""}&fields=id,parents`, { method: "PATCH", body: "{}" });
+    f.parents = (res && res.parents) || [dest];
+    $("drive-dialogue").close(); driveMsg("« " + (f.name || "Fichier") + " » déplacé : " + b.textContent.replace(/^\S+\s/, "").trim() + ".");
+    if (driveChemin.length) { driveSel = null; chargerDrive({ nouvelleRecherche: true }); }
+  } catch (e) { statut.textContent = "Impossible de déplacer : " + driveExplique(e); }
+});
 async function chargerDrive({ nouvelleRecherche = false } = {}) {
   if (!jetonGoogle) return;
   if (nouvelleRecherche) drivePageToken = null;
