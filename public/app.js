@@ -2824,6 +2824,26 @@ const budgetTexteVersCat = (texte, kind) => {
 };
 let budgetSyncEnCours = false;
 function budgetStatut(t) { const el = $("budget-liaison-statut"); if (el) el.textContent = t; }
+const BUDGET_TAUX = "mwrs_budget_taux_usd_fc";
+function budgetChargerTaux() {
+  const input = $("budget-taux-usd-fc"), status = $("budget-taux-statut");
+  if (!input) return;
+  let value = ""; try { value = localStorage.getItem(BUDGET_TAUX) || ""; } catch {}
+  input.value = value;
+  if (status) status.textContent = value && Number(value) > 0 ? "Enregistré" : "Taux non renseigné";
+}
+$("budget-taux-usd-fc")?.addEventListener("change", (ev) => {
+  const value = Number(ev.target.value);
+  const status = $("budget-taux-statut");
+  if (ev.target.value === "" || !Number.isFinite(value) || value <= 0) {
+    try { localStorage.removeItem(BUDGET_TAUX); } catch {}
+    if (status) status.textContent = "Taux non renseigné";
+    return;
+  }
+  try { localStorage.setItem(BUDGET_TAUX, String(value)); } catch {}
+  if (status) status.textContent = "Taux enregistré";
+});
+budgetChargerTaux();
 function budgetRendreLiaison() {
   const sel = $("budget-liaison-compte"); if (!sel) return;
   const lien = budgetLireLien();
