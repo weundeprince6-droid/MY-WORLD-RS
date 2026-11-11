@@ -2372,7 +2372,8 @@ window.addEventListener("message", async (event) => {
         const sheet = await google("https://sheets.googleapis.com/v4/spreadsheets/" + encodeURIComponent(f.id) + "/values/A1:Z500");
         payload.values = sheet.values || [];
       } else {
-        const response = await google("https://www.googleapis.com/drive/v3/files/" + encodeURIComponent(f.id) + "?alt=media");
+        const response = await fetch("https://www.googleapis.com/drive/v3/files/" + encodeURIComponent(f.id) + "?alt=media", { headers: { Authorization: "Bearer " + jetonGoogle } });
+        if (!response.ok) throw new Error("Google Drive n'a pas pu télécharger ce fichier (HTTP " + response.status + ").");
         const blob = await response.blob();
         if (blob.size > 18 * 1024 * 1024) throw new Error("Fichier trop volumineux pour la lecture dans la Télévision (maximum 18 Mo).");
         payload.dataUrl = await new Promise((resolve,reject) => { const reader=new FileReader(); reader.onload=()=>resolve(reader.result); reader.onerror=()=>reject(new Error("Lecture du fichier impossible")); reader.readAsDataURL(blob); });
