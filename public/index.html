@@ -483,7 +483,13 @@
                 <button class="btn btn-ghost" id="budget-liaison-sync" type="button">Synchroniser maintenant</button>
                 <button class="btn btn-ghost" id="budget-liaison-stop" type="button" hidden>Délier</button>
               </div>
-              <p id="budget-liaison-statut" class="meta" role="status" style="margin:6px 0 0">Choisissez un compte : le budget prend sa devise (FC, USD, EUR…) et les entrées et sorties sont copiées dans les deux sens.</p>
+              <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px">
+                <label for="budget-taux-usd-fc" class="meta" style="margin:0">Taux manuel : 1 USD =</label>
+                <input id="budget-taux-usd-fc" type="number" min="0.000001" step="any" inputmode="decimal" placeholder="Ex. 2800" aria-label="Valeur en FC pour un dollar américain" style="width:125px;max-width:40vw">
+                <strong class="meta">FC</strong>
+                <span id="budget-taux-statut" class="meta" role="status">Taux non renseigné</span>
+              </div>
+              <p id="budget-liaison-statut" class="meta" role="status" style="margin:6px 0 0">Le taux de change est à votre disposition : saisissez votre propre valeur. Le choix du compte lié reste indépendant.</p>
             </section>
             <section class="carte wallet-card" style="padding:0;overflow:hidden">
               <iframe id="budget-mensuel-frame" title="Gestionnaire Budget mensuel" src="budget-mensuel.html" style="display:block;width:100%;height:calc(100vh - 205px);min-height:680px;border:0;background:var(--surface)"></iframe>
