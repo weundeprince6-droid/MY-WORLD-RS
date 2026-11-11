@@ -2809,6 +2809,108 @@ $("wallet-history")?.addEventListener("click", (ev) => {
 ["wallet-period","wallet-type-filter","wallet-chart-currency"].forEach(id=>$(id)?.addEventListener("change",walletRender));
 ["wallet-search","wallet-history-account","wallet-history-kind"].forEach(id=>$(id)?.addEventListener(id==="wallet-search"?"input":"change",walletRenderHistory));
 
+
+// ---------- Liaison Budget mensuel ↔ Porte-Monnaie (dans les deux sens) ----------
+const BUDGET_CLE = "budget_transactions", BUDGET_LIEN = "mwrs_budget_liaison";
+const BUDGET_CATS = { logement: "Logement", alimentation: "Alimentation", transports: "Transports", loisirs: "Loisirs & Sorties", sante: "Santé & Assurance", factures: "Factures & Énergie", autre_depense: "Autres Dépenses", salaire: "Salaire & Revenus", freelance: "Freelance & Extra", investissements: "Investissements", autre_revenu: "Autres Revenus" };
+const budgetLireLien = () => { try { const l = JSON.parse(localStorage.getItem(BUDGET_LIEN) || "null"); return l && l.accountId ? { accountId: l.accountId, map: l.map || {} } : null; } catch { return null; } };
+const budgetEcrireLien = (l) => { try { l ? localStorage.setItem(BUDGET_LIEN, JSON.stringify(l)) : localStorage.removeItem(BUDGET_LIEN); } catch {} };
+const budgetLireTx = () => { try { const t = JSON.parse(localStorage.getItem(BUDGET_CLE) || "null"); return Array.isArray(t) ? t : []; } catch { return []; } };
+const budgetCatVersTexte = (c) => BUDGET_CATS[c] || c || "";
+const budgetTexteVersCat = (texte, kind) => {
+  const t = String(texte || "").trim().toLowerCase();
+  const trouve = Object.entries(BUDGET_CATS).find(([id, nom]) => id === t || nom.toLowerCase() === t);
+  return trouve ? trouve[0] : (kind === "income" ? "autre_revenu" : "autre_depense");
+};
+let budgetSyncEnCours = false;
+function budgetStatut(t) { const el = $("budget-liaison-statut"); if (el) el.textContent = t; }
+function budgetRendreLiaison() {
+  const sel = $("budget-liaison-compte"); if (!sel) return;
+  const lien = budgetLireLien();
+  const comptes = walletAccounts.filter((a) => String(a.currency || "").toUpperCase() === "EUR");
+  sel.innerHTML = '<option value="">— Aucun compte lié —</option>' + comptes.map((a) => `<option value="${echapper(a.id)}">${echapper(a.name)} (${echapper(walletMoney(a.balance, a.currency))})</option>`).join("");
+  sel.value = lien && comptes.some((a) => a.id === lien.accountId) ? lien.accountId : "";
+  const stop = $("budget-liaison-stop"); if (stop) stop.hidden = !lien;
+  const sync = $("budget-liaison-sync"); if (sync) sync.disabled = !lien;
+}
+function budgetRechargerIframe() {
+  const f = $("budget-mensuel-frame");
+  try { f?.contentWindow?.location.reload(); } catch { if (f) f.src = f.src; }
+}
+async function budgetSynchroniser() {
+  if (budgetSyncEnCours) return;
+  const lien = budgetLireLien(); if (!lien) return;
+  budgetSyncEnCours = true;
+  try {
+    if (!walletLoaded) await chargerWallet(true);
+    const compte = walletAccounts.find((a) => a.id === lien.accountId);
+    if (!compte) { budgetStatut("Le compte lié n'existe plus : choisissez-en un autre."); return; }
+    let budget = budgetLireTx(), modifBudget = false, nbVersWallet = 0, nbVersBudget = 0, nbSuppr = 0;
+    const map = lien.map; // idBudget -> idWallet
+    const inverse = () => Object.fromEntries(Object.entries(map).map(([b, w]) => [w, b]));
+    const mouvements = () => walletTransactions.filter((t) => t.accountId === compte.id && (t.kind === "income" || t.kind === "expense"));
+    // 1) Suppressions : un côté a disparu, on supprime l'autre
+    for (const [b, w] of Object.entries(map)) {
+      const dansBudget = budget.some((t) => String(t.id) === b);
+      const txW = walletTransactions.find((t) => t.id === w);
+      if (!dansBudget && txW) {
+        await walletDeleteDoc("walletTransactions", w);
+        walletTransactions = walletTransactions.filter((t) => t.id !== w);
+        const effet = walletEffet(txW);
+        await walletPatchAccount(compte, -effet); compte.balance = Number(compte.balance || 0) - effet;
+        delete map[b]; nbSuppr++;
+      } else if (dansBudget && !txW) {
+        budget = budget.filter((t) => String(t.id) !== b); modifBudget = true; delete map[b]; nbSuppr++;
+      } else if (!dansBudget && !txW) delete map[b];
+    }
+    // 2) Budget → Porte-Monnaie
+    for (const t of budget) {
+      if (map[String(t.id)] || !(t.type === "income" || t.type === "expense") || !(Number(t.amount) > 0)) continue;
+      const kind = t.type, montant = Number(t.amount), id = walletId();
+      const tx = { kind, accountId: compte.id, accountName: compte.name, accountType: compte.type, currency: compte.currency, amount: montant, category: "", description: String(t.desc || ""), paymentMethod: "", date: String(t.date || new Date().toISOString().slice(0, 10)), createdAt: new Date().toISOString(), fromBudget: "1" };
+      tx.category = BUDGET_CATS[t.category] || String(t.category || "");
+      await walletCreate("walletTransactions", id, tx);
+      const effet = kind === "income" ? montant : -montant;
+      await walletPatchAccount(compte, effet); compte.balance = Number(compte.balance || 0) + effet;
+      walletTransactions.unshift({ ...tx, id }); map[String(t.id)] = id; nbVersWallet++;
+    }
+    // 3) Porte-Monnaie → Budget
+    const inv = inverse();
+    for (const w of mouvements()) {
+      if (inv[w.id]) continue;
+      const idB = Date.now() + Math.floor(Math.random() * 100000) + budget.length;
+      budget.push({ id: idB, type: w.kind, desc: w.description || w.category || (w.kind === "income" ? "Entrée" : "Sortie"), amount: Number(w.amount), date: String(w.date || "").slice(0, 10), category: budgetTexteVersCat(w.category, w.kind) });
+      map[String(idB)] = w.id; modifBudget = true; nbVersBudget++;
+    }
+    budgetEcrireLien({ accountId: compte.id, map });
+    if (modifBudget) { try { localStorage.setItem(BUDGET_CLE, JSON.stringify(budget)); } catch {} budgetRechargerIframe(); }
+    walletRender(); budgetRendreLiaison();
+    budgetStatut(nbVersWallet + nbVersBudget + nbSuppr
+      ? `Synchronisé : ${nbVersWallet} ajoutée(s) au Porte-Monnaie, ${nbVersBudget} ajoutée(s) au budget, ${nbSuppr} suppression(s) répercutée(s).`
+      : "Tout est à jour : le budget et le compte « " + compte.name + " » sont identiques.");
+  } catch (e) {
+    budgetStatut("Synchronisation impossible : " + (e?.message || e));
+  } finally { budgetSyncEnCours = false; }
+}
+$("budget-liaison-compte")?.addEventListener("change", async (ev) => {
+  const id = ev.target.value;
+  if (!id) { budgetEcrireLien(null); budgetRendreLiaison(); budgetStatut("Liaison désactivée."); return; }
+  const nb = budgetLireTx().filter((t) => Number(t.amount) > 0).length;
+  if (nb && !confirm(`Lier ce compte au budget ?\n${nb} opération(s) du budget seront ajoutées au compte (son solde changera) et les opérations du compte seront ajoutées au budget.`)) { budgetRendreLiaison(); return; }
+  budgetEcrireLien({ accountId: id, map: {} });
+  budgetRendreLiaison();
+  await budgetSynchroniser();
+});
+$("budget-liaison-sync")?.addEventListener("click", () => budgetSynchroniser());
+$("budget-liaison-stop")?.addEventListener("click", () => { budgetEcrireLien(null); budgetRendreLiaison(); budgetStatut("Liaison désactivée : les opérations déjà copiées restent en place."); });
+document.querySelector('[data-tab="budget-mensuel"]')?.addEventListener("click", async () => {
+  await chargerWallet(false); budgetRendreLiaison(); if (budgetLireLien()) budgetSynchroniser();
+});
+// Une saisie dans le budget (iframe de même origine) déclenche la synchronisation
+window.addEventListener("storage", (ev) => { if (ev.key === BUDGET_CLE && budgetLireLien()) budgetSynchroniser(); });
+// Une opération saisie côté Porte-Monnaie est reprise dans le budget
+$("wallet-operation-form")?.addEventListener("submit", () => setTimeout(() => { if (budgetLireLien()) budgetSynchroniser(); }, 1500));
+
 async function walletChargerJsPdf() {
   if (window.jspdf?.jsPDF) return window.jspdf.jsPDF;
   await new Promise((resolve,reject)=>{

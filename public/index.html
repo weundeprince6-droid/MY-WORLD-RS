@@ -476,6 +476,15 @@
             </section>
           <section class="tab-pane" id="pane-budget-mensuel" role="tabpanel" data-pane="budget-mensuel" hidden>
             <div class="section-heading"><div><p class="eyebrow">GESTION FINANCIÈRE</p><h2>Budget mensuel</h2><p>Suivez vos revenus, dépenses, économies et prévisions dans un espace indépendant.</p></div><span class="section-icon">📊</span></div>
+            <section class="carte wallet-card" id="budget-liaison" style="padding:12px 16px;margin-bottom:12px">
+              <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+                <strong>🔗 Liaison avec le Porte-Monnaie</strong>
+                <select id="budget-liaison-compte" aria-label="Compte du Porte-Monnaie lié"></select>
+                <button class="btn btn-ghost" id="budget-liaison-sync" type="button">Synchroniser maintenant</button>
+                <button class="btn btn-ghost" id="budget-liaison-stop" type="button" hidden>Délier</button>
+              </div>
+              <p id="budget-liaison-statut" class="meta" role="status" style="margin:6px 0 0">Choisissez un compte en euros : les entrées et sorties seront copiées dans les deux sens.</p>
+            </section>
             <section class="carte wallet-card" style="padding:0;overflow:hidden">
               <iframe id="budget-mensuel-frame" title="Gestionnaire Budget mensuel" src="budget-mensuel.html" style="display:block;width:100%;height:calc(100vh - 205px);min-height:680px;border:0;background:var(--surface)"></iframe>
             </section>
@@ -564,7 +573,7 @@
       setTimeout(function(){if(!window.__appPret)montrer("L'application n'a pas démarré. Vérifiez votre connexion internet (les composants Firebase se chargent depuis Google), désactivez un éventuel bloqueur de publicités, puis rechargez. Sans internet : l'application doit d'abord avoir été ouverte deux fois avec internet sur cet appareil pour s'installer hors ligne. Appuyez sur F12 > Console pour voir le détail.");},6000);
     })();
   </script>
-  <script type="module" src="app.js?v=20261111-onglets-messages-v1-drive4"></script>
+  <script type="module" src="app.js?v=20261111-budget-liaison1"></script>
   <div id="tv-fenetre" class="tv-fenetre" hidden><div class="tv-barre"><strong>📺 Télévision</strong><span class="tv-actions"><button type="button" id="tv-masquer" title="Masquer le lecteur : la lecture continue en arrière-plan">▾ Masquer (lecture en arrière-plan)</button><button type="button" id="tv-fermer" title="Arrêter la lecture et fermer">✕ Fermer</button></span></div><div id="tv-zone" class="tv-zone"></div></div>
   <div id="tv-mini" class="tv-mini" hidden><span class="tv-mini-pastille">🎵</span><span id="tv-mini-titre" class="tv-mini-titre">Télévision en lecture</span><button type="button" id="tv-mini-afficher">Afficher</button><button type="button" id="tv-mini-arreter" title="Arrêter la lecture">✕</button></div>
 </body>

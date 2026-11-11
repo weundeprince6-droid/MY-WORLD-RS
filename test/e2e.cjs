@@ -100,8 +100,8 @@ async function scenario(nom, { mode = 'ok', sdkBloque = false, quotaGmail = fals
       if (m === 'POST') { (etat.wallet.crees = etat.wallet.crees || []).push({ url: u, corps: JSON.parse(route.request().postData()) }); return route.fulfill(json({})); }
       const S = (v) => ({ stringValue: v });
       if (u.includes('/houseEntries') || u.includes('/houseSettings') || u.includes('/houseItems')) return route.fulfill(json({}));
-      if (u.includes('/walletAccounts')) return route.fulfill(json({ documents: [{ name: 'x/walletAccounts/a1', fields: { name: S('Caisse'), type: S('personal'), currency: S('USD'), balance: { doubleValue: 70 }, createdAt: S('2026-11-01') } }] }));
-      return route.fulfill(json({ documents: [{ name: 'x/walletTransactions/t1', fields: { kind: S('expense'), accountId: S('a1'), accountName: S('Caisse'), currency: S('USD'), amount: { doubleValue: 30 }, date: S('2026-11-03'), description: S('Transport') } }] }));
+      if (u.includes('/walletAccounts')) return route.fulfill(json({ documents: [{ name: 'x/walletAccounts/a1', fields: { name: S('Caisse'), type: S('personal'), currency: S(etat.devise || 'USD'), balance: { doubleValue: 70 }, createdAt: S('2026-11-01') } }] }));
+      return route.fulfill(json({ documents: [{ name: 'x/walletTransactions/t1', fields: { kind: S('expense'), accountId: S('a1'), accountName: S('Caisse'), currency: S(etat.devise || 'USD'), amount: { doubleValue: 30 }, date: S('2026-11-03'), description: S('Transport') } }] }));
     }
     if (u.includes('/documents/days')) { etat.lecturesJours = (etat.lecturesJours || 0) + (/\/documents\/days\/\d{4}/.test(u) ? 1 : 0);
      if (/\/documents\/days\/\d{4}/.test(u)) { const d0 = new Date(); const iso0 = d0.getFullYear() + '-' + String(d0.getMonth() + 1).padStart(2, '0') + '-' + String(d0.getDate()).padStart(2, '0'); return route.fulfill(json({ name: 'x/days/' + iso0, fields: { items: { mapValue: { fields: { a: { mapValue: { fields: { k: { stringValue: 's' }, name: { stringValue: 'Riz' }, q: { integerValue: String(etat.qteRiz || 3) }, p: { integerValue: '1000' }, c: { stringValue: 'FC' } } } }, r1: { mapValue: { fields: { k: { stringValue: 'r' }, type: { stringValue: 'in' }, a: { integerValue: '10000' }, c: { stringValue: 'FC' }, g: { stringValue: 'g1' } } } }, r2: { mapValue: { fields: { k: { stringValue: 'r' }, type: { stringValue: 'out' }, a: { integerValue: '2500' }, c: { stringValue: 'FC' }, g: { stringValue: 'g1' } } } } } } } } })); }
@@ -421,6 +421,26 @@ srv.listen(8765, async () => {
     const lectures = etat.lecturesJours || 0;
     const ok = /3\s?000/.test(avant) && /9\s?000/.test(apres) && voyant.includes('En direct') && lectures >= 2 && lectures <= 6;
     return { ok, detail: JSON.stringify({ avantA: avant.slice(avant.indexOf('Ventes'), avant.indexOf('Ventes') + 40), apresA: apres.slice(apres.indexOf('Ventes'), apres.indexOf('Ventes') + 40), voyant, lectures }) };
+  }));
+  res.push(await scenario('Budget ↔ Porte-Monnaie : liaison dans les deux sens', {}, async (p, appels, logs, etat) => {
+    etat.devise = 'EUR';
+    p.on('dialog', (d) => d.accept());
+    await p.click('#bouton-connexion'); await p.waitForTimeout(3000);
+    await p.evaluate(() => localStorage.setItem('budget_transactions', JSON.stringify([{ id: 11, type: 'income', desc: 'Prime', amount: 100, date: '2026-11-05', category: 'salaire' }])));
+    await p.click('[data-tab="budget-mensuel"]'); await p.waitForTimeout(1500);
+    await p.selectOption('#budget-liaison-compte', 'a1'); await p.waitForTimeout(2500);
+    const crees = ((etat.wallet && etat.wallet.crees) || []).filter((c) => c.url.includes('/walletTransactions'));
+    const prime = crees.find((c) => c.corps.fields.description && c.corps.fields.description.stringValue === 'Prime');
+    const patch = (etat.wallet.patchs || []).find((x) => x.fields.balance && x.fields.balance.doubleValue === 170);
+    const budget = await p.evaluate(() => JSON.parse(localStorage.getItem('budget_transactions')));
+    const transport = budget.find((t) => t.desc === 'Transport');
+    // suppression côté budget -> répercutée sur le compte
+    await p.evaluate(() => localStorage.setItem('budget_transactions', JSON.stringify(JSON.parse(localStorage.getItem('budget_transactions')).filter((t) => t.id !== 11))));
+    await p.click('#budget-liaison-sync'); await p.waitForTimeout(2000);
+    const supprime = (etat.wallet.supprimes || []).length >= 1;
+    const statut = (await p.textContent('#budget-liaison-statut')).trim();
+    const ok = !!prime && prime.corps.fields.kind.stringValue === 'income' && !!patch && !!transport && transport.type === 'expense' && transport.amount === 30 && supprime;
+    return { ok, detail: JSON.stringify({ prime: !!prime, patch: !!patch, transport, supprime, statut }) };
   }));
   res.push(await scenario('Porte-Monnaie : 50 % des ristournes versés dans « Mes parts de ristourne »', {}, async (p, appels, logs, etat) => {
     await p.click('#bouton-connexion'); await p.waitForTimeout(3000);
