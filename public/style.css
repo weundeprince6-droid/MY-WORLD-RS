@@ -1462,3 +1462,82 @@ body:has(#tableau:not([hidden])) .entete-date{display:flex}
 .drive-dossier:hover:not(:disabled){border-color:var(--primary)}
 .drive-dossier:disabled{opacity:.5;cursor:not-allowed}
 .drive-dialogue-actions{display:flex;justify-content:flex-end}
+
+
+/* ---------- Harmonisation des espaces : organisation inspirée de Messages ---------- */
+/* Le porte-monnaie est volontairement exclu de toutes ces règles. */
+#pane-dashboard .dashboard-detail-grid{
+  display:grid;grid-template-columns:minmax(280px,.82fr) minmax(0,1.18fr);
+  gap:14px;align-items:stretch
+}
+#pane-dashboard .dashboard-detail-grid>.dashboard-detail:first-child{grid-column:1}
+#pane-dashboard .dashboard-detail-grid>.dashboard-detail:nth-child(2){grid-column:2}
+#pane-dashboard .dashboard-detail-grid>.dashboard-detail:nth-child(3){grid-column:1/-1}
+#pane-dashboard .dashboard-alerts{margin-top:14px}
+#pane-social{
+  display:grid;grid-template-columns:minmax(280px,.9fr) minmax(0,1.1fr);
+  gap:14px;align-items:start
+}
+#pane-social>.section-heading,#pane-social>section:last-child{grid-column:1/-1}
+#pane-social>#carte-telegram,#pane-social>#carte-facebook{
+  height:100%;margin:0;min-width:0
+}
+#pane-social>#carte-telegram,#pane-social>#carte-facebook{
+  border-radius:15px;box-shadow:var(--shadow)
+}
+#pane-social>section:last-child{margin:0;min-height:180px}
+#pane-bases>.carte{min-height:520px;border-radius:15px;box-shadow:var(--shadow)}
+#pane-bases #grille-kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
+#pane-bases #grille-kpis>.titre-base{grid-column:1/-1;margin:12px 0 0;padding:10px 12px;border-bottom:1px solid var(--border);color:var(--primary)}
+#pane-bases #grille-kpis>.kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;grid-column:1/-1}
+#pane-pro #pro-vue,#pane-maison #wallet-vue-maison{display:flex;flex-direction:column;gap:14px;min-width:0}
+#pane-pro #pro-vue>.maison-resume,#pane-maison #wallet-vue-maison>.maison-resume{margin:0}
+#pane-pro #pro-vue>.carte,#pane-maison #wallet-vue-maison>.carte{margin:0}
+#pane-pro .maison-grille,#pane-maison .maison-grille{
+  display:grid;grid-template-columns:minmax(280px,.88fr) minmax(0,1.12fr);
+  gap:14px;align-items:start
+}
+#pane-pro .maison-grille>.carte,#pane-maison .maison-grille>.carte{min-width:0;margin:0;height:100%}
+#pane-pro .maison-materiel,#pane-maison .maison-materiel{grid-template-columns:repeat(2,minmax(0,1fr))}
+#pane-notes .notes-intro{display:flex;align-items:center;justify-content:space-between;gap:16px}
+#pane-notes .notes-list-card{display:grid;grid-template-columns:minmax(230px,.36fr) minmax(0,1fr);gap:12px;align-items:start}
+#pane-notes .notes-list-card>.card-heading{grid-column:1/-1}
+#pane-notes .notes-toolbar{display:flex;flex-direction:column;gap:9px;min-width:0}
+#pane-notes .notes-list{min-width:0;max-height:calc(100vh - 390px);overflow:auto;padding:2px 5px 2px 0}
+#pane-notes .notes-item{margin:0 0 10px}
+#pane-notes #notes-editor-card{grid-column:1/-1}
+#pane-profile{display:grid;grid-template-columns:minmax(280px,.85fr) minmax(0,1.15fr);gap:14px;align-items:start}
+#pane-profile>.section-heading{grid-column:1/-1}
+#pane-profile>.profile-card{height:100%;margin:0;min-width:0;border-radius:15px;box-shadow:var(--shadow)}
+#pane-profile>.profile-card:first-of-type{display:flex;flex-direction:column;justify-content:center;min-height:220px}
+#pane-assistant>.section-heading{margin-bottom:14px}
+#pane-assistant:after{
+  content:"Votre espace d’assistance est prêt à accueillir vos questions.";
+  display:flex;align-items:center;justify-content:center;min-height:320px;padding:24px;
+  border:1px solid var(--border);border-radius:16px;background:var(--surface);
+  color:var(--muted);text-align:center;box-shadow:var(--shadow)
+}
+@media(max-width:900px){
+  #pane-dashboard .dashboard-detail-grid{grid-template-columns:1fr}
+  #pane-dashboard .dashboard-detail-grid>.dashboard-detail{grid-column:1/-1}
+  #pane-social,#pane-profile{grid-template-columns:1fr}
+  #pane-social>.section-heading,#pane-social>section:last-child,#pane-profile>.section-heading{grid-column:1}
+  #pane-pro .maison-grille,#pane-maison .maison-grille{grid-template-columns:1fr}
+  #pane-notes .notes-list-card{grid-template-columns:1fr}
+  #pane-notes .notes-list-card>.card-heading{grid-column:1}
+  #pane-notes .notes-toolbar{display:grid;grid-template-columns:minmax(0,1fr) minmax(130px,.5fr)}
+  #pane-notes .notes-list{max-height:none}
+}
+@media(max-width:650px){
+  #pane-social{gap:10px}
+  #pane-social>.section-heading{align-items:flex-start}
+  #pane-social .form-ligne{display:flex;flex-direction:column;align-items:stretch;gap:8px}
+  #pane-social .form-ligne input,#pane-social .form-ligne button{width:100%;min-width:0}
+  #pane-bases #grille-kpis,#pane-bases #grille-kpis>.kpis{grid-template-columns:1fr}
+  #pane-notes .notes-intro{align-items:stretch;flex-direction:column}
+  #pane-notes .notes-intro-actions{display:flex;flex-wrap:wrap}
+  #pane-notes .notes-toolbar{grid-template-columns:1fr}
+  #pane-profile{gap:10px}
+  #pane-profile>.profile-card{min-height:0}
+  #pane-assistant:after{min-height:220px}
+}
