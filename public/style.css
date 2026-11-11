@@ -1539,6 +1539,10 @@ body:has(#tableau:not([hidden])) .entete-date{display:flex}
   #pane-notes .notes-list{max-height:none}
 }
 @media(max-width:650px){
+  #pane-assistant .ia-carte{grid-template-columns:1fr}
+  #pane-assistant .ia-carte>.card-heading{grid-column:1}
+  #pane-assistant .ia-fil{max-height:none;min-height:220px}
+  #pane-assistant .ia-ligne{flex-direction:column}
   #pane-social{gap:10px}
   #pane-social>.section-heading{align-items:flex-start}
   #pane-social .form-ligne{display:flex;flex-direction:column;align-items:stretch;gap:8px}
