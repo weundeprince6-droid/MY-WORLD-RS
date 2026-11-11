@@ -9,7 +9,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#0b1220">
   <link rel="icon" type="image/png" href="icone-192.png">
-  <link rel="stylesheet" href="style.css?v=20261110-agenda-chat-v1">
+  <link rel="stylesheet" href="style.css?v=20261111-drive-chat-v1">
 </head>
 <body>
   <header class="entete">
@@ -231,33 +231,40 @@
             <section class="carte"><ul id="liste-social" class="liste"></ul></section>
           </section>
           <section class="tab-pane" id="pane-drive" role="tabpanel" data-pane="drive" hidden>
-            <section class="drive-espace" aria-label="Espace Google Drive">
-              <div class="drive-commandes">
-                <form id="drive-create-form" class="drive-create-form" autocomplete="off">
-                  <input id="drive-create-name" type="text" maxlength="150" placeholder="Nom du nouveau document…" aria-label="Nom du document" required>
-                  <select id="drive-create-type" aria-label="Type de document"><option value="document">Google Docs</option><option value="spreadsheet">Google Sheets</option></select>
-                  <button class="btn btn-primary" id="drive-create-submit" type="submit">＋ Créer</button>
-                </form>
-                <div class="drive-actions">
-                  <input id="drive-recherche" type="search" placeholder="Rechercher un document ou dossier…" aria-label="Rechercher dans Google Drive">
-                  <button class="btn btn-light" id="drive-actualiser" type="button">↻ Actualiser</button>
-                  <button class="btn btn-light" id="drive-autoriser-google" type="button">Autoriser Google Drive</button>
+            <section class="gmail-desktop drive-desktop" aria-label="Google Drive">
+              <aside class="gmail-conversations">
+                <div class="gmail-search"><span>⌕</span><input id="drive-recherche" type="search" placeholder="Rechercher un document ou dossier…" aria-label="Rechercher dans Google Drive"></div>
+                <div class="gmail-filtres"><button type="button" class="actif" data-drive-filtre="tous">Tous</button><button type="button" data-drive-filtre="Dossiers">Dossiers</button><button type="button" data-drive-filtre="Docs">Docs</button><button type="button" data-drive-filtre="Sheets">Sheets</button><button type="button" data-drive-filtre="PDF">PDF</button><button type="button" data-drive-filtre="Images">Images</button><button type="button" data-drive-filtre="Autres">Autres</button></div>
+                <div class="drive-outils-liste"><button class="btn btn-light" id="drive-actualiser" type="button">↻ Actualiser</button><button class="btn btn-light" id="drive-autoriser-google" type="button">Autoriser Google Drive</button></div>
+                <p id="drive-statut" class="meta drive-statut-liste" role="status">Ouvrez cette rubrique pour charger vos fichiers Google Drive.</p>
+                <div class="gmail-liste-conversations">
+                  <ul id="drive-fichiers" class="drive-ul"></ul>
+                  <button class="btn drive-plus-btn" id="drive-plus" type="button" hidden>Charger plus</button>
                 </div>
-                <p id="drive-create-status" class="meta drive-create-status" role="status">Pour créer un fichier, autorisez d’abord l’accès Google Drive si nécessaire.</p>
-              </div>
-            <section class="carte drive-editor-card" id="drive-editor-card" hidden>
+              </aside>
+              <section class="gmail-discussion" aria-label="Fichier sélectionné">
+                <header class="gmail-discussion-entete"><div class="gmail-discussion-identite"><span class="gmail-avatar" id="drive-avatar">📁</span><div><strong id="drive-titre">Mon Drive</strong><small id="drive-sous-titre">Choisissez un fichier dans la liste</small></div></div><div class="gmail-discussion-actions"><button type="button" id="drive-retour-accueil" title="Retour" hidden>←</button><button type="button" id="drive-evt-modifier" title="Modifier ici" hidden>✎</button><a id="drive-evt-ouvrir" class="agenda-lien-google" title="Ouvrir dans Google Drive" target="_blank" rel="noopener noreferrer" hidden>↗</a></div></header>
+                <div id="drive-fil" class="gmail-fil-messages">
+                  <div id="drive-vue-accueil"><div class="gmail-date-separateur">Google Drive</div><article class="gmail-bulle-wrap autre"><div class="gmail-bulle"><div class="gmail-bulle-expediteur">Mon Drive</div><div class="gmail-bulle-corps">Choisissez un fichier à gauche pour le voir ou le modifier ici.\nPour créer un document, écrivez son nom en bas et choisissez Docs ou Sheets.</div></div></article></div>
+                  <div id="drive-vue-detail" hidden></div>
+                  <section class="carte drive-editor-card" id="drive-editor-card" hidden>
               <div class="card-heading"><div><p class="eyebrow">ÉDITION INTÉGRÉE</p><h3 id="drive-editor-title">Mon document</h3><p class="meta">Vous restez dans MY WORLD RS. Les modifications sont synchronisées avec Google Drive.</p></div><button class="btn btn-light" id="drive-editor-close" type="button">Fermer</button></div>
               <p class="meta drive-editor-help">Docs : éditeur de texte. Sheets : colonnes séparées par tabulations, lignes séparées par retours à la ligne.</p>
               <textarea id="drive-editor-content" class="drive-editor-content" spellcheck="true" aria-label="Contenu du document" rows="18"></textarea>
               <div class="drive-toolbar"><p id="drive-editor-status" class="meta" role="status">Chargement…</p><button class="btn btn-primary" id="drive-editor-save" type="button" disabled>Enregistrer dans Google Drive</button></div>
             </section>
-              <div class="drive-contenu">
-                <div class="drive-contenu-entete"><strong>Vos fichiers et dossiers</strong><span class="meta">Google Drive</span></div>
-                <p id="drive-statut" class="meta" role="status">Ouvrez cette rubrique pour charger vos fichiers Google Drive.</p>
-                <ul id="drive-fichiers" class="liste drive-list"></ul>
-                <button class="btn" id="drive-plus" type="button" hidden>Charger plus</button>
-              </div>
+                </div>
+                <footer class="gmail-compositeur drive-compositeur">
+                  <form id="drive-create-form" class="drive-create-form" autocomplete="off">
+                    <input id="drive-create-name" type="text" maxlength="150" placeholder="Nom du nouveau document…" aria-label="Nom du document" required>
+                    <select id="drive-create-type" aria-label="Type de document"><option value="document">Google Docs</option><option value="spreadsheet">Google Sheets</option></select>
+                    <button class="btn btn-primary" id="drive-create-submit" type="submit" title="Créer">＋</button>
+                  </form>
+                  <p id="drive-create-status" class="meta drive-create-status" role="status">Pour créer un fichier, autorisez d’abord l’accès Google Drive si nécessaire.</p>
+                </footer>
+              </section>
             </section>
+          </section>
 
           </section>
           <section class="tab-pane" id="pane-pro" role="tabpanel" data-pane="pro" hidden>
@@ -542,7 +549,7 @@
       setTimeout(function(){if(!window.__appPret)montrer("L'application n'a pas démarré. Vérifiez votre connexion internet (les composants Firebase se chargent depuis Google), désactivez un éventuel bloqueur de publicités, puis rechargez. Sans internet : l'application doit d'abord avoir été ouverte deux fois avec internet sur cet appareil pour s'installer hors ligne. Appuyez sur F12 > Console pour voir le détail.");},6000);
     })();
   </script>
-  <script type="module" src="app.js?v=20261110-agenda-chat-v1"></script>
+  <script type="module" src="app.js?v=20261111-drive-chat-v1"></script>
   <div id="tv-fenetre" class="tv-fenetre" hidden><div class="tv-barre"><strong>📺 Télévision</strong><span class="tv-actions"><button type="button" id="tv-masquer" title="Masquer le lecteur : la lecture continue en arrière-plan">▾ Masquer (lecture en arrière-plan)</button><button type="button" id="tv-fermer" title="Arrêter la lecture et fermer">✕ Fermer</button></span></div><div id="tv-zone" class="tv-zone"></div></div>
   <div id="tv-mini" class="tv-mini" hidden><span class="tv-mini-pastille">🎵</span><span id="tv-mini-titre" class="tv-mini-titre">Télévision en lecture</span><button type="button" id="tv-mini-afficher">Afficher</button><button type="button" id="tv-mini-arreter" title="Arrêter la lecture">✕</button></div>
 </body>

@@ -78,6 +78,7 @@ async function scenario(nom, { mode = 'ok', sdkBloque = false, quotaGmail = fals
     if (quotaGmail && u.includes('/messages/m1') && !quota.deja) { quota.deja = true; return route.fulfill({ status: 403, headers: { ...CORS, 'content-type': 'application/json' }, body: JSON.stringify({ error: { code: 403, message: "Quota exceeded for quota metric 'Total Query Cost' and limit 'Units per minute per user'" } }) }); }
     if (u.includes('/messages/m1')) return route.fulfill(json({ id: 'm1', threadId: 't1', labelIds: ['UNREAD', 'IMPORTANT'], snippet: 'Merci de régler avant le 5', internalDate: String(Date.now()), payload: { headers: [{ name: 'From', value: 'Marie Dupont <marie@ex.com>' }, { name: 'Subject', value: 'Rappel facture urgente' }] } }));
     if (u.includes('/messages/m2')) return route.fulfill(json({ id: 'm2', threadId: 't2', labelIds: ['CATEGORY_PROMOTIONS'], snippet: 'promo', internalDate: '1', payload: { headers: [{ name: 'From', value: 'Shop <no-reply@gmail.com>' }, { name: 'Subject', value: 'Promotion -50%' }] } }));
+    if (u.includes('drive/v3/files') && m === 'GET') return route.fulfill(json({ files: [{ id: 'd1', name: 'Budget 2026', mimeType: 'application/vnd.google-apps.spreadsheet', modifiedTime: '2026-11-01T10:00:00Z' }, { id: 'd2', name: 'Compte rendu', mimeType: 'application/vnd.google-apps.document', modifiedTime: '2026-11-02T10:00:00Z' }, { id: 'd3', name: 'Contrats', mimeType: 'application/vnd.google-apps.folder', modifiedTime: '2026-10-02T10:00:00Z' }, { id: 'd4', name: 'Facture.pdf', mimeType: 'application/pdf', modifiedTime: '2026-10-12T10:00:00Z', size: '204800' }] }));
     if (u.includes('calendar/v3') && m === 'POST') { etat.evenements = etat.evenements || []; etat.evenements.push(JSON.parse(route.request().postData())); return route.fulfill(json({ id: 'nouveau1' })); }
     if (u.includes('calendar/v3') && m === 'DELETE') { etat.supprime = decodeURIComponent(u.split('/events/')[1]); return route.fulfill({ status: 204, headers: CORS }); }
     if (u.includes('calendar/v3')) return route.fulfill(json({ items: [{ id: 'e1', summary: 'Réunion du comité', start: { dateTime: dans30.toISOString() }, end: { dateTime: new Date(dans30.getTime() + 3600000).toISOString() } }] }));
@@ -140,6 +141,21 @@ srv.listen(8765, async () => {
     await p.click('#agenda-evt-modifier').catch(() => {});
     const ok = avant.lignes > 0 && avant.cal && avant.detail && apres.detail && apres.cal && apres.modif && apres.titre.length > 0 && apres.corps.includes(apres.titre) && auj && vide === 0 && retour;
     return { ok, detail: JSON.stringify({ avant, apres: { ...apres, corps: apres.corps.slice(0, 40) }, auj, vide, retour }) };
+  }));
+  res.push(await scenario('Drive : présentation comme la messagerie (liste, filtres, détail, éditeur)', {}, async (p) => {
+    await p.click('#bouton-connexion'); await p.waitForTimeout(2500);
+    await p.click('[data-tab="drive"]'); await p.waitForTimeout(1200);
+    const nb = await p.evaluate(() => document.querySelectorAll('#drive-fichiers [data-drive-file]').length);
+    await p.click('[data-drive-filtre="Sheets"]'); const sheets = await p.evaluate(() => document.querySelectorAll('#drive-fichiers [data-drive-file]').length);
+    await p.click('[data-drive-filtre="tous"]');
+    await p.click('#drive-fichiers [data-drive-file="d2"]'); await p.waitForTimeout(200);
+    const det = await p.evaluate(() => ({ titre: document.getElementById('drive-titre').textContent, detail: !document.getElementById('drive-vue-detail').hidden, modif: !document.getElementById('drive-evt-modifier').hidden, lien: document.getElementById('drive-evt-ouvrir').href }));
+    await p.click('#drive-fichiers [data-drive-file="d4"]'); await p.waitForTimeout(100);
+    const pdf = await p.evaluate(() => ({ modif: document.getElementById('drive-evt-modifier').hidden, corps: document.getElementById('drive-vue-detail').textContent }));
+    await p.click('#drive-retour-accueil'); const accueil = await p.evaluate(() => !document.getElementById('drive-vue-accueil').hidden);
+    const form = await p.evaluate(() => !!document.getElementById('drive-create-form') && !!document.getElementById('drive-create-name'));
+    const ok = nb === 4 && sheets === 1 && det.titre === 'Compte rendu' && det.detail && det.modif && det.lien.includes('d2') && pdf.modif && pdf.corps.includes('200 Ko') && accueil && form;
+    return { ok, detail: JSON.stringify({ nb, sheets, det, pdf: pdf.corps.slice(0, 60), accueil, form }) };
   }));
   res.push(await scenario('Quota Gmail dépassé : nouvel essai automatique', { quotaGmail: true }, async (p) => {
     await p.click('#bouton-connexion'); await p.waitForTimeout(6000);

@@ -1398,3 +1398,23 @@ body:has(#tableau:not([hidden])) .entete-date{display:flex}
 #agenda-vue-calendrier .agenda-cal-anniversaire-wrap{display:flex;flex-direction:column;gap:16px}
 #agenda-vue-calendrier[hidden],#agenda-vue-detail[hidden]{display:none}
 @media(max-width:900px){#pane-agenda .gmail-desktop{height:auto;min-height:0}}
+
+/* ---------- Google Drive : même présentation que la messagerie ---------- */
+#pane-drive .drive-desktop{height:calc(100vh - 190px);min-height:520px;border-radius:0}
+#pane-drive .drive-ul{list-style:none;margin:0;padding:0}
+#pane-drive .drive-ul .vide{padding:14px 18px;color:var(--muted);font-size:12px}
+#pane-drive .gmail-filtres{flex-wrap:wrap}
+.drive-outils-liste{display:flex;gap:6px;flex-wrap:wrap;padding:0 14px 6px}
+.drive-outils-liste .btn{padding:6px 10px;font-size:11px}
+.drive-statut-liste{margin:0;padding:2px 16px 8px;font-size:11px}
+.drive-plus-btn{margin:10px 14px}
+.drive-avatar-icone{font-size:20px;background:var(--bg)}
+.drive-compositeur{flex-direction:column;align-items:stretch;gap:4px}
+.drive-compositeur .drive-create-form{display:flex;gap:8px;align-items:center}
+.drive-compositeur .drive-create-form input{cursor:text}
+.drive-compositeur .drive-create-form select{height:42px;border:1px solid var(--border);border-radius:24px;background:var(--bg);color:var(--text);padding:0 12px;font:inherit;font-size:13px}
+.drive-compositeur .drive-create-status{margin:0;font-size:11px}
+.drive-compositeur .drive-create-form button{flex:none;width:42px;height:42px;padding:0;border-radius:50%}
+#drive-vue-accueil[hidden],#drive-vue-detail[hidden]{display:none}
+#pane-drive .drive-editor-card{margin:14px 0 0}
+@media(max-width:900px){#pane-drive .drive-desktop{height:auto;min-height:0}}
