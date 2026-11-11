@@ -1,1 +1,734 @@
-/mnt/data/budget_mensuel.html
+<!DOCTYPE html>
+<html lang="fr" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestionnaire de Budget Mensuel</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="font-sans antialiased text-slate-800 min-h-full flex flex-col pb-12">
+
+    <!-- Navbar / Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="p-2 bg-emerald-600 text-white rounded-xl shadow-sm">
+                    <i class="fa-solid fa-wallet text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-slate-900 leading-tight">Budget Mensuel</h1>
+                    <p class="text-xs text-slate-500">Tableau de bord financier</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button onclick="exportData()" class="px-3 py-1.5 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors flex items-center gap-1.5">
+                    <i class="fa-solid fa-download"></i> Exporter JSON
+                </button>
+                <button onclick="resetData()" class="px-3 py-1.5 text-xs font-medium text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors flex items-center gap-1.5">
+                    <i class="fa-solid fa-rotate-left"></i> Réinitialiser
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 flex-1 w-full space-y-6">
+
+        <!-- Banner KPI / Synthèse -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <!-- Solde Initial -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm relative overflow-hidden">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Solde Départ</p>
+                        <div class="flex items-baseline mt-1">
+                            <input type="number" id="initialBalance" value="1500" onchange="updateCalculations()" class="w-28 font-bold text-xl text-slate-800 bg-transparent border-b border-dashed border-slate-300 focus:outline-none focus:border-emerald-500">
+                            <span class="font-bold text-slate-800 ml-1">€</span>
+                        </div>
+                    </div>
+                    <div class="p-2.5 bg-slate-100 text-slate-600 rounded-xl">
+                        <i class="fa-solid fa-piggy-bank"></i>
+                    </div>
+                </div>
+                <p class="text-[11px] text-slate-400 mt-2"><i class="fa-solid fa-pen text-[9px] mr-1"></i> Modifiable</p>
+            </div>
+
+            <!-- Revenus Totaux -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Revenus Totaux</p>
+                        <h3 class="text-xl font-bold text-emerald-600 mt-1" id="totalIncome">0,00 €</h3>
+                    </div>
+                    <div class="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl">
+                        <i class="fa-solid fa-arrow-trend-up"></i>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-500 mt-2" id="incomeCount">0 transactions</p>
+            </div>
+
+            <!-- Dépenses Totales -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Dépenses Totales</p>
+                        <h3 class="text-xl font-bold text-rose-600 mt-1" id="totalExpenses">0,00 €</h3>
+                    </div>
+                    <div class="p-2.5 bg-rose-50 text-rose-600 rounded-xl">
+                        <i class="fa-solid fa-arrow-trend-down"></i>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-500 mt-2" id="expenseCount">0 transactions</p>
+            </div>
+
+            <!-- Économies Réalisées -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Épargne Nette</p>
+                        <h3 class="text-xl font-bold text-indigo-600 mt-1" id="netSavings">0,00 €</h3>
+                    </div>
+                    <div class="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl">
+                        <i class="fa-solid fa-coins"></i>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-500 mt-2" id="savingsRate">Taux d'épargne: 0%</p>
+            </div>
+
+            <!-- Solde Final -->
+            <div class="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-5 rounded-2xl shadow-md sm:col-span-2 lg:col-span-1">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Solde Final Estimer</p>
+                        <h3 class="text-2xl font-bold mt-1 text-emerald-400" id="finalBalance">0,00 €</h3>
+                    </div>
+                    <div class="p-2.5 bg-white/10 rounded-xl text-emerald-400">
+                        <i class="fa-solid fa-vault"></i>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-300 mt-2 flex items-center gap-1">
+                    <span id="balanceStatusIcon"><i class="fa-solid fa-circle-check text-emerald-400"></i></span>
+                    <span id="balanceStatus">Budget équilibré</span>
+                </p>
+            </div>
+        </div>
+
+        <!-- Section Formulaire + Graphiques -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- Formulaire d'ajout de transaction (4 cols) -->
+            <div class="lg:col-span-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm h-fit">
+                <h2 class="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-plus-circle text-emerald-600"></i> Nouvelle Transaction
+                </h2>
+                <form id="transactionForm" onsubmit="addTransaction(event)" class="space-y-4">
+                    <!-- Type (Dépense / Revenu) -->
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Type de mouvement</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <label class="cursor-pointer">
+                                <input type="radio" name="type" value="expense" checked onchange="updateCategoryOptions()" class="peer hidden">
+                                <div class="text-center py-2 px-3 border border-slate-200 rounded-xl text-xs font-medium peer-checked:bg-rose-50 peer-checked:border-rose-300 peer-checked:text-rose-700 transition-all">
+                                    <i class="fa-solid fa-minus mr-1"></i> Dépense
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="type" value="income" onchange="updateCategoryOptions()" class="peer hidden">
+                                <div class="text-center py-2 px-3 border border-slate-200 rounded-xl text-xs font-medium peer-checked:bg-emerald-50 peer-checked:border-emerald-300 peer-checked:text-emerald-700 transition-all">
+                                    <i class="fa-solid fa-plus mr-1"></i> Revenu
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Libellé -->
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Description / Intitulé</label>
+                        <input type="text" id="desc" required placeholder="Ex: Courses supermarché, Salaire..." class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
+                    </div>
+
+                    <!-- Montant & Date -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Montant (€)</label>
+                            <input type="number" id="amount" step="0.01" min="0.01" required placeholder="0.00" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Date</label>
+                            <input type="date" id="date" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
+                        </div>
+                    </div>
+
+                    <!-- Catégorie -->
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Catégorie</label>
+                        <select id="category" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
+                            <!-- Dynamique via JS -->
+                        </select>
+                    </div>
+
+                    <button type="submit" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl text-sm shadow-sm transition-all duration-150 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-check"></i> Enregistrer
+                    </button>
+                </form>
+            </div>
+
+            <!-- Visualisations / Graphiques (8 cols) -->
+            <div class="lg:col-span-8 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-pie text-emerald-600"></i> Répartition des Dépenses
+                    </h2>
+                    <span class="text-xs text-slate-400">Analyse visuelle</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                    <div class="relative h-64 flex items-center justify-center">
+                        <canvas id="expenseChart"></canvas>
+                    </div>
+                    <div class="relative h-64 flex items-center justify-center">
+                        <canvas id="budgetComparisonChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section Tableau Comparatif Prévu vs Réel par Catégorie -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-scale-balanced text-emerald-600"></i> Budget Prévu vs Réel par Catégorie
+                    </h2>
+                    <p class="text-xs text-slate-500">Ajustez votre budget prévu pour calculer les écarts automatiquement</p>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-slate-600">
+                    <thead class="bg-slate-50 text-slate-700 font-semibold uppercase tracking-wider border-b border-slate-200">
+                        <tr>
+                            <th class="py-3 px-4">Catégorie</th>
+                            <th class="py-3 px-4">Type</th>
+                            <th class="py-3 px-4 text-right">Prévu (€)</th>
+                            <th class="py-3 px-4 text-right">Réel (€)</th>
+                            <th class="py-3 px-4 text-right">Écart (€)</th>
+                            <th class="py-3 px-4 text-center">Progression</th>
+                        </tr>
+                    </thead>
+                    <tbody id="categorySummaryTable" class="divide-y divide-slate-100">
+                        <!-- Généré par JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Section Historique des Transactions -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                <div>
+                    <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-emerald-600"></i> Historique des Transactions
+                    </h2>
+                    <p class="text-xs text-slate-500" id="transactionCountBadge">0 enregistrement(s)</p>
+                </div>
+
+                <!-- Filtres -->
+                <div class="flex flex-wrap items-center gap-2">
+                    <div class="relative">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" id="searchInput" oninput="renderTransactions()" placeholder="Rechercher..." class="pl-8 pr-3 py-1.5 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+                    </div>
+                    <select id="filterCategory" onchange="renderTransactions()" class="px-3 py-1.5 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
+                        <option value="all">Toutes catégories</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Tableau d'historique -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-50 text-slate-700 font-semibold uppercase tracking-wider border-b border-slate-200">
+                        <tr>
+                            <th class="py-3 px-4">Date</th>
+                            <th class="py-3 px-4">Description</th>
+                            <th class="py-3 px-4">Catégorie</th>
+                            <th class="py-3 px-4 text-right">Montant</th>
+                            <th class="py-3 px-4 text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionList" class="divide-y divide-slate-100">
+                        <!-- Inséré via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-slate-900 text-white text-xs px-4 py-3 rounded-xl shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 flex items-center gap-2 z-50">
+        <i class="fa-solid fa-circle-info text-emerald-400"></i>
+        <span id="toastMessage">Notification</span>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // Catégories par défaut
+        const CATEGORIES = {
+            expense: [
+                { id: 'logement', name: 'Logement & Loyer', icon: 'fa-house', color: '#3b82f6' },
+                { id: 'alimentation', name: 'Alimentation & Courses', icon: 'fa-cart-shopping', color: '#ef4444' },
+                { id: 'transports', name: 'Transports & Carburant', icon: 'fa-car', color: '#f59e0b' },
+                { id: 'loisirs', name: 'Loisirs & Sorties', icon: 'fa-gamepad', color: '#ec4899' },
+                { id: 'sante', name: 'Santé & Assurance', icon: 'fa-heart-pulse', color: '#10b981' },
+                { id: 'factures', name: 'Factures & Énergie', icon: 'fa-bolt', color: '#6366f1' },
+                { id: 'autre_depense', name: 'Autres Dépenses', icon: 'fa-ellipsis', color: '#64748b' }
+            ],
+            income: [
+                { id: 'salaire', name: 'Salaire & Revenus', icon: 'fa-briefcase', color: '#22c55e' },
+                { id: 'freelance', name: 'Freelance & Extra', icon: 'fa-laptop-code', color: '#06b6d4' },
+                { id: 'investissements', name: 'Investissements', icon: 'fa-chart-line', color: '#8b5cf6' },
+                { id: 'autre_revenu', name: 'Autres Revenus', icon: 'fa-sack-dollar', color: '#a855f7' }
+            ]
+        };
+
+        // Budget prévisionnel par défaut (Modifiable dans le tableau)
+        let plannedBudgets = JSON.parse(localStorage.getItem('budget_planned')) || {
+            'logement': 700,
+            'alimentation': 350,
+            'transports': 120,
+            'loisirs': 150,
+            'sante': 60,
+            'factures': 100,
+            'autre_depense': 50,
+            'salaire': 2200,
+            'freelance': 300,
+            'investissements': 50,
+            'autre_revenu': 0
+        };
+
+        // Transactions stockées
+        let transactions = JSON.parse(localStorage.getItem('budget_transactions')) || [
+            { id: 1, type: 'income', desc: 'Salaire mensuel', amount: 2200, date: '2026-11-01', category: 'salaire' },
+            { id: 2, type: 'expense', desc: 'Loyer appartement', amount: 720, date: '2026-11-02', category: 'logement' },
+            { id: 3, type: 'expense', desc: 'Supermarché', amount: 135.50, date: '2026-11-05', category: 'alimentation' },
+            { id: 4, type: 'expense', desc: 'Abonnement Transport', amount: 65, date: '2026-11-06', category: 'transports' }
+        ];
+
+        let pieChart = null;
+        let barChart = null;
+
+        // Initialisation de la page
+        window.onload = function() {
+            // Définir la date du jour par défaut
+            document.getElementById('date').value = new Date().toISOString().split('T')[0];
+            
+            // Initialiser les options de catégorie
+            updateCategoryOptions();
+            populateCategoryFilter();
+            
+            // Calculs et affichages
+            updateCalculations();
+            initCharts();
+        };
+
+        // Met à jour la liste des catégories dans le formulaire selon le type sélectionné
+        function updateCategoryOptions() {
+            const type = document.querySelector('input[name="type"]:checked').value;
+            const select = document.getElementById('category');
+            select.innerHTML = '';
+
+            CATEGORIES[type].forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat.id;
+                opt.textContent = cat.name;
+                select.appendChild(opt);
+            });
+        }
+
+        // Remplit le filtre de recherche avec toutes les catégories
+        function populateCategoryFilter() {
+            const filterSelect = document.getElementById('filterCategory');
+            filterSelect.innerHTML = '<option value="all">Toutes catégories</option>';
+            
+            const allCats = [...CATEGORIES.expense, ...CATEGORIES.income];
+            allCats.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat.id;
+                opt.textContent = cat.name;
+                filterSelect.appendChild(opt);
+            });
+        }
+
+        // Obtenir les infos d'une catégorie par son ID
+        function getCategoryInfo(catId) {
+            const allCats = [...CATEGORIES.expense, ...CATEGORIES.income];
+            return allCats.find(c => c.id === catId) || { name: catId, icon: 'fa-circle-question', color: '#94a3b8' };
+        }
+
+        // Ajouter une nouvelle transaction
+        function addTransaction(e) {
+            e.preventDefault();
+            const type = document.querySelector('input[name="type"]:checked').value;
+            const desc = document.getElementById('desc').value.trim();
+            const amount = parseFloat(document.getElementById('amount').value);
+            const date = document.getElementById('date').value;
+            const category = document.getElementById('category').value;
+
+            if (!desc || isNaN(amount) || amount <= 0 || !date) {
+                showToast('Veuillez remplir correctement tous les champs.');
+                return;
+            }
+
+            const newTx = {
+                id: Date.now(),
+                type,
+                desc,
+                amount,
+                date,
+                category
+            };
+
+            transactions.unshift(newTx);
+            saveData();
+            updateCalculations();
+
+            // Réinitialiser le formulaire
+            document.getElementById('desc').value = '';
+            document.getElementById('amount').value = '';
+            showToast('Transaction ajoutée avec succès !');
+        }
+
+        // Supprimer une transaction
+        function deleteTransaction(id) {
+            transactions = transactions.filter(t => t.id !== id);
+            saveData();
+            updateCalculations();
+            showToast('Transaction supprimée.');
+        }
+
+        // Mettre à jour le budget prévisionnel
+        function updatePlannedBudget(catId, value) {
+            const val = parseFloat(value) || 0;
+            plannedBudgets[catId] = val;
+            localStorage.setItem('budget_planned', JSON.stringify(plannedBudgets));
+            updateCalculations();
+        }
+
+        // Calculs globaux et rafraîchissement UI
+        function updateCalculations() {
+            const initialBal = parseFloat(document.getElementById('initialBalance').value) || 0;
+            
+            let totalIncome = 0;
+            let totalExpenses = 0;
+            let incomeCount = 0;
+            let expenseCount = 0;
+
+            transactions.forEach(t => {
+                if (t.type === 'income') {
+                    totalIncome += t.amount;
+                    incomeCount++;
+                } else {
+                    totalExpenses += t.amount;
+                    expenseCount++;
+                }
+            });
+
+            const netSavings = totalIncome - totalExpenses;
+            const finalBalance = initialBal + netSavings;
+            const savingsRate = totalIncome > 0 ? ((netSavings / totalIncome) * 100).toFixed(1) : 0;
+
+            // Mettre à jour le DOM des cartes KPI
+            document.getElementById('totalIncome').textContent = formatCurrency(totalIncome);
+            document.getElementById('incomeCount').textContent = `${incomeCount} transaction(s)`;
+
+            document.getElementById('totalExpenses').textContent = formatCurrency(totalExpenses);
+            document.getElementById('expenseCount').textContent = `${expenseCount} transaction(s)`;
+
+            document.getElementById('netSavings').textContent = formatCurrency(netSavings);
+            document.getElementById('savingsRate').textContent = `Taux d'épargne: ${savingsRate}%`;
+
+            const finalBalEl = document.getElementById('finalBalance');
+            finalBalEl.textContent = formatCurrency(finalBalance);
+            
+            const statusEl = document.getElementById('balanceStatus');
+            const statusIcon = document.getElementById('balanceStatusIcon');
+            if (finalBalance >= initialBal) {
+                statusEl.textContent = 'Budget sous contrôle';
+                statusIcon.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-400"></i>';
+            } else {
+                statusEl.textContent = 'Attention au déficit';
+                statusIcon.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-amber-400"></i>';
+            }
+
+            renderCategorySummary();
+            renderTransactions();
+            updateCharts();
+        }
+
+        // Génère le tableau Prévu vs Réel
+        function renderCategorySummary() {
+            const tbody = document.getElementById('categorySummaryTable');
+            tbody.innerHTML = '';
+
+            const allCats = [...CATEGORIES.expense, ...CATEGORIES.income];
+
+            allCats.forEach(cat => {
+                // Somme réelle
+                const realAmount = transactions
+                    .filter(t => t.category === cat.id)
+                    .reduce((sum, t) => sum + t.amount, 0);
+
+                const plannedAmount = plannedBudgets[cat.id] || 0;
+                const isExpense = CATEGORIES.expense.some(c => c.id === cat.id);
+                const diff = isExpense ? plannedAmount - realAmount : realAmount - plannedAmount;
+                
+                // Pourcentage de progression
+                let percent = plannedAmount > 0 ? Math.min(Math.round((realAmount / plannedAmount) * 100), 100) : 0;
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50/80 transition-colors';
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-medium text-slate-800 flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-lg flex items-center justify-center text-xs text-white" style="background-color: ${cat.color}">
+                            <i class="fa-solid ${cat.icon}"></i>
+                        </span>
+                        ${cat.name}
+                    </td>
+                    <td class="py-3 px-4">
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold ${isExpense ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}">
+                            ${isExpense ? 'Dépense' : 'Revenu'}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4 text-right">
+                        <input type="number" step="10" value="${plannedAmount}" 
+                            onchange="updatePlannedBudget('${cat.id}', this.value)"
+                            class="w-20 text-right font-medium text-slate-700 bg-transparent border-b border-dashed border-slate-300 focus:outline-none focus:border-emerald-500">
+                    </td>
+                    <td class="py-3 px-4 text-right font-semibold ${isExpense ? 'text-slate-800' : 'text-emerald-600'}">
+                        ${formatCurrency(realAmount)}
+                    </td>
+                    <td class="py-3 px-4 text-right font-semibold ${diff < 0 ? 'text-rose-600' : 'text-emerald-600'}">
+                        ${diff >= 0 ? '+' : ''}${formatCurrency(diff)}
+                    </td>
+                    <td class="py-3 px-4">
+                        <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                            <div class="h-2 rounded-full ${isExpense && realAmount > plannedAmount ? 'bg-rose-500' : 'bg-emerald-500'}" style="width: ${percent}%"></div>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Génère le tableau d'historique des transactions
+        function renderTransactions() {
+            const tbody = document.getElementById('transactionList');
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const filterCat = document.getElementById('filterCategory').value;
+
+            tbody.innerHTML = '';
+
+            const filtered = transactions.filter(t => {
+                const matchesSearch = t.desc.toLowerCase().includes(search);
+                const matchesCat = filterCat === 'all' || t.category === filterCat;
+                return matchesSearch && matchesCat;
+            });
+
+            document.getElementById('transactionCountBadge').textContent = `${filtered.length} enregistrement(s)`;
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="py-8 text-center text-slate-400 italic">
+                            Aucune transaction trouvée.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            filtered.forEach(t => {
+                const catInfo = getCategoryInfo(t.category);
+                const isExpense = t.type === 'expense';
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition-colors';
+                tr.innerHTML = `
+                    <td class="py-3 px-4 text-slate-500 font-mono text-[11px]">${t.date}</td>
+                    <td class="py-3 px-4 font-medium text-slate-800">${escapeHtml(t.desc)}</td>
+                    <td class="py-3 px-4">
+                        <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium bg-slate-100 text-slate-700">
+                            <i class="fa-solid ${catInfo.icon} text-[10px]" style="color: ${catInfo.color}"></i>
+                            ${catInfo.name}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4 text-right font-bold ${isExpense ? 'text-rose-600' : 'text-emerald-600'}">
+                        ${isExpense ? '-' : '+'}${formatCurrency(t.amount)}
+                    </td>
+                    <td class="py-3 px-4 text-center">
+                        <button onclick="deleteTransaction(${t.id})" class="text-slate-400 hover:text-rose-600 p-1 rounded-lg transition-colors" title="Supprimer">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Graphiques Chart.js
+        function initCharts() {
+            // Graphique 1: Répartition Dépenses (Pie)
+            const ctx1 = document.getElementById('expenseChart').getContext('2d');
+            pieChart = new Chart(ctx1, {
+                type: 'doughnut',
+                data: { labels: [], datasets: [{ data: [], backgroundColor: [] }] },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { family: 'Inter', size: 11 } } },
+                        title: { display: true, text: 'Répartition des dépenses' }
+                    }
+                }
+            });
+
+            // Graphique 2: Prévu vs Réel (Bar)
+            const ctx2 = document.getElementById('budgetComparisonChart').getContext('2d');
+            barChart = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: ['Revenus', 'Dépenses'],
+                    datasets: [
+                        { label: 'Prévu', data: [0, 0], backgroundColor: '#cbd5e1' },
+                        { label: 'Réel', data: [0, 0], backgroundColor: ['#22c55e', '#ef4444'] }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { family: 'Inter', size: 11 } } },
+                        title: { display: true, text: 'Revenus vs Dépenses' }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+
+            updateCharts();
+        }
+
+        function updateCharts() {
+            if (!pieChart || !barChart) return;
+
+            // Mettre à jour Pie Chart (Dépenses uniquement)
+            const expenseTotals = {};
+            CATEGORIES.expense.forEach(c => expenseTotals[c.id] = 0);
+
+            transactions.filter(t => t.type === 'expense').forEach(t => {
+                if (expenseTotals[t.category] !== undefined) {
+                    expenseTotals[t.category] += t.amount;
+                }
+            });
+
+            const labels = [];
+            const data = [];
+            const colors = [];
+
+            CATEGORIES.expense.forEach(c => {
+                if (expenseTotals[c.id] > 0) {
+                    labels.push(c.name);
+                    data.push(expenseTotals[c.id]);
+                    colors.push(c.color);
+                }
+            });
+
+            pieChart.data.labels = labels;
+            pieChart.data.datasets[0].data = data;
+            pieChart.data.datasets[0].backgroundColor = colors;
+            pieChart.update();
+
+            // Mettre à jour Bar Chart (Comparaison Globale)
+            const totalIncomePlanned = CATEGORIES.income.reduce((sum, c) => sum + (plannedBudgets[c.id] || 0), 0);
+            const totalExpensePlanned = CATEGORIES.expense.reduce((sum, c) => sum + (plannedBudgets[c.id] || 0), 0);
+
+            const totalIncomeReal = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+            const totalExpenseReal = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+
+            barChart.data.datasets[0].data = [totalIncomePlanned, totalExpensePlanned];
+            barChart.data.datasets[1].data = [totalIncomeReal, totalExpenseReal];
+            barChart.update();
+        }
+
+        // Utilitaires
+        function formatCurrency(val) {
+            return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(val);
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/[&<>"']/g, function(m) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+            });
+        }
+
+        function saveData() {
+            localStorage.setItem('budget_transactions', JSON.stringify(transactions));
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMessage').textContent = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ transactions, plannedBudgets }));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `budget_export_${new Date().toISOString().split('T')[0]}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function resetData() {
+            if (confirm("Voulez-vous vraiment réinitialiser toutes les données ?")) {
+                localStorage.removeItem('budget_transactions');
+                localStorage.removeItem('budget_planned');
+                location.reload();
+            }
+        }
+    </script>
+</body>
+</html>
