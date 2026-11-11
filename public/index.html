@@ -476,6 +476,9 @@
             </section>
           <section class="tab-pane" id="pane-budget-mensuel" role="tabpanel" data-pane="budget-mensuel" hidden>
             <div class="section-heading"><div><p class="eyebrow">GESTION FINANCIÈRE</p><h2>Budget mensuel</h2><p>Suivez vos revenus, dépenses, économies et prévisions dans un espace indépendant.</p></div><span class="section-icon">📊</span></div>
+            <section class="carte wallet-card" style="padding:0;overflow:hidden">
+              <iframe id="budget-mensuel-frame" title="Gestionnaire Budget mensuel" src="budget-mensuel.html" style="display:block;width:100%;height:calc(100vh - 205px);min-height:680px;border:0;background:var(--surface)"></iframe>
+            </section>
             <section class="carte wallet-card" id="budget-liaison" style="padding:12px 16px;margin-bottom:12px">
               <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
                 <strong>🔗 Liaison avec le Porte-Monnaie</strong>
@@ -490,9 +493,6 @@
                 <span id="budget-taux-statut" class="meta" role="status">Taux non renseigné</span>
               </div>
               <p id="budget-liaison-statut" class="meta" role="status" style="margin:6px 0 0">Le taux de change est à votre disposition : saisissez votre propre valeur. Le choix du compte lié reste indépendant.</p>
-            </section>
-            <section class="carte wallet-card" style="padding:0;overflow:hidden">
-              <iframe id="budget-mensuel-frame" title="Gestionnaire Budget mensuel" src="budget-mensuel.html" style="display:block;width:100%;height:calc(100vh - 205px);min-height:680px;border:0;background:var(--surface)"></iframe>
             </section>
           </section>
           <section class="tab-pane" id="pane-notes" role="tabpanel" data-pane="notes" hidden>
