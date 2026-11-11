@@ -9,7 +9,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#0b1220">
   <link rel="icon" type="image/png" href="icone-192.png">
-  <link rel="stylesheet" href="style.css?v=20261111-onglets-messages-v1-drive4">
+  <link rel="stylesheet" href="style.css?v=20261111-budget-liaison-design-v1">
 </head>
 <body>
   <header class="entete">
@@ -479,20 +479,29 @@
             <section class="carte wallet-card" style="padding:0;overflow:hidden">
               <iframe id="budget-mensuel-frame" title="Gestionnaire Budget mensuel" src="budget-mensuel.html" style="display:block;width:100%;height:calc(100vh - 205px);min-height:680px;border:0;background:var(--surface)"></iframe>
             </section>
-            <section class="carte wallet-card" id="budget-liaison" style="padding:12px 16px;margin-bottom:12px">
-              <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-                <strong>🔗 Liaison avec le Porte-Monnaie</strong>
-                <select id="budget-liaison-compte" aria-label="Compte du Porte-Monnaie lié"></select>
-                <button class="btn btn-ghost" id="budget-liaison-sync" type="button">Synchroniser maintenant</button>
-                <button class="btn btn-ghost" id="budget-liaison-stop" type="button" hidden>Délier</button>
+            <section class="budget-reglages" id="budget-liaison" aria-label="Paramètres du budget">
+              <div class="budget-reglages-entete">
+                <div class="budget-reglages-icone" aria-hidden="true">⚙</div>
+                <div><p class="eyebrow">PARAMÈTRES ET SYNCHRONISATION</p><h3>Connexions du budget</h3><p>Reliez votre budget à votre Porte-Monnaie et définissez votre taux de change.</p></div>
               </div>
-              <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px">
-                <label for="budget-taux-usd-fc" class="meta" style="margin:0">Taux manuel : 1 USD =</label>
-                <input id="budget-taux-usd-fc" type="number" min="0.000001" step="any" inputmode="decimal" placeholder="Ex. 2800" aria-label="Valeur en FC pour un dollar américain" style="width:125px;max-width:40vw">
-                <strong class="meta">FC</strong>
-                <span id="budget-taux-statut" class="meta" role="status">Taux non renseigné</span>
+              <div class="budget-reglages-grille">
+                <article class="budget-reglage-bloc budget-liaison-bloc">
+                  <div class="budget-reglage-titre"><span class="budget-reglage-picto" aria-hidden="true">🔗</span><div><strong>Liaison avec le Porte-Monnaie</strong><small>Choisissez le compte à synchroniser.</small></div></div>
+                  <label class="budget-reglage-label" for="budget-liaison-compte">Compte du Porte-Monnaie</label>
+                  <select id="budget-liaison-compte" aria-label="Compte du Porte-Monnaie lié"></select>
+                  <div class="budget-reglage-actions">
+                    <button class="btn btn-primary" id="budget-liaison-sync" type="button">↻ Synchroniser maintenant</button>
+                    <button class="btn btn-ghost" id="budget-liaison-stop" type="button" hidden>Délier</button>
+                  </div>
+                </article>
+                <article class="budget-reglage-bloc budget-taux-bloc">
+                  <div class="budget-reglage-titre"><span class="budget-reglage-picto" aria-hidden="true">💱</span><div><strong>Taux de change manuel</strong><small>Renseignez votre valeur de référence.</small></div></div>
+                  <label class="budget-reglage-label" for="budget-taux-usd-fc">Valeur de 1 dollar américain</label>
+                  <div class="budget-taux-saisie"><span>1 USD =</span><input id="budget-taux-usd-fc" type="number" min="0.000001" step="any" inputmode="decimal" placeholder="Ex. 2800" aria-label="Valeur en FC pour un dollar américain"><strong>FC</strong></div>
+                  <span id="budget-taux-statut" class="budget-taux-statut" role="status">Taux non renseigné</span>
+                </article>
               </div>
-              <p id="budget-liaison-statut" class="meta" role="status" style="margin:6px 0 0">Le taux de change est à votre disposition : saisissez votre propre valeur. Le choix du compte lié reste indépendant.</p>
+              <p id="budget-liaison-statut" class="budget-liaison-statut" role="status">Le choix du compte lié reste indépendant du taux de change que vous renseignez.</p>
             </section>
           </section>
           <section class="tab-pane" id="pane-notes" role="tabpanel" data-pane="notes" hidden>
