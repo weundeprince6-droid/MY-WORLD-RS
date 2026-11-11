@@ -142,20 +142,27 @@ srv.listen(8765, async () => {
     const ok = avant.lignes > 0 && avant.cal && avant.detail && apres.detail && apres.cal && apres.modif && apres.titre.length > 0 && apres.corps.includes(apres.titre) && auj && vide === 0 && retour;
     return { ok, detail: JSON.stringify({ avant, apres: { ...apres, corps: apres.corps.slice(0, 40) }, auj, vide, retour }) };
   }));
-  res.push(await scenario('Drive : présentation comme la messagerie (liste, filtres, détail, éditeur)', {}, async (p) => {
+  res.push(await scenario('Drive : types de fichiers à gauche, contenu à droite, aperçu dans l\'application', {}, async (p) => {
     await p.click('#bouton-connexion'); await p.waitForTimeout(2500);
     await p.click('[data-tab="drive"]'); await p.waitForTimeout(1200);
-    const nb = await p.evaluate(() => document.querySelectorAll('#drive-fichiers [data-drive-file]').length);
-    await p.click('[data-drive-filtre="Sheets"]'); const sheets = await p.evaluate(() => document.querySelectorAll('#drive-fichiers [data-drive-file]').length);
-    await p.click('[data-drive-filtre="tous"]');
-    await p.click('#drive-fichiers [data-drive-file="d2"]'); await p.waitForTimeout(200);
-    const det = await p.evaluate(() => ({ titre: document.getElementById('drive-titre').textContent, detail: !document.getElementById('drive-vue-detail').hidden, modif: !document.getElementById('drive-evt-modifier').hidden, lien: document.getElementById('drive-evt-ouvrir').href }));
-    await p.click('#drive-fichiers [data-drive-file="d4"]'); await p.waitForTimeout(100);
-    const pdf = await p.evaluate(() => ({ modif: document.getElementById('drive-evt-modifier').hidden, corps: document.getElementById('drive-vue-detail').textContent }));
-    await p.click('#drive-retour-accueil'); const accueil = await p.evaluate(() => !document.getElementById('drive-vue-accueil').hidden);
-    const form = await p.evaluate(() => !!document.getElementById('drive-create-form') && !!document.getElementById('drive-create-name'));
-    const ok = nb === 4 && sheets === 1 && det.titre === 'Compte rendu' && det.detail && det.modif && det.lien.includes('d2') && pdf.modif && pdf.corps.includes('200 Ko') && accueil && form;
-    return { ok, detail: JSON.stringify({ nb, sheets, det, pdf: pdf.corps.slice(0, 60), accueil, form }) };
+    const cats = await p.evaluate(() => [...document.querySelectorAll('#drive-categories [data-drive-cat]')].map((b) => b.textContent.trim()));
+    const nb = await p.evaluate(() => document.querySelectorAll('#drive-grille [data-drive-file]').length);
+    await p.click('[data-drive-cat="excel"]'); await p.waitForTimeout(600);
+    const excel = await p.evaluate(() => [...document.querySelectorAll('#drive-grille [data-drive-file]')].map((b) => b.dataset.driveFile));
+    await p.click('[data-drive-cat="pdf"]'); await p.waitForTimeout(600);
+    await p.click('#drive-grille [data-drive-file="d4"]'); await p.waitForTimeout(300);
+    const pdf = await p.evaluate(() => ({ titre: document.getElementById('drive-titre').textContent, src: document.getElementById('drive-apercu').src, apercu: !document.getElementById('drive-vue-apercu').hidden, liste: document.getElementById('drive-vue-liste').hidden, modif: document.getElementById('drive-evt-modifier').hidden, lien: document.getElementById('drive-evt-ouvrir').href }));
+    await p.click('#drive-retour'); await p.waitForTimeout(200);
+    const retour = await p.evaluate(() => !document.getElementById('drive-vue-liste').hidden && document.getElementById('drive-vue-apercu').hidden);
+    await p.click('[data-drive-cat="word"]'); await p.waitForTimeout(600);
+    await p.click('#drive-grille [data-drive-file="d2"]'); await p.waitForTimeout(300);
+    const doc = await p.evaluate(() => ({ src: document.getElementById('drive-apercu').src, modif: !document.getElementById('drive-evt-modifier').hidden }));
+    await p.click('#drive-evt-modifier'); await p.waitForTimeout(500);
+    const edit = await p.evaluate(() => ({ carte: !document.getElementById('drive-editor-card').hidden, apercu: document.getElementById('drive-vue-apercu').hidden }));
+    const ok = cats.length >= 10 && cats.some((c) => c.includes('PDF')) && cats.some((c) => c.includes('Photos')) && cats.some((c) => c.includes('Dossiers')) && cats.some((c) => c.includes('Word')) && nb === 4
+      && excel.length === 1 && excel[0] === 'd1' && pdf.titre === 'Facture.pdf' && pdf.src.includes('drive.google.com/file/d/d4/preview') && pdf.apercu && pdf.liste && pdf.modif && retour
+      && doc.src.includes('docs.google.com/document/d/d2/preview') && doc.modif && edit.carte && edit.apercu;
+    return { ok, detail: JSON.stringify({ cats: cats.length, nb, excel, pdf, retour, doc, edit }) };
   }));
   res.push(await scenario('Quota Gmail dépassé : nouvel essai automatique', { quotaGmail: true }, async (p) => {
     await p.click('#bouton-connexion'); await p.waitForTimeout(6000);

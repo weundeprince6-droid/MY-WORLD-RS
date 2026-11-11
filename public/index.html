@@ -9,7 +9,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#0b1220">
   <link rel="icon" type="image/png" href="icone-192.png">
-  <link rel="stylesheet" href="style.css?v=20261111-drive-chat-v1">
+  <link rel="stylesheet" href="style.css?v=20261111-drive-types-v2">
 </head>
 <body>
   <header class="entete">
@@ -233,20 +233,16 @@
           <section class="tab-pane" id="pane-drive" role="tabpanel" data-pane="drive" hidden>
             <section class="gmail-desktop drive-desktop" aria-label="Google Drive">
               <aside class="gmail-conversations">
-                <div class="gmail-search"><span>⌕</span><input id="drive-recherche" type="search" placeholder="Rechercher un document ou dossier…" aria-label="Rechercher dans Google Drive"></div>
-                <div class="gmail-filtres"><button type="button" class="actif" data-drive-filtre="tous">Tous</button><button type="button" data-drive-filtre="Dossiers">Dossiers</button><button type="button" data-drive-filtre="Docs">Docs</button><button type="button" data-drive-filtre="Sheets">Sheets</button><button type="button" data-drive-filtre="PDF">PDF</button><button type="button" data-drive-filtre="Images">Images</button><button type="button" data-drive-filtre="Autres">Autres</button></div>
+                <div class="gmail-search"><span>⌕</span><input id="drive-recherche" type="search" placeholder="Rechercher un fichier ou dossier…" aria-label="Rechercher dans Google Drive"></div>
                 <div class="drive-outils-liste"><button class="btn btn-light" id="drive-actualiser" type="button">↻ Actualiser</button><button class="btn btn-light" id="drive-autoriser-google" type="button">Autoriser Google Drive</button></div>
                 <p id="drive-statut" class="meta drive-statut-liste" role="status">Ouvrez cette rubrique pour charger vos fichiers Google Drive.</p>
-                <div class="gmail-liste-conversations">
-                  <ul id="drive-fichiers" class="drive-ul"></ul>
-                  <button class="btn drive-plus-btn" id="drive-plus" type="button" hidden>Charger plus</button>
-                </div>
+                <nav class="gmail-liste-conversations" id="drive-categories" aria-label="Types de fichiers"></nav>
               </aside>
-              <section class="gmail-discussion" aria-label="Fichier sélectionné">
-                <header class="gmail-discussion-entete"><div class="gmail-discussion-identite"><span class="gmail-avatar" id="drive-avatar">📁</span><div><strong id="drive-titre">Mon Drive</strong><small id="drive-sous-titre">Choisissez un fichier dans la liste</small></div></div><div class="gmail-discussion-actions"><button type="button" id="drive-retour-accueil" title="Retour" hidden>←</button><button type="button" id="drive-evt-modifier" title="Modifier ici" hidden>✎</button><a id="drive-evt-ouvrir" class="agenda-lien-google" title="Ouvrir dans Google Drive" target="_blank" rel="noopener noreferrer" hidden>↗</a></div></header>
-                <div id="drive-fil" class="gmail-fil-messages">
-                  <div id="drive-vue-accueil"><div class="gmail-date-separateur">Google Drive</div><article class="gmail-bulle-wrap autre"><div class="gmail-bulle"><div class="gmail-bulle-expediteur">Mon Drive</div><div class="gmail-bulle-corps">Choisissez un fichier à gauche pour le voir ou le modifier ici.\nPour créer un document, écrivez son nom en bas et choisissez Docs ou Sheets.</div></div></article></div>
-                  <div id="drive-vue-detail" hidden></div>
+              <section class="gmail-discussion" aria-label="Contenu">
+                <header class="gmail-discussion-entete"><div class="gmail-discussion-identite"><span class="gmail-avatar" id="drive-avatar">🗂</span><div><strong id="drive-titre">Tous les fichiers</strong><small id="drive-sous-titre">Choisissez un type de fichier à gauche</small></div></div><div class="gmail-discussion-actions"><button type="button" id="drive-retour" title="Retour" hidden>←</button><button type="button" id="drive-evt-modifier" title="Modifier ici" hidden>✎</button><a id="drive-evt-ouvrir" class="agenda-lien-google" title="Ouvrir dans Google Drive" target="_blank" rel="noopener noreferrer" hidden>↗</a></div></header>
+                <div id="drive-fil" class="drive-fil">
+                  <div id="drive-vue-liste"><div id="drive-grille" class="drive-grille"></div><button class="btn drive-plus-btn" id="drive-plus" type="button" hidden>Charger plus</button></div>
+                  <div id="drive-vue-apercu" hidden><iframe id="drive-apercu" title="Aperçu du fichier" allow="autoplay; fullscreen" referrerpolicy="no-referrer"></iframe><p class="meta drive-apercu-aide">Si l’aperçu reste vide, connectez-vous à Google dans ce navigateur ou utilisez ↗ pour ouvrir dans Google Drive.</p></div>
                   <section class="carte drive-editor-card" id="drive-editor-card" hidden>
               <div class="card-heading"><div><p class="eyebrow">ÉDITION INTÉGRÉE</p><h3 id="drive-editor-title">Mon document</h3><p class="meta">Vous restez dans MY WORLD RS. Les modifications sont synchronisées avec Google Drive.</p></div><button class="btn btn-light" id="drive-editor-close" type="button">Fermer</button></div>
               <p class="meta drive-editor-help">Docs : éditeur de texte. Sheets : colonnes séparées par tabulations, lignes séparées par retours à la ligne.</p>
@@ -263,6 +259,8 @@
                   <p id="drive-create-status" class="meta drive-create-status" role="status">Pour créer un fichier, autorisez d’abord l’accès Google Drive si nécessaire.</p>
                 </footer>
               </section>
+            </section>
+          </section>
             </section>
           </section>
 
@@ -549,7 +547,7 @@
       setTimeout(function(){if(!window.__appPret)montrer("L'application n'a pas démarré. Vérifiez votre connexion internet (les composants Firebase se chargent depuis Google), désactivez un éventuel bloqueur de publicités, puis rechargez. Sans internet : l'application doit d'abord avoir été ouverte deux fois avec internet sur cet appareil pour s'installer hors ligne. Appuyez sur F12 > Console pour voir le détail.");},6000);
     })();
   </script>
-  <script type="module" src="app.js?v=20261111-drive-chat-v1"></script>
+  <script type="module" src="app.js?v=20261111-drive-types-v2"></script>
   <div id="tv-fenetre" class="tv-fenetre" hidden><div class="tv-barre"><strong>📺 Télévision</strong><span class="tv-actions"><button type="button" id="tv-masquer" title="Masquer le lecteur : la lecture continue en arrière-plan">▾ Masquer (lecture en arrière-plan)</button><button type="button" id="tv-fermer" title="Arrêter la lecture et fermer">✕ Fermer</button></span></div><div id="tv-zone" class="tv-zone"></div></div>
   <div id="tv-mini" class="tv-mini" hidden><span class="tv-mini-pastille">🎵</span><span id="tv-mini-titre" class="tv-mini-titre">Télévision en lecture</span><button type="button" id="tv-mini-afficher">Afficher</button><button type="button" id="tv-mini-arreter" title="Arrêter la lecture">✕</button></div>
 </body>

@@ -1418,3 +1418,22 @@ body:has(#tableau:not([hidden])) .entete-date{display:flex}
 #drive-vue-accueil[hidden],#drive-vue-detail[hidden]{display:none}
 #pane-drive .drive-editor-card{margin:14px 0 0}
 @media(max-width:900px){#pane-drive .drive-desktop{height:auto;min-height:0}}
+
+/* ---------- Drive : catégories à gauche, contenu à droite ---------- */
+.drive-fil{flex:1;min-height:0;overflow:auto;padding:16px;background:var(--bg)}
+.drive-grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.drive-carte{display:flex;flex-direction:column;gap:6px;text-align:left;padding:8px;border:1px solid var(--border);border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font:inherit;min-width:0}
+.drive-carte:hover{border-color:var(--primary);box-shadow:0 4px 14px rgba(0,0,0,.08)}
+.drive-carte strong{font-size:12px;line-height:1.3;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.drive-carte small{font-size:10px;color:var(--muted)}
+.drive-carte-visuel{position:relative;display:grid;place-items:center;height:96px;border-radius:10px;background:var(--bg);overflow:hidden}
+.drive-carte-icone{font-size:38px}
+.drive-carte-visuel img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.drive-vide{grid-column:1/-1;padding:24px 4px}
+#drive-vue-apercu{display:flex;flex-direction:column;gap:8px;height:100%}
+#drive-vue-apercu[hidden],#drive-vue-liste[hidden]{display:none}
+#drive-apercu{flex:1;min-height:420px;width:100%;border:1px solid var(--border);border-radius:12px;background:#fff}
+.drive-apercu-aide{margin:0;font-size:11px}
+#pane-drive #drive-categories .gmail-conversation{border-bottom:0}
+#drive-categories .gmail-conversation{padding:7px 14px;min-height:0;align-items:center}
+#drive-categories .gmail-avatar{width:34px;height:34px;font-size:17px}

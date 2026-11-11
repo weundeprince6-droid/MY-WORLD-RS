@@ -899,7 +899,7 @@ function urlDrive(q, pageToken) {
   const params = new URLSearchParams({
     pageSize: "50",
     orderBy: "folder,name",
-    fields: "nextPageToken,files(id,name,mimeType,modifiedTime,webViewLink,iconLink,size)",
+    fields: "nextPageToken,files(id,name,mimeType,modifiedTime,webViewLink,iconLink,size,thumbnailLink)",
     q: q || "trashed = false",
   });
   if (pageToken) params.set("pageToken", pageToken);
@@ -917,65 +917,109 @@ function categorieFichierDrive(f) {
   if (type.startsWith("audio/")) return "Audio";
   return "Autres fichiers";
 }
-let driveFiltre = "tous", driveSel = null;
-const DRIVE_FILTRES = { Docs: ["Google Docs"], Sheets: ["Google Sheets"], Dossiers: ["Dossiers"], PDF: ["PDF"], Images: ["Images"], Autres: ["Vidéos", "Audio", "Autres fichiers"] };
-function iconeFichierDrive(f) {
-  const t = f.mimeType || "";
-  return t === "application/vnd.google-apps.folder" ? "📁" : t === "application/pdf" ? "📕" : t.includes("spreadsheet") ? "📊" : t.includes("document") ? "📄" : t.startsWith("image/") ? "🖼️" : t.startsWith("video/") ? "🎬" : t.startsWith("audio/") ? "🎵" : "📎";
+const MIME_GDOC = "application/vnd.google-apps.document", MIME_GSHEET = "application/vnd.google-apps.spreadsheet", MIME_GSLIDES = "application/vnd.google-apps.presentation", MIME_DOSSIER = "application/vnd.google-apps.folder";
+const DRIVE_CATS = [
+  { id: "tous", nom: "Tous les fichiers", icone: "🗂" },
+  { id: "dossiers", nom: "Dossiers", icone: "📁", exact: [MIME_DOSSIER] },
+  { id: "pdf", nom: "PDF", icone: "📕", exact: ["application/pdf"] },
+  { id: "photos", nom: "Photos", icone: "🖼️", contient: ["image/"] },
+  { id: "word", nom: "Word / Docs", icone: "📄", exact: [MIME_GDOC, "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/vnd.oasis.opendocument.text", "application/rtf"] },
+  { id: "excel", nom: "Excel / Sheets", icone: "📊", exact: [MIME_GSHEET, "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/vnd.oasis.opendocument.spreadsheet", "text/csv"] },
+  { id: "ppt", nom: "PowerPoint / Slides", icone: "📽️", exact: [MIME_GSLIDES, "application/vnd.ms-powerpoint", "application/vnd.openxmlformats-officedocument.presentationml.presentation", "application/vnd.oasis.opendocument.presentation"] },
+  { id: "videos", nom: "Vidéos", icone: "🎬", contient: ["video/"] },
+  { id: "audio", nom: "Audio", icone: "🎵", contient: ["audio/"] },
+  { id: "texte", nom: "Texte & code", icone: "📝", contient: ["text/"], sauf: ["text/csv"] },
+  { id: "archives", nom: "Archives", icone: "🗜️", exact: ["application/zip", "application/x-zip-compressed", "application/vnd.rar", "application/x-rar-compressed", "application/x-7z-compressed", "application/gzip", "application/x-tar"] },
+  { id: "autres", nom: "Autres", icone: "📎" },
+];
+let driveCat = "tous", driveSel = null, driveChemin = [];
+const driveCatParId = (id) => DRIVE_CATS.find((c) => c.id === id) || DRIVE_CATS[0];
+function driveDansCat(c, mime) {
+  mime = mime || "";
+  if (c.id === "tous") return true;
+  if (c.id === "autres") return !DRIVE_CATS.some((x) => x.id !== "tous" && x.id !== "autres" && driveDansCat(x, mime));
+  if ((c.sauf || []).includes(mime)) return false;
+  return (c.exact || []).includes(mime) || (c.contient || []).some((m) => mime.includes(m));
 }
-const driveEditable = (f) => f.mimeType === "application/vnd.google-apps.document" || f.mimeType === "application/vnd.google-apps.spreadsheet";
+const driveCatDe = (f) => DRIVE_CATS.find((c) => c.id !== "tous" && c.id !== "autres" && driveDansCat(c, f.mimeType)) || driveCatParId("autres");
+function driveFiltreQ(c) {
+  const parties = (x) => [...(x.exact || []).map((m) => `mimeType = '${m}'`), ...(x.contient || []).map((m) => `mimeType contains '${m}'`)];
+  if (c.id === "tous") return "";
+  if (c.id === "autres") return " and not (" + DRIVE_CATS.filter((x) => x.id !== "tous" && x.id !== "autres").flatMap(parties).join(" or ") + ")";
+  return " and (" + parties(c).join(" or ") + ")" + (c.sauf || []).map((m) => ` and mimeType != '${m}'`).join("");
+}
+function iconeFichierDrive(f) { return f.mimeType === MIME_DOSSIER ? "📁" : driveCatDe(f).icone; }
+const driveEditable = (f) => f.mimeType === MIME_GDOC || f.mimeType === MIME_GSHEET;
 const driveTaille = (o) => { const n = Number(o); return !n ? "" : n > 1048576 ? (n / 1048576).toFixed(1).replace(".", ",") + " Mo" : Math.max(1, Math.round(n / 1024)) + " Ko"; };
-function driveFichiersFiltres() {
-  const cats = DRIVE_FILTRES[driveFiltre];
-  return driveListeAffichee.filter((f) => !cats || cats.includes(categorieFichierDrive(f)));
+function driveUrlApercu(f) {
+  const id = encodeURIComponent(f.id);
+  if (f.mimeType === MIME_GDOC) return `https://docs.google.com/document/d/${id}/preview`;
+  if (f.mimeType === MIME_GSHEET) return `https://docs.google.com/spreadsheets/d/${id}/preview`;
+  if (f.mimeType === MIME_GSLIDES) return `https://docs.google.com/presentation/d/${id}/preview`;
+  return `https://drive.google.com/file/d/${id}/preview`;
 }
-function driveAfficherDetail(f) {
-  const detail = $("drive-vue-detail"), accueil = $("drive-vue-accueil");
-  const montrer = !!f;
-  detail.hidden = !montrer; accueil.hidden = montrer;
-  $("drive-retour-accueil").hidden = !montrer;
-  $("drive-evt-modifier").hidden = !(montrer && driveEditable(f));
-  const lien = $("drive-evt-ouvrir"); lien.hidden = !montrer;
-  if (!montrer) {
-    $("drive-titre").textContent = "Mon Drive"; $("drive-sous-titre").textContent = "Choisissez un fichier dans la liste"; $("drive-avatar").textContent = "📁"; detail.innerHTML = "";
+function rendreCategoriesDrive() {
+  $("drive-categories").innerHTML = DRIVE_CATS.map((c) => '<button type="button" class="gmail-conversation'+(driveCat===c.id?" selectionnee":"")+'" data-drive-cat="'+c.id+'"><span class="gmail-avatar drive-avatar-icone">'+c.icone+'</span><span class="gmail-conversation-texte"><span class="gmail-conversation-haut"><strong>'+echapper(c.nom)+'</strong></span></span></button>').join("");
+}
+function driveFichiersVus() {
+  return driveChemin.length ? driveListeAffichee : driveListeAffichee.filter((f) => driveDansCat(driveCatParId(driveCat), f.mimeType));
+}
+function rendreDrive() {
+  rendreCategoriesDrive();
+  const cat = driveCatParId(driveCat), dossier = driveChemin[driveChemin.length - 1];
+  if (driveSel && !driveListeAffichee.some((f) => f.id === driveSel)) driveSel = null;
+  const f = driveSel ? driveListeAffichee.find((x) => x.id === driveSel) : null;
+  const edition = !$("drive-editor-card").hidden;
+  $("drive-vue-liste").hidden = !!f; $("drive-vue-apercu").hidden = !f || edition;
+  $("drive-retour").hidden = !(f || driveChemin.length);
+  $("drive-evt-modifier").hidden = !(f && driveEditable(f));
+  const lien = $("drive-evt-ouvrir");
+  if (f) {
+    lien.hidden = false; lien.href = f.webViewLink || `https://drive.google.com/open?id=${encodeURIComponent(f.id)}`;
+    const date = f.modifiedTime ? jourHeure.format(new Date(f.modifiedTime)) : "";
+    $("drive-titre").textContent = f.name || "Sans nom"; $("drive-avatar").textContent = iconeFichierDrive(f);
+    $("drive-sous-titre").textContent = driveCatDe(f).nom + (date ? " · modifié " + date : "") + (driveTaille(f.size) ? " · " + driveTaille(f.size) : "");
+    const src = driveUrlApercu(f), cadre = $("drive-apercu"); if (cadre.dataset.src !== src) { cadre.dataset.src = src; cadre.src = src; }
     return;
   }
-  lien.href = f.webViewLink || `https://drive.google.com/open?id=${encodeURIComponent(f.id)}`;
-  const date = f.modifiedTime ? jourHeure.format(new Date(f.modifiedTime)) : "";
-  const cat = categorieFichierDrive(f);
-  $("drive-titre").textContent = f.name || "Sans nom"; $("drive-sous-titre").textContent = cat + (date ? " · modifié " + date : ""); $("drive-avatar").textContent = iconeFichierDrive(f);
-  const lignes = [["🗂", cat], ...(date ? [["🕒", "Modifié " + date]] : []), ...(driveTaille(f.size) ? [["💾", driveTaille(f.size)]] : [])];
-  detail.innerHTML = '<div class="gmail-date-separateur">'+echapper(cat)+'</div><article class="gmail-bulle-wrap autre"><div class="gmail-bulle"><div class="gmail-bulle-expediteur">Google Drive</div><div class="gmail-bulle-corps"><strong>'+iconeFichierDrive(f)+" "+echapper(f.name || "Sans nom")+'</strong>\n'+lignes.map(([i, t]) => i+" "+echapper(t)).join("\n")+'</div>'+(date?'<time>'+echapper(date)+'</time>':'')+'</div></article>';
+  const cadre = $("drive-apercu"); if (cadre.dataset.src) { cadre.dataset.src = ""; cadre.src = "about:blank"; }
+  lien.hidden = !dossier; if (dossier) lien.href = `https://drive.google.com/drive/folders/${encodeURIComponent(dossier.id)}`;
+  $("drive-titre").textContent = dossier ? dossier.name : cat.nom; $("drive-avatar").textContent = dossier ? "📁" : cat.icone;
+  const vus = driveFichiersVus();
+  $("drive-sous-titre").textContent = dossier ? "Dossier · " + driveChemin.map((d) => d.name).join(" › ") : vus.length + " élément(s)" + (drivePageToken ? " chargé(s)" : "");
+  $("drive-grille").innerHTML = vus.length ? vus.map((x) => {
+    const date = x.modifiedTime ? jourCourt.format(new Date(x.modifiedTime)) : "";
+    const miniature = x.thumbnailLink && (x.mimeType || "").startsWith("image/") ? '<img src="'+echapper(x.thumbnailLink)+'" alt="" loading="lazy" referrerpolicy="no-referrer">' : "";
+    return '<button type="button" class="drive-carte'+(x.mimeType===MIME_DOSSIER?" dossier":"")+'" data-drive-file="'+echapper(x.id)+'"><span class="drive-carte-visuel"><span class="drive-carte-icone">'+iconeFichierDrive(x)+'</span>'+miniature+'</span><strong>'+echapper(x.name || "Sans nom")+'</strong><small>'+echapper([driveCatDe(x).nom, date, driveTaille(x.size)].filter(Boolean).join(" · "))+'</small></button>';
+  }).join("") : '<p class="meta drive-vide">Aucun fichier de ce type'+(driveRecherche.trim()?" pour cette recherche":"")+'.</p>';
 }
 function afficherFichiersDrive(fichiers, ajouter = false) {
   driveFichiersIA = (ajouter ? driveFichiersIA : []).concat(fichiers.map(f => ({ name: f.name, mimeType: f.mimeType || "", modifiedTime: f.modifiedTime || "" })));
   driveListeAffichee = (ajouter ? driveListeAffichee : []).concat(fichiers);
   rendreDrive();
 }
-function rendreDrive() {
-  const liste = $("drive-fichiers");
-  if (driveSel && !driveListeAffichee.some((f) => f.id === driveSel)) driveSel = null;
-  const vus = driveFichiersFiltres();
-  liste.innerHTML = vus.length ? vus.map((f) => {
-    const date = f.modifiedTime ? jourCourt.format(new Date(f.modifiedTime)) : "";
-    return '<li><button type="button" class="gmail-conversation'+(driveSel===f.id?" selectionnee":"")+'" data-drive-file="'+echapper(f.id)+'"><span class="gmail-avatar drive-avatar-icone">'+iconeFichierDrive(f)+'</span><span class="gmail-conversation-texte"><span class="gmail-conversation-haut"><strong>'+echapper(f.name || "Sans nom")+'</strong><time>'+echapper(date)+'</time></span><span class="gmail-conversation-sujet">'+echapper(categorieFichierDrive(f))+'</span></span></button></li>';
-  }).join("") : '<li class="vide">Aucun fichier trouvé.</li>';
-  driveAfficherDetail(driveSel ? driveListeAffichee.find((f) => f.id === driveSel) : null);
-}
-document.querySelectorAll("[data-drive-filtre]").forEach((b) => b.addEventListener("click", () => {
-  driveFiltre = b.dataset.driveFiltre;
-  document.querySelectorAll("[data-drive-filtre]").forEach((x) => x.classList.toggle("actif", x === b));
-  rendreDrive();
-}));
-$("drive-fichiers")?.addEventListener("click", (ev) => {
-  const b = ev.target.closest("[data-drive-file]"); if (!b) return;
-  driveSel = b.dataset.driveFile; fermerDriveEditeur(); rendreDrive();
+$("drive-categories")?.addEventListener("click", (ev) => {
+  const b = ev.target.closest("[data-drive-cat]"); if (!b) return;
+  driveCat = b.dataset.driveCat; driveSel = null; driveChemin = []; fermerDriveEditeur();
+  rendreDrive(); chargerDrive({ nouvelleRecherche: true });
 });
-$("drive-retour-accueil")?.addEventListener("click", () => { driveSel = null; fermerDriveEditeur(); rendreDrive(); });
+$("drive-grille")?.addEventListener("click", (ev) => {
+  const b = ev.target.closest("[data-drive-file]"); if (!b) return;
+  const f = driveListeAffichee.find((x) => x.id === b.dataset.driveFile); if (!f) return;
+  if (f.mimeType === MIME_DOSSIER) { driveChemin.push({ id: f.id, name: f.name || "Dossier" }); driveSel = null; chargerDrive({ nouvelleRecherche: true }); return; }
+  driveSel = f.id; fermerDriveEditeur(); rendreDrive();
+});
+$("drive-grille")?.addEventListener("error", (ev) => { if (ev.target.tagName === "IMG") ev.target.remove(); }, true);
+$("drive-retour")?.addEventListener("click", () => {
+  if (!$("drive-editor-card").hidden) { fermerDriveEditeur(); return; }
+  if (driveSel) { driveSel = null; rendreDrive(); return; }
+  if (driveChemin.length) { driveChemin.pop(); chargerDrive({ nouvelleRecherche: true }); }
+});
 $("drive-evt-modifier")?.addEventListener("click", () => {
   const f = driveListeAffichee.find((x) => x.id === driveSel); if (!f) return;
-  ouvrirDriveDansEditeur(f.id, f.name || "Sans nom", f.mimeType.includes("spreadsheet") ? "spreadsheet" : "document");
+  ouvrirDriveDansEditeur(f.id, f.name || "Sans nom", f.mimeType === MIME_GSHEET ? "spreadsheet" : "document");
 });
+rendreCategoriesDrive();
 async function chargerDrive({ nouvelleRecherche = false } = {}) {
   if (!jetonGoogle) return;
   if (nouvelleRecherche) drivePageToken = null;
@@ -984,17 +1028,18 @@ async function chargerDrive({ nouvelleRecherche = false } = {}) {
   statut.textContent = "Chargement de Google Drive…";
   bouton.disabled = true;
   try {
-    let q = "trashed = false";
+    const dossier = driveChemin[driveChemin.length - 1];
+    let q = dossier ? `'${dossier.id.replace(/'/g, "")}' in parents and trashed = false` : "trashed = false" + driveFiltreQ(driveCatParId(driveCat));
     if (driveRecherche.trim()) q += " and name contains '" + driveRecherche.trim().replace(/\\/g, "\\\\").replace(/'/g, "\\'") + "'";
     const resultat = await google(urlDrive(q, nouvelleRecherche ? null : drivePageToken));
     afficherFichiersDrive(resultat.files || [], !nouvelleRecherche && Boolean(drivePageToken));
     drivePageToken = resultat.nextPageToken || null;
     $("drive-plus").hidden = !drivePageToken;
-    statut.textContent = `${driveListeAffichee.length} fichier(s) affiché(s). Les éléments s'ouvrent dans Google Drive.`;
+    statut.textContent = `${driveListeAffichee.length} élément(s) chargé(s).`;
     driveCharge = true;
   } catch (e) {
     statut.textContent = "Impossible de lire Google Drive : " + e.message;
-    $("drive-fichiers").innerHTML = "";
+    $("drive-grille").innerHTML = "";
   } finally { bouton.disabled = false; }
 }
 $("drive-actualiser")?.addEventListener("click", () => chargerDrive({ nouvelleRecherche: true }));
@@ -1016,6 +1061,7 @@ function fermerDriveEditeur() {
   const zone = $("drive-editor-card");
   if (zone) zone.hidden = true;
   driveEditeur = { id: "", name: "", type: "document", original: "" };
+  if (typeof rendreDrive === "function" && $("drive-vue-apercu")) rendreDrive();
 }
 function afficherTSV(values) {
   return (values || []).map(row => (row || []).map(v => String(v ?? "").replace(/\\t/g, " ").replace(/\\r?\\n/g, " ")).join("\\t")).join("\\n");
@@ -1027,7 +1073,7 @@ async function ouvrirDriveDansEditeur(id, name, type) {
   const zone = $("drive-editor-card"), titre = $("drive-editor-title"), champ = $("drive-editor-content"), status = $("drive-editor-status");
   if (!zone || !champ) return;
   driveEditeur = { id, name, type, original: "" };
-  zone.hidden = false;
+  zone.hidden = false; rendreDrive();
   titre.textContent = (type === "spreadsheet" ? "Google Sheets · " : "Google Docs · ") + name;
   champ.value = "";
   champ.placeholder = type === "spreadsheet" ? "Cellules séparées par des tabulations ; une ligne par rangée…" : "Écrivez votre document ici…";
