@@ -1725,3 +1725,49 @@ body:has(#tableau:not([hidden])) .entete-date{display:flex}
   #pane-agenda .agenda-desktop .gmail-discussion-entete{padding:10px!important;gap:6px!important}
   #pane-agenda .agenda-desktop .gmail-discussion-actions{gap:4px!important}
 }
+
+
+/* Lecteur de l'Agenda : finition champagne-or douce, reposante pour les yeux */
+#pane-agenda .gmail-discussion{
+  background:#f7f2e6!important;
+  border-color:#d9c58e!important;
+  color:#302a1e!important;
+}
+#pane-agenda .gmail-discussion-entete{
+  background:#eee3c8!important;
+  border-bottom:1px solid #d9c58e!important;
+  color:#302a1e!important;
+}
+#pane-agenda .gmail-discussion-identite strong,
+#pane-agenda .gmail-discussion-identite small{
+  color:#403720!important;
+}
+#pane-agenda .gmail-fil-messages{
+  background-color:#f8f4ea!important;
+  background-image:radial-gradient(#cbb77c55 .7px,transparent .7px)!important;
+  color:#302a1e!important;
+}
+#pane-agenda #agenda-vue-detail,
+#pane-agenda #agenda-vue-detail *{
+  color:#302a1e;
+}
+#pane-agenda #agenda-vue-detail .carte,
+#pane-agenda #agenda-vue-calendrier .carte{
+  background:#fffaf0!important;
+  border-color:#e1d2a9!important;
+  color:#302a1e!important;
+  box-shadow:0 3px 14px rgba(112,86,30,.07)!important;
+}
+#pane-agenda .gmail-discussion-actions button,
+#pane-agenda .gmail-discussion-actions .agenda-lien-google,
+#pane-agenda .gmail-compositeur{
+  background:#f1e6cb!important;
+  border-color:#d5bd7d!important;
+  color:#6f541c!important;
+}
+#pane-agenda .gmail-compositeur input{
+  background:#fffaf0!important;
+  border-color:#dfcea0!important;
+  color:#403720!important;
+}
+#pane-agenda .gmail-compositeur input::placeholder{color:#8b7a55!important}
