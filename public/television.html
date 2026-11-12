@@ -196,6 +196,15 @@ table.keys{width:100%;border-collapse:collapse}table.keys td{padding:3px 4px;bor
 .small{color:var(--muted);font-size:12px}
 ::-webkit-scrollbar{width:8px}::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
 @media(max-width:820px){#app{flex-direction:column}#sidebar{width:100%;height:38%;border-right:none;border-bottom:1px solid var(--border)}#app.panel-open #panel{position:fixed;right:0;top:0;bottom:0;z-index:20}}
+
+/* Aperçu du fichier suivant, façon lecteur vidéo */
+#tv-next-preview{position:absolute;z-index:80;right:22px;bottom:22px;width:min(340px,calc(100% - 44px));padding:16px 18px;background:rgba(20,25,34,.96);border:1px solid rgba(215,183,105,.7);border-radius:14px;box-shadow:0 12px 38px rgba(0,0,0,.45);color:#fff;animation:tvNextIn .22s ease-out}
+#tv-next-preview .tv-next-kicker{font-size:10px;letter-spacing:1.5px;font-weight:800;color:#e2c477;margin-bottom:7px}
+#tv-next-preview .tv-next-name{font-size:14px;font-weight:700;line-height:1.4;overflow-wrap:anywhere;margin-bottom:7px}
+#tv-next-preview .tv-next-count{font-size:12px;color:#d6d9df;margin-bottom:12px}
+#tv-next-preview .tv-next-play{background:#c9a653;color:#171717;border:0;border-radius:8px;padding:9px 13px;font-weight:700}
+#tv-next-preview .tv-next-cancel{float:right;background:transparent;border:0;color:#fff;font-size:22px;padding:2px 8px}
+@keyframes tvNextIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 </style>
 
 <script>
@@ -812,7 +821,30 @@ function nextIndex(dir) {
   if (np < 0) np = dir < 0 ? pool.length - 1 : -1;
   return np === -1 ? -1 : pool[np];
 }
-const next = (dir = 1) => { const n = nextIndex(dir); if (n !== -1) play(n); };
+let tvNextTimer = null, tvNextInterval = null;
+function tvAnnulerSuivant() {
+  clearTimeout(tvNextTimer); clearInterval(tvNextInterval);
+  tvNextTimer = tvNextInterval = null;
+  document.getElementById('tv-next-preview')?.remove();
+}
+function tvProgrammerSuivant() {
+  tvAnnulerSuivant();
+  const n = nextIndex(1);
+  if (n === -1) return;
+  const it = items[n], card = document.createElement('div');
+  card.id = 'tv-next-preview';
+  card.innerHTML = '<div class="tv-next-kicker">À SUIVRE</div><div class="tv-next-name"></div><div class="tv-next-count">Lecture dans 5 s</div><button type="button" class="tv-next-play">▶ Lire maintenant</button><button type="button" class="tv-next-cancel" title="Annuler">×</button>';
+  card.querySelector('.tv-next-name').textContent = it.name || 'Fichier suivant';
+  $('viewer').appendChild(card);
+  let left = 5;
+  const count = card.querySelector('.tv-next-count');
+  const lancer = () => { tvAnnulerSuivant(); play(n); };
+  card.querySelector('.tv-next-play').addEventListener('click', lancer);
+  card.querySelector('.tv-next-cancel').addEventListener('click', tvAnnulerSuivant);
+  tvNextInterval = setInterval(() => { left--; if (count.isConnected) count.textContent = 'Lecture dans ' + left + ' s'; }, 1000);
+  tvNextTimer = setTimeout(lancer, 5000);
+}
+const next = (dir = 1) => { tvAnnulerSuivant(); const n = nextIndex(dir); if (n !== -1) play(n); };
 
 function togglePlay() {
   const m = activeMedia();
@@ -831,7 +863,7 @@ function onEnded() {
   if (it) { prog[it.key] = { done: 1, u: Date.now() }; flushProg(); renderList(); }
   if (stopAfter) { stopAfter = false; $('sleep').value = '0'; osd('Arrêt programmé'); updatePlayBtn(); return; }
   if (repeat === 'one') { const m = activeMedia(); m.currentTime = 0; m.play(); return; }
-  next(1);
+  tvProgrammerSuivant();
 }
 function onTime(m) {
   if (m !== activeMedia()) return;
