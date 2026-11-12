@@ -1682,3 +1682,46 @@ body:has(#tableau:not([hidden])) .entete-date{display:flex}
     word-break:break-word!important;
   }
 }
+
+
+/* Agenda : empiler la liste et le détail sur les fenêtres étroites */
+@media(max-width:900px){
+  #pane-agenda .agenda-desktop{
+    display:flex!important;
+    flex-direction:column!important;
+    width:100%!important;
+    min-width:0!important;
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+    overflow:visible!important;
+  }
+  #pane-agenda .agenda-desktop .gmail-conversations{
+    width:100%!important;
+    min-width:0!important;
+    height:280px!important;
+    max-height:38vh!important;
+    flex:0 0 auto!important;
+    border-right:0!important;
+    border-bottom:1px solid var(--border)!important;
+  }
+  #pane-agenda .agenda-desktop .gmail-discussion{
+    width:100%!important;
+    min-width:0!important;
+    min-height:420px!important;
+    flex:1 1 auto!important;
+  }
+  #pane-agenda .agenda-desktop .gmail-discussion-entete,
+  #pane-agenda .agenda-desktop .gmail-fil-messages,
+  #pane-agenda .agenda-desktop .gmail-compositeur{
+    min-width:0!important;
+    max-width:100%!important;
+    box-sizing:border-box!important;
+  }
+}
+@media(max-width:480px){
+  #pane-agenda .agenda-desktop .gmail-conversations{height:245px!important;max-height:34vh!important}
+  #pane-agenda .agenda-desktop .gmail-discussion{min-height:360px!important}
+  #pane-agenda .agenda-desktop .gmail-discussion-entete{padding:10px!important;gap:6px!important}
+  #pane-agenda .agenda-desktop .gmail-discussion-actions{gap:4px!important}
+}
