@@ -206,72 +206,40 @@ table.keys{width:100%;border-collapse:collapse}table.keys td{padding:3px 4px;bor
 #tv-next-preview .tv-next-cancel{float:right;background:transparent;border:0;color:#fff;font-size:22px;padding:2px 8px}
 @keyframes tvNextIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 
-/* ===== Thème or champagne du lecteur multimédia ===== */
-:root{
- --bg:#f7f0df;--panel:#111923;--panel2:#1b2734;--text:#292315;
- --muted:#806b42;--accent:#b8862d;--accent2:#e4c77e;--border:#d9c38f;
+
+/* ===== Trois thèmes du lecteur : clair, sombre et doré ===== */
+:root{--bg:#10151d;--panel:#171f2b;--panel2:#222d3b;--text:#edf1f7;--muted:#a6b0bf;--accent:#238b68;--accent2:#62c69d;--border:#354253}
+body.light{--bg:#f1f3f7;--panel:#fff;--panel2:#e8ebf1;--text:#202635;--muted:#687386;--accent:#167c58;--accent2:#52b98c;--border:#d5dbe5}
+body.gold{--bg:#0b0d10;--panel:#111417;--panel2:#1b2025;--text:#f7f0df;--muted:#c1ad83;--accent:#c99b43;--accent2:#edca79;--border:#6d542b}
+body{background:var(--bg)!important;color:var(--text)!important}
+#app,#sidebar,#stage,#controls,#panel{background:var(--panel)!important;color:var(--text)!important;border-color:var(--border)!important}
+#viewer{background:var(--bg)!important;color:var(--text)!important}
+#viewer.mode-video{background:#000!important}
+#viewer.mode-audio{background:radial-gradient(ellipse at center,color-mix(in srgb,var(--panel2) 70%,var(--bg)),var(--bg))!important}
+#sidebar .side-head,#titleBar,#controls,.side-head{border-color:var(--border)!important}
+#sidebar button,#sidebar select,#sidebar input,#panel button,#panel select,#panel input:not([type=range]),#btnRow button{
+ background:var(--panel2)!important;color:var(--text)!important;border-color:var(--border)!important
 }
-body{background:#0c1118;color:#f7edda}
-#app{background:#0c1118}
-#sidebar{background:#111923;color:#f7edda;border-right:1px solid #65502a}
-#sidebar .side-head{border-color:#594722}
-#sidebar button,#sidebar select,#sidebar input[type=search]{background:#1b2734;color:#f7edda;border-color:#65552f}
-#sidebar button:hover,#sidebar button.active{background:#b8862d;color:#17130b;border-color:#e4c77e}
-#sidebar #playlist li{color:#f5eddd}
-#sidebar #playlist li:hover{background:#293545}
-#sidebar #playlist li.current{background:#4b3a1c;color:#ffe3a0;outline:1px solid #c69b4a}
-#sidebar #playlist li.grp{background:#111923;color:#e4c77e}
-#stage{background:#f7f0df;color:#302716}
-#viewer{background:linear-gradient(145deg,#f8efd9,#ead7a8);color:#302716}
-#viewer.mode-video{background:#000}
-#viewer.mode-audio{background:radial-gradient(ellipse at center,#fff4d9 0%,#f0dfb9 65%,#dfc58c 100%)}
-#audioInfo{color:#473313}
-#audioTitle{text-shadow:none;color:#38280d}
-#audioIcon{color:#b8862d;filter:drop-shadow(0 5px 12px #b8862d55)}
-#titleBar{background:#f2e3c0;color:#3c2b0e;border-top:1px solid #d7bd7e}
-#controls{background:#fff5df;color:#39290f;border-top:1px solid #d9c18b}
-#seekRow span.t{color:#705725}
-input[type=range]{accent-color:#b8862d}
-#btnRow .group button,#btnRow .group select{
- background:#f5e6c5;color:#68470e;border:1px solid #c9a65d;
- min-width:40px;min-height:40px;font-weight:800;
-}
-#btnRow .group button:hover{background:#e8d19d;color:#382607;border-color:#a87920}
-#btnRow .group button.primary{background:linear-gradient(145deg,#d8b15c,#a9771c);color:#fff9e9;border:1px solid #946515;box-shadow:0 4px 12px #8c641e44}
-#seek{accent-color:#b8862d}
-#docBox{background:#fbf4e5;color:#302716}
-#docEntete{background:#f0dfb8;border-color:#d9c38f;color:#302716}
-#pdfBarre{background:#f2e3c0;color:#302716;border-color:#d9c38f}
-#pdfBarre button,#docActions button{background:#fff5df;color:#65470f;border-color:#c9a65d}
-#galerie,#gallery{background:#f7f0df;color:#302716}
-#toast,#osd{background:#29200f;color:#fff1cf;border:1px solid #c69b4a}
+#sidebar button:hover,#panel button:hover,#btnRow button:hover{border-color:var(--accent)!important}
+#sidebar button.active,#ptabs button.active{background:var(--accent)!important;color:#fff!important}
+#playlist li{color:var(--text)!important}
+#playlist li:hover,#playlist li.grp{background:var(--panel2)!important}
+#playlist li.grp,#playlist li.current{color:var(--accent2)!important}
+#playlist li.current{background:color-mix(in srgb,var(--accent) 22%,var(--panel))!important}
+#titleBar{background:var(--panel2)!important;color:var(--text)!important}
+#seekRow span.t,#empty,#panel .small{color:var(--muted)!important}
+#docBox,#pdfBarre,#galerie,#gallery,#tvDriveView{background:var(--panel)!important;color:var(--text)!important;border-color:var(--border)!important}
+#docEntete{background:var(--panel2)!important;color:var(--text)!important;border-color:var(--border)!important}
+#toast,#osd{background:var(--panel2)!important;color:var(--text)!important;border:1px solid var(--accent)!important}
+input[type=range]{accent-color:var(--accent)!important}
+body.gold #audioInfo,body.gold #audioTitle{color:#f7e9c9!important;text-shadow:none!important}
+body.gold #audioIcon{color:#d8ad57!important;filter:drop-shadow(0 5px 14px #c99b4366)}
+body.gold #btnRow .group button.primary{background:linear-gradient(145deg,#e4bd68,#a8751e)!important;color:#211707!important}
+body.gold #btnRow .group button{border-color:#8e6b30!important}
+body.gold #titleBar{background:#1a1a18!important}
 </style>
 
-<script>
-/* Le lecteur reprend automatiquement les couleurs et le thème de MY WORLD RS */
-(function(){
-  function synchroniserThemeParent(){
-    try{
-      var racineParent=parent.document.documentElement;
-      var styles=parent.getComputedStyle(racineParent);
-      var correspondances={
-        "--bg":"--bg","--panel":"--surface","--panel2":"--primary-soft",
-        "--text":"--text","--muted":"--muted","--accent":"--primary",
-        "--accent2":"--green","--border":"--border"
-      };
-      Object.keys(correspondances).forEach(function(cible){
-        var valeur=styles.getPropertyValue(correspondances[cible]).trim();
-        if(valeur)document.body.style.setProperty(cible,valeur);
-      });
-      document.body.classList.toggle("light",racineParent.dataset.theme!=="dark");
-    }catch(e){}
-  }
-  synchroniserThemeParent();
-  try{
-    new MutationObserver(synchroniserThemeParent).observe(parent.document.documentElement,{attributes:true,attributeFilter:["data-theme","class"]});
-  }catch(e){}
-})();
-</script>
+
 
 </head>
 <body data-mode="empty">
@@ -446,6 +414,13 @@ input[type=range]{accent-color:#b8862d}
     </section>
 
     <section class="psec" data-p="opts">
+      <label for="playerTheme">Apparence du lecteur</label>
+      <select id="playerTheme">
+        <option value="light">Thème clair</option>
+        <option value="dark">Thème sombre</option>
+        <option value="gold">Thème doré</option>
+      </select>
+
       <label class="chk"><input type="checkbox" id="optResume" checked /> Reprendre là où j'en étais</label>
       <label class="chk"><input type="checkbox" id="optAutosub" checked /> Charger automatiquement les sous-titres</label>
       <label>Minuterie de sommeil</label>
@@ -1356,7 +1331,21 @@ $('btnFull').onclick = toggleFull;
 video.addEventListener('click', togglePlay);
 video.addEventListener('dblclick', toggleFull);
 
-function applyTheme() { document.body.classList.toggle('light', S.theme === 'light'); }
+function applyTheme() {
+  const theme = ['light','dark','gold'].includes(S.theme) ? S.theme : 'dark';
+  S.theme = theme;
+  document.body.classList.toggle('light', theme === 'light');
+  document.body.classList.toggle('gold', theme === 'gold');
+  document.body.dataset.theme = theme;
+  const chooser = $('playerTheme');
+  if (chooser) chooser.value = theme;
+}
+applyTheme();
+$('playerTheme').addEventListener('change', e => {
+  S.theme = e.target.value;
+  saveS();
+  applyTheme();
+});
 function openPanel(tab) { $('app').classList.add('panel-open'); if (tab) showTab(tab); }
 function showTab(p) {
   document.querySelectorAll('#ptabs button').forEach((b) => b.classList.toggle('active', b.dataset.p === p));
