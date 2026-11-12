@@ -1587,3 +1587,44 @@ body:has(#tableau:not([hidden])) .entete-date{display:flex}
 #pane-budget-mensuel .budget-taux-statut{display:inline-flex;margin-top:9px;padding:4px 9px;border-radius:20px;background:var(--primary-soft);color:var(--primary);font-size:11px;font-weight:700}
 #pane-budget-mensuel .budget-liaison-statut{margin:14px 0 0;padding:10px 12px;border-left:3px solid var(--primary);border-radius:0 9px 9px 0;background:var(--surface);color:var(--muted);font-size:11px}
 @media(max-width:700px){#pane-budget-mensuel .budget-reglages-grille{grid-template-columns:1fr}#pane-budget-mensuel .budget-reglage-bloc{padding:15px}#pane-budget-mensuel .budget-reglages-entete{align-items:flex-start}#pane-budget-mensuel .budget-reglages-entete h3{font-size:17px}#pane-budget-mensuel .budget-reglage-actions{display:grid;grid-template-columns:1fr}#pane-budget-mensuel .budget-reglage-actions .btn{width:100%}}
+
+/* Navigation mobile : onglets lisibles et défilement horizontal au doigt */
+@media(max-width:760px){
+  .sidebar{
+    overflow-x:auto;
+    overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior-x:contain;
+    scrollbar-width:none;
+    touch-action:pan-x;
+    scroll-padding-inline:8px;
+  }
+  .sidebar::-webkit-scrollbar{display:none}
+  .navigation{
+    display:flex;
+    width:max-content;
+    min-width:max-content;
+    justify-content:flex-start;
+    gap:4px;
+  }
+  .nav-item{
+    flex:0 0 78px;
+    width:78px;
+    min-width:78px;
+    max-width:88px;
+    min-height:56px;
+    padding:7px 4px;
+    scroll-snap-align:start;
+  }
+  .nav-item>span:not(.nav-icon):not(.nav-arrow){
+    display:-webkit-box;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:2;
+    overflow:hidden;
+    white-space:normal;
+    line-height:1.15;
+    overflow-wrap:anywhere;
+  }
+  .nav-icon{line-height:1.2}
+  .nav-item:focus-visible{outline:2px solid var(--primary);outline-offset:-2px}
+}
