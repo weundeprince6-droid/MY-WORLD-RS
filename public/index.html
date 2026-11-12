@@ -9,7 +9,25 @@
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#0b1220">
   <link rel="icon" type="image/png" href="icone-192.png">
-  <link rel="stylesheet" href="style.css?v=20261112-agenda-reader-gold-v1">
+  <link rel="stylesheet" href="style.css?v=20261112-player-gold-theme-v1">
+<style>
+/* Boutons de fenêtre du lecteur : symboles contrastés et faciles à voir */
+.tv-barre .tv-actions{display:flex;align-items:center;gap:9px}
+.tv-barre .tv-actions button,.tv-mini button{
+ width:42px!important;height:38px!important;min-width:42px!important;
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ border:1px solid #d4b46c!important;border-radius:10px!important;
+ background:linear-gradient(145deg,#f7e8c5,#dfc17d)!important;
+ color:#352409!important;font-size:25px!important;font-weight:900!important;
+ line-height:1!important;padding:0!important;
+ box-shadow:0 2px 7px #0003!important;
+}
+.tv-barre .tv-actions button:hover,.tv-mini button:hover{
+ background:#c99a3e!important;color:#fff!important;transform:translateY(-1px)
+}
+.tv-mini{border:1px solid #c49b4c!important;background:#111923!important;color:#fff1d2!important}
+.tv-mini-titre{color:#fff1d2!important}
+</style>
 </head>
 <body>
   <header class="entete">
@@ -589,7 +607,7 @@
     })();
   </script>
   <script type="module" src="app.js?v=20261111-budget-liaison3"></script>
-  <div id="tv-fenetre" class="tv-fenetre" hidden><div class="tv-barre"><strong>📺 Télévision</strong><span class="tv-actions"><button type="button" id="tv-masquer" title="Mettre en arrière-plan : la lecture continue">↓</button><button type="button" id="tv-fermer" title="Fermer et arrêter la lecture">×</button></span></div><div id="tv-zone" class="tv-zone"></div></div>
-  <div id="tv-mini" class="tv-mini" hidden><span class="tv-mini-pastille">🎵</span><span id="tv-mini-titre" class="tv-mini-titre">Télévision en lecture</span><button type="button" id="tv-mini-afficher" title="Afficher le lecteur">↑</button><button type="button" id="tv-mini-arreter" title="Arrêter la lecture">✕</button></div>
+  <div id="tv-fenetre" class="tv-fenetre" hidden><div class="tv-barre"><strong>📺 Télévision</strong><span class="tv-actions"><button type="button" id="tv-masquer" aria-label="Mettre en arrière-plan" title="Mettre en arrière-plan : la lecture continue">━</button><button type="button" id="tv-fermer" aria-label="Fermer le lecteur" title="Fermer et arrêter la lecture">✖</button></span></div><div id="tv-zone" class="tv-zone"></div></div>
+  <div id="tv-mini" class="tv-mini" hidden><span class="tv-mini-pastille">🎵</span><span id="tv-mini-titre" class="tv-mini-titre">Télévision en lecture</span><button type="button" id="tv-mini-afficher" aria-label="Afficher le lecteur" title="Afficher le lecteur">▣</button><button type="button" id="tv-mini-arreter" title="Arrêter la lecture">✕</button></div>
 </body>
 </html>
