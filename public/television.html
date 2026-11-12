@@ -205,6 +205,46 @@ table.keys{width:100%;border-collapse:collapse}table.keys td{padding:3px 4px;bor
 #tv-next-preview .tv-next-play{background:#c9a653;color:#171717;border:0;border-radius:8px;padding:9px 13px;font-weight:700}
 #tv-next-preview .tv-next-cancel{float:right;background:transparent;border:0;color:#fff;font-size:22px;padding:2px 8px}
 @keyframes tvNextIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ===== Thème or champagne du lecteur multimédia ===== */
+:root{
+ --bg:#f7f0df;--panel:#111923;--panel2:#1b2734;--text:#292315;
+ --muted:#806b42;--accent:#b8862d;--accent2:#e4c77e;--border:#d9c38f;
+}
+body{background:#0c1118;color:#f7edda}
+#app{background:#0c1118}
+#sidebar{background:#111923;color:#f7edda;border-right:1px solid #65502a}
+#sidebar .side-head{border-color:#594722}
+#sidebar button,#sidebar select,#sidebar input[type=search]{background:#1b2734;color:#f7edda;border-color:#65552f}
+#sidebar button:hover,#sidebar button.active{background:#b8862d;color:#17130b;border-color:#e4c77e}
+#sidebar #playlist li{color:#f5eddd}
+#sidebar #playlist li:hover{background:#293545}
+#sidebar #playlist li.current{background:#4b3a1c;color:#ffe3a0;outline:1px solid #c69b4a}
+#sidebar #playlist li.grp{background:#111923;color:#e4c77e}
+#stage{background:#f7f0df;color:#302716}
+#viewer{background:linear-gradient(145deg,#f8efd9,#ead7a8);color:#302716}
+#viewer.mode-video{background:#000}
+#viewer.mode-audio{background:radial-gradient(ellipse at center,#fff4d9 0%,#f0dfb9 65%,#dfc58c 100%)}
+#audioInfo{color:#473313}
+#audioTitle{text-shadow:none;color:#38280d}
+#audioIcon{color:#b8862d;filter:drop-shadow(0 5px 12px #b8862d55)}
+#titleBar{background:#f2e3c0;color:#3c2b0e;border-top:1px solid #d7bd7e}
+#controls{background:#fff5df;color:#39290f;border-top:1px solid #d9c18b}
+#seekRow span.t{color:#705725}
+input[type=range]{accent-color:#b8862d}
+#btnRow .group button,#btnRow .group select{
+ background:#f5e6c5;color:#68470e;border:1px solid #c9a65d;
+ min-width:40px;min-height:40px;font-weight:800;
+}
+#btnRow .group button:hover{background:#e8d19d;color:#382607;border-color:#a87920}
+#btnRow .group button.primary{background:linear-gradient(145deg,#d8b15c,#a9771c);color:#fff9e9;border:1px solid #946515;box-shadow:0 4px 12px #8c641e44}
+#seek{accent-color:#b8862d}
+#docBox{background:#fbf4e5;color:#302716}
+#docEntete{background:#f0dfb8;border-color:#d9c38f;color:#302716}
+#pdfBarre{background:#f2e3c0;color:#302716;border-color:#d9c38f}
+#pdfBarre button,#docActions button{background:#fff5df;color:#65470f;border-color:#c9a65d}
+#galerie,#gallery{background:#f7f0df;color:#302716}
+#toast,#osd{background:#29200f;color:#fff1cf;border:1px solid #c69b4a}
 </style>
 
 <script>
