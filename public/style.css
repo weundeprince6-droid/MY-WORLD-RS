@@ -1628,3 +1628,57 @@ body:has(#tableau:not([hidden])) .entete-date{display:flex}
   .nav-icon{line-height:1.2}
   .nav-item:focus-visible{outline:2px solid var(--primary);outline-offset:-2px}
 }
+
+
+/* Correctif mobile — messages des réseaux sociaux */
+@media(max-width:760px){
+  #pane-social #liste-social{
+    display:block!important;
+    width:100%!important;
+    min-width:0!important;
+    max-width:100%!important;
+    overflow:visible!important;
+  }
+  #pane-social #liste-social>li{
+    display:block!important;
+    width:100%!important;
+    min-width:0!important;
+    min-height:0!important;
+    height:auto!important;
+    padding:13px 10px!important;
+    overflow-wrap:anywhere!important;
+  }
+  #pane-social #liste-social .ligne{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr)!important;
+    justify-content:initial!important;
+    align-items:start!important;
+    gap:4px!important;
+    width:100%!important;
+    min-width:0!important;
+  }
+  #pane-social #liste-social .ligne strong{
+    display:block!important;
+    width:100%!important;
+    min-width:0!important;
+    overflow-wrap:anywhere!important;
+    word-break:break-word!important;
+    white-space:normal!important;
+  }
+  #pane-social #liste-social .ligne .meta{
+    display:block!important;
+    width:100%!important;
+    min-width:0!important;
+    white-space:normal!important;
+    overflow-wrap:anywhere!important;
+  }
+  #pane-social #liste-social .extrait{
+    display:block!important;
+    width:100%!important;
+    min-width:0!important;
+    margin-top:5px!important;
+    white-space:normal!important;
+    overflow-wrap:anywhere!important;
+    word-break:break-word!important;
+  }
+}
