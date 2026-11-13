@@ -94,10 +94,10 @@
             <button class="nav-item" role="tab" aria-selected="false" data-tab="bases"><span class="nav-icon">▤</span><span>Mes bases</span><span class="nav-arrow">›</span></button>
             <button class="nav-item" role="tab" aria-selected="false" data-tab="social"><span class="nav-icon">◎</span><span>Réseaux sociaux</span><span class="nav-arrow">›</span></button>
             <button class="nav-item" role="tab" aria-selected="false" data-tab="drive"><span class="nav-icon">▣</span><span>Mes documents</span><span class="nav-arrow">›</span></button>
-            <button class="nav-item" role="tab" aria-selected="false" data-tab="pro"><span class="nav-icon">☑</span><span>Projet pro</span><span class="nav-arrow">›</span></button>
+            <button class="nav-item" role="tab" aria-selected="false" data-tab="maison-pro"><span class="nav-icon">🏠</span><span>Ma maison &amp; Projet pro</span><span class="nav-arrow">›</span></button>
             <button class="nav-item" role="tab" aria-selected="false" data-tab="notes"><span class="nav-icon">📝</span><span>Notes & Projets</span><span class="nav-arrow">›</span></button>
             <button class="nav-item" role="tab" aria-selected="false" data-tab="wallet"><span class="nav-icon">💰</span><span>Mon Porte-Monnaie</span><span class="nav-arrow">›</span></button>
-            <button class="nav-item" role="tab" aria-selected="false" data-tab="maison"><span class="nav-icon">🏠</span><span>Ma maison</span><span class="nav-arrow">›</span></button>
+
             <button class="nav-item" role="tab" aria-selected="false" data-tab="budget-mensuel"><span class="nav-icon">📊</span><span>Budget mensuel</span><span class="nav-arrow">›</span></button>
             <button class="nav-item" role="tab" aria-selected="false" data-tab="profile"><span class="nav-icon">♙</span><span>Profil</span><span class="nav-arrow">›</span></button>
             <button class="nav-item" role="tab" aria-selected="false" data-tab="assistant"><span class="nav-icon">✦</span><span>Assistant IA</span><span class="nav-arrow">›</span></button>
@@ -294,7 +294,13 @@
           </section>
 
           </section>
-          <section class="tab-pane" id="pane-pro" role="tabpanel" data-pane="pro" hidden>
+          <section class="tab-pane" id="pane-maison-pro" role="tabpanel" data-pane="maison-pro" hidden>
+            <div class="section-heading wallet-page-heading"><div><p class="eyebrow">ESPACES PERSONNEL ET PROFESSIONNEL</p><h2>Ma maison &amp; Projet pro</h2><p>Choisissez l’espace à consulter. Les données et les réglages de chaque espace restent indépendants.</p></div><span class="section-icon">🏠</span></div>
+            <div class="espace-switch" role="group" aria-label="Choisir un espace">
+              <button type="button" class="espace-switch-btn actif" data-espace-view="maison" aria-pressed="true">🏠 Ma maison</button>
+              <button type="button" class="espace-switch-btn" data-espace-view="pro" aria-pressed="false">☑ Projet pro</button>
+            </div>
+          <section class="espace-sousvue" id="pane-pro" data-espace-pane="pro" hidden>
             <div class="section-heading"><div><p class="eyebrow">MON ACTIVITÉ</p><h2>Projet pro</h2><p>Dépenses et revenus de l'activité, budget professionnel, investissement du projet et équipements.</p></div><span class="section-icon blue">☑</span></div>
             <div id="pro-vue">
               <div class="maison-resume" id="pro-resume"></div>
@@ -353,6 +359,68 @@
               </div>
               <p id="pro-status" class="meta" role="status"></p>
             </div>
+          </section>
+          <section class="espace-sousvue" id="pane-maison" data-espace-pane="maison">
+            <div class="section-heading wallet-page-heading"><div><p class="eyebrow">MON FOYER</p><h2>Ma maison</h2><p>Dépenses du foyer, budget familial et projet de construction.</p></div><span class="section-icon">🏠</span></div>
+            <div id="wallet-vue-maison">
+              <div class="maison-resume" id="maison-resume"></div>
+              <section class="carte wallet-card maison-card tv-carte"><div class="tv-ligne"><div><h3>📺 Télévision</h3><p class="muted">Lecteur audio, vidéo et photo de la maison.</p></div><button type="button" class="primary-button" id="tv-ouvrir">Ouvrir la télévision</button></div></section>
+              <section class="carte wallet-card maison-card"><div class="card-heading"><h3>Détail du mois et du chantier</h3></div><div id="maison-detail"></div></section>
+              <div class="maison-grille">
+                <section class="carte wallet-card maison-card"><h3>Ajouter une opération</h3>
+                  <form id="maison-form" class="wallet-form" autocomplete="off">
+                    <label>Type<select name="section" id="maison-section"><option value="depense">Dépense de la maison</option><option value="revenu">Revenu du foyer</option><option value="chantier">Projet de construction</option></select></label>
+                    <label>Catégorie<select name="category" id="maison-categorie"></select></label>
+                    <label>Montant<input name="amount" type="text" inputmode="decimal" placeholder="Ex. 25000" required></label>
+                    <label>Devise<select name="currency"><option value="FC" selected>Franc congolais (FC)</option><option value="USD">Dollar américain (USD)</option></select></label>
+                    <label>Date<input name="date" type="date" required></label>
+                    <label>Compte du porte-monnaie<select name="accountId" id="maison-compte"><option value="">Aucun (suivi seulement)</option></select></label>
+                    <p class="meta" id="maison-compte-aide">Choisissez un compte pour que la dépense soit déduite de son solde (ou le revenu ajouté).</p>
+                    <label>Note<input name="note" type="text" maxlength="200" placeholder="Facultatif"></label>
+                    <button class="btn btn-primary" type="submit">Enregistrer</button>
+                  </form>
+                </section>
+                <section class="carte wallet-card maison-card"><h3>Budgets</h3>
+                  <form id="maison-reglages" class="wallet-form" autocomplete="off">
+                    <label>Budget familial par mois (FC)<input name="budgetFC" type="text" inputmode="decimal" placeholder="0"></label>
+                    <label>Budget familial par mois (USD)<input name="budgetUSD" type="text" inputmode="decimal" placeholder="0"></label>
+                    <label>Budget du projet de construction (FC)<input name="chantierFC" type="text" inputmode="decimal" placeholder="0"></label>
+                    <label>Budget du projet de construction (USD)<input name="chantierUSD" type="text" inputmode="decimal" placeholder="0"></label>
+                    <label>Avancement du chantier : <b id="maison-avancement-val">0 %</b><input name="avancement" id="maison-avancement" type="range" min="0" max="100" step="5" value="0"></label>
+                    <button class="btn btn-secondary" type="submit">Enregistrer les budgets</button>
+                  </form>
+                </section>
+              </div>
+              <section class="carte wallet-card maison-card"><div class="card-heading"><h3>Historique</h3><label class="maison-filtre">Afficher<select id="maison-filtre"><option value="all">Tout</option><option value="depense">Dépenses de la maison</option><option value="revenu">Revenus du foyer</option><option value="chantier">Projet de construction</option></select></label></div><div id="maison-liste"></div></section>
+              <div class="maison-grille maison-materiel">
+                <section class="carte wallet-card maison-card"><h3>Matériel de la maison</h3><p class="meta" id="materiel-total">Aucun matériel répertorié.</p>
+                  <form id="materiel-stock-form" class="wallet-form" autocomplete="off">
+                    <label>Nom du matériel<input name="name" type="text" maxlength="80" placeholder="Ex. Table à manger" required></label>
+                    <label>Quantité<input name="qty" type="text" inputmode="decimal" value="1"></label>
+                    <label>Prix unitaire<input name="price" type="text" inputmode="decimal" placeholder="Facultatif"></label>
+                    <label>Devise<select name="currency"><option value="FC" selected>Franc congolais (FC)</option><option value="USD">Dollar américain (USD)</option></select></label>
+                    <label>Pièce<select name="place"><option>Salon</option><option>Cuisine</option><option>Chambre</option><option>Salle de bain</option><option>Extérieur</option><option>Autre</option></select></label>
+                    <label>État<select name="state"><option>Neuf</option><option selected>Bon</option><option>Usé</option><option>À réparer</option></select></label>
+                    <button class="btn btn-primary" type="submit">Ajouter au répertoire</button>
+                  </form>
+                  <div id="materiel-stock-liste"></div>
+                </section>
+                <section class="carte wallet-card maison-card"><h3>Matériel à ravitailler</h3><p class="meta" id="materiel-achat-total">Rien à acheter pour le moment.</p>
+                  <form id="materiel-achat-form" class="wallet-form" autocomplete="off">
+                    <label>Nom du matériel<input name="name" type="text" maxlength="80" placeholder="Ex. Casseroles" required></label>
+                    <label>Quantité<input name="qty" type="text" inputmode="decimal" value="1"></label>
+                    <label>Prix estimé (unitaire)<input name="price" type="text" inputmode="decimal" placeholder="Facultatif"></label>
+                    <label>Devise<select name="currency"><option value="FC" selected>Franc congolais (FC)</option><option value="USD">Dollar américain (USD)</option></select></label>
+                    <label>Priorité<select name="priority"><option>Urgent</option><option selected>Normal</option><option>Plus tard</option></select></label>
+                    <button class="btn btn-primary" type="submit">Ajouter à la liste d'achats</button>
+                  </form>
+                  <label class="maison-filtre maison-compte-achat">Compte débité à l'achat<select id="materiel-compte"><option value="">Choisir un compte…</option></select></label>
+                  <div id="materiel-achat-liste"></div>
+                </section>
+              </div>
+              <p id="maison-status" class="meta" role="status"></p>
+            </div>
+            </section>
           </section>
           <section class="tab-pane" id="pane-wallet" role="tabpanel" data-pane="wallet" hidden>
             <div class="section-heading wallet-page-heading"><div><p class="eyebrow">GESTION FINANCIÈRE</p><h2>Mon Porte-Monnaie</h2><p>Suivez vos comptes, vos entrées, vos dépenses et vos transferts en USD et en FC.</p></div><span class="section-icon green">💰</span></div>
@@ -443,67 +511,6 @@
             <p id="wallet-status" class="meta" role="status">Les données du porte-monnaie sont privées et synchronisées dans votre Firebase My World RS.</p>
 
           </section>
-          <section class="tab-pane" id="pane-maison" role="tabpanel" data-pane="maison" hidden>
-            <div class="section-heading wallet-page-heading"><div><p class="eyebrow">MON FOYER</p><h2>Ma maison</h2><p>Dépenses du foyer, budget familial et projet de construction.</p></div><span class="section-icon">🏠</span></div>
-            <div id="wallet-vue-maison">
-              <div class="maison-resume" id="maison-resume"></div>
-              <section class="carte wallet-card maison-card tv-carte"><div class="tv-ligne"><div><h3>📺 Télévision</h3><p class="muted">Lecteur audio, vidéo et photo de la maison.</p></div><button type="button" class="primary-button" id="tv-ouvrir">Ouvrir la télévision</button></div></section>
-              <section class="carte wallet-card maison-card"><div class="card-heading"><h3>Détail du mois et du chantier</h3></div><div id="maison-detail"></div></section>
-              <div class="maison-grille">
-                <section class="carte wallet-card maison-card"><h3>Ajouter une opération</h3>
-                  <form id="maison-form" class="wallet-form" autocomplete="off">
-                    <label>Type<select name="section" id="maison-section"><option value="depense">Dépense de la maison</option><option value="revenu">Revenu du foyer</option><option value="chantier">Projet de construction</option></select></label>
-                    <label>Catégorie<select name="category" id="maison-categorie"></select></label>
-                    <label>Montant<input name="amount" type="text" inputmode="decimal" placeholder="Ex. 25000" required></label>
-                    <label>Devise<select name="currency"><option value="FC" selected>Franc congolais (FC)</option><option value="USD">Dollar américain (USD)</option></select></label>
-                    <label>Date<input name="date" type="date" required></label>
-                    <label>Compte du porte-monnaie<select name="accountId" id="maison-compte"><option value="">Aucun (suivi seulement)</option></select></label>
-                    <p class="meta" id="maison-compte-aide">Choisissez un compte pour que la dépense soit déduite de son solde (ou le revenu ajouté).</p>
-                    <label>Note<input name="note" type="text" maxlength="200" placeholder="Facultatif"></label>
-                    <button class="btn btn-primary" type="submit">Enregistrer</button>
-                  </form>
-                </section>
-                <section class="carte wallet-card maison-card"><h3>Budgets</h3>
-                  <form id="maison-reglages" class="wallet-form" autocomplete="off">
-                    <label>Budget familial par mois (FC)<input name="budgetFC" type="text" inputmode="decimal" placeholder="0"></label>
-                    <label>Budget familial par mois (USD)<input name="budgetUSD" type="text" inputmode="decimal" placeholder="0"></label>
-                    <label>Budget du projet de construction (FC)<input name="chantierFC" type="text" inputmode="decimal" placeholder="0"></label>
-                    <label>Budget du projet de construction (USD)<input name="chantierUSD" type="text" inputmode="decimal" placeholder="0"></label>
-                    <label>Avancement du chantier : <b id="maison-avancement-val">0 %</b><input name="avancement" id="maison-avancement" type="range" min="0" max="100" step="5" value="0"></label>
-                    <button class="btn btn-secondary" type="submit">Enregistrer les budgets</button>
-                  </form>
-                </section>
-              </div>
-              <section class="carte wallet-card maison-card"><div class="card-heading"><h3>Historique</h3><label class="maison-filtre">Afficher<select id="maison-filtre"><option value="all">Tout</option><option value="depense">Dépenses de la maison</option><option value="revenu">Revenus du foyer</option><option value="chantier">Projet de construction</option></select></label></div><div id="maison-liste"></div></section>
-              <div class="maison-grille maison-materiel">
-                <section class="carte wallet-card maison-card"><h3>Matériel de la maison</h3><p class="meta" id="materiel-total">Aucun matériel répertorié.</p>
-                  <form id="materiel-stock-form" class="wallet-form" autocomplete="off">
-                    <label>Nom du matériel<input name="name" type="text" maxlength="80" placeholder="Ex. Table à manger" required></label>
-                    <label>Quantité<input name="qty" type="text" inputmode="decimal" value="1"></label>
-                    <label>Prix unitaire<input name="price" type="text" inputmode="decimal" placeholder="Facultatif"></label>
-                    <label>Devise<select name="currency"><option value="FC" selected>Franc congolais (FC)</option><option value="USD">Dollar américain (USD)</option></select></label>
-                    <label>Pièce<select name="place"><option>Salon</option><option>Cuisine</option><option>Chambre</option><option>Salle de bain</option><option>Extérieur</option><option>Autre</option></select></label>
-                    <label>État<select name="state"><option>Neuf</option><option selected>Bon</option><option>Usé</option><option>À réparer</option></select></label>
-                    <button class="btn btn-primary" type="submit">Ajouter au répertoire</button>
-                  </form>
-                  <div id="materiel-stock-liste"></div>
-                </section>
-                <section class="carte wallet-card maison-card"><h3>Matériel à ravitailler</h3><p class="meta" id="materiel-achat-total">Rien à acheter pour le moment.</p>
-                  <form id="materiel-achat-form" class="wallet-form" autocomplete="off">
-                    <label>Nom du matériel<input name="name" type="text" maxlength="80" placeholder="Ex. Casseroles" required></label>
-                    <label>Quantité<input name="qty" type="text" inputmode="decimal" value="1"></label>
-                    <label>Prix estimé (unitaire)<input name="price" type="text" inputmode="decimal" placeholder="Facultatif"></label>
-                    <label>Devise<select name="currency"><option value="FC" selected>Franc congolais (FC)</option><option value="USD">Dollar américain (USD)</option></select></label>
-                    <label>Priorité<select name="priority"><option>Urgent</option><option selected>Normal</option><option>Plus tard</option></select></label>
-                    <button class="btn btn-primary" type="submit">Ajouter à la liste d'achats</button>
-                  </form>
-                  <label class="maison-filtre maison-compte-achat">Compte débité à l'achat<select id="materiel-compte"><option value="">Choisir un compte…</option></select></label>
-                  <div id="materiel-achat-liste"></div>
-                </section>
-              </div>
-              <p id="maison-status" class="meta" role="status"></p>
-            </div>
-            </section>
           <section class="tab-pane" id="pane-budget-mensuel" role="tabpanel" data-pane="budget-mensuel" hidden>
             <div class="section-heading"><div><p class="eyebrow">GESTION FINANCIÈRE</p><h2>Budget mensuel</h2><p>Suivez vos revenus, dépenses, économies et prévisions dans un espace indépendant.</p></div><span class="section-icon">📊</span></div>
             <section class="carte wallet-card" style="padding:0;overflow:hidden">
@@ -606,10 +613,15 @@
       function ouvrirOnglet(nom) {
         document.querySelectorAll("[data-pane]").forEach(function (p) { var actif=p.dataset.pane===nom; p.hidden=!actif; p.classList.toggle("active",actif); });
         document.querySelectorAll("[data-tab]").forEach(function (b) { var actif=b.dataset.tab===nom; b.classList.toggle("active",actif); b.setAttribute("aria-selected",actif?"true":"false"); });
-        var titres={dashboard:"Tableau de bord",messages:"Messages",agenda:"Agenda",bases:"Mes bases",social:"Réseaux sociaux",drive:"Google Drive",pro:"Projet pro",wallet:"Mon Porte-Monnaie",maison:"Ma maison","budget-mensuel":"Budget mensuel",profile:"Mon profil",assistant:"Assistant IA",notes:"Notes & Projets"}; document.title=(titres[nom]||"My World RS")+" — My World RS";
+        var titres={dashboard:"Tableau de bord",messages:"Messages",agenda:"Agenda",bases:"Mes bases",social:"Réseaux sociaux",drive:"Google Drive","maison-pro":"Ma maison & Projet pro",wallet:"Mon Porte-Monnaie","budget-mensuel":"Budget mensuel",profile:"Mon profil",assistant:"Assistant IA",notes:"Notes & Projets"}; document.title=(titres[nom]||"My World RS")+" — My World RS";
       }
       document.querySelectorAll("[data-tab]").forEach(function(b){b.addEventListener("click",function(){ouvrirOnglet(b.dataset.tab);});});
       document.querySelectorAll("[data-go]").forEach(function(b){b.addEventListener("click",function(){ouvrirOnglet(b.dataset.go);});});
+      document.querySelectorAll("[data-espace-view]").forEach(function(b){b.addEventListener("click",function(){
+        var nom=b.dataset.espaceView;
+        document.querySelectorAll("[data-espace-pane]").forEach(function(p){p.hidden=p.dataset.espacePane!==nom;});
+        document.querySelectorAll("[data-espace-view]").forEach(function(x){var actif=x.dataset.espaceView===nom;x.classList.toggle("actif",actif);x.setAttribute("aria-pressed",actif?"true":"false");});
+      });});
       function actualiserDateHeure(){var el=document.getElementById("date-du-jour");if(!el)return;var d=new Date();var dateTexte=new Intl.DateTimeFormat("fr-FR",{weekday:"short",day:"numeric",month:"short"}).format(d);var heureTexte=new Intl.DateTimeFormat("fr-FR",{hour:"2-digit",minute:"2-digit"}).format(d);el.textContent=dateTexte+" · "+heureTexte;} actualiserDateHeure(); window.setInterval(actualiserDateHeure,60000);
     })();
     (function () {
@@ -620,7 +632,7 @@
       setTimeout(function(){if(!window.__appPret)montrer("L'application n'a pas démarré. Vérifiez votre connexion internet (les composants Firebase se chargent depuis Google), désactivez un éventuel bloqueur de publicités, puis rechargez. Sans internet : l'application doit d'abord avoir été ouverte deux fois avec internet sur cet appareil pour s'installer hors ligne. Appuyez sur F12 > Console pour voir le détail.");},6000);
     })();
   </script>
-  <script type="module" src="app.js?v=20261111-budget-liaison8"></script>
+  <script type="module" src="app.js?v=20261113-maison-pro1"></script>
   <div id="tv-fenetre" class="tv-fenetre" hidden><div class="tv-barre"><strong>📺 Télévision</strong><span class="tv-actions"><button type="button" id="tv-masquer" aria-label="Mettre en arrière-plan" title="Mettre en arrière-plan : la lecture continue">━</button><button type="button" id="tv-fermer" aria-label="Fermer le lecteur" title="Fermer et arrêter la lecture">✖</button></span></div><div id="tv-zone" class="tv-zone"></div></div>
   <div id="tv-mini" class="tv-mini" hidden><span class="tv-mini-pastille">🎵</span><span id="tv-mini-titre" class="tv-mini-titre">Télévision en lecture</span><button type="button" id="tv-mini-afficher" aria-label="Afficher le lecteur" title="Afficher le lecteur">▣</button><button type="button" id="tv-mini-arreter" title="Arrêter la lecture">✕</button></div>
 </body>
