@@ -182,32 +182,17 @@
             <!-- Formulaire d'ajout de transaction (4 cols) -->
             <div class="lg:col-span-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm h-fit">
                 <h2 class="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
-                    <i class="fa-solid fa-plus-circle text-emerald-600"></i> Nouvelle Transaction
+                    <i class="fa-solid fa-plus-circle text-emerald-600"></i> Nouvelle dépense
                 </h2>
                 <form id="transactionForm" onsubmit="addTransaction(event)" class="space-y-4">
-                    <!-- Type (Dépense / Revenu) -->
-                    <div>
-                        <label class="block text-xs font-medium text-slate-600 mb-1">Type de mouvement</label>
-                        <div class="grid grid-cols-2 gap-2">
-                            <label class="cursor-pointer">
-                                <input type="radio" name="type" value="expense" checked onchange="updateCategoryOptions()" class="peer hidden">
-                                <div class="text-center py-2 px-3 border border-slate-200 rounded-xl text-xs font-medium peer-checked:bg-rose-50 peer-checked:border-rose-300 peer-checked:text-rose-700 transition-all">
-                                    <i class="fa-solid fa-minus mr-1"></i> Dépense
-                                </div>
-                            </label>
-                            <label class="cursor-pointer">
-                                <input type="radio" name="type" value="income" onchange="updateCategoryOptions()" class="peer hidden">
-                                <div class="text-center py-2 px-3 border border-slate-200 rounded-xl text-xs font-medium peer-checked:bg-emerald-50 peer-checked:border-emerald-300 peer-checked:text-emerald-700 transition-all">
-                                    <i class="fa-solid fa-plus mr-1"></i> Revenu
-                                </div>
-                            </label>
-                        </div>
-                    </div>
+                    <!-- Dépenses seulement : les revenus se saisissent dans le Porte-Monnaie -->
+                    <input type="radio" name="type" value="expense" checked hidden>
+                    <p class="text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2"><i class="fa-solid fa-circle-info mr-1"></i> Ici, saisissez seulement vos <strong>dépenses</strong>. Les revenus se saisissent dans le Porte-Monnaie et apparaissent automatiquement dans ce budget.</p>
 
                     <!-- Libellé -->
                     <div>
                         <label class="block text-xs font-medium text-slate-600 mb-1">Description / Intitulé</label>
-                        <input type="text" id="desc" required placeholder="Ex: Courses supermarché, Salaire..." class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
+                        <input type="text" id="desc" required placeholder="Ex: Courses supermarché, Loyer..." class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
                     </div>
 
                     <!-- Montant & Date -->
