@@ -2219,6 +2219,7 @@ window.addEventListener('keydown', (e) => {
     case 'b': addMark(); break;
     case 'i': toggleInfo(); break;
     case 'm': $('btnMute').click(); break;
+    case 'Enter': if (['video', 'image'].includes(items[current]?.type)) { e.preventDefault(); toggleFull(); } break;
     case 'f': toggleFull(); break;
     case 'r': $('btnRepeat').click(); break;
     case 'S': screenshot(); break;
