@@ -2254,3 +2254,92 @@ html[data-theme="dark"] #pane-agenda #agenda-anniversaire .agenda-anniversaire-c
 html[data-theme="gold"] #pane-agenda #agenda-anniversaire .agenda-anniversaire-compte{
   color:var(--primary)!important;
 }
+
+
+/* ==========================================================
+   MY WORLD RS — en-tête et navigation mobile compacts
+   Correctif ciblé : ne modifie ni la connexion ni les fonctions.
+   ========================================================== */
+@media (max-width: 760px) {
+  .entete {
+    height: 56px !important;
+    min-height: 56px !important;
+    padding: 0 10px !important;
+    gap: 7px !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+  }
+  .entete .marque {
+    flex: 0 1 auto;
+    min-width: 0;
+    gap: 7px;
+  }
+  .entete .logo {
+    width: 33px;
+    height: 33px;
+    flex: 0 0 33px;
+  }
+  .entete .marque-texte strong {
+    font-size: 15px;
+    white-space: nowrap;
+  }
+  .entete .marque-texte small,
+  .entete .entete-bienvenue,
+  .entete .entete-date {
+    display: none !important;
+  }
+  .entete .outils {
+    flex: 0 0 auto;
+    flex-wrap: nowrap !important;
+    min-width: 0;
+    margin-left: auto;
+    gap: 5px;
+  }
+  .entete .outils .meta { display: none !important; }
+  .entete .theme-toggle {
+    min-width: 36px;
+    width: 36px;
+    height: 36px;
+    padding: 5px;
+  }
+  .entete .btn-icon-header {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+  }
+  .entete #bouton-renouveler {
+    max-width: 112px;
+    padding: 6px 7px;
+    font-size: 10px;
+    line-height: 1.15;
+    white-space: normal;
+  }
+  main { padding: 14px 11px 78px !important; }
+  .sidebar {
+    padding: 4px 6px calc(4px + env(safe-area-inset-bottom)) !important;
+  }
+  .nav-item {
+    min-height: 46px !important;
+    padding: 4px 3px !important;
+    gap: 2px !important;
+  }
+  .nav-icon { font-size: 15px !important; line-height: 1.1; }
+  .nav-item>span:not(.nav-icon):not(.nav-arrow) {
+    font-size: 9px;
+    line-height: 1.1;
+    -webkit-line-clamp: 2;
+  }
+}
+@media (max-width: 430px) {
+  .entete { padding-inline: 8px !important; }
+  .entete .marque-texte strong { font-size: 14px; }
+  .entete .outils { gap: 4px; }
+  .entete #bouton-renouveler { max-width: 88px; font-size: 9px; }
+}
+@media (max-width: 360px) {
+  .entete .logo { width: 30px; height: 30px; flex-basis: 30px; }
+  .entete .marque-texte strong { font-size: 13px; }
+  .entete .theme-toggle,
+  .entete .btn-icon-header { width: 31px; height: 31px; min-width: 31px; }
+  .nav-item { flex-basis: 70px !important; width: 70px !important; min-width: 70px !important; }
+}
