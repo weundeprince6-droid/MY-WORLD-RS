@@ -2124,38 +2124,11 @@ html[data-theme="dark"] #pane-bases{--base-alerte:#fdba74;--base-erreur:#fca5a5}
 }
 
 
-/* MOBILE : tous les carreaux en pile verticale, jamais côte à côte.
-   Règle prioritaire sur les grilles définies plus haut. */
+/* MOBILE : empilement vertical limité au Tableau de bord.
+   Les autres onglets conservent leur disposition précédente. */
 @media (max-width: 760px) {
-  #pane-dashboard .dashboard-detail-grid,
   #pane-dashboard .dashboard-grid,
-  #pane-dashboard .kpis,
-  #pane-messages .gmail-desktop,
-  #pane-messages .gmail-layout,
-  #pane-messages .messages-grid,
-  [id^="pane-"] .dashboard-grid,
-  [id^="pane-"] .dashboard-detail-grid,
-  [id^="pane-"] .agenda-grid,
-  [id^="pane-"] .kpis,
-  [id^="pane-"] .wallet-summary,
-  [id^="pane-"] .wallet-statistics,
-  [id^="pane-"] .wallet-chart-grid,
-  [id^="pane-"] .wallet-forecast-metrics,
-  [id^="pane-"] .wallet-forecasts,
-  [id^="pane-"] .notes-fields,
-  [id^="pane-"] .notes-toolbar,
-  [id^="pane-"] .profil-apercu-grid,
-  [id^="pane-"] .maison-grille,
-  [id^="pane-"] .maison-resume,
-  [id^="pane-"] .maison-detail-grille,
-  [id^="pane-"] .drive-grille,
-  [id^="pane-"] .base-grille,
-  [id^="pane-"] #grille-kpis,
-  [id^="pane-"] #grille-kpis > .kpis,
-  [id^="pane-"] .budget-reglages-grille,
-  [id^="pane-"] .ia-portee,
-  [id^="pane-"] .ia-carte,
-  [id^="pane-"] .gmail-desktop {
+  #pane-dashboard .dashboard-detail-grid {
     display: grid !important;
     grid-template-columns: minmax(0, 1fr) !important;
     grid-auto-flow: row !important;
@@ -2163,37 +2136,12 @@ html[data-theme="dark"] #pane-bases{--base-alerte:#fdba74;--base-erreur:#fca5a5}
     min-width: 0;
   }
 
-  #pane-dashboard .dashboard-detail-grid > *,
-  #pane-messages .gmail-desktop > *,
-  [id^="pane-"] .dashboard-grid > *,
-  [id^="pane-"] .dashboard-detail-grid > *,
-  [id^="pane-"] .agenda-grid > *,
-  [id^="pane-"] .kpis > *,
-  [id^="pane-"] .wallet-summary > *,
-  [id^="pane-"] .wallet-statistics > *,
-  [id^="pane-"] .wallet-chart-grid > *,
-  [id^="pane-"] .notes-fields > *,
-  [id^="pane-"] .profil-apercu-grid > *,
-  [id^="pane-"] .maison-grille > *,
-  [id^="pane-"] .maison-resume > *,
-  [id^="pane-"] .maison-detail-grille > *,
-  [id^="pane-"] .drive-grille > *,
-  [id^="pane-"] .base-grille > *,
-  [id^="pane-"] #grille-kpis > *,
-  [id^="pane-"] .budget-reglages-grille > * {
+  #pane-dashboard .dashboard-grid > *,
+  #pane-dashboard .dashboard-detail-grid > * {
     grid-column: 1 / -1 !important;
     width: 100%;
     max-width: 100%;
     min-width: 0;
     box-sizing: border-box;
-  }
-
-  #pane-messages .gmail-desktop {
-    height: auto !important;
-    min-height: 0 !important;
-  }
-  #pane-messages .gmail-desktop > * {
-    min-width: 0;
-    max-width: 100%;
   }
 }
