@@ -2502,11 +2502,11 @@ $("materiel-achat-form")?.addEventListener("submit", (ev) => ajouterMateriel(ev,
 }));
   return { ouvrir: ouvrirMaison, donnees: () => ({ nom: cfg.nom, charge: maisonCharge, calc: calculerMaison(maisonEntrees, maisonReglages, moisDe()), entrees: maisonEntrees, materiel: calculerMateriel(materielItems), articles: materielItems }) };
 }
-const ESPACE_MAISON = creerEspaceProjet({ p: "maison", m: "materiel", tab: "maison", nom: "Ma maison", c: { entries: "houseEntries", settings: "houseSettings", items: "houseItems" },
+const ESPACE_MAISON = creerEspaceProjet({ p: "maison", m: "materiel", tab: "maison-pro", nom: "Ma maison", c: { entries: "houseEntries", settings: "houseSettings", items: "houseItems" },
   cat: { depense: CATEGORIES_MAISON, revenu: CATEGORIES_REVENU, chantier: CATEGORIES_CHANTIER },
   lib: { depense: "Dépense maison", revenu: "Revenu du foyer", chantier: "Chantier" },
   t: { solde: "Solde du foyer", projet: "Projet de construction", budget: "Budget familial", rejoint: "le matériel de la maison." } });
-const ESPACE_PRO = creerEspaceProjet({ p: "pro", m: "promat", tab: "pro", nom: "Projet pro", c: { entries: "proEntries", settings: "proSettings", items: "proItems" },
+const ESPACE_PRO = creerEspaceProjet({ p: "pro", m: "promat", tab: "maison-pro", nom: "Projet pro", c: { entries: "proEntries", settings: "proSettings", items: "proItems" },
   cat: { depense: CATEGORIES_PRO, revenu: CATEGORIES_REVENU_PRO, chantier: CATEGORIES_PROJET_PRO },
   lib: { depense: "Dépense pro", revenu: "Revenu de l'activité", chantier: "Investissement" },
   t: { solde: "Solde de l'activité", projet: "Investissement du projet", budget: "Budget professionnel", rejoint: "le matériel du projet." } });
