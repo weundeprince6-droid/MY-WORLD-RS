@@ -3867,17 +3867,32 @@ $("keep-fichiers")?.addEventListener("change", async (e) => {
 (function initThemeToggle(){
   const root=document.documentElement, button=$("theme-toggle"), icon=$("theme-toggle-icon"), label=$("theme-toggle-label");
   if(!button)return;
+  const themes=["light","dark","gold"];
+  const names={light:"Clair",dark:"Sombre",gold:"Doré"};
+  const icons={light:"☀️",dark:"🌙",gold:"✨"};
   function applyTheme(theme, save=true){
-    const dark=theme==="dark";
-    root.dataset.theme=dark?"dark":"light";
-    button.setAttribute("aria-label",dark?"Passer au mode clair":"Passer au mode sombre");
-    button.setAttribute("title",dark?"Activer le mode clair":"Activer le mode sombre");
-    if(icon)icon.textContent=dark?"☀️":"🌙";
-    if(label)label.textContent=dark?"Clair":"Sombre";
-    if(save){try{localStorage.setItem("mwrs.theme",dark?"dark":"light");}catch{}}
+    if(!themes.includes(theme))theme="light";
+    root.dataset.theme=theme;
+    const next=themes[(themes.indexOf(theme)+1)%themes.length];
+    button.setAttribute("aria-label","Thème actuel : "+names[theme]+". Passer au thème "+names[next]);
+    button.setAttribute("title","Thème "+names[theme]+" — cliquer pour passer à "+names[next]);
+    if(icon)icon.textContent=icons[theme];
+    if(label)label.textContent=names[theme];
+    if(save){try{localStorage.setItem("mwrs.theme",theme);}catch{}}
+    document.querySelectorAll("[data-theme-choice]").forEach(el=>{
+      el.setAttribute("aria-pressed",String(el.dataset.themeChoice===theme));
+    });
+    try{
+      const frame=document.getElementById("tv-frame")||document.querySelector('iframe[src*="television.html"]');
+      frame?.contentWindow?.postMessage({type:"mwrs-theme-change",theme},"*");
+    }catch{}
   }
-  applyTheme(root.dataset.theme==="dark"?"dark":"light",false);
-  button.addEventListener("click",()=>applyTheme(root.dataset.theme==="dark"?"light":"dark"));
+  applyTheme(themes.includes(root.dataset.theme)?root.dataset.theme:"light",false);
+  button.addEventListener("click",()=>applyTheme(themes[(themes.indexOf(root.dataset.theme)+1)%themes.length]));
+  document.querySelectorAll("[data-theme-choice]").forEach(el=>{
+    el.addEventListener("click",()=>applyTheme(el.dataset.themeChoice));
+  });
+  window.addEventListener("storage",e=>{if(e.key==="mwrs.theme"&&themes.includes(e.newValue))applyTheme(e.newValue,false);});
 })();
 
 
