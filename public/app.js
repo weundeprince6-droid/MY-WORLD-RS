@@ -2894,7 +2894,7 @@ async function supprimerMouvementWallet(id) {
   }
 }
 // À l'ouverture de l'onglet, on charge les comptes et opérations s'ils ne le sont pas encore
-document.querySelector('[data-tab="wallet"]')?.addEventListener("click", () => { chargerWallet(false); });
+document.querySelector('[data-finance-view="wallet"]')?.addEventListener("click", () => { chargerWallet(false); });
 $("wallet-history")?.addEventListener("click", (ev) => {
   const b = ev.target.closest?.("[data-wallet-supprimer]");
   if (b) supprimerMouvementWallet(b.dataset.walletSupprimer);
@@ -2997,7 +2997,7 @@ function transfertTauxAuto() {
 }
 ["wallet-transfer-from", "wallet-transfer-to"].forEach(id => $(id)?.addEventListener("change", transfertTauxAuto));
 budgetChargerTaux();
-document.querySelector('[data-tab="budget-mensuel"]')?.addEventListener("click", async () => {
+document.querySelector('[data-finance-view="budget-mensuel"]')?.addEventListener("click", async () => {
   await chargerWallet(false);
   budgetRendreSoldesComptes();
   // Le « reste à encaisser » dépend des ristournes d'ESE DB : on les lit si ce n'est pas déjà fait
