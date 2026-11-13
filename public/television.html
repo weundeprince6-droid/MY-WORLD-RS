@@ -2183,8 +2183,21 @@ function renderResume() {
  }
  async function choisirDossierMesFilms() {
    if (!('showDirectoryPicker' in window)) { mesFilmsStatus.textContent = 'Ce navigateur ne prend pas en charge le choix automatique de dossier. Essayez Edge ou Chrome récent.'; return; }
-   try { const d = await window.showDirectoryPicker({ mode: 'read' }); mesFilmsFolder = d; await DB.set('mesFilmsFolder', d); await synchroniserMesFilms(true); }
-   catch (e) { if (e.name !== 'AbortError') mesFilmsStatus.textContent = 'Sélection du dossier impossible.'; }
+   try {
+     const d = await window.showDirectoryPicker({ mode: 'read' });
+     mesFilmsFolder = d;
+     await DB.set('mesFilmsFolder', d);
+     // Demander l'accès pendant le geste utilisateur et préserver le stockage local.
+     const permission = await d.requestPermission({ mode: 'read' });
+     if (navigator.storage && navigator.storage.persist) {
+       try { await navigator.storage.persist(); } catch (_) {}
+     }
+     if (permission !== 'granted') {
+       mesFilmsStatus.textContent = 'Le dossier est mémorisé, mais l’accès n’a pas été accordé. Cliquez sur Synchroniser pour réessayer.';
+       return;
+     }
+     await synchroniserMesFilms(false);
+   } catch (e) { if (e.name !== 'AbortError') mesFilmsStatus.textContent = 'Sélection du dossier impossible.'; }
  }
  function afficherOngletMesFilms() {
    tvDriveHide(); $('playlist').hidden = true; mesFilmsPane.hidden = false;
