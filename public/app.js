@@ -820,12 +820,15 @@ async function servirHorsLigne(url, options, cause) {
 
 // Appel Google avec un nouvel essai automatique si le quota est momentanément dépassé
 async function google(url, options = {}) {
-  try {
-    return await googleUneFois(url, options);
-  } catch (e) {
-    if (!e.quota) throw e;
-    await new Promise((ok) => setTimeout(ok, 3000));
-    return googleUneFois(url, options);
+  // Quota Google dépassé : jusqu'à 3 nouveaux essais espacés (la limite Gmail se renouvelle à la minute)
+  const attentes = [4000, 12000, 25000];
+  for (let essai = 0; ; essai++) {
+    try {
+      return await googleUneFois(url, options);
+    } catch (e) {
+      if (!e.quota || essai >= attentes.length) throw e;
+      await new Promise((ok) => setTimeout(ok, attentes[essai]));
+    }
   }
 }
 
@@ -3979,6 +3982,7 @@ function gmailAjouterBulle(m,moi){
   const pj=(m.pieces||[]).map(f=>'<div class="gmail-piece">📎 '+echapper(f.nom)+' · '+tailleLisible(f.taille)+'</div>').join("");
   return '<article class="gmail-bulle-wrap '+(moi?'moi':'autre')+'"><div class="gmail-bulle"><div class="gmail-bulle-expediteur">'+echapper(nom)+'</div><div class="gmail-bulle-corps">'+contenu+'</div>'+pj+'<time>'+heure+'</time></div></article>';
 }
+const gmailCacheComplets=new Map(); // id du mail → réponse Gmail complète (un mail ne change pas)
 async function ouvrirGmailThread(adresse){
   gmailThreadActif=adresse;rendreGmailConversations();
   const fil=$("gmail-fil-messages"),repondre=$("gmail-repondre");
@@ -3986,9 +3990,12 @@ async function ouvrirGmailThread(adresse){
   repondre.disabled=true;$("gmail-composer-input").disabled=true;gmailMessageActif=null;
   try{
     const requete='from:'+adresse+' OR to:'+adresse;
-    const liste=await google(URL_GMAIL+"messages?maxResults=100&q="+encodeURIComponent(requete));
+    // 30 messages les plus récents suffisent (et ménagent le quota Gmail) ; un mail déjà chargé n'est jamais redemandé
+    const liste=await google(URL_GMAIL+"messages?maxResults=30&q="+encodeURIComponent(requete));
     const ids=(liste.messages||[]).map(x=>x.id);
-    const messages=(await enLots(ids,4,id=>google(URL_GMAIL+"messages/"+encodeURIComponent(id)+"?format=full"))).map(lireMessageComplet).sort((a,b)=>Number(a.date||0)-Number(b.date||0));
+    const manquants=ids.filter(id=>!gmailCacheComplets.has(id));
+    await enLots(manquants,3,async id=>{gmailCacheComplets.set(id,await google(URL_GMAIL+"messages/"+encodeURIComponent(id)+"?format=full"));});
+    const messages=ids.map(id=>gmailCacheComplets.get(id)).filter(Boolean).map(lireMessageComplet).sort((a,b)=>Number(a.date||0)-Number(b.date||0));
     if(!messages.length)throw new Error("Aucun message trouvé pour ce correspondant.");
     const moi=String(fb?.auth.currentUser?.email||"").toLowerCase();
     gmailMessageActif=messages[messages.length-1];mailLu=gmailMessageActif;
@@ -4000,7 +4007,10 @@ async function ouvrirGmailThread(adresse){
     fil.innerHTML='<div class="gmail-date-separateur">Échanges avec '+echapper(adresse)+' · '+messages.length+' message'+(messages.length>1?'s':'')+'</div>'+messages.map(m=>gmailAjouterBulle(m,moi&&gmailAdresse(m.de)===moi)).join("");
     fil.scrollTop=fil.scrollHeight;repondre.disabled=false;$("gmail-composer-input").disabled=false;
     const t=gmailThreadsAffiches.find(x=>x.id===adresse);if(t)t.nonLu=false;rendreGmailConversations();
-  }catch(e){fil.innerHTML='<div class="gmail-liste-vide">Impossible de charger cette conversation : '+echapper(e.message)+'</div>';}
+  }catch(e){
+    fil.innerHTML='<div class="gmail-liste-vide">Impossible de charger cette conversation : '+echapper(e.message)+'<br><button type="button" id="gmail-reessayer">Réessayer</button></div>';
+    $("gmail-reessayer")?.addEventListener("click",()=>ouvrirGmailThread(adresse));
+  }
 }
 $("gmail-recherche")?.addEventListener("input",rendreGmailConversations);
 document.querySelectorAll("[data-gmail-filtre]").forEach(b=>b.addEventListener("click",()=>{
