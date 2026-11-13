@@ -1781,22 +1781,54 @@ function rendreKpis() {
     $("grille-kpis").innerHTML = '<p class="vide">Aucun indicateur configuré (voir config.js).</p>';
     return;
   }
+  // base → (libellé → indicateurs) : les mêmes mesures en FC et en USD sont réunies dans une seule tuile
   const groupes = new Map();
   for (const k of etat.kpis.filter((x) => !(x.masquerSiZero && x.valeur === 0))) {
-    if (!groupes.has(k.base)) groupes.set(k.base, []);
-    groupes.get(k.base).push(k);
+    if (!groupes.has(k.base)) groupes.set(k.base, new Map());
+    const tuiles = groupes.get(k.base);
+    if (!tuiles.has(k.label)) tuiles.set(k.label, []);
+    tuiles.get(k.label).push(k);
   }
-  $("grille-kpis").innerHTML = [...groupes.entries()]
-    .map(
-      ([nom, liste]) => `<h3 class="titre-base">${echapper(nom || "Données")}</h3><div class="kpis">${liste
-        .map(
-          (k) => `<div class="kpi ${k.erreur ? "erreur" : k.etat !== "ok" ? "alerte" : ""}" ${k.erreur ? `title="${echapper(k.erreur)}"` : ""}>
-            <div class="valeur">${echapper(typeof k.valeur === "number" ? k.valeur.toLocaleString("fr-FR") : k.valeur)} <small>${echapper(k.unite)}</small></div>
-            <div class="libelle">${echapper(k.label)}</div></div>`,
-        )
-        .join("")}</div>`,
-    )
+  const tousLesKpis = [...groupes.values()].flatMap((t) => [...t.values()].flat());
+  const nbAlertes = tousLesKpis.filter((k) => !k.erreur && k.etat !== "ok").length;
+  const nbErreurs = tousLesKpis.filter((k) => k.erreur).length;
+  const formater = (k) => echapper(typeof k.valeur === "number" ? k.valeur.toLocaleString("fr-FR") : k.valeur);
+  const initiales = (nom) => echapper(String(nom || "DB").split(/\s+/).map((m) => m[0]).join("").slice(0, 3).toUpperCase());
+
+  const resume = `<div class="bases-resume">
+      <div><b>${groupes.size}</b><span>base${groupes.size > 1 ? "s" : ""} suivie${groupes.size > 1 ? "s" : ""}</span></div>
+      <div><b>${tousLesKpis.length}</b><span>indicateurs</span></div>
+      <div class="${nbAlertes ? "alerte" : "ok"}"><b>${nbAlertes}</b><span>à surveiller</span></div>
+      ${nbErreurs ? `<div class="erreur"><b>${nbErreurs}</b><span>indisponible${nbErreurs > 1 ? "s" : ""}</span></div>` : ""}
+    </div>`;
+
+  const blocs = [...groupes.entries()]
+    .map(([nom, tuiles]) => {
+      const liste = [...tuiles.values()];
+      const alertesBase = liste.flat().filter((k) => !k.erreur && k.etat !== "ok").length;
+      const statut = alertesBase
+        ? `<span class="base-statut alerte">${alertesBase} à surveiller</span>`
+        : `<span class="base-statut ok">Tout est en ordre</span>`;
+      const cartes = liste
+        .map((ks) => {
+          const probleme = ks.some((k) => k.erreur) ? "erreur" : ks.some((k) => k.etat !== "ok") ? "alerte" : "";
+          const titre = ks.find((k) => k.erreur) ? ` title="${echapper(ks.find((k) => k.erreur).erreur)}"` : "";
+          const valeurs = ks
+            .map((k) => `<div class="base-valeur"><span class="nombre">${formater(k)}</span>${k.unite ? `<span class="unite">${echapper(k.unite)}</span>` : ""}</div>`)
+            .join("");
+          return `<article class="base-kpi ${probleme}"${titre}>
+            <p class="libelle">${echapper(ks[0].label)}${probleme === "alerte" ? '<i class="base-pastille" aria-label="À surveiller"></i>' : ""}${probleme === "erreur" ? '<i class="base-pastille" aria-label="Indisponible"></i>' : ""}</p>
+            <div class="base-valeurs">${valeurs}</div></article>`;
+        })
+        .join("");
+      return `<section class="base-bloc">
+        <header class="base-entete"><span class="base-badge" aria-hidden="true">${initiales(nom)}</span>
+          <div><h3>${echapper(nom || "Données")}</h3><p>${liste.length} indicateur${liste.length > 1 ? "s" : ""}</p></div>${statut}</header>
+        <div class="base-grille">${cartes}</div></section>`;
+    })
     .join("");
+
+  $("grille-kpis").innerHTML = resume + blocs;
 }
 
 function rendreSocial() {

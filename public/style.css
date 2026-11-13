@@ -1937,3 +1937,49 @@ html[data-theme="gold"] .theme-toggle{
  background:linear-gradient(135deg,#d7b45f,#a77b2a)!important;
  color:#21190a!important;border-color:#967334!important;
 }
+
+/* ===== Onglet « Mes bases » — nouveau design ===== */
+/* Couleurs d'alerte propres à l'onglet : --orange est remappé en vert dans certains thèmes */
+#pane-bases{--base-alerte:#c2410c;--base-erreur:#b42318}
+@media(prefers-color-scheme:dark){html:not([data-theme="light"]):not([data-theme="gold"]) #pane-bases{--base-alerte:#fdba74;--base-erreur:#fca5a5}}
+html[data-theme="dark"] #pane-bases{--base-alerte:#fdba74;--base-erreur:#fca5a5}
+#pane-bases>.carte{width:100%;min-height:0;background:transparent;border:0;box-shadow:none;padding:0}
+#pane-bases #grille-kpis{display:flex;flex-direction:column;align-items:stretch;grid-template-columns:none;gap:16px;width:100%}
+.bases-resume{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px}
+.bases-resume>div{display:grid;gap:2px;padding:12px 14px;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow)}
+.bases-resume b{font-size:24px;line-height:1.1;color:var(--text);font-variant-numeric:tabular-nums}
+.bases-resume span{font-size:11px;color:var(--muted)}
+.bases-resume .ok b{color:var(--primary)}
+.bases-resume .alerte b{color:var(--base-alerte)}
+.bases-resume .erreur b{color:var(--base-erreur)}
+.base-bloc{background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+.base-entete{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,var(--primary-soft),transparent)}
+.base-entete>div{flex:1;min-width:0}
+.base-entete h3{margin:0;font-size:15px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.base-entete p{margin:1px 0 0;font-size:11px;color:var(--muted)}
+.base-badge{flex:none;display:grid;place-items:center;width:40px;height:40px;border-radius:12px;background:var(--primary);color:#fff;font-size:12px;font-weight:700;letter-spacing:.03em}
+.base-statut{flex:none;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:600;border:1px solid transparent}
+.base-statut.ok{color:var(--primary);background:var(--primary-soft)}
+.base-statut.alerte{color:var(--base-alerte);background:color-mix(in srgb,var(--base-alerte) 14%,transparent);border-color:color-mix(in srgb,var(--base-alerte) 35%,transparent)}
+.base-grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;padding:14px}
+.base-kpi{position:relative;display:flex;flex-direction:column;justify-content:space-between;gap:10px;min-height:92px;padding:12px 14px 12px 17px;background:var(--bg);border:1px solid var(--border);border-radius:12px}
+.base-kpi::before{content:"";position:absolute;left:0;top:12px;bottom:12px;width:4px;border-radius:0 4px 4px 0;background:var(--primary)}
+.base-kpi.alerte::before{background:var(--base-alerte)}
+.base-kpi.erreur::before{background:var(--base-erreur)}
+.base-kpi .libelle{display:flex;align-items:center;gap:6px;margin:0;font-size:12px;font-weight:600;color:var(--muted)}
+.base-pastille{width:8px;height:8px;border-radius:50%;background:var(--base-alerte);flex:none}
+.base-kpi.erreur .base-pastille{background:var(--base-erreur)}
+.base-valeurs{display:grid;gap:2px}
+.base-valeur{display:flex;align-items:baseline;gap:6px;min-width:0}
+.base-valeur .nombre{font-size:22px;font-weight:700;line-height:1.15;color:var(--text);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.base-valeurs .base-valeur:nth-child(n+2) .nombre{font-size:16px;font-weight:600;color:var(--muted)}
+.base-valeur .unite{font-size:11px;font-weight:600;color:var(--muted)}
+.base-kpi.alerte .base-valeur:first-child .nombre{color:var(--base-alerte)}
+.base-kpi.erreur .nombre{color:var(--base-erreur)}
+@media(max-width:560px){
+  .bases-resume{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .base-grille{grid-template-columns:1fr 1fr;gap:8px;padding:10px}
+  .base-kpi{min-height:84px;padding:10px 10px 10px 14px}
+  .base-valeur .nombre{font-size:18px}
+  .base-entete{flex-wrap:wrap}
+}
