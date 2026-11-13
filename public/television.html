@@ -1022,7 +1022,7 @@ async function play(i) {
             toast('Reprendre à ' + fmt(rp.t) + ' ?', 'Reprendre', () => {
               m.currentTime = rp.t;
               m.play().catch(() => {});
-            }, 5000);
+            }, 10000);
           } else {
             m.currentTime = rp.t;
             toast('Reprise à ' + fmt(rp.t), 'Depuis le début', () => { m.currentTime = 0; });
