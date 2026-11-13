@@ -2299,6 +2299,8 @@ window.addEventListener('keydown', (e) => {
     items = propres; regrouper(); renderList();
     if (propres.length !== lib.length) persist();
   }
+  mesFilmsFolder = await DB.get('mesFilmsFolder');
+  if (mesFilmsFolder) await synchroniserMesFilms(false);
   renderResume();
 })();
 })();
