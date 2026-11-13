@@ -358,6 +358,12 @@ body.gold #titleBar{background:#1a1a18!important}
 @media(max-width:820px){
   #viewer{border:0!important;border-radius:0!important;box-shadow:none!important}
 }
+
+.read-history{list-style:none;padding:0;margin:10px 0;display:grid;gap:8px}
+.read-history li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 8px;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--panel2)}
+.read-history .history-open{grid-column:1;text-align:left;overflow-wrap:anywhere;font-weight:650}
+.read-history .history-meta{grid-column:1;color:var(--muted);font-size:11px}
+.read-history .history-remove{grid-column:2;grid-row:1/3;align-self:center;color:var(--text);font-size:20px}
 </style>
 
 
@@ -490,7 +496,7 @@ body.gold #titleBar{background:#1a1a18!important}
   <aside id="panel"><div class="panel-in">
     <div class="ptabs" id="ptabs">
       <button data-p="video" class="active">Vidéo</button><button data-p="audio">Audio</button>
-      <button data-p="subs">Sous-titres</button><button data-p="marks">Repères</button><button data-p="opts">Options</button>
+      <button data-p="subs">Sous-titres</button><button data-p="marks">Repères</button><button data-p="history">Historique</button><button data-p="opts">Options</button>
     </div>
 
     <section class="psec active" data-p="video">
@@ -534,6 +540,13 @@ body.gold #titleBar{background:#1a1a18!important}
       <p class="small" id="markNone">Aucun repère pour ce fichier.</p>
     </section>
 
+    <section class="psec" data-p="history">
+      <h3>Historique de lecture</h3>
+      <p class="small">Les fichiers apparaissent ici dès que tu as lu au moins 50 % de leur durée. Le classement suit l'heure de lecture, du plus récent au plus ancien.</p>
+      <p id="readHistoryEmpty" class="small">Aucun fichier lu à 50 % ou plus pour le moment.</p>
+      <ul id="readHistoryList" class="read-history"></ul>
+      <button id="clearReadHistory" type="button">Effacer l'historique</button>
+    </section>
     <section class="psec" data-p="opts">
       <label for="playerTheme">Apparence du lecteur</label>
       <select id="playerTheme">
@@ -613,9 +626,35 @@ let S = { ...defaults };
 try { Object.assign(S, JSON.parse(localStorage.getItem('lp_settings') || '{}')); } catch (e) {}
 const saveS = () => { try { localStorage.setItem('lp_settings', JSON.stringify(S)); } catch (e) {} };
 
-let prog = {}, marks = {};
+let prog = {}, marks = {}, readHistory = {};
 try { prog = JSON.parse(localStorage.getItem('lp_progress') || '{}'); } catch (e) {}
 try { marks = JSON.parse(localStorage.getItem('lp_marks') || '{}'); } catch (e) {}
+try { readHistory = JSON.parse(localStorage.getItem('lp_read_history') || '{}'); } catch (e) {}
+function flushHistory() {
+  const rows = Object.values(readHistory).sort((a,b)=>b.u-a.u).slice(0,300);
+  readHistory = Object.fromEntries(rows.map(x=>[x.key,x]));
+  try { localStorage.setItem('lp_read_history', JSON.stringify(readHistory)); } catch (e) {}
+}
+function renderHistory() {
+  const host = $('readHistoryList'); if (!host) return;
+  const rows = Object.values(readHistory).sort((a,b)=>b.u-a.u);
+  host.innerHTML = '';
+  $('readHistoryEmpty').style.display = rows.length ? 'none' : 'block';
+  rows.forEach(row => {
+    const li = document.createElement('li');
+    const date = new Date(row.u);
+    const time = date.toLocaleDateString('fr-FR')+' · '+date.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    li.innerHTML = '<button class="history-open"></button><span class="history-meta"></span><button class="history-remove" title="Retirer de l’historique">×</button>';
+    li.querySelector('.history-open').textContent = row.name+' · '+row.pct+'%';
+    li.querySelector('.history-meta').textContent = (row.type||'média')+' — '+time+' — '+fmt(row.t)+' / '+fmt(row.d);
+    li.querySelector('.history-open').onclick = () => {
+      const idx = items.findIndex(x=>x.key===row.key);
+      if(idx>=0) play(idx); else osd('Ajoute ce fichier à la liste pour le relire');
+    };
+    li.querySelector('.history-remove').onclick = () => { delete readHistory[row.key]; flushHistory(); renderHistory(); };
+    host.appendChild(li);
+  });
+}
 function flushProg() {
   const keys = Object.keys(prog);
   if (keys.length > 400) keys.sort((a, b) => prog[a].u - prog[b].u).slice(0, keys.length - 400).forEach((k) => delete prog[k]);
@@ -883,8 +922,13 @@ function saveProg() {
   const d = m.duration, t = m.currentTime;
   if (!isFinite(d) || d < 1) return;
   lastSave = Date.now();
+  const now = Date.now(), pct = Math.min(100, Math.round(t / d * 100));
+  if (pct >= 50) {
+    readHistory[it.key] = { key: it.key, name: it.name, type: it.type, t: Math.round(t), d: Math.round(d), pct, u: now };
+    flushHistory();
+  }
   if (it.type === 'audio' && d < 600) return;
-  if (d - t < 8 && t > d * 0.9) prog[it.key] = { done: 1, u: Date.now() };
+  if (d - t < 8 && t > d * 0.9) prog[it.key] = { done: 1, u: now };
   else if (t < 5) delete prog[it.key];
   else prog[it.key] = { t: Math.round(t), d: Math.round(d), u: Date.now() };
   try { localStorage.setItem('lp_last', it.key); } catch (e) {}
@@ -1469,11 +1513,17 @@ $('playerTheme').addEventListener('change', e => {
 });
 function openPanel(tab) { $('app').classList.add('panel-open'); if (tab) showTab(tab); }
 function showTab(p) {
+  if (p === 'history') renderHistory();
   document.querySelectorAll('#ptabs button').forEach((b) => b.classList.toggle('active', b.dataset.p === p));
   document.querySelectorAll('.psec').forEach((s) => s.classList.toggle('active', s.dataset.p === p));
 }
 $('btnPanel').onclick = () => $('app').classList.toggle('panel-open');
 $('ptabs').onclick = (e) => { const b = e.target.closest('button'); if (b) showTab(b.dataset.p); };
+$('clearReadHistory').onclick = () => {
+  if (!confirm("Effacer tout l’historique des fichiers lus à 50 % ou plus ?")) return;
+  readHistory = {}; flushHistory(); renderHistory();
+};
+
 $('optResume').onchange = (e) => { S.resume = e.target.checked; saveS(); };
 $('optAutosub').onchange = (e) => { S.autosub = e.target.checked; saveS(); };
 $('sleep').onchange = (e) => {
