@@ -2916,11 +2916,13 @@ function budgetComptesSelectionnes() {
 let budgetCompteIndex = 0;
 function budgetRendreSoldesComptes() {
   const zone = $("budget-comptes-soldes"), statut = $("budget-comptes-statut");
+  const precedent = $("budget-compte-precedent");
   const suivant = $("budget-compte-suivant");
   if (!zone) return;
   if (!walletAccounts.length) {
     zone.innerHTML = '<p class="vide" style="padding:12px">Aucun compte disponible. Créez un compte dans Mon Porte-Monnaie.</p>';
     if (statut) statut.textContent = "Aucun solde à afficher.";
+    if (precedent) precedent.disabled = true;
     if (suivant) suivant.disabled = true;
     return;
   }
@@ -2943,8 +2945,14 @@ function budgetRendreSoldesComptes() {
       bloc +
     '</div>';
   if (statut) statut.textContent = "Compte " + (budgetCompteIndex + 1) + " sur " + walletAccounts.length + " · Lecture seule.";
+  if (precedent) precedent.disabled = walletAccounts.length < 2;
   if (suivant) suivant.disabled = walletAccounts.length < 2;
 }
+$("budget-compte-precedent")?.addEventListener("click", () => {
+  if (!walletAccounts.length) return;
+  budgetCompteIndex = (budgetCompteIndex - 1 + walletAccounts.length) % walletAccounts.length;
+  budgetRendreSoldesComptes();
+});
 $("budget-compte-suivant")?.addEventListener("click", () => {
   if (!walletAccounts.length) return;
   budgetCompteIndex = (budgetCompteIndex + 1) % walletAccounts.length;
