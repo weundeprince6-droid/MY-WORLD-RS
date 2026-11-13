@@ -423,10 +423,10 @@
           <section class="tab-pane" id="pane-finances" role="tabpanel" data-pane="finances" hidden>
             <div class="section-heading"><div><p class="eyebrow">GESTION FINANCIÈRE</p><h2>Porte-Monnaie &amp; Budget</h2><p>Deux espaces réunis dans un seul onglet, avec leurs opérations et réglages conservés séparément.</p></div><span class="section-icon green">💰</span></div>
             <div class="finance-switch" role="group" aria-label="Choisir un espace financier">
-              <button type="button" class="finance-switch-btn actif" data-finance-view="wallet" aria-pressed="true">💰 Mon Porte-Monnaie</button>
-              <button type="button" class="finance-switch-btn" data-finance-view="budget-mensuel" aria-pressed="false">📊 Budget mensuel</button>
+              <button type="button" class="finance-switch-btn actif" data-finance-view="budget-mensuel" aria-pressed="true">📊 Budget mensuel</button>
+              <button type="button" class="finance-switch-btn" data-finance-view="wallet" aria-pressed="false">💰 Mon Porte-Monnaie</button>
             </div>
-            <section class="finance-sousvue" id="pane-wallet" role="tabpanel" data-finance-pane="wallet">
+            <section class="finance-sousvue" id="pane-wallet" role="tabpanel" data-finance-pane="wallet" hidden>
             <div class="section-heading wallet-page-heading"><div><p class="eyebrow">GESTION FINANCIÈRE</p><h2>Mon Porte-Monnaie</h2><p>Suivez vos comptes, vos entrées, vos dépenses et vos transferts en USD et en FC.</p></div><span class="section-icon green">💰</span></div>
             <div class="wallet-block-heading"><div><p class="eyebrow">SITUATION FINANCIÈRE</p><h3>Vue d'ensemble</h3><p>Un aperçu rapide de vos soldes et de votre activité.</p></div></div>
             <div class="wallet-summary" id="wallet-summary">
@@ -515,7 +515,7 @@
             <p id="wallet-status" class="meta" role="status">Les données du porte-monnaie sont privées et synchronisées dans votre Firebase My World RS.</p>
 
           </section>
-            <section class="finance-sousvue" id="pane-budget-mensuel" role="tabpanel" data-finance-pane="budget-mensuel" hidden>
+            <section class="finance-sousvue" id="pane-budget-mensuel" role="tabpanel" data-finance-pane="budget-mensuel">
             <div class="section-heading"><div><p class="eyebrow">GESTION FINANCIÈRE</p><h2>Budget mensuel</h2><p>Suivez vos revenus, dépenses, économies et prévisions dans un espace indépendant.</p></div><span class="section-icon">📊</span></div>
             <section class="carte wallet-card" style="padding:0;overflow:hidden">
               <iframe id="budget-mensuel-frame" title="Gestionnaire Budget mensuel" src="budget-mensuel.html" style="display:block;width:100%;height:calc(100vh - 205px);min-height:680px;border:0;background:var(--surface)"></iframe>
