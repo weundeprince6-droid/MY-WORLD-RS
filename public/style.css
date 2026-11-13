@@ -2145,3 +2145,50 @@ html[data-theme="dark"] #pane-bases{--base-alerte:#fdba74;--base-erreur:#fca5a5}
     box-sizing: border-box;
   }
 }
+
+
+/* GARDE-FOUS THEME : aucun panneau blanc en mode sombre ou doré */
+html[data-theme="dark"] [id^="pane-"] .carte,
+html[data-theme="dark"] [id^="pane-"] .card,
+html[data-theme="dark"] [id^="pane-"] .panneau,
+html[data-theme="dark"] [id^="pane-"] .widget,
+html[data-theme="dark"] [id^="pane-"] .feature-card,
+html[data-theme="dark"] [id^="pane-"] .summary-card,
+html[data-theme="dark"] [id^="pane-"] .agenda-calendrier,
+html[data-theme="dark"] [id^="pane-"] .agenda-desktop,
+html[data-theme="dark"] [id^="pane-"] #agenda-vue-calendrier,
+html[data-theme="dark"] [id^="pane-"] #agenda-vue-calendrier .carte,
+html[data-theme="dark"] [id^="pane-"] [class~="bg-white"],
+html[data-theme="dark"] [id^="pane-"] [class~="bg-slate-50"],
+html[data-theme="dark"] [id^="pane-"] [class~="bg-gray-50"],
+html[data-theme="gold"] [id^="pane-"] .carte,
+html[data-theme="gold"] [id^="pane-"] .card,
+html[data-theme="gold"] [id^="pane-"] .panneau,
+html[data-theme="gold"] [id^="pane-"] .widget,
+html[data-theme="gold"] [id^="pane-"] .feature-card,
+html[data-theme="gold"] [id^="pane-"] .summary-card,
+html[data-theme="gold"] [id^="pane-"] .agenda-calendrier,
+html[data-theme="gold"] [id^="pane-"] .agenda-desktop,
+html[data-theme="gold"] [id^="pane-"] #agenda-vue-calendrier,
+html[data-theme="gold"] [id^="pane-"] #agenda-vue-calendrier .carte,
+html[data-theme="gold"] [id^="pane-"] [class~="bg-white"],
+html[data-theme="gold"] [id^="pane-"] [class~="bg-slate-50"],
+html[data-theme="gold"] [id^="pane-"] [class~="bg-gray-50"]{
+  background-color:var(--surface)!important;
+  color:var(--text)!important;
+  border-color:var(--border)!important;
+}
+html[data-theme="dark"] #pane-agenda .gmail-discussion,
+html[data-theme="dark"] #pane-agenda .gmail-discussion-entete,
+html[data-theme="dark"] #pane-agenda .gmail-fil-messages,
+html[data-theme="dark"] #pane-agenda .gmail-compositeur,
+html[data-theme="gold"] #pane-agenda .gmail-discussion,
+html[data-theme="gold"] #pane-agenda .gmail-discussion-entete,
+html[data-theme="gold"] #pane-agenda .gmail-fil-messages,
+html[data-theme="gold"] #pane-agenda .gmail-compositeur{
+  background:var(--surface)!important;
+  color:var(--text)!important;
+  border-color:var(--border)!important;
+}
+html[data-theme="dark"] #pane-agenda #agenda-vue-detail *,
+html[data-theme="gold"] #pane-agenda #agenda-vue-detail *{color:var(--text)}
