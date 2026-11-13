@@ -525,7 +525,7 @@
                 const sl = JSON.parse(localStorage.getItem('budget_soldes') || 'null');
                 if (sl && sl.devise === DEVISE) {
                     document.getElementById('soldeDisponible').textContent = formatCurrency(sl.disponible);
-                    document.getElementById('soldeDisponibleNote').textContent = 'Somme de vos ' + sl.nbComptes + ' compte(s) en ' + SYMBOLES[sl.devise] + ' du Porte-Monnaie, déjà encaissée.';
+                    document.getElementById('soldeDisponibleNote').textContent = 'Somme de vos ' + sl.nbComptes + ' compte(s) du Porte-Monnaie, déjà encaissée' + (sl.taux ? ' (USD/FC au taux commun : 1 USD = ' + sl.taux + ' FC).' : '.') + (sl.exclus ? ' ' + sl.exclus + ' compte(s) d\'une autre devise non inclus : renseignez le taux de change.' : '');
                     finalBalEl.textContent = formatCurrency(sl.disponible + sl.aEncaisser);
                     document.getElementById('finalBalanceNote').textContent = formatCurrency(sl.disponible) + ' disponibles + ' + formatCurrency(sl.aEncaisser) + ' à encaisser (ristournes et parts)';
                 }

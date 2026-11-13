@@ -444,6 +444,15 @@ srv.listen(8765, async () => {
     const ok = /^70[, ]/.test(dep.disp) && /à encaisser/.test(dep.note) && dep.v === '100' && dep.ro && dev === 'FC' && /FC$/.test(aff) && !!prime && prime.corps.fields.kind.stringValue === 'income' && !!patch && !!transport && transport.type === 'expense' && transport.amount === 30 && supprime;
     return { ok, detail: JSON.stringify({ dep, dev, aff, prime: !!prime, patch: !!patch, transport, supprime, statut }) };
   }));
+  res.push(await scenario('Taux de change : la saisie dans Budget mensuel est enregistrée', {}, async (p, appels, logs, etat) => {
+    etat.devise = 'FC';
+    await p.click('#bouton-connexion'); await p.waitForTimeout(3000);
+    await p.evaluate(() => localStorage.setItem('mwrs_budget_taux_usd_fc', '2800'));
+    await p.click('[data-tab="budget-mensuel"]'); await p.waitForTimeout(1500);
+    await p.fill('#budget-taux-usd-fc', '2500'); await p.dispatchEvent('#budget-taux-usd-fc', 'change'); await p.waitForTimeout(500);
+    const taux = await p.evaluate(() => localStorage.getItem('mwrs_budget_taux_usd_fc'));
+    return { ok: taux === '2500', detail: JSON.stringify({ taux }) };
+  }));
   res.push(await scenario('Porte-Monnaie : 50 % des ristournes versés dans « Mes parts de ristourne »', {}, async (p, appels, logs, etat) => {
     await p.click('#bouton-connexion'); await p.waitForTimeout(3000);
     await p.click('[data-tab="wallet"]'); await p.waitForTimeout(1500);

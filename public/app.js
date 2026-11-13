@@ -2687,6 +2687,7 @@ function walletRender() {
   walletRenderForecasts();
   const options = walletAccounts.map(a=>`<option value="${echapper(a.id)}">${echapper(a.name)} — ${a.currency} (${a.type==="personal"?"Personnel":"Pro"})</option>`).join("");
   ["wallet-op-account","wallet-transfer-from","wallet-transfer-to"].forEach(id => { const el=$(id); if(el){const old=el.value;el.innerHTML=options || '<option value="">Créez d’abord un compte</option>';if(walletAccounts.some(a=>a.id===old))el.value=old;} });
+  try { transfertTauxAuto(); } catch {}
   const filter=$("wallet-history-account"), old=filter.value;
   filter.innerHTML='<option value="all">Tous les comptes</option>'+options;
   if(walletAccounts.some(a=>a.id===old))filter.value=old;
@@ -2879,11 +2880,34 @@ $("budget-taux-usd-fc")?.addEventListener("change", (ev) => {
   if (ev.target.value === "" || !Number.isFinite(value) || value <= 0) {
     try { localStorage.removeItem(BUDGET_TAUX); } catch {}
     if (status) status.textContent = "Taux non renseigné";
+    transfertTauxAuto(); if (budgetLireLien()) budgetSynchroniser();
     return;
   }
   try { localStorage.setItem(BUDGET_TAUX, String(value)); } catch {}
   if (status) status.textContent = "Taux enregistré";
+  transfertTauxAuto(); if (budgetLireLien()) budgetSynchroniser();
 });
+// Un seul taux USD/FC pour toute l'appli (saisi dans Budget mensuel) : transferts, soldes disponibles et solde final estimé
+const tauxUsdFc = () => { try { const v = Number(localStorage.getItem(BUDGET_TAUX)); return v > 0 ? v : 0; } catch { return 0; } };
+function convertirDevise(montant, de, vers) {
+  de = String(de || "").toUpperCase(); vers = String(vers || "").toUpperCase();
+  if (de === vers) return montant;
+  const t = tauxUsdFc(); if (!t) return null;
+  if (de === "USD" && vers === "FC") return montant * t;
+  if (de === "FC" && vers === "USD") return montant / t;
+  return null;
+}
+function transfertTauxAuto() {
+  const f = $("wallet-transfer-form"); if (!f) return;
+  const champ = f.elements.namedItem("rate"), de = walletAccounts.find((a) => a.id === f.elements.namedItem("from")?.value), vers = walletAccounts.find((a) => a.id === f.elements.namedItem("to")?.value);
+  if (!champ) return;
+  const t = tauxUsdFc(), cur = (a) => String(a?.currency || "").toUpperCase();
+  if (de && vers && cur(de) !== cur(vers) && t) {
+    champ.value = String(Math.round((cur(de) === "USD" ? t : 1 / t) * 1e6) / 1e6);
+    champ.readOnly = true; champ.title = "Taux commun : 1 USD = " + t + " FC (à modifier dans Budget mensuel)";
+  } else { champ.readOnly = false; champ.title = ""; if (!(de && vers && cur(de) !== cur(vers))) champ.value = ""; }
+}
+["wallet-transfer-from", "wallet-transfer-to"].forEach((id) => $(id)?.addEventListener("change", transfertTauxAuto));
 budgetChargerTaux();
 function budgetRendreLiaison() {
   const sel = $("budget-liaison-compte"); if (!sel) return;
@@ -2958,10 +2982,11 @@ async function budgetSynchroniser() {
     if (departAvant !== depart) modifBudget = modifBudget || "iframe";
     // Tous les comptes dans la devise du budget : solde disponible + ce qui reste à encaisser (parts de ristourne/caisse non encore enregistrées)
     const devB = String(compte.currency || "EUR").toUpperCase();
-    const disponible = walletAccounts.filter((a) => String(a.currency || "").toUpperCase() === devB).reduce((n, a) => n + Number(a.balance || 0), 0);
+    let disponible = 0, nbComptes = 0, exclus = 0;
+    for (const a of walletAccounts) { const v = convertirDevise(Number(a.balance || 0), a.currency, devB); if (v === null) exclus++; else { disponible += v; nbComptes++; } }
     let aEncaisser = 0;
-    try { for (const p of [...calculerPartsRistourne(), ...calculerPartsCaisse()]) if (p.devise === devB && p.aEnregistrer > 0) aEncaisser += p.aEnregistrer; } catch {}
-    const soldes = JSON.stringify({ devise: devB, disponible: Math.round(disponible * 100) / 100, aEncaisser: Math.round(aEncaisser * 100) / 100, nbComptes: walletAccounts.filter((a) => String(a.currency || "").toUpperCase() === devB).length });
+    try { for (const p of [...calculerPartsRistourne(), ...calculerPartsCaisse()]) { if (!(p.aEnregistrer > 0)) continue; const v = convertirDevise(p.aEnregistrer, p.devise, devB); if (v !== null) aEncaisser += v; } } catch {}
+    const soldes = JSON.stringify({ devise: devB, disponible: Math.round(disponible * 100) / 100, aEncaisser: Math.round(aEncaisser * 100) / 100, nbComptes, exclus, taux: tauxUsdFc() });
     let soldesAvant = null; try { soldesAvant = localStorage.getItem(BUDGET_SOLDES); localStorage.setItem(BUDGET_SOLDES, soldes); } catch {}
     if (soldesAvant !== soldes) modifBudget = modifBudget || "iframe";
     if (modifBudget) { if (modifBudget === true) { try { localStorage.setItem(BUDGET_CLE, JSON.stringify(budget)); } catch {} } budgetRechargerIframe(); }
