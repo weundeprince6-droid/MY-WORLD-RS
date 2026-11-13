@@ -27,6 +27,10 @@
 }
 .tv-mini{border:1px solid #c49b4c!important;background:#111923!important;color:#fff1d2!important}
 .tv-mini-titre{color:#fff1d2!important}
+
+/* Navigation des comptes du Budget : boutons lisibles sur mobile. */
+.budget-compte-navigation .btn{min-height:44px;white-space:normal;line-height:1.25;text-align:center}
+@media(max-width:420px){.budget-compte-navigation{flex-direction:column}.budget-compte-navigation .btn{width:100%;flex-basis:auto}}
 </style>
 </head>
 <body>
@@ -516,8 +520,9 @@
                   <div id="budget-comptes-soldes" role="region" aria-label="Détails du compte sélectionné" aria-live="polite" style="margin-top:14px;min-height:130px">
                     <p class="vide" style="padding:12px">Chargement des comptes…</p>
                   </div>
-                  <div style="display:flex;justify-content:flex-end;margin-top:12px">
-                    <button class="btn btn-primary" id="budget-compte-suivant" type="button">Compte suivant →</button>
+                  <div class="budget-compte-navigation" style="display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;margin-top:12px">
+                    <button class="btn btn-secondary" id="budget-compte-precedent" type="button" style="flex:1 1 140px;min-width:0">← Compte précédent</button>
+                    <button class="btn btn-primary" id="budget-compte-suivant" type="button" style="flex:1 1 140px;min-width:0">Compte suivant →</button>
                   </div>
                   <p id="budget-comptes-statut" class="budget-liaison-statut" role="status">Consultation uniquement : aucune écriture ni synchronisation vers le Porte-Monnaie.</p>
                 </article>
