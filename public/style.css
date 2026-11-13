@@ -2127,7 +2127,6 @@ html[data-theme="dark"] #pane-bases{--base-alerte:#fdba74;--base-erreur:#fca5a5}
 /* MOBILE : tous les carreaux en pile verticale, jamais côte à côte.
    Règle prioritaire sur les grilles définies plus haut. */
 @media (max-width: 760px) {
-  #pane-dashboard .dashboard-metrics,
   #pane-dashboard .dashboard-detail-grid,
   #pane-dashboard .dashboard-grid,
   #pane-dashboard .kpis,
@@ -2135,7 +2134,6 @@ html[data-theme="dark"] #pane-bases{--base-alerte:#fdba74;--base-erreur:#fca5a5}
   #pane-messages .gmail-layout,
   #pane-messages .messages-grid,
   [id^="pane-"] .dashboard-grid,
-  [id^="pane-"] .dashboard-metrics,
   [id^="pane-"] .dashboard-detail-grid,
   [id^="pane-"] .agenda-grid,
   [id^="pane-"] .kpis,
@@ -2166,10 +2164,8 @@ html[data-theme="dark"] #pane-bases{--base-alerte:#fdba74;--base-erreur:#fca5a5}
   }
 
   #pane-dashboard .dashboard-detail-grid > *,
-  #pane-dashboard .dashboard-metrics > *,
   #pane-messages .gmail-desktop > *,
   [id^="pane-"] .dashboard-grid > *,
-  [id^="pane-"] .dashboard-metrics > *,
   [id^="pane-"] .dashboard-detail-grid > *,
   [id^="pane-"] .agenda-grid > *,
   [id^="pane-"] .kpis > *,
