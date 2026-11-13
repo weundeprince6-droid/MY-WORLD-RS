@@ -2017,6 +2017,54 @@ async function walletPatchAccount(account, delta) {
   const url = urlFirestore(firebaseConfig.projectId, walletPath(uid, "walletAccounts", account.id)) + "?updateMask.fieldPaths=balance";
   return google(url, { method: "PATCH", body: JSON.stringify(walletFields({ balance: Number(account.balance || 0) + delta })) });
 }
+// ---------- Suivi manuel des encaissements de ristourne (séparé des données ESE DB) ----------
+let suiviRistourneManuel = { id: "principal", totalFC: 0, encaisseFC: 0, totalUSD: 0, encaisseUSD: 0, saved: false };
+function rendreSuiviRistourne() {
+  for (const dev of ["FC", "USD"]) {
+    const suffix = dev.toLowerCase(), totalKey = "total" + dev, encaisseKey = "encaisse" + dev;
+    const total = Number(suiviRistourneManuel[totalKey] || 0), encaisse = Number(suiviRistourneManuel[encaisseKey] || 0);
+    const totalEl = $("rist-suivi-total-" + suffix), encaisseEl = $("rist-suivi-encaisse-" + suffix);
+    if (totalEl && document.activeElement !== totalEl) totalEl.value = total;
+    if (encaisseEl && document.activeElement !== encaisseEl) encaisseEl.value = encaisse;
+    const resteEl = $("rist-suivi-reste-" + suffix);
+    if (resteEl) resteEl.textContent = walletMoney(Math.max(0, total - encaisse), dev);
+  }
+}
+function actualiserResteRistourne() {
+  for (const dev of ["FC", "USD"]) {
+    const total = Number($("rist-suivi-total-" + dev.toLowerCase())?.value || 0);
+    const encaisse = Number($("rist-suivi-encaisse-" + dev.toLowerCase())?.value || 0);
+    const reste = $("rist-suivi-reste-" + dev.toLowerCase());
+    if (reste) reste.textContent = walletMoney(Math.max(0, total - encaisse), dev);
+  }
+}
+async function enregistrerSuiviRistourne() {
+  const bouton = $("rist-suivi-enregistrer"), statut = $("rist-suivi-statut");
+  if (bouton) bouton.disabled = true;
+  try {
+    if (!fb?.auth.currentUser || !jetonGoogle) throw new Error("Connectez-vous pour enregistrer votre suivi.");
+    const totalFC = Math.max(0, Number($("rist-suivi-total-fc")?.value || 0));
+    const encaisseFC = Math.max(0, Number($("rist-suivi-encaisse-fc")?.value || 0));
+    const totalUSD = Math.max(0, Number($("rist-suivi-total-usd")?.value || 0));
+    const encaisseUSD = Math.max(0, Number($("rist-suivi-encaisse-usd")?.value || 0));
+    if (encaisseFC > totalFC || encaisseUSD > totalUSD) throw new Error("Le montant déjà encaissé ne peut pas dépasser la somme totale.");
+    const data = { id: "principal", totalFC, encaisseFC, totalUSD, encaisseUSD, updatedAt: new Date().toISOString() };
+    const uid = fb.auth.currentUser.uid;
+    if (suiviRistourneManuel.saved) {
+      const url = urlFirestore(firebaseConfig.projectId, walletPath(uid, "walletRistourneSuivi", "principal")) + "?updateMask.fieldPaths=totalFC&updateMask.fieldPaths=encaisseFC&updateMask.fieldPaths=totalUSD&updateMask.fieldPaths=encaisseUSD&updateMask.fieldPaths=updatedAt";
+      await google(url, { method: "PATCH", body: JSON.stringify(walletFields(data)) });
+    } else { await walletCreate("walletRistourneSuivi", "principal", data); }
+    suiviRistourneManuel = { ...data, saved: true };
+    rendreSuiviRistourne();
+    if (statut) statut.textContent = "Suivi enregistré dans votre Firebase My World RS.";
+  } catch (e) { if (statut) statut.textContent = "Enregistrement impossible : " + e.message; }
+  finally { if (bouton) bouton.disabled = false; }
+}
+for (const id of ["rist-suivi-total-fc","rist-suivi-encaisse-fc","rist-suivi-total-usd","rist-suivi-encaisse-usd"]) {
+  const el = $(id); if (el) el.addEventListener("input", actualiserResteRistourne);
+}
+$("rist-suivi-enregistrer")?.addEventListener("click", enregistrerSuiviRistourne);
+
 // ---------- Ristournes ESE DB (dans Mon Porte-Monnaie) ----------
 const formatMontantDevise = walletMoney; // un seul formateur de montants pour toute l'appli
 function rendreRistourne(r) {
@@ -2650,10 +2698,12 @@ async function chargerWallet(force = false) {
   const status = $("wallet-status");
   if (status) status.textContent = "Chargement des comptes et opérations…";
   try {
-    const [accounts, transactions] = await Promise.all([walletReadCollection("walletAccounts"), walletReadCollection("walletTransactions")]);
+    const [accounts, transactions, suiviRistourne] = await Promise.all([walletReadCollection("walletAccounts"), walletReadCollection("walletTransactions"), walletReadCollection("walletRistourneSuivi")]);
     walletAccounts = accounts.map(a => ({ ...a, id: a.id, balance: Number(a.balance || 0) })).sort((a,b) => String(a.createdAt).localeCompare(String(b.createdAt)));
     walletTransactions = transactions.map(t => ({ ...t, id: t.id, amount: Number(t.amount || 0), targetAmount: Number(t.targetAmount || 0) })).sort((a,b) => String(b.date || "").localeCompare(String(a.date || "")));
+    suiviRistourneManuel = { ...(suiviRistourne.find(x => x.id === "principal") || suiviRistourne[0] || suiviRistourneManuel), saved: suiviRistourne.length > 0 };
     walletLoaded = true;
+    rendreSuiviRistourne();
     walletRender();
     if (status) status.textContent = "Données synchronisées avec votre Firebase My World RS. Elles sont séparées des bases AVEC LA SAGESSE et ESE DB.";
   } catch (e) {
