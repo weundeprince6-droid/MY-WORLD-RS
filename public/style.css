@@ -2343,3 +2343,267 @@ html[data-theme="gold"] #pane-agenda #agenda-anniversaire .agenda-anniversaire-c
   .entete .btn-icon-header { width: 31px; height: 31px; min-width: 31px; }
   .nav-item { flex-basis: 70px !important; width: 70px !important; min-width: 70px !important; }
 }
+
+
+/* ==========================================================
+   MY WORLD RS — correction complémentaire des débordements
+   et des zones de contenu trop courtes sur écrans tactiles.
+   Périmètre limité aux panneaux internes (pas à la connexion).
+   ========================================================== */
+@media (max-width: 760px) {
+  #tableau,
+  #tableau .content-area,
+  #tableau .tab-pane,
+  #tableau [id^="pane-"] {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  #tableau .content-area {
+    padding-inline: 0;
+  }
+
+  #tableau [id^="pane-"] {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none;
+    overflow: visible;
+  }
+
+  /* Les titres, filtres et commandes occupent plusieurs lignes si besoin. */
+  #tableau [id^="pane-"] .section-heading,
+  #tableau [id^="pane-"] .card-heading,
+  #tableau [id^="pane-"] .gmail-toolbar,
+  #tableau [id^="pane-"] .gmail-filtres,
+  #tableau [id^="pane-"] .drive-toolbar,
+  #tableau [id^="pane-"] .drive-actions,
+  #tableau [id^="pane-"] .notes-toolbar,
+  #tableau [id^="pane-"] .wallet-filters,
+  #tableau [id^="pane-"] .wallet-export-actions,
+  #tableau [id^="pane-"] .agenda-form-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  #tableau [id^="pane-"] .section-heading > *,
+  #tableau [id^="pane-"] .card-heading > *,
+  #tableau [id^="pane-"] .gmail-toolbar > *,
+  #tableau [id^="pane-"] .drive-toolbar > *,
+  #tableau [id^="pane-"] .notes-toolbar > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  /* Formulaires : un champ par ligne, sans écrasement horizontal. */
+  #tableau [id^="pane-"] .form-ligne,
+  #tableau [id^="pane-"] .agenda-form,
+  #tableau [id^="pane-"] .wallet-form,
+  #tableau [id^="pane-"] .notes-form,
+  #tableau [id^="pane-"] .nouveau-mail-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+    min-width: 0;
+    gap: 9px;
+  }
+
+  #tableau [id^="pane-"] input:not([type="checkbox"]):not([type="radio"]),
+  #tableau [id^="pane-"] select,
+  #tableau [id^="pane-"] textarea {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    min-height: 42px;
+    box-sizing: border-box;
+  }
+
+  #tableau [id^="pane-"] textarea {
+    min-height: 104px;
+    resize: vertical;
+  }
+
+  #tableau [id^="pane-"] .carte,
+  #tableau [id^="pane-"] .card,
+  #tableau [id^="pane-"] .panneau,
+  #tableau [id^="pane-"] .feature-card,
+  #tableau [id^="pane-"] .dashboard-detail {
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  /* Agenda et messagerie : les panneaux deviennent défilables en hauteur. */
+  #pane-agenda .gmail-desktop,
+  #pane-messages .gmail-desktop,
+  #pane-drive .drive-desktop {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  #pane-agenda .gmail-conversations,
+  #pane-messages .gmail-conversations {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    min-height: 150px !important;
+    max-height: 32vh !important;
+    flex: 0 1 auto !important;
+    overflow-y: auto !important;
+  }
+
+  #pane-agenda .gmail-discussion,
+  #pane-messages .gmail-discussion {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 300px !important;
+    max-height: none !important;
+    flex: 1 1 auto !important;
+    overflow: visible !important;
+  }
+
+  #pane-agenda .gmail-fil-messages,
+  #pane-messages .gmail-fil-messages,
+  #pane-drive .drive-fil {
+    min-height: 180px;
+    max-height: none;
+    overflow: auto;
+    overflow-wrap: anywhere;
+  }
+
+  #pane-drive .drive-contenu,
+  #pane-drive .drive-editor-content,
+  #pane-drive .drive-editor-card {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    height: auto;
+    min-height: 0;
+    box-sizing: border-box;
+  }
+
+  /* Graphiques et tableaux : aucune colonne ne force la largeur de l'écran. */
+  #pane-wallet .wallet-chart-grid,
+  #pane-wallet .wallet-summary,
+  #pane-wallet .wallet-statistics,
+  #pane-wallet .wallet-columns,
+  #pane-wallet .wallet-ristourne-metrics,
+  #pane-budget-mensuel .budget-reglages-grille,
+  #pane-notes .notes-list-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+    min-width: 0;
+  }
+
+  #tableau [id^="pane-"] .wallet-chart-wrap,
+  #tableau [id^="pane-"] .chart-wrap,
+  #tableau [id^="pane-"] .graphique-wrap,
+  #tableau [id^="pane-"] canvas,
+  #tableau [id^="pane-"] svg {
+    max-width: 100%;
+  }
+
+  #tableau [id^="pane-"] .wallet-history-wrap,
+  #tableau [id^="pane-"] .table-wrap,
+  #tableau [id^="pane-"] .table-responsive,
+  #tableau [id^="pane-"] .table-container {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #tableau [id^="pane-"] table {
+    width: max-content;
+    min-width: 100%;
+    max-width: none;
+  }
+
+  #tableau [id^="pane-"] th,
+  #tableau [id^="pane-"] td {
+    min-width: 76px;
+    padding: 8px 9px;
+    line-height: 1.35;
+    vertical-align: top;
+  }
+
+  /* Texte long et commandes : retour à la ligne plutôt que chevauchement. */
+  #tableau [id^="pane-"] h1,
+  #tableau [id^="pane-"] h2,
+  #tableau [id^="pane-"] h3,
+  #tableau [id^="pane-"] p,
+  #tableau [id^="pane-"] label,
+  #tableau [id^="pane-"] .meta,
+  #tableau [id^="pane-"] .description,
+  #tableau [id^="pane-"] .extrait {
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+
+  #tableau [id^="pane-"] button,
+  #tableau [id^="pane-"] .btn {
+    min-height: 38px;
+    max-width: 100%;
+    height: auto;
+    line-height: 1.3;
+    white-space: normal;
+  }
+}
+
+@media (max-width: 420px) {
+  #tableau [id^="pane-"] {
+    padding-inline: 0;
+  }
+
+  #tableau [id^="pane-"] .section-heading,
+  #tableau [id^="pane-"] .card-heading {
+    align-items: flex-start;
+  }
+
+  #tableau [id^="pane-"] .section-heading h1,
+  #tableau [id^="pane-"] .section-heading h2,
+  #tableau [id^="pane-"] .section-heading h3 {
+    font-size: clamp(16px, 5vw, 20px);
+    line-height: 1.25;
+  }
+
+  #tableau [id^="pane-"] .carte,
+  #tableau [id^="pane-"] .card,
+  #tableau [id^="pane-"] .panneau {
+    padding-inline: 10px;
+  }
+
+  #tableau [id^="pane-"] .btn,
+  #tableau [id^="pane-"] button {
+    padding-inline: 9px;
+  }
+}
+
+@media (max-width: 360px) {
+  #tableau [id^="pane-"] .section-heading h1,
+  #tableau [id^="pane-"] .section-heading h2 {
+    font-size: 16px;
+  }
+
+  #tableau [id^="pane-"] th,
+  #tableau [id^="pane-"] td {
+    min-width: 68px;
+    padding: 7px;
+    font-size: 11px;
+  }
+}
