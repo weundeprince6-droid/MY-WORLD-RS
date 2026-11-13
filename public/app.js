@@ -2863,29 +2863,18 @@ function budgetComptesSelectionnes() {
   } catch { return walletAccounts.map(a => a.id); }
 }
 function budgetRendreSoldesComptes() {
-  const choix = $("budget-comptes-choix"), soldes = $("budget-comptes-soldes"), statut = $("budget-comptes-statut");
-  if (!choix || !soldes) return;
+  const soldes = $("budget-comptes-soldes"), statut = $("budget-comptes-statut");
+  if (!soldes) return;
   if (!walletAccounts.length) {
-    choix.innerHTML = '<p class="vide">Aucun compte disponible. Connectez-vous et créez un compte dans Mon Porte-Monnaie.</p>';
-    soldes.innerHTML = "";
+    soldes.innerHTML = '<p class="vide" style="padding:12px">Aucun compte disponible. Connectez-vous et créez un compte dans Mon Porte-Monnaie.</p>';
     if (statut) statut.textContent = "Aucun solde à afficher.";
     return;
   }
-  const selection = budgetComptesSelectionnes().filter(id => walletAccounts.some(a => a.id === id));
-  choix.innerHTML = walletAccounts.map(a => {
-    const checked = selection.includes(a.id) ? " checked" : "";
-    return '<label style="display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--border);border-radius:12px;cursor:pointer"><input type="checkbox" data-budget-compte="' + echapper(a.id) + '"' + checked + '><span><strong>' + echapper(a.name) + '</strong><small style="display:block;color:var(--muted)">' + (a.type === "personal" ? "Personnel" : "Professionnel") + ' · ' + echapper(a.currency || "") + '</small></span></label>';
-  }).join("");
-  choix.querySelectorAll("[data-budget-compte]").forEach(input => input.addEventListener("change", () => {
-    const ids = [...choix.querySelectorAll("[data-budget-compte]:checked")].map(x => x.dataset.budgetCompte);
-    try { localStorage.setItem(BUDGET_COMPTES_AFFICHES, JSON.stringify(ids)); } catch {}
-    budgetRendreSoldesComptes();
-  }));
-  const visibles = walletAccounts.filter(a => selection.includes(a.id));
-  soldes.innerHTML = visibles.length ? visibles.map(a =>
-    '<article class="budget-reglage-bloc" style="padding:16px"><small style="color:var(--muted)">' + (a.type === "personal" ? "Personnel" : "Professionnel") + '</small><strong style="display:block;margin:5px 0">' + echapper(a.name) + '</strong><div style="font-size:1.35rem;font-weight:800;overflow-wrap:anywhere">' + echapper(walletMoney(a.balance, a.currency)) + '</div><small style="color:var(--muted)">Solde disponible · lecture seule</small></article>'
-  ).join("") : '<p class="vide">Sélectionnez les comptes à afficher.</p>';
-  if (statut) statut.textContent = visibles.length + " compte(s) affiché(s) sur " + walletAccounts.length + " · Consultation en lecture seule.";
+  const lignes = walletAccounts.map(a =>
+    '<tr><td style="padding:10px 12px;font-weight:700">' + echapper(a.name) + '</td><td style="padding:10px 12px;color:var(--muted)">' + (a.type === "personal" ? "Personnel" : "Professionnel") + '</td><td style="padding:10px 12px;text-align:right;font-weight:800;white-space:nowrap">' + echapper(walletMoney(a.balance, a.currency)) + '</td></tr>'
+  ).join("");
+  soldes.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:.92rem"><thead style="position:sticky;top:0;background:var(--surface);z-index:1"><tr><th scope="col" style="padding:10px 12px;text-align:left;border-bottom:1px solid var(--border)">Compte</th><th scope="col" style="padding:10px 12px;text-align:left;border-bottom:1px solid var(--border)">Type</th><th scope="col" style="padding:10px 12px;text-align:right;border-bottom:1px solid var(--border)">Solde</th></tr></thead><tbody>' + lignes + '</tbody></table>';
+  if (statut) statut.textContent = walletAccounts.length + " compte(s) · Faites défiler le tableau pour consulter les soldes · Lecture seule.";
 }
 function budgetChargerTaux() {
   const input = $("budget-taux-usd-fc"), status = $("budget-taux-statut");
