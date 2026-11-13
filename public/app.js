@@ -3892,7 +3892,7 @@ $("notes-cancel").addEventListener("click", notesReset);
 
 $("notes-search").addEventListener("input", notesRender);
 $("notes-filter").addEventListener("change", notesRender);
-document.querySelector('[data-tab="notes"]')?.addEventListener("click", () => notesLoad());
+document.querySelector('[data-subview="notes"]')?.addEventListener("click", () => notesLoad());
 
 // ---------- Import Google Keep (Takeout) ----------
 $("keep-fichiers")?.addEventListener("change", async (e) => {
