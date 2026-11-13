@@ -1771,3 +1771,169 @@ body:has(#tableau:not([hidden])) .entete-date{display:flex}
   color:#403720!important;
 }
 #pane-agenda .gmail-compositeur input::placeholder{color:#8b7a55!important}
+
+
+/* ==========================================================
+   MY WORLD RS — Thèmes globaux clair / sombre / doré
+   Ces règles couvrent toutes les vues et tous les panneaux.
+   ========================================================== */
+html[data-theme="light"]{
+ color-scheme:light;
+ --bg:#f4f6fa;--surface:#ffffff;--text:#202a3a;--muted:#687589;
+ --border:#dfe5ed;--primary:#087a4b;--primary-dark:#075c3c;
+ --primary-soft:#e6f4ec;--shadow:0 8px 24px rgba(31,50,81,.06);
+}
+html[data-theme="dark"]{
+ color-scheme:dark;
+ --bg:#0b111a;--surface:#151e2a;--text:#edf2f8;--muted:#aab7c7;
+ --border:#344153;--primary:#59d6a0;--primary-dark:#2eb77e;
+ --primary-soft:#17382e;--shadow:0 8px 24px rgba(0,0,0,.22);
+}
+html[data-theme="gold"]{
+ color-scheme:dark;
+ --bg:#0c0d10;--surface:#17191d;--text:#f4ecd9;--muted:#c0ad83;
+ --border:#5e4b2b;--primary:#d2a94f;--primary-dark:#a97b25;
+ --primary-soft:#332918;--shadow:0 8px 26px rgba(0,0,0,.28);
+}
+html[data-theme="gold"] body,
+html[data-theme="gold"] .app-shell,
+html[data-theme="gold"] main,
+html[data-theme="gold"] .contenu,
+html[data-theme="gold"] .zone-contenu{
+ background:var(--bg)!important;color:var(--text)!important;
+}
+html[data-theme="gold"] .entete,
+html[data-theme="gold"] .sidebar,
+html[data-theme="gold"] .navigation,
+html[data-theme="gold"] .carte,
+html[data-theme="gold"] .card,
+html[data-theme="gold"] .panneau,
+html[data-theme="gold"] .modal-content,
+html[data-theme="gold"] .dialog-content,
+html[data-theme="gold"] .dropdown-menu,
+html[data-theme="gold"] .menu-contextuel,
+html[data-theme="gold"] .table-wrap,
+html[data-theme="gold"] .liste,
+html[data-theme="gold"] .gmail-conversations,
+html[data-theme="gold"] .gmail-discussion,
+html[data-theme="gold"] .gmail-fil-messages,
+html[data-theme="gold"] .gmail-discussion-entete,
+html[data-theme="gold"] .gmail-compositeur,
+html[data-theme="gold"] .agenda-desktop,
+html[data-theme="gold"] .agenda-calendrier,
+html[data-theme="gold"] .social-card,
+html[data-theme="gold"] .social-composer,
+html[data-theme="gold"] .base-card,
+html[data-theme="gold"] .database-card,
+html[data-theme="gold"] .widget,
+html[data-theme="gold"] .kpi,
+html[data-theme="gold"] .feature-card,
+html[data-theme="gold"] .summary-card{
+ background:#17191d!important;color:var(--text)!important;
+ border-color:var(--border)!important;box-shadow:var(--shadow)!important;
+}
+html[data-theme="gold"] .entete,
+html[data-theme="gold"] .sidebar,
+html[data-theme="gold"] .navigation{
+ background:#111317!important;
+}
+html[data-theme="gold"] h1,html[data-theme="gold"] h2,
+html[data-theme="gold"] h3,html[data-theme="gold"] h4,
+html[data-theme="gold"] label,html[data-theme="gold"] strong,
+html[data-theme="gold"] .section-heading,
+html[data-theme="gold"] .nav-item,
+html[data-theme="gold"] .meta{
+ color:var(--text)!important;
+}
+html[data-theme="gold"] p,html[data-theme="gold"] small,
+html[data-theme="gold"] .muted,html[data-theme="gold"] .description,
+html[data-theme="gold"] .extrait,html[data-theme="gold"] .libelle{
+ color:var(--muted)!important;
+}
+html[data-theme="gold"] button,
+html[data-theme="gold"] .btn,
+html[data-theme="gold"] .nav-item.active,
+html[data-theme="gold"] .onglet.active,
+html[data-theme="gold"] [aria-selected="true"]{
+ border-color:#967334!important;
+}
+html[data-theme="gold"] .btn-primary,
+html[data-theme="gold"] .nav-item.active,
+html[data-theme="gold"] .onglet.active,
+html[data-theme="gold"] [aria-selected="true"]{
+ background:linear-gradient(135deg,#d7b45f,#a77b2a)!important;
+ color:#21190a!important;
+}
+html[data-theme="gold"] input,
+html[data-theme="gold"] select,
+html[data-theme="gold"] textarea,
+html[data-theme="gold"] .champ,
+html[data-theme="gold"] .form-control{
+ background:#202126!important;color:#f4ecd9!important;
+ border-color:#69542f!important;
+}
+html[data-theme="gold"] input::placeholder,
+html[data-theme="gold"] textarea::placeholder{color:#b7a47b!important}
+html[data-theme="gold"] table,
+html[data-theme="gold"] th,
+html[data-theme="gold"] td,
+html[data-theme="gold"] .table{
+ color:var(--text)!important;border-color:var(--border)!important;
+}
+html[data-theme="gold"] th{background:#29251c!important;color:#e9cf91!important}
+html[data-theme="gold"] tr:nth-child(even){background:#1d1d1b!important}
+html[data-theme="gold"] .bandeau.ok,
+html[data-theme="gold"] .alert-success{background:#263222!important;color:#e5d5a8!important}
+html[data-theme="gold"] .bandeau.erreur,
+html[data-theme="gold"] .alert-danger{background:#3a211d!important;color:#ffd0c4!important}
+html[data-theme="gold"] .tasks-entete{
+ background:#282317!important;border-color:#a27c35!important;color:#fff0c8!important;
+}
+html[data-theme="gold"] .tasks-entete-label{color:#e7c66e!important}
+html[data-theme="gold"] #tasks-entete-texte{color:#fff0d0!important}
+html[data-theme="gold"] #pane-agenda .gmail-discussion,
+html[data-theme="gold"] #pane-agenda .gmail-fil-messages,
+html[data-theme="gold"] #pane-agenda #agenda-vue-detail .carte{
+ background:#17191d!important;color:#f4ecd9!important;border-color:#5e4b2b!important;
+}
+html[data-theme="gold"] #pane-agenda .gmail-discussion-entete,
+html[data-theme="gold"] #pane-agenda .gmail-compositeur,
+html[data-theme="gold"] #pane-agenda .gmail-discussion-actions button{
+ background:#29251c!important;color:#f4ecd9!important;border-color:#8a6b32!important;
+}
+html[data-theme="gold"] #pane-agenda .gmail-discussion-identite strong,
+html[data-theme="gold"] #pane-agenda .gmail-discussion-identite small,
+html[data-theme="gold"] #pane-agenda #agenda-vue-detail,
+html[data-theme="gold"] #pane-agenda #agenda-vue-detail *{color:#f4ecd9!important}
+html[data-theme="light"] #pane-agenda .gmail-discussion,
+html[data-theme="light"] #pane-agenda .gmail-fil-messages,
+html[data-theme="light"] #pane-agenda #agenda-vue-detail .carte{
+ background:#fff!important;color:#202a3a!important;border-color:#dfe5ed!important;
+}
+html[data-theme="light"] #pane-agenda .gmail-discussion-entete,
+html[data-theme="light"] #pane-agenda .gmail-compositeur,
+html[data-theme="light"] #pane-agenda .gmail-discussion-actions button{
+ background:#f3f6fa!important;color:#202a3a!important;border-color:#dfe5ed!important;
+}
+html[data-theme="light"] #pane-agenda .gmail-discussion-identite strong,
+html[data-theme="light"] #pane-agenda .gmail-discussion-identite small,
+html[data-theme="light"] #pane-agenda #agenda-vue-detail,
+html[data-theme="light"] #pane-agenda #agenda-vue-detail *{color:#202a3a!important}
+html[data-theme="dark"] #pane-agenda .gmail-discussion,
+html[data-theme="dark"] #pane-agenda .gmail-fil-messages,
+html[data-theme="dark"] #pane-agenda #agenda-vue-detail .carte{
+ background:#151e2a!important;color:#edf2f8!important;border-color:#344153!important;
+}
+html[data-theme="dark"] #pane-agenda .gmail-discussion-entete,
+html[data-theme="dark"] #pane-agenda .gmail-compositeur,
+html[data-theme="dark"] #pane-agenda .gmail-discussion-actions button{
+ background:#202c3a!important;color:#edf2f8!important;border-color:#344153!important;
+}
+html[data-theme="dark"] #pane-agenda .gmail-discussion-identite strong,
+html[data-theme="dark"] #pane-agenda .gmail-discussion-identite small,
+html[data-theme="dark"] #pane-agenda #agenda-vue-detail,
+html[data-theme="dark"] #pane-agenda #agenda-vue-detail *{color:#edf2f8!important}
+html[data-theme="gold"] .theme-toggle{
+ background:linear-gradient(135deg,#d7b45f,#a77b2a)!important;
+ color:#21190a!important;border-color:#967334!important;
+}
