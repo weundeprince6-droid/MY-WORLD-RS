@@ -2195,18 +2195,22 @@ function renderResume() {
    try {
      const d = await window.showDirectoryPicker({ mode: 'read' });
      mesFilmsFolder = d;
+     // Demander l'autorisation immédiatement après le sélecteur : une attente IndexedDB
+     // préalable peut faire expirer l'activation utilisateur nécessaire dans Edge.
+     let permission = 'prompt';
+     try { permission = await d.requestPermission({ mode: 'read' }); } catch (_) {}
+     // Conserver le handle même si Edge demande une nouvelle autorisation plus tard.
      await DB.set('mesFilmsFolder', d);
-     // Demander l'accès pendant le geste utilisateur et préserver le stockage local.
-     const permission = await d.requestPermission({ mode: 'read' });
+     // Protège IndexedDB contre l'éviction, mais ne rend pas l'autorisation permanente.
      if (navigator.storage && navigator.storage.persist) {
        try { await navigator.storage.persist(); } catch (_) {}
      }
      if (permission !== 'granted') {
-       mesFilmsStatus.textContent = 'Le dossier est mémorisé, mais l’accès n’a pas été accordé. Cliquez sur Synchroniser pour réessayer.';
+       mesFilmsStatus.textContent = 'Dossier mémorisé. Dans Edge, cliquez sur Synchroniser et autorisez l’accès si la fenêtre apparaît.';
        return;
      }
      await synchroniserMesFilms(false);
-   } catch (e) { if (e.name !== 'AbortError') mesFilmsStatus.textContent = 'Sélection du dossier impossible.'; }
+   } catch (e) { if (e.name !== 'AbortError') mesFilmsStatus.textContent = 'Sélection du dossier impossible. Vérifiez les autorisations du site dans Edge.'; }
  }
  function afficherOngletMesFilms() {
    tvDriveHide(); $('playlist').hidden = true; mesFilmsPane.hidden = false;
