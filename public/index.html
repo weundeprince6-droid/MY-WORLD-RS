@@ -498,19 +498,24 @@
                 <div class="budget-reglages-icone" aria-hidden="true">👁</div>
                 <div><p class="eyebrow">CONSULTATION EN LECTURE SEULE</p><h3>Soldes disponibles dans les comptes</h3><p>Choisissez les comptes dont vous souhaitez afficher le solde. Cette vue ne modifie aucune opération.</p></div>
               </div>
-              <article class="budget-reglage-bloc budget-soldes-taux-combine">
-                <div class="budget-reglage-titre"><span class="budget-reglage-picto" aria-hidden="true">▤</span><div><strong>Soldes des comptes et taux de change</strong><small>Consultez vos soldes dans le tableau défilant et gardez le taux de conversion au même endroit.</small></div></div>
-                <div id="budget-comptes-soldes" role="region" aria-label="Tableau défilant des soldes des comptes" tabindex="0" style="max-height:230px;overflow-y:auto;overflow-x:auto;margin-top:12px;border:1px solid var(--border);border-radius:10px">
-                  <p class="vide" style="padding:12px">Chargement des comptes…</p>
-                </div>
-                <p id="budget-comptes-statut" class="budget-liaison-statut" role="status">Consultation uniquement : aucune écriture ni synchronisation vers le Porte-Monnaie.</p>
-                <div class="budget-taux-bloc" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+              <div class="budget-soldes-taux-combine" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:16px;align-items:stretch">
+                <article class="budget-reglage-bloc" style="min-width:0">
+                  <div class="budget-reglage-titre"><span class="budget-reglage-picto" aria-hidden="true">👛</span><div><strong>Solde du compte</strong><small>Un compte à la fois · utilisez le bouton pour passer au suivant.</small></div></div>
+                  <div id="budget-comptes-soldes" role="region" aria-label="Détails du compte sélectionné" aria-live="polite" style="margin-top:14px;min-height:130px">
+                    <p class="vide" style="padding:12px">Chargement des comptes…</p>
+                  </div>
+                  <div style="display:flex;justify-content:flex-end;margin-top:12px">
+                    <button class="btn btn-primary" id="budget-compte-suivant" type="button">Compte suivant →</button>
+                  </div>
+                  <p id="budget-comptes-statut" class="budget-liaison-statut" role="status">Consultation uniquement : aucune écriture ni synchronisation vers le Porte-Monnaie.</p>
+                </article>
+                <article class="budget-reglage-bloc budget-taux-bloc" style="min-width:0">
                   <div class="budget-reglage-titre"><span class="budget-reglage-picto" aria-hidden="true">💱</span><div><strong>Taux de change manuel</strong><small>Renseignez votre valeur de référence.</small></div></div>
                   <label class="budget-reglage-label" for="budget-taux-usd-fc">Valeur de 1 dollar américain</label>
                   <div class="budget-taux-saisie"><span>1 USD =</span><input id="budget-taux-usd-fc" type="number" min="0.000001" step="any" inputmode="decimal" placeholder="Ex. 2800" aria-label="Valeur en FC pour un dollar américain"><strong>FC</strong></div>
                   <span id="budget-taux-statut" class="budget-taux-statut" role="status">Taux non renseigné</span>
-                </div>
-              </article>
+                </article>
+              </div>
 
             </section>
           </section>
