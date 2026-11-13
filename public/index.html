@@ -28,6 +28,14 @@
 .tv-mini{border:1px solid #c49b4c!important;background:#111923!important;color:#fff1d2!important}
 .tv-mini-titre{color:#fff1d2!important}
 
+
+/* Sous-onglets des espaces regroupés : navigation compacte et responsive. */
+.espace-switch{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 18px;padding:8px;border:1px solid var(--border);border-radius:14px;background:var(--surface,transparent)}
+.espace-switch-btn{appearance:none;border:1px solid var(--border);border-radius:10px;padding:10px 16px;min-height:42px;background:var(--surface-2,var(--surface));color:var(--text);font:inherit;font-weight:650;cursor:pointer}
+.espace-switch-btn.actif{background:var(--accent,var(--primary));border-color:transparent;color:#fff}
+.espace-sousvue{min-width:0;width:100%}
+@media(max-width:560px){.espace-switch{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.espace-switch-btn{padding:9px 7px;min-width:0;font-size:.92rem}}
+
 /* Navigation des comptes du Budget : boutons lisibles sur mobile. */
 .budget-compte-navigation .btn{min-height:44px;white-space:normal;line-height:1.25;text-align:center}
 @media(max-width:420px){.budget-compte-navigation{flex-direction:column}.budget-compte-navigation .btn{width:100%;flex-basis:auto}}
@@ -130,7 +138,7 @@
 <div class="espace-switch" role="group" aria-label="Choisir un espace de communication">
 <button type="button" class="espace-switch-btn actif" data-subview="messages" aria-pressed="true">✉ Messages</button>
 <button type="button" class="espace-switch-btn" data-subview="social" aria-pressed="false">◎ Réseaux sociaux</button></div>
-<div class="espace-sousvue" id="communication-pane-messages" data-subview-pane="messages"><section class="tab-pane" id="pane-messages" role="tabpanel" data-subpane="messages" hidden>
+<div class="espace-sousvue" id="communication-pane-messages" data-subview-pane="messages"><section class="tab-pane" id="pane-messages" role="tabpanel" data-subpane="messages">
             <section class="gmail-desktop" aria-label="Messagerie Gmail">
               <aside class="gmail-conversations">
                 <div class="gmail-search"><span>⌕</span><input id="gmail-recherche" type="search" placeholder="Rechercher dans les conversations…" aria-label="Rechercher dans les conversations"></div>
@@ -159,7 +167,7 @@
             </section>
             <div class="gmail-anciens-vues" hidden><section class="carte" id="vue-importants"><ul id="liste-messages" class="liste"></ul></section><section class="carte" id="vue-recus" hidden><ul id="liste-recents" class="liste"></ul></section><section class="carte" id="vue-envoyes" hidden><div class="card-heading"><div><h2>Mails envoyés</h2></div><button id="envoyes-actualiser" class="btn btn-light" type="button">↻ Actualiser</button></div><ul id="liste-envoyes" class="liste"><li class="vide">Chargement des mails envoyés…</li></ul></section></div>
           </section></div>
-<div class="espace-sousvue" id="communication-pane-social" data-subview-pane="social" hidden><section class="tab-pane" id="pane-social" role="tabpanel" data-subpane="social" hidden>
+<div class="espace-sousvue" id="communication-pane-social" data-subview-pane="social" hidden><section class="tab-pane" id="pane-social" role="tabpanel" data-subpane="social">
             <div class="section-heading"><div><p class="eyebrow">COMMUNAUTÉ</p><h2>Réseaux sociaux</h2><p>Les messages de vos réseaux connectés.</p></div><span class="section-icon orange">◎</span></div>
             <section class="carte" id="carte-telegram">
               <h3>Telegram</h3>
@@ -211,7 +219,7 @@
 <div class="espace-switch" role="group" aria-label="Choisir un espace d’organisation">
 <button type="button" class="espace-switch-btn actif" data-subview="agenda" aria-pressed="true">▦ Agenda</button>
 <button type="button" class="espace-switch-btn" data-subview="notes" aria-pressed="false">📝 Notes &amp; Projets</button></div>
-<div class="espace-sousvue" id="organisation-pane-agenda" data-subview-pane="agenda"><section class="tab-pane" id="pane-agenda" role="tabpanel" data-subpane="agenda" hidden>
+<div class="espace-sousvue" id="organisation-pane-agenda" data-subview-pane="agenda"><section class="tab-pane" id="pane-agenda" role="tabpanel" data-subpane="agenda">
             <div class="section-heading"><div><p class="eyebrow">ORGANISATION</p><h2>Mon agenda</h2><p>Consultez vos rendez-vous en aperçu, puis ajoutez ou modifiez au besoin.</p></div><button class="btn btn-primary" id="agenda-nouveau" type="button">＋ Nouveau rendez-vous</button></div>
             <section class="gmail-desktop agenda-desktop" aria-label="Agenda">
               <aside class="gmail-conversations">
@@ -255,7 +263,7 @@
               </form>
               <p id="agenda-retour" class="meta" role="status"></p></section>
           </section></div>
-<div class="espace-sousvue" id="organisation-pane-notes" data-subview-pane="notes" hidden><section class="tab-pane" id="pane-notes" role="tabpanel" data-subpane="notes" hidden>
+<div class="espace-sousvue" id="organisation-pane-notes" data-subview-pane="notes" hidden><section class="tab-pane" id="pane-notes" role="tabpanel" data-subpane="notes">
             <div class="section-heading"><div><p class="eyebrow">VOTRE ESPACE PERSONNEL</p><h2>Notes & Projets</h2><p>Consultez vos notes et projets en mode aperçu. Ouvrez la modification seulement si nécessaire.</p></div><button class="btn btn-primary" id="notes-new" type="button">＋ Nouvelle note / projet</button></div>
             <section class="carte notes-intro"><div><strong>Importer vos notes Google Keep</strong><p class="meta">Votre compte Gmail est personnel : Google ne permet pas la synchronisation directe de Keep. Exportez vos notes avec <a href="https://takeout.google.com/settings/takeout/custom/keep" target="_blank" rel="noopener noreferrer">Google Takeout</a> (cochez seulement « Keep »), puis choisissez ici le fichier .zip reçu (ou les fichiers .json). Les notes déjà importées ne sont jamais dupliquées, les notes à la corbeille sont ignorées.</p><p id="keep-statut" class="meta" role="status"></p></div><div class="notes-intro-actions"><label class="btn btn-primary keep-import" for="keep-fichiers">Importer depuis Keep</label><input id="keep-fichiers" type="file" accept=".zip,.json,application/zip,application/json" multiple hidden><a class="btn btn-light" href="https://keep.google.com/" target="_blank" rel="noopener noreferrer">Ouvrir Google Keep ↗</a></div></section>
             <section class="carte notes-editor" id="notes-editor-card" hidden><div class="card-heading"><div><p class="eyebrow">CAPTURE RAPIDE</p><h2 id="notes-form-title">Nouvelle note ou projet</h2></div><span class="heading-icon">✍</span></div>
