@@ -882,7 +882,7 @@ async function googleUneFois(url, options = {}, nouvelEssai = true) {
       conseil = ` → Votre compte Google n'a pas accès au projet « ${projet} » (ou Firestore y est désactivé).`;
     }
     const quota = r.status === 429 || /quota exceeded|rate limit|userRateLimitExceeded/i.test(detail);
-    if (quota) conseil = " → Google limite temporairement les requêtes. Attendez une minute puis cliquez sur « Actualiser ».";
+    if (quota) conseil = " → Google limite temporairement les requêtes. Attendez une minute puis cliquez sur ↻ (en haut).";
     const erreur = new Error(`Google a répondu ${r.status}${detail ? " : " + detail : ""}${conseil}`);
     erreur.quota = quota;
     erreur.status = r.status;
@@ -1187,7 +1187,7 @@ async function chargerDrive({ nouvelleRecherche = false } = {}) {
   const statut = $("drive-statut");
   const bouton = $("drive-actualiser");
   statut.textContent = "Chargement de Google Drive…";
-  bouton.disabled = true;
+  if (bouton) bouton.disabled = true;
   try {
     const dossier = driveChemin[driveChemin.length - 1];
     let q = dossier ? `'${dossier.id.replace(/'/g, "")}' in parents and trashed = false` : "trashed = false" + driveFiltreQ(driveCatParId(driveCat));
@@ -1201,7 +1201,7 @@ async function chargerDrive({ nouvelleRecherche = false } = {}) {
   } catch (e) {
     statut.textContent = "Impossible de lire Google Drive : " + e.message;
     $("drive-grille").innerHTML = "";
-  } finally { bouton.disabled = false; }
+  } finally { if (bouton) bouton.disabled = false; }
 }
 $("drive-actualiser")?.addEventListener("click", () => chargerDrive({ nouvelleRecherche: true }));
 $("drive-plus")?.addEventListener("click", () => chargerDrive());
@@ -1943,6 +1943,12 @@ async function tout() {
   if (erreurs.length) afficherErreur(erreurs.join(" · "));
   tout_rendre();
   chargerRistourne();
+  // Le bouton ↻ du haut actualise aussi l'onglet ouvert (Drive, Notes, Porte-Monnaie) : plus de boutons « Actualiser » en double
+  try {
+    if (!$("pane-drive")?.hidden) chargerDrive({ nouvelleRecherche: true });
+    if (!$("pane-notes")?.hidden) notesLoad(true);
+    if (walletLoaded) chargerWallet(true);
+  } catch {}
 }
 
 // ---------- Mon Porte-Monnaie : données privées par utilisateur Firebase ----------
@@ -2141,7 +2147,7 @@ async function reinitialiserPartsRistourne() {
     if (statut) statut.textContent = "Compte « " + NOM_COMPTE_PART + " » réinitialisé : cliquez sur « Enregistrer ma part » pour repartir sur une base correcte.";
   } catch (e) {
     walletRender();
-    if (statut) statut.textContent = "Réinitialisation non terminée : " + e.message + " — cliquez sur « Actualiser » pour revérifier vos soldes.";
+    if (statut) statut.textContent = "Réinitialisation non terminée : " + e.message + " — cliquez sur ↻ (en haut) pour revérifier vos soldes.";
   } finally { partRistourneEnCours = false; rendrePartRistourne(); }
 }
 $("rist-part-reinit")?.addEventListener("click", reinitialiserPartsRistourne);
@@ -2233,7 +2239,7 @@ async function reinitialiserPartsCaisse() {
     if (statut) statut.textContent = "Compte « " + NOM_COMPTE_CAISSE + " » réinitialisé.";
   } catch (e) {
     walletRender();
-    if (statut) statut.textContent = "Réinitialisation non terminée : " + e.message + " — cliquez sur « Actualiser ».";
+    if (statut) statut.textContent = "Réinitialisation non terminée : " + e.message + " — cliquez sur ↻ (en haut).";
   } finally { partCaisseEnCours = false; rendrePartCaisse(); }
 }
 $("caisse-part-reinit")?.addEventListener("click", reinitialiserPartsCaisse);
@@ -2832,7 +2838,7 @@ async function supprimerMouvementWallet(id) {
     if (status) status.textContent = lot.length > 1 ? "Transfert supprimé, soldes corrigés." : "Mouvement supprimé, solde corrigé.";
   } catch (e) {
     walletRender();
-    if (status) status.textContent = "Suppression non terminée : " + e.message + " — cliquez sur « Actualiser » pour revérifier vos soldes.";
+    if (status) status.textContent = "Suppression non terminée : " + e.message + " — cliquez sur ↻ (en haut) pour revérifier vos soldes.";
   }
 }
 // À l'ouverture de l'onglet, on charge les comptes et opérations s'ils ne le sont pas encore
@@ -3865,7 +3871,7 @@ $("notes-form").addEventListener("submit", async e => {
 });
 $("notes-form").elements.type.addEventListener("change", e => notesSetType(e.target.value));
 $("notes-cancel").addEventListener("click", notesReset);
-$("notes-refresh").addEventListener("click", () => notesLoad(true));
+
 $("notes-search").addEventListener("input", notesRender);
 $("notes-filter").addEventListener("change", notesRender);
 document.querySelector('[data-tab="notes"]')?.addEventListener("click", () => notesLoad());
@@ -4018,12 +4024,6 @@ document.querySelectorAll("[data-gmail-filtre]").forEach(b=>b.addEventListener("
   document.querySelectorAll("[data-gmail-filtre]").forEach(x=>x.classList.toggle("actif",x===b));
   rendreGmailConversations();
 }));
-$("gmail-actualiser")?.addEventListener("click",async()=>{
-  const b=$("gmail-actualiser");b.disabled=true;b.textContent="…";
-  try{const g=await chargerGmail();etat.messages=g.importants;etat.recents=g.recents;rendreMessages();if(gmailThreadActif)await ouvrirGmailThread(gmailThreadActif);}
-  catch(e){afficherErreur("Actualisation Gmail impossible : "+e.message);}
-  finally{b.disabled=false;b.textContent="↻";}
-});
 $("gmail-repondre")?.addEventListener("click",()=>{
   if(!gmailMessageActif)return;
   mailLu=gmailMessageActif;repondreAuMail();

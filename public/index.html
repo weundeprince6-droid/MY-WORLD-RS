@@ -113,10 +113,6 @@
             </div>
             <div class="dashboard-grid">
               <article class="feature-card feature-purple"><div class="feature-icon">▶</div><div><span class="feature-label">DIVERTISSEMENT</span><h3>Média</h3><p>Vos vidéos, musiques MP3, photos et documents, rangés par dossier.</p><button class="text-link" id="dash-media" type="button">Ouvrir le lecteur <span>→</span></button></div></article>
-              <article class="feature-card feature-green"><div class="feature-icon">✉</div><div><span class="feature-label">COMMUNICATION</span><h3>Messages importants</h3><p>Consultez vos messages prioritaires et préparez vos réponses.</p><button class="text-link" data-go="messages">Voir les messages <span>→</span></button></div></article>
-              <article class="feature-card feature-blue"><div class="feature-icon">▦</div><div><span class="feature-label">ORGANISATION</span><h3>Votre agenda</h3><p>Gardez un œil sur les rendez-vous du jour et à venir.</p><button class="text-link" data-go="agenda">Consulter l'agenda <span>→</span></button></div></article>
-              <article class="feature-card feature-purple"><div class="feature-icon">▤</div><div><span class="feature-label">ACTIVITÉS</span><h3>Chiffres clés</h3><p>Suivez les indicateurs de vos bases de données.</p><button class="text-link" data-go="bases">Voir les indicateurs <span>→</span></button></div></article>
-              <article class="feature-card feature-orange"><div class="feature-icon">◎</div><div><span class="feature-label">COMMUNAUTÉ</span><h3>Réseaux sociaux</h3><p>Retrouvez ici les messages de vos réseaux connectés.</p><button class="text-link" data-go="social">Voir les réseaux <span>→</span></button></div></article>
             </div>
             <div class="dashboard-detail-grid">
               <section class="carte dashboard-detail"><div class="card-heading"><div><p class="eyebrow">FINANCES & ACTIVITÉS</p><h2>Chiffres essentiels</h2></div><button class="text-link" data-go="bases">Tout voir →</button></div><div id="dashboard-kpis" class="dashboard-kpi-list"><p class="vide">Les indicateurs apparaîtront après actualisation.</p></div></section>
@@ -147,7 +143,7 @@
                     <button class="btn btn-light" type="button" data-compte-messages="professionnel" aria-pressed="false">💼 Professionnels <span class="compteur" data-compteur="professionnel"></span></button>
                   </div>
                 </div>
-                <header class="gmail-discussion-entete"><div class="gmail-discussion-identite"><span class="gmail-avatar" id="gmail-contact-avatar">✉</span><div><strong id="gmail-contact-nom">Sélectionnez une conversation</strong><small id="gmail-contact-adresse">Vos messages Gmail apparaîtront ici</small></div></div><div class="gmail-discussion-actions"><button type="button" id="gmail-ouvrir-web" title="Ouvrir dans Gmail">↗</button><button type="button" id="gmail-actualiser" title="Actualiser">↻</button></div></header>
+                <header class="gmail-discussion-entete"><div class="gmail-discussion-identite"><span class="gmail-avatar" id="gmail-contact-avatar">✉</span><div><strong id="gmail-contact-nom">Sélectionnez une conversation</strong><small id="gmail-contact-adresse">Vos messages Gmail apparaîtront ici</small></div></div><div class="gmail-discussion-actions"><button type="button" id="gmail-ouvrir-web" title="Ouvrir dans Gmail">↗</button></div></header>
                 <div id="gmail-fil-messages" class="gmail-fil-messages"><div class="gmail-bienvenue"><span>✉</span><h3>Vos conversations</h3><p>Choisissez un message dans la liste pour afficher l'échange complet.</p></div></div>
                 <footer class="gmail-compositeur"><button type="button" id="gmail-repondre" title="Répondre à cette conversation" disabled>➤</button><input id="gmail-composer-input" type="text" readonly placeholder="Écrire une réponse…" aria-label="Écrire une réponse" disabled></footer>
               </section>
@@ -253,7 +249,7 @@
             <section class="gmail-desktop drive-desktop" aria-label="Google Drive">
               <aside class="gmail-conversations">
                 <div class="gmail-search"><span>⌕</span><input id="drive-recherche" type="search" placeholder="Rechercher un fichier ou dossier…" aria-label="Rechercher dans Google Drive"></div>
-                <div class="drive-outils-liste"><button class="btn btn-light" id="drive-actualiser" type="button">↻ Actualiser</button><button class="btn btn-light" id="drive-autoriser-google" type="button">Autoriser Google Drive</button></div>
+                <div class="drive-outils-liste"><button class="btn btn-light" id="drive-autoriser-google" type="button">Autoriser Google Drive</button></div>
                 <p id="drive-statut" class="meta drive-statut-liste" role="status">Ouvrez cette rubrique pour charger vos fichiers Google Drive.</p>
                 <nav class="gmail-liste-conversations" id="drive-categories" aria-label="Types de fichiers"></nav>
               </aside>
@@ -536,7 +532,7 @@
                 <label class="notes-wide notes-project-only">Étapes du projet <span class="meta">(une étape par ligne)</span><textarea name="steps" rows="4" maxlength="10000" placeholder="Préparer…\nContacter…\nFinaliser…"></textarea></label>
               </div><div class="notes-actions"><span id="notes-status" class="meta" role="status">Vos notes et projets sont privés et enregistrés dans votre espace Firebase.</span><div><button class="btn btn-quiet" id="notes-cancel" type="button" hidden>Annuler la modification</button> <button class="btn btn-primary" id="notes-save" type="submit">Enregistrer</button></div></div></form>
             </section>
-            <section class="carte notes-list-card"><div class="card-heading"><div><p class="eyebrow">VOTRE COLLECTION</p><h2>Notes et projets enregistrés</h2></div><button class="btn btn-light" id="notes-refresh" type="button">↻ Actualiser</button></div><div class="notes-toolbar"><input id="notes-search" type="search" placeholder="Rechercher dans vos notes et projets…" aria-label="Rechercher dans vos notes et projets"><select id="notes-filter"><option value="all">Tout afficher</option><option value="note">Notes</option><option value="project">Projets</option><option value="todo">Projets à faire</option><option value="doing">Projets en cours</option><option value="done">Projets terminés</option></select></div><div id="notes-list" class="notes-list"><p class="vide">Connectez-vous pour charger vos notes et projets.</p></div></section>
+            <section class="carte notes-list-card"><div class="card-heading"><div><p class="eyebrow">VOTRE COLLECTION</p><h2>Notes et projets enregistrés</h2></div></div><div class="notes-toolbar"><input id="notes-search" type="search" placeholder="Rechercher dans vos notes et projets…" aria-label="Rechercher dans vos notes et projets"><select id="notes-filter"><option value="all">Tout afficher</option><option value="note">Notes</option><option value="project">Projets</option><option value="todo">Projets à faire</option><option value="doing">Projets en cours</option><option value="done">Projets terminés</option></select></div><div id="notes-list" class="notes-list"><p class="vide">Connectez-vous pour charger vos notes et projets.</p></div></section>
           </section>
           <section class="tab-pane" id="pane-profile" role="tabpanel" data-pane="profile" hidden>
             <div class="section-heading"><div><p class="eyebrow">VOS INFORMATIONS</p><h2>Mon profil</h2><p>Complétez vos informations une seule fois. Elles seront synchronisées dans Firebase avec votre compte Google.</p></div><span class="section-icon blue">♙</span></div>
@@ -606,7 +602,7 @@
       setTimeout(function(){if(!window.__appPret)montrer("L'application n'a pas démarré. Vérifiez votre connexion internet (les composants Firebase se chargent depuis Google), désactivez un éventuel bloqueur de publicités, puis rechargez. Sans internet : l'application doit d'abord avoir été ouverte deux fois avec internet sur cet appareil pour s'installer hors ligne. Appuyez sur F12 > Console pour voir le détail.");},6000);
     })();
   </script>
-  <script type="module" src="app.js?v=20261111-budget-liaison4"></script>
+  <script type="module" src="app.js?v=20261111-budget-liaison5"></script>
   <div id="tv-fenetre" class="tv-fenetre" hidden><div class="tv-barre"><strong>📺 Télévision</strong><span class="tv-actions"><button type="button" id="tv-masquer" aria-label="Mettre en arrière-plan" title="Mettre en arrière-plan : la lecture continue">━</button><button type="button" id="tv-fermer" aria-label="Fermer le lecteur" title="Fermer et arrêter la lecture">✖</button></span></div><div id="tv-zone" class="tv-zone"></div></div>
   <div id="tv-mini" class="tv-mini" hidden><span class="tv-mini-pastille">🎵</span><span id="tv-mini-titre" class="tv-mini-titre">Télévision en lecture</span><button type="button" id="tv-mini-afficher" aria-label="Afficher le lecteur" title="Afficher le lecteur">▣</button><button type="button" id="tv-mini-arreter" title="Arrêter la lecture">✕</button></div>
 </body>
