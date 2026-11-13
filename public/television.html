@@ -176,7 +176,7 @@ body[data-mode="image"] #seekRow{visibility:hidden}
 #panel{width:0;overflow:hidden;background:var(--panel);border-left:1px solid var(--border);transition:width .2s}
 #app.panel-open #panel{width:350px}
 .panel-in{width:350px;height:100%;display:flex;flex-direction:column}
-.ptabs{display:flex;gap:3px;padding:10px;border-bottom:1px solid var(--border)}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-bottom:1px solid var(--border);min-height:48px}.panel-head strong{font-size:14px}.panel-head button{width:34px;height:34px;padding:0;font-size:18px;font-weight:700;border-radius:8px;background:var(--panel2);color:var(--text);flex:none}.panel-head button:hover{background:var(--accent);color:#fff}.ptabs{display:flex;gap:3px;padding:10px;border-bottom:1px solid var(--border)}
 .ptabs button{flex:1;padding:6px 2px;font-size:12px}.ptabs button.active{background:var(--accent);color:#fff}
 .psec{display:none;padding:14px;overflow-y:auto;flex:1;font-size:13px}
 .psec.active{display:block}
@@ -535,6 +535,7 @@ body.gold #titleBar{background:#1a1a18!important}
   </main>
 
   <aside id="panel"><div class="panel-in">
+    <div class="panel-head"><strong>Réglages du lecteur</strong><button id="btnPanelClose" type="button" title="Fermer les réglages" aria-label="Fermer les réglages">✕</button></div>
     <div class="ptabs" id="ptabs">
       <button data-p="video" class="active">Vidéo</button><button data-p="audio">Audio</button>
       <button data-p="subs">Sous-titres</button><button data-p="marks">Repères</button><button data-p="history">Historique</button><button data-p="opts">Options</button>
@@ -1559,6 +1560,7 @@ function showTab(p) {
   document.querySelectorAll('.psec').forEach((s) => s.classList.toggle('active', s.dataset.p === p));
 }
 $('btnPanel').onclick = () => $('app').classList.toggle('panel-open');
+$('btnPanelClose').onclick = () => $('app').classList.remove('panel-open');;
 $('ptabs').onclick = (e) => { const b = e.target.closest('button'); if (b) showTab(b.dataset.p); };
 $('clearReadHistory').onclick = () => {
   if (!confirm("Effacer tout l’historique des fichiers lus à 50 % ou plus ?")) return;
