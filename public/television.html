@@ -1112,9 +1112,10 @@ for (const m of [audio, video]) {
     else $('nowPlaying').textContent = base + ' — fichier audio illisible ou corrompu.';
   });
 }
-// ----- Lecture des vidéos que le navigateur refuse (son AC3/E-AC3/DTS, conteneurs AVI/MKV/WMV…) -----
-// Le fichier est converti en mémoire par ffmpeg (WebAssembly, chargé une seule fois depuis internet) :
-// la vidéo est recopiée telle quelle, le son est recodé en AAC, puis le résultat est lu normalement.
+// ----- Compatibilité vidéo étendue -----
+// Les fichiers refusés par le navigateur sont convertis en MP4 H.264 + AAC.
+// On réencode aussi l'image (et pas seulement le son) pour éviter les codecs HEVC,
+// MPEG-2, VP9, etc. que certains navigateurs/ordinateurs ne savent pas décoder.
 let ffmpegPret = null;
 const convertis = new Map(); // clé du fichier -> Blob MP4 déjà converti
 function chargerFFmpeg() {
@@ -1151,11 +1152,18 @@ async function convertirEtLire(it, base) {
       try { await ff.createDir('/src'); } catch {}
       await ff.mount('WORKERFS', { files: [entree] }, '/src');
       const journal = []; const surLog = ({ message }) => { journal.push(message); if (journal.length > 40) journal.shift(); };
-      const surProgres = ({ progress }) => info('conversion du son pour la lecture… ' + Math.min(99, Math.round((progress || 0) * 100)) + ' %');
+      const surProgres = ({ progress }) => info('conversion de la vidéo et du son… ' + Math.min(99, Math.round((progress || 0) * 100)) + ' %');
       ff.on('log', surLog); ff.on('progress', surProgres);
       try {
-        info('conversion du son pour la lecture…');
-        const code = await ff.exec(['-i', '/src/entree.' + ext, '-map', '0:v:0', '-map', '0:a:0?', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-ac', '2', '-sn', '-dn', '-movflags', '+faststart', '-y', 'sortie.mp4']);
+        info('conversion de la vidéo et du son pour la lecture…');
+        const code = await ff.exec([
+          '-i', '/src/entree.' + ext,
+          '-map', '0:v:0', '-map', '0:a:0?',
+          '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '27',
+          '-pix_fmt', 'yuv420p', '-profile:v', 'main', '-level', '4.0',
+          '-c:a', 'aac', '-b:a', '160k', '-ac', '2',
+          '-sn', '-dn', '-movflags', '+faststart', '-y', 'sortie.mp4'
+        ]);
         if (code !== 0) throw new Error('conversion refusée : ' + (journal.filter((l) => /error|invalid|not supported|could not/i.test(l)).pop() || 'code ' + code));
         const data = await ff.readFile('sortie.mp4');
         blob = new Blob([data.buffer ? data.buffer : data], { type: 'video/mp4' });
