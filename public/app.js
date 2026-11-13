@@ -2012,7 +2012,7 @@ async function walletPatchAccount(account, delta) {
   return google(url, { method: "PATCH", body: JSON.stringify(walletFields({ balance: Number(account.balance || 0) + delta })) });
 }
 // ---------- Ristournes ESE DB (dans Mon Porte-Monnaie) ----------
-const formatMontantDevise = (n, devise) => `${Number(n || 0).toLocaleString("fr-FR", { maximumFractionDigits: 2 })} ${devise}`;
+const formatMontantDevise = walletMoney; // un seul formateur de montants pour toute l'appli
 function rendreRistourne(r) {
   const met = (id, v) => { const el = $(id); if (el) el.textContent = v; };
   for (const [cle, prefixe] of [["depots", "depots"], ["retraits", "retraits"], ["solde", "solde"]]) {
