@@ -81,7 +81,19 @@
       html[data-mw-theme="dark"] .shadow-sm,html[data-mw-theme="dark"] .shadow-md,html[data-mw-theme="gold"] .shadow-sm,html[data-mw-theme="gold"] .shadow-md{box-shadow:0 8px 24px rgba(0,0,0,.22)!important}
       html[data-mw-theme="gold"] .text-emerald-400{color:#e2bd68!important}
       html[data-mw-theme="gold"] .bg-white\/10{background-color:rgba(210,169,79,.14)!important}
-    </style>
+    
+      /* Aucun fond blanc dans les thèmes sombre et doré, y compris les cartes utilitaires. */
+      html[data-mw-theme="dark"] .bg-white,
+      html[data-mw-theme="dark"] .bg-slate-50,
+      html[data-mw-theme="dark"] .bg-gray-50,
+      html[data-mw-theme="dark"] .bg-slate-100,
+      html[data-mw-theme="dark"] .bg-gray-100{background-color:var(--mw-surface)!important;color:var(--mw-text)!important}
+      html[data-mw-theme="gold"] .bg-white,
+      html[data-mw-theme="gold"] .bg-slate-50,
+      html[data-mw-theme="gold"] .bg-gray-50,
+      html[data-mw-theme="gold"] .bg-slate-100,
+      html[data-mw-theme="gold"] .bg-gray-100{background-color:var(--mw-surface)!important;color:var(--mw-text)!important}
+</style>
 </head>
 <body class="font-sans antialiased text-slate-800 min-h-full flex flex-col pb-12">
 
