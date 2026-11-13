@@ -440,8 +440,8 @@ srv.listen(8765, async () => {
     const supprime = (etat.wallet.supprimes || []).length >= 1;
     const statut = (await p.textContent('#budget-liaison-statut')).trim();
     const dev = await p.evaluate(() => localStorage.getItem('budget_devise')); const aff = await p.frames().find((f) => f.url().includes('budget-mensuel')).evaluate(() => formatCurrency(1500));
-    const fr = p.frames().find((f) => f.url().includes('budget-mensuel')); const dep = await fr.evaluate(() => ({ v: document.getElementById('initialBalance').value, ro: document.getElementById('initialBalance').readOnly, fin: document.getElementById('finalBalance').textContent.replace(/\s/g, ' ') }));
-    const ok = dep.v === '100' && dep.ro && dev === 'FC' && /FC$/.test(aff) && !!prime && prime.corps.fields.kind.stringValue === 'income' && !!patch && !!transport && transport.type === 'expense' && transport.amount === 30 && supprime;
+    const fr = p.frames().find((f) => f.url().includes('budget-mensuel')); const dep = await fr.evaluate(() => ({ v: document.getElementById('initialBalance').value, ro: document.getElementById('initialBalance').readOnly, fin: document.getElementById('finalBalance').textContent.replace(/\s/g, ' '), disp: document.getElementById('soldeDisponible').textContent.replace(/\s/g, ' '), note: document.getElementById('finalBalanceNote').textContent }));
+    const ok = /^70[, ]/.test(dep.disp) && /à encaisser/.test(dep.note) && dep.v === '100' && dep.ro && dev === 'FC' && /FC$/.test(aff) && !!prime && prime.corps.fields.kind.stringValue === 'income' && !!patch && !!transport && transport.type === 'expense' && transport.amount === 30 && supprime;
     return { ok, detail: JSON.stringify({ dep, dev, aff, prime: !!prime, patch: !!patch, transport, supprime, statut }) };
   }));
   res.push(await scenario('Porte-Monnaie : 50 % des ristournes versés dans « Mes parts de ristourne »', {}, async (p, appels, logs, etat) => {

@@ -98,7 +98,7 @@
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 flex-1 w-full space-y-6">
 
         <!-- Banner KPI / Synthèse -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <!-- Solde Initial -->
             <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm relative overflow-hidden">
                 <div class="flex justify-between items-start">
@@ -158,11 +158,23 @@
                 <p class="text-xs text-slate-500 mt-2" id="savingsRate">Taux d'épargne: 0%</p>
             </div>
 
+            <!-- Solde à ma disposition (somme de tous les comptes du Porte-Monnaie) -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Solde à ma disposition</p>
+                        <h3 class="text-xl font-bold text-indigo-600 mt-1" id="soldeDisponible">—</h3>
+                    </div>
+                    <div class="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl"><i class="fa-solid fa-wallet"></i></div>
+                </div>
+                <p class="text-[11px] text-slate-400 mt-2" id="soldeDisponibleNote">Liez un compte du Porte-Monnaie pour afficher vos soldes.</p>
+            </div>
+
             <!-- Solde Final -->
             <div class="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-5 rounded-2xl shadow-md sm:col-span-2 lg:col-span-1">
                 <div class="flex justify-between items-start">
                     <div>
-                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Solde Final Estimer</p>
+                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Solde final estimé</p>
                         <h3 class="text-2xl font-bold mt-1 text-emerald-400" id="finalBalance">0,00 €</h3>
                     </div>
                     <div class="p-2.5 bg-white/10 rounded-xl text-emerald-400">
@@ -173,6 +185,7 @@
                     <span id="balanceStatusIcon"><i class="fa-solid fa-circle-check text-emerald-400"></i></span>
                     <span id="balanceStatus">Budget équilibré</span>
                 </p>
+                <p class="text-[11px] text-slate-400 mt-1" id="finalBalanceNote"></p>
             </div>
         </div>
 
@@ -507,6 +520,16 @@
 
             const finalBalEl = document.getElementById('finalBalance');
             finalBalEl.textContent = formatCurrency(finalBalance);
+            // Compte(s) Porte-Monnaie liés : solde final estimé = tous les comptes + ce qui reste à encaisser
+            try {
+                const sl = JSON.parse(localStorage.getItem('budget_soldes') || 'null');
+                if (sl && sl.devise === DEVISE) {
+                    document.getElementById('soldeDisponible').textContent = formatCurrency(sl.disponible);
+                    document.getElementById('soldeDisponibleNote').textContent = 'Somme de vos ' + sl.nbComptes + ' compte(s) en ' + SYMBOLES[sl.devise] + ' du Porte-Monnaie, déjà encaissée.';
+                    finalBalEl.textContent = formatCurrency(sl.disponible + sl.aEncaisser);
+                    document.getElementById('finalBalanceNote').textContent = formatCurrency(sl.disponible) + ' disponibles + ' + formatCurrency(sl.aEncaisser) + ' à encaisser (ristournes et parts)';
+                }
+            } catch (e) {}
             
             const statusEl = document.getElementById('balanceStatus');
             const statusIcon = document.getElementById('balanceStatusIcon');

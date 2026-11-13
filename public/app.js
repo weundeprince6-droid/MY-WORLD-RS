@@ -2852,7 +2852,7 @@ $("wallet-history")?.addEventListener("click", (ev) => {
 
 
 // ---------- Liaison Budget mensuel ↔ Porte-Monnaie (dans les deux sens) ----------
-const BUDGET_CLE = "budget_transactions", BUDGET_LIEN = "mwrs_budget_liaison", BUDGET_DEPART = "budget_solde_depart";
+const BUDGET_CLE = "budget_transactions", BUDGET_LIEN = "mwrs_budget_liaison", BUDGET_DEPART = "budget_solde_depart", BUDGET_SOLDES = "budget_soldes";
 const BUDGET_CATS = { logement: "Logement", alimentation: "Alimentation", transports: "Transports", loisirs: "Loisirs & Sorties", sante: "Santé & Assurance", factures: "Factures & Énergie", autre_depense: "Autres Dépenses", salaire: "Salaire & Revenus", freelance: "Freelance & Extra", investissements: "Investissements", autre_revenu: "Autres Revenus" };
 const budgetLireLien = () => { try { const l = JSON.parse(localStorage.getItem(BUDGET_LIEN) || "null"); return l && l.accountId ? { accountId: l.accountId, map: l.map || {} } : null; } catch { return null; } };
 const budgetEcrireLien = (l) => { try { l ? localStorage.setItem(BUDGET_LIEN, JSON.stringify(l)) : localStorage.removeItem(BUDGET_LIEN); } catch {} };
@@ -2956,6 +2956,14 @@ async function budgetSynchroniser() {
     const depart = String(Math.round((Number(compte.balance || 0) - net) * 100) / 100);
     let departAvant = null; try { departAvant = localStorage.getItem(BUDGET_DEPART); localStorage.setItem(BUDGET_DEPART, depart); } catch {}
     if (departAvant !== depart) modifBudget = modifBudget || "iframe";
+    // Tous les comptes dans la devise du budget : solde disponible + ce qui reste à encaisser (parts de ristourne/caisse non encore enregistrées)
+    const devB = String(compte.currency || "EUR").toUpperCase();
+    const disponible = walletAccounts.filter((a) => String(a.currency || "").toUpperCase() === devB).reduce((n, a) => n + Number(a.balance || 0), 0);
+    let aEncaisser = 0;
+    try { for (const p of [...calculerPartsRistourne(), ...calculerPartsCaisse()]) if (p.devise === devB && p.aEnregistrer > 0) aEncaisser += p.aEnregistrer; } catch {}
+    const soldes = JSON.stringify({ devise: devB, disponible: Math.round(disponible * 100) / 100, aEncaisser: Math.round(aEncaisser * 100) / 100, nbComptes: walletAccounts.filter((a) => String(a.currency || "").toUpperCase() === devB).length });
+    let soldesAvant = null; try { soldesAvant = localStorage.getItem(BUDGET_SOLDES); localStorage.setItem(BUDGET_SOLDES, soldes); } catch {}
+    if (soldesAvant !== soldes) modifBudget = modifBudget || "iframe";
     if (modifBudget) { if (modifBudget === true) { try { localStorage.setItem(BUDGET_CLE, JSON.stringify(budget)); } catch {} } budgetRechargerIframe(); }
     walletRender(); budgetRendreLiaison();
     budgetStatut(nbVersWallet + nbVersBudget + nbSuppr
@@ -2967,7 +2975,7 @@ async function budgetSynchroniser() {
 }
 $("budget-liaison-compte")?.addEventListener("change", async (ev) => {
   const id = ev.target.value;
-  if (!id) { budgetEcrireLien(null); try { localStorage.removeItem(BUDGET_DEPART); } catch {} budgetRechargerIframe(); budgetRendreLiaison(); budgetStatut("Liaison désactivée."); return; }
+  if (!id) { budgetEcrireLien(null); try { localStorage.removeItem(BUDGET_DEPART); localStorage.removeItem(BUDGET_SOLDES); } catch {} budgetRechargerIframe(); budgetRendreLiaison(); budgetStatut("Liaison désactivée."); return; }
   const nb = budgetLireTx().filter((t) => Number(t.amount) > 0).length;
   if (nb && !confirm(`Lier ce compte au budget ?\n${nb} opération(s) du budget seront ajoutées au compte (son solde changera) et les opérations du compte seront ajoutées au budget.`)) { budgetRendreLiaison(); return; }
   budgetEcrireLien({ accountId: id, map: {} });
@@ -2976,7 +2984,7 @@ $("budget-liaison-compte")?.addEventListener("change", async (ev) => {
   await budgetSynchroniser();
 });
 $("budget-liaison-sync")?.addEventListener("click", () => budgetSynchroniser());
-$("budget-liaison-stop")?.addEventListener("click", () => { budgetEcrireLien(null); try { localStorage.removeItem(BUDGET_DEPART); } catch {} budgetRechargerIframe(); budgetRendreLiaison(); budgetStatut("Liaison désactivée : les opérations déjà copiées restent en place."); });
+$("budget-liaison-stop")?.addEventListener("click", () => { budgetEcrireLien(null); try { localStorage.removeItem(BUDGET_DEPART); localStorage.removeItem(BUDGET_SOLDES); } catch {} budgetRechargerIframe(); budgetRendreLiaison(); budgetStatut("Liaison désactivée : les opérations déjà copiées restent en place."); });
 document.querySelector('[data-tab="budget-mensuel"]')?.addEventListener("click", async () => {
   await chargerWallet(false); budgetRendreLiaison(); if (budgetLireLien()) budgetSynchroniser();
 });
