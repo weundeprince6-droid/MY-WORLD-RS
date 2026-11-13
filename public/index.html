@@ -498,20 +498,20 @@
                 <div class="budget-reglages-icone" aria-hidden="true">👁</div>
                 <div><p class="eyebrow">CONSULTATION EN LECTURE SEULE</p><h3>Soldes disponibles dans les comptes</h3><p>Choisissez les comptes dont vous souhaitez afficher le solde. Cette vue ne modifie aucune opération.</p></div>
               </div>
-              <article class="budget-reglage-bloc" style="margin-bottom:16px">
-                <div class="budget-reglage-titre"><span class="budget-reglage-picto" aria-hidden="true">▤</span><div><strong>Soldes des comptes</strong><small>Faites défiler ce petit tableau pour consulter chaque compte.</small></div></div>
+              <article class="budget-reglage-bloc budget-soldes-taux-combine">
+                <div class="budget-reglage-titre"><span class="budget-reglage-picto" aria-hidden="true">▤</span><div><strong>Soldes des comptes et taux de change</strong><small>Consultez vos soldes dans le tableau défilant et gardez le taux de conversion au même endroit.</small></div></div>
                 <div id="budget-comptes-soldes" role="region" aria-label="Tableau défilant des soldes des comptes" tabindex="0" style="max-height:230px;overflow-y:auto;overflow-x:auto;margin-top:12px;border:1px solid var(--border);border-radius:10px">
                   <p class="vide" style="padding:12px">Chargement des comptes…</p>
                 </div>
                 <p id="budget-comptes-statut" class="budget-liaison-statut" role="status">Consultation uniquement : aucune écriture ni synchronisation vers le Porte-Monnaie.</p>
+                <div class="budget-taux-bloc" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+                  <div class="budget-reglage-titre"><span class="budget-reglage-picto" aria-hidden="true">💱</span><div><strong>Taux de change manuel</strong><small>Renseignez votre valeur de référence.</small></div></div>
+                  <label class="budget-reglage-label" for="budget-taux-usd-fc">Valeur de 1 dollar américain</label>
+                  <div class="budget-taux-saisie"><span>1 USD =</span><input id="budget-taux-usd-fc" type="number" min="0.000001" step="any" inputmode="decimal" placeholder="Ex. 2800" aria-label="Valeur en FC pour un dollar américain"><strong>FC</strong></div>
+                  <span id="budget-taux-statut" class="budget-taux-statut" role="status">Taux non renseigné</span>
+                </div>
               </article>
-              <article class="budget-reglage-bloc budget-taux-bloc">
-                <div class="budget-reglage-titre"><span class="budget-reglage-picto" aria-hidden="true">💱</span><div><strong>Taux de change manuel</strong><small>Renseignez votre valeur de référence.</small></div></div>
-                <label class="budget-reglage-label" for="budget-taux-usd-fc">Valeur de 1 dollar américain</label>
-                <div class="budget-taux-saisie"><span>1 USD =</span><input id="budget-taux-usd-fc" type="number" min="0.000001" step="any" inputmode="decimal" placeholder="Ex. 2800" aria-label="Valeur en FC pour un dollar américain"><strong>FC</strong></div>
-                <span id="budget-taux-statut" class="budget-taux-statut" role="status">Taux non renseigné</span>
-              </article>
-              <p class="budget-liaison-statut">Le taux de change reste commun aux fonctions de conversion du Porte-Monnaie. Les soldes affichés ici restent en lecture seule.</p>
+
             </section>
           </section>
           <section class="tab-pane" id="pane-notes" role="tabpanel" data-pane="notes" hidden>
