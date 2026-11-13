@@ -366,6 +366,18 @@
                 <article><span>Ristournes distribuées (retraits)</span><strong id="rist-retraits-fc">—</strong><b id="rist-retraits-usd">—</b></article>
                 <article class="rist-solde"><span>Solde des ristournes</span><strong id="rist-solde-fc">—</strong><b id="rist-solde-usd">—</b></article>
               </div>
+              <div class="rist-suivi-manuel carte" style="margin:16px 0;padding:16px">
+                <div class="card-heading"><div><p class="eyebrow">SUIVI PERSONNEL</p><h3>Encaissement de la ristourne</h3><p>Renseignez le montant prévu et ce que vous avez déjà encaissé. Le reste se calcule automatiquement.</p></div></div>
+                <div class="wallet-summary" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
+                  <label>Somme totale à encaisser (FC)<input id="rist-suivi-total-fc" type="number" min="0" step="0.01" placeholder="0"></label>
+                  <label>Déjà encaissé (FC)<input id="rist-suivi-encaisse-fc" type="number" min="0" step="0.01" placeholder="0"></label>
+                  <article class="wallet-total wallet-total-accent"><span>Reste à encaisser (FC)</span><strong id="rist-suivi-reste-fc">0 FC</strong></article>
+                  <label>Somme totale à encaisser (USD)<input id="rist-suivi-total-usd" type="number" min="0" step="0.01" placeholder="0"></label>
+                  <label>Déjà encaissé (USD)<input id="rist-suivi-encaisse-usd" type="number" min="0" step="0.01" placeholder="0"></label>
+                  <article class="wallet-total wallet-total-accent"><span>Reste à encaisser (USD)</span><strong id="rist-suivi-reste-usd">0 USD</strong></article>
+                </div>
+                <div class="rist-part-actions" style="margin-top:12px"><button id="rist-suivi-enregistrer" class="btn btn-primary" type="button">Enregistrer le suivi</button><span id="rist-suivi-statut" class="meta" aria-live="polite">Suivi personnel, indépendant des mouvements ESE DB.</span></div>
+              </div>
               <div id="rist-groupes" class="rist-groupes"></div>
               <p id="rist-credits" class="meta rist-credits"></p>
               <div class="rist-part"><div><strong>Mes parts de ristourne (50 %)</strong><p id="rist-part-info" class="meta">Calcul de votre part en attente…</p></div><div class="rist-part-actions"><button id="rist-part-enregistrer" class="btn btn-primary" type="button" disabled>Enregistrer ma part</button><button id="rist-part-reinit" class="btn btn-secondary" type="button" disabled title="Efface tous les mouvements du compte et remet la part à enregistrer">Réinitialiser le compte</button></div></div>
