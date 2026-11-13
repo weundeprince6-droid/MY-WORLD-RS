@@ -2607,3 +2607,10 @@ html[data-theme="gold"] #pane-agenda #agenda-anniversaire .agenda-anniversaire-c
     font-size: 11px;
   }
 }
+/* Navigation interne des espaces Ma maison et Projet pro */
+.espace-sousvue[hidden]{display:none!important}
+.espace-switch{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 20px}
+.espace-switch-btn{border:1px solid var(--border);border-radius:12px;padding:11px 17px;background:var(--surface);color:var(--text);font:inherit;font-weight:700;cursor:pointer;transition:background .15s,border-color .15s,color .15s}
+.espace-switch-btn:hover{border-color:var(--primary);background:var(--primary-soft)}
+.espace-switch-btn.actif{background:var(--primary-soft);border-color:var(--primary);color:var(--primary)}
+@media(max-width:520px){.espace-switch{display:grid;grid-template-columns:1fr 1fr}.espace-switch-btn{padding:10px 8px;font-size:13px}}
