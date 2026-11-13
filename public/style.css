@@ -2614,3 +2614,12 @@ html[data-theme="gold"] #pane-agenda #agenda-anniversaire .agenda-anniversaire-c
 .espace-switch-btn:hover{border-color:var(--primary);background:var(--primary-soft)}
 .espace-switch-btn.actif{background:var(--primary-soft);border-color:var(--primary);color:var(--primary)}
 @media(max-width:520px){.espace-switch{display:grid;grid-template-columns:1fr 1fr}.espace-switch-btn{padding:10px 8px;font-size:13px}}
+
+
+/* Navigation interne : Porte-Monnaie et Budget mensuel réunis, données séparées. */
+.finance-switch{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 20px}
+.finance-switch-btn{flex:1 1 220px;min-height:46px;border:1px solid var(--border);border-radius:12px;padding:11px 16px;background:var(--surface);color:var(--text);font:inherit;font-weight:750;cursor:pointer;transition:background .15s,border-color .15s,color .15s}
+.finance-switch-btn:hover{border-color:var(--primary);background:var(--primary-soft)}
+.finance-switch-btn.actif{background:var(--primary-soft);border-color:var(--primary);color:var(--primary)}
+.finance-sousvue[hidden]{display:none!important}
+@media(max-width:520px){.finance-switch{display:grid;grid-template-columns:1fr}.finance-switch-btn{width:100%;min-width:0;font-size:14px}}
