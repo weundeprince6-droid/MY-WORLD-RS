@@ -732,11 +732,11 @@ const setMode = (m) => { viewer.className = 'mode-' + m; document.body.dataset.m
 // ================= Messages à l'écran =================
 let osdT, toastT;
 function osd(msg) { const o = $('osd'); o.textContent = msg; o.classList.add('show'); clearTimeout(osdT); osdT = setTimeout(() => o.classList.remove('show'), 1300); }
-function toast(msg, label, action) {
+function toast(msg, label, action, duration = 7000) {
   const t = $('toast'); t.innerHTML = '';
   const s = document.createElement('span'); s.textContent = msg; t.appendChild(s);
-  if (label) { const b = document.createElement('button'); b.textContent = label; b.onclick = () => { action(); t.classList.remove('show'); }; t.appendChild(b); }
-  t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 7000);
+  if (label) { const b = document.createElement('button'); b.textContent = label; b.onclick = () => { action(); t.classList.remove('show'); clearTimeout(toastT); }; t.appendChild(b); }
+  t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), duration);
 }
 
 // ================= Accès aux fichiers =================
@@ -1016,8 +1016,17 @@ async function play(i) {
     if (S.resume && rp && !rp.done && rp.t > 5 && (it.type === 'video' || rp.d >= 600)) {
       m.addEventListener('loadedmetadata', () => {
         if (rp.t < m.duration - 8) {
-          m.currentTime = rp.t;
-          toast('Reprise à ' + fmt(rp.t), 'Depuis le début', () => { m.currentTime = 0; });
+          if (it.type === 'video') {
+            // La vidéo démarre toujours au début. La reprise n'a lieu que si l'utilisateur l'accepte dans les 5 secondes.
+            m.currentTime = 0;
+            toast('Reprendre à ' + fmt(rp.t) + ' ?', 'Reprendre', () => {
+              m.currentTime = rp.t;
+              m.play().catch(() => {});
+            }, 5000);
+          } else {
+            m.currentTime = rp.t;
+            toast('Reprise à ' + fmt(rp.t), 'Depuis le début', () => { m.currentTime = 0; });
+          }
         }
       }, { once: true });
     }
