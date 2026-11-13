@@ -499,11 +499,10 @@
                 <div><p class="eyebrow">CONSULTATION EN LECTURE SEULE</p><h3>Soldes disponibles dans les comptes</h3><p>Choisissez les comptes dont vous souhaitez afficher le solde. Cette vue ne modifie aucune opération.</p></div>
               </div>
               <article class="budget-reglage-bloc" style="margin-bottom:16px">
-                <div class="budget-reglage-titre"><span class="budget-reglage-picto" aria-hidden="true">☑</span><div><strong>Comptes à afficher</strong><small>Cochez un ou plusieurs comptes.</small></div></div>
-                <div id="budget-comptes-choix" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:10px;margin:14px 0">
-                  <p class="vide">Chargement des comptes…</p>
+                <div class="budget-reglage-titre"><span class="budget-reglage-picto" aria-hidden="true">▤</span><div><strong>Soldes des comptes</strong><small>Faites défiler ce petit tableau pour consulter chaque compte.</small></div></div>
+                <div id="budget-comptes-soldes" role="region" aria-label="Tableau défilant des soldes des comptes" tabindex="0" style="max-height:230px;overflow-y:auto;overflow-x:auto;margin-top:12px;border:1px solid var(--border);border-radius:10px">
+                  <p class="vide" style="padding:12px">Chargement des comptes…</p>
                 </div>
-                <div id="budget-comptes-soldes" aria-live="polite" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:12px"></div>
                 <p id="budget-comptes-statut" class="budget-liaison-statut" role="status">Consultation uniquement : aucune écriture ni synchronisation vers le Porte-Monnaie.</p>
               </article>
               <article class="budget-reglage-bloc budget-taux-bloc">
