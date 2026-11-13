@@ -2192,3 +2192,35 @@ html[data-theme="gold"] #pane-agenda .gmail-compositeur{
 }
 html[data-theme="dark"] #pane-agenda #agenda-vue-detail *,
 html[data-theme="gold"] #pane-agenda #agenda-vue-detail *{color:var(--text)}
+
+/* Agenda — le calendrier mensuel respecte réellement les thèmes sombre et doré.
+   Neutralise l'ancienne finition champagne claire qui imposait un fond crème. */
+html[data-theme="dark"] #pane-agenda #agenda-vue-calendrier .agenda-calendrier,
+html[data-theme="gold"] #pane-agenda #agenda-vue-calendrier .agenda-calendrier{
+  background:var(--surface)!important;
+  color:var(--text)!important;
+  border-color:var(--border)!important;
+  box-shadow:var(--shadow)!important;
+}
+html[data-theme="dark"] #pane-agenda #agenda-vue-calendrier .agenda-cal-jour,
+html[data-theme="gold"] #pane-agenda #agenda-vue-calendrier .agenda-cal-jour{
+  background:var(--bg)!important;
+  color:var(--text)!important;
+  border-color:var(--border)!important;
+}
+html[data-theme="dark"] #pane-agenda #agenda-vue-calendrier .agenda-cal-entete,
+html[data-theme="gold"] #pane-agenda #agenda-vue-calendrier .agenda-cal-entete{
+  background:transparent!important;
+  color:var(--muted)!important;
+  border-color:transparent!important;
+}
+html[data-theme="dark"] #pane-agenda #agenda-vue-calendrier .agenda-cal-vide,
+html[data-theme="gold"] #pane-agenda #agenda-vue-calendrier .agenda-cal-vide{
+  background:transparent!important;
+}
+html[data-theme="dark"] #pane-agenda #agenda-vue-calendrier .agenda-cal-nav button,
+html[data-theme="gold"] #pane-agenda #agenda-vue-calendrier .agenda-cal-nav button{
+  background:var(--bg)!important;
+  color:var(--text)!important;
+  border-color:var(--border)!important;
+}
