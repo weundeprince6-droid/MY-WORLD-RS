@@ -2224,3 +2224,33 @@ html[data-theme="gold"] #pane-agenda #agenda-vue-calendrier .agenda-cal-nav butt
   color:var(--text)!important;
   border-color:var(--border)!important;
 }
+
+/* Compteur d'anniversaire — mêmes fonds thématiques que le calendrier */
+html[data-theme="dark"] #pane-agenda #agenda-anniversaire,
+html[data-theme="gold"] #pane-agenda #agenda-anniversaire{
+  background:var(--surface)!important;
+  color:var(--text)!important;
+  border-color:var(--border)!important;
+  box-shadow:var(--shadow)!important;
+}
+html[data-theme="dark"] #pane-agenda #agenda-anniversaire .agenda-anniversaire-icon,
+html[data-theme="gold"] #pane-agenda #agenda-anniversaire .agenda-anniversaire-icon{
+  background:var(--bg)!important;
+  color:var(--text)!important;
+}
+html[data-theme="dark"] #pane-agenda #agenda-anniversaire .agenda-anniversaire-contenu,
+html[data-theme="gold"] #pane-agenda #agenda-anniversaire .agenda-anniversaire-contenu{
+  color:var(--text)!important;
+}
+html[data-theme="dark"] #pane-agenda #agenda-anniversaire .agenda-anniversaire-contenu h2,
+html[data-theme="dark"] #pane-agenda #agenda-anniversaire .agenda-anniversaire-contenu .eyebrow,
+html[data-theme="dark"] #pane-agenda #agenda-anniversaire .agenda-anniversaire-contenu .meta,
+html[data-theme="gold"] #pane-agenda #agenda-anniversaire .agenda-anniversaire-contenu h2,
+html[data-theme="gold"] #pane-agenda #agenda-anniversaire .agenda-anniversaire-contenu .eyebrow,
+html[data-theme="gold"] #pane-agenda #agenda-anniversaire .agenda-anniversaire-contenu .meta{
+  color:var(--text)!important;
+}
+html[data-theme="dark"] #pane-agenda #agenda-anniversaire .agenda-anniversaire-compte,
+html[data-theme="gold"] #pane-agenda #agenda-anniversaire .agenda-anniversaire-compte{
+  color:var(--primary)!important;
+}
