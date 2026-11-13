@@ -2684,6 +2684,7 @@ async function chargerRistourne(force = false, silencieux = false) {
     rendrePartRistourne();
     rendrePartCaisse();
     if (walletLoaded) walletRender();
+    budgetRendreSoldesComptes();
     if (statut) statut.textContent = `Synchronisé avec ESE DB à ${heure.format(new Date())} · ${r.mouvements} mouvement(s) de ristourne lus.`;
   } catch (e) {
     if (statut) statut.textContent = "Synchronisation ESE DB impossible : " + e.message;
@@ -2925,13 +2926,21 @@ function budgetRendreSoldesComptes() {
   }
   budgetCompteIndex = ((budgetCompteIndex % walletAccounts.length) + walletAccounts.length) % walletAccounts.length;
   const a = walletAccounts[budgetCompteIndex];
+  const gros = (titre, texte, couleur) => '<div style="padding:12px 0 2px;border-top:1px solid var(--border)"><div style="font-size:.82rem;color:var(--muted)">' + titre + '</div><strong style="display:block;margin-top:5px;font-size:1.45rem;overflow-wrap:anywhere' + (couleur ? ';color:' + couleur : '') + '">' + echapper(texte) + '</strong></div>';
+  let bloc;
+  if (a.name === NOM_COMPTE_PART) {
+    // Compte « Mes parts de ristourne » : argent déjà encaissé et part de 50 % qui reste à encaisser
+    const p = derniereRistourne ? calculerPartsRistourne().find(x => x.devise === String(a.currency).toUpperCase()) : null;
+    bloc = gros("Solde encaissé", walletMoney(a.balance, a.currency)) +
+      gros("Reste à encaisser", p ? walletMoney(Math.max(0, p.aEnregistrer), a.currency) : "calcul en cours…", p && p.aEnregistrer > 0 ? "var(--primary)" : "");
+  } else bloc = gros("Solde disponible", walletMoney(a.balance, a.currency));
   zone.innerHTML =
     '<div style="padding:16px;border:1px solid var(--border);border-radius:12px;background:var(--surface)">' +
       '<div style="font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Compte ' + (budgetCompteIndex + 1) + ' sur ' + walletAccounts.length + '</div>' +
       '<h3 style="margin:8px 0 14px;font-size:1.15rem">' + echapper(a.name || "Compte sans nom") + '</h3>' +
       '<div style="display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-top:1px solid var(--border)"><span style="color:var(--muted)">Type</span><strong>' + (a.type === "personal" ? "Personnel" : "Professionnel") + '</strong></div>' +
       '<div style="display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-top:1px solid var(--border)"><span style="color:var(--muted)">Devise</span><strong>' + echapper(String(a.currency || "").toUpperCase()) + '</strong></div>' +
-      '<div style="padding:12px 0 2px;border-top:1px solid var(--border)"><div style="font-size:.82rem;color:var(--muted)">Solde disponible</div><strong style="display:block;margin-top:5px;font-size:1.45rem;overflow-wrap:anywhere">' + echapper(walletMoney(a.balance, a.currency)) + '</strong></div>' +
+      bloc +
     '</div>';
   if (statut) statut.textContent = "Compte " + (budgetCompteIndex + 1) + " sur " + walletAccounts.length + " · Lecture seule.";
   if (suivant) suivant.disabled = walletAccounts.length < 2;
@@ -2983,6 +2992,8 @@ budgetChargerTaux();
 document.querySelector('[data-tab="budget-mensuel"]')?.addEventListener("click", async () => {
   await chargerWallet(false);
   budgetRendreSoldesComptes();
+  // Le « reste à encaisser » dépend des ristournes d'ESE DB : on les lit si ce n'est pas déjà fait
+  if (!derniereRistourne) { try { await chargerRistourne(false, true); } catch {} budgetRendreSoldesComptes(); }
 });
 async function walletChargerJsPdf() {
   if (window.jspdf?.jsPDF) return window.jspdf.jsPDF;
