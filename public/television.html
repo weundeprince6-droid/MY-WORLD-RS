@@ -433,9 +433,19 @@ body.gold #titleBar{background:#1a1a18!important}
         <button data-filter="video">Vidéo</button>
         <button data-filter="image">Photos</button>
         <button data-filter="doc">Documents</button>
+        <button type="button" id="mesFilmsTab">Mes films et séries</button>
         <button type="button" id="tvDriveTab">Google Drive</button>
       </div>
     <ul id="playlist"></ul>
+    <section id="mesFilmsPane" hidden style="flex:1;min-height:0;overflow:auto;padding:10px">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+        <strong style="flex:1">🎬 Mes films et séries</strong>
+        <button id="mesFilmsChoisir" type="button">📁 Choisir le dossier</button>
+        <button id="mesFilmsActualiser" type="button">↻ Synchroniser</button>
+      </div>
+      <p id="mesFilmsStatus" style="font-size:12px;color:var(--muted)">Choisissez le dossier qui contient vos films et séries.</p>
+      <div id="mesFilmsList"></div>
+    </section>
     <section id="tvDrivePane" hidden style="flex:1;min-height:0;overflow:auto;padding:10px">
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px"><strong style="flex:1">Google Drive</strong><button id="tvDriveRefresh" type="button">↻ Actualiser</button></div>
       <p id="tvDriveStatus" style="font-size:12px;color:var(--muted)">Chargement…</p>
@@ -1603,7 +1613,7 @@ $('btnClear').onclick = () => {
 };
 $('tabs').onclick = (e) => {
   const b = e.target.closest('button'); if (!b) return;
-  if (b.id === 'tvDriveTab') return;
+  if (b.id === 'tvDriveTab' || b.id === 'mesFilmsTab') return;
   if (typeof tvDriveHide === 'function') tvDriveHide();
   filter = b.dataset.filter;
   document.querySelectorAll('#tabs button').forEach((x) => x.classList.toggle('active', x === b));
@@ -2144,15 +2154,57 @@ function renderResume() {
 
 
  // ================= Google Drive dans la Télévision =================
+ const mesFilmsTab = $('mesFilmsTab'), mesFilmsPane = $('mesFilmsPane'), mesFilmsStatus = $('mesFilmsStatus'), mesFilmsList = $('mesFilmsList');
+ let mesFilmsFolder = null, mesFilmsItems = [];
+ function afficherMesFilms() {
+   mesFilmsList.innerHTML = '';
+   if (!mesFilmsItems.length) { mesFilmsList.textContent = 'Aucune vidéo trouvée dans ce dossier.'; return; }
+   mesFilmsItems.forEach((it) => {
+     const b = document.createElement('button'); b.type = 'button'; b.style.cssText = 'display:block;width:100%;text-align:left;margin:5px 0;white-space:normal';
+     b.textContent = '▶  ' + it.name; b.title = it.path;
+     b.onclick = () => { let i = items.findIndex(x => x.key === it.key && x.path === it.path); if (i < 0) { items.push(it); regrouper(); i = items.indexOf(it); renderList(); persist(); } play(i); };
+     mesFilmsList.appendChild(b);
+   });
+ }
+ async function synchroniserMesFilms(demander = false) {
+   if (!mesFilmsFolder) mesFilmsFolder = await DB.get('mesFilmsFolder');
+   if (!mesFilmsFolder) { mesFilmsStatus.textContent = 'Choisissez une fois votre dossier Mes films et séries.'; afficherMesFilms(); return; }
+   try {
+     let p = await mesFilmsFolder.queryPermission({ mode: 'read' });
+     if (p !== 'granted' && demander) p = await mesFilmsFolder.requestPermission({ mode: 'read' });
+     if (p !== 'granted') { mesFilmsStatus.textContent = 'Autorisation nécessaire : cliquez sur Synchroniser pour autoriser à nouveau l’accès au dossier.'; afficherMesFilms(); return; }
+     mesFilmsStatus.textContent = 'Recherche des nouvelles vidéos…';
+     const trouvees = (await scanDir(mesFilmsFolder)).filter(x => x.type === 'video');
+     const existantes = new Map(items.filter(x => x.dirHandle === mesFilmsFolder && x.type === 'video').map(x => [x.path, x]));
+     for (const it of trouvees) { const old = existantes.get(it.path); if (old) { old.file = it.file; old.size = it.size; old.mod = it.mod; old.key = it.key; old.subs = it.subs; } else items.push(it); }
+     mesFilmsItems = trouvees; regrouper(); renderList(); persist(); afficherMesFilms();
+     mesFilmsStatus.textContent = trouvees.length + ' vidéo(s) dans « ' + mesFilmsFolder.name + ' » — bibliothèque synchronisée.';
+   } catch (e) { mesFilmsStatus.textContent = 'Impossible de lire ce dossier. Vérifiez qu’il existe et réessayez.'; }
+ }
+ async function choisirDossierMesFilms() {
+   if (!('showDirectoryPicker' in window)) { mesFilmsStatus.textContent = 'Ce navigateur ne prend pas en charge le choix automatique de dossier. Essayez Edge ou Chrome récent.'; return; }
+   try { const d = await window.showDirectoryPicker({ mode: 'read' }); mesFilmsFolder = d; await DB.set('mesFilmsFolder', d); await synchroniserMesFilms(true); }
+   catch (e) { if (e.name !== 'AbortError') mesFilmsStatus.textContent = 'Sélection du dossier impossible.'; }
+ }
+ function afficherOngletMesFilms() {
+   tvDriveHide(); $('playlist').hidden = true; mesFilmsPane.hidden = false;
+   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('active', b === mesFilmsTab));
+   if (!mesFilmsItems.length) synchroniserMesFilms(false);
+ }
+ function cacherOngletMesFilms() { mesFilmsPane.hidden = true; $('playlist').hidden = false; }
+ mesFilmsTab?.addEventListener('click', afficherOngletMesFilms);
+ $('mesFilmsChoisir')?.addEventListener('click', choisirDossierMesFilms);
+ $('mesFilmsActualiser')?.addEventListener('click', () => synchroniserMesFilms(true));
  const tvDriveTab = $('tvDriveTab'), tvDrivePane = $('tvDrivePane'), tvDriveList = $('tvDriveList'), tvDriveStatus = $('tvDriveStatus');
  let tvDriveActive = false, tvDriveBlobUrl = null;
  function tvDriveSend(action, extra={}) { parent.postMessage({ source:'mwrs-tv-drive', action, ...extra }, '*'); }
  function tvDriveShow() {
+   cacherOngletMesFilms();
    tvDriveActive = true; $('playlist').hidden = true; tvDrivePane.hidden = false;
    $('tabs').querySelectorAll('button').forEach(b=>b.classList.toggle('active',b===tvDriveTab));
    tvDriveStatus.textContent='Connexion à Google Drive…'; tvDriveSend('list');
  }
- function tvDriveHide() { tvDriveActive=false; tvDrivePane.hidden=true; $('playlist').hidden=false; }
+ function tvDriveHide() { tvDriveActive=false; tvDrivePane.hidden=true; $('playlist').hidden=false; mesFilmsPane.hidden=true; }
  tvDriveTab?.addEventListener('click',tvDriveShow);
  $('tvDriveRefresh')?.addEventListener('click',()=>{tvDriveStatus.textContent='Actualisation…';tvDriveSend('list');});
  tvDriveList?.addEventListener('click',e=>{const b=e.target.closest('[data-tv-drive-id]');if(!b)return;tvDriveStatus.textContent='Ouverture…';tvDriveSend('open',{id:b.dataset.tvDriveId});});
