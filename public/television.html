@@ -509,7 +509,7 @@ body.gold #titleBar{background:#1a1a18!important}
       </div>
     <section id="youtubePane" hidden>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">
-        <strong style="font-size:16px;flex:1">▶ YouTube · Explorer</strong>
+        <strong style="font-size:16px;flex:1">▶ YouTube · Accueil</strong>
         <button id="youtubeBack" type="button">← Mes fichiers</button>
       </div>
       <form id="youtubeSearchForm" style="display:flex;gap:7px;margin-bottom:9px">
@@ -524,7 +524,7 @@ body.gold #titleBar{background:#1a1a18!important}
         <button type="button" data-yt-query="éducation">Éducation</button>
         <button type="button" data-yt-query="technologie">Technologie</button>
       </div>
-      <p id="youtubeStatus" role="status" style="font-size:12px;color:var(--muted)">Enregistrez votre clé API, puis recherchez une vidéo ou choisissez une catégorie. Vous pouvez aussi coller directement un lien ci-dessous.</p>
+      <p id="youtubeStatus" role="status" style="font-size:12px;color:var(--muted)">Bienvenue sur YouTube dans MY WORLD RS. Chargement des vidéos populaires…</p>
       <div id="youtubeResults" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin:10px 0"></div>
       <form id="youtubeForm" style="display:flex;gap:7px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:12px;margin-top:12px">
         <input id="youtubeUrl" type="url" required placeholder="Ou collez un lien YouTube…" aria-label="Lien de la vidéo YouTube" style="flex:1;min-width:150px;padding:9px;border-radius:8px;border:1px solid var(--border);background:var(--panel2);color:var(--text)" />
@@ -2533,6 +2533,7 @@ function renderResume() {
    $('tabs').querySelectorAll('button').forEach(b => b.classList.toggle('active', b === youtubeTab));
    if (document.body.dataset.mode !== 'youtube') setMode('empty');
    ytMajRetour(); $('youtubeQuery').focus();
+   if (!ytResults.children.length) { $('youtubeQuery').value = 'tendances RDC'; youtubeSearch('tendances RDC'); }
  }
  function youtubeHide() { youtubePane.hidden = true; if (!tvDriveActive && mesFilmsPane.hidden && !matchsActive) $('playlist').hidden = false; ytMajRetour(); }
  function ytMajRetour() { const r = $('ytRetour'); if (r) r.hidden = !(document.body.dataset.mode === 'youtube' && youtubePane.hidden); }
