@@ -486,10 +486,6 @@ body.gold #titleBar{background:#1a1a18!important}
         <button type="button" data-yt-query="technologie">Technologie</button>
       </div>
       <p id="youtubeStatus" role="status" style="font-size:12px;color:var(--muted)">Enregistrez votre clé API, puis recherchez une vidéo ou choisissez une catégorie. Vous pouvez aussi coller directement un lien ci-dessous.</p>
-      <div id="youtubePlaybackNav" style="display:flex;gap:8px;margin:8px 0 12px">
-        <button id="youtubePrev" type="button" disabled style="flex:1">⏮ Vidéo précédente</button>
-        <button id="youtubeNext" type="button" disabled style="flex:1">Vidéo suivante ⏭</button>
-      </div>
       <div id="youtubeResults" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:10px;margin:10px 0"></div>
       <form id="youtubeForm" style="display:flex;gap:7px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:12px;margin-top:12px">
         <input id="youtubeUrl" type="url" required placeholder="Ou collez un lien YouTube…" aria-label="Lien de la vidéo YouTube" style="flex:1;min-width:150px;padding:9px;border-radius:8px;border:1px solid var(--border);background:var(--panel2);color:var(--text)" />
@@ -788,7 +784,12 @@ const SPEEDS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 3, 4];
 let speed = 1;
 
 const activeMedia = () => { const it = items[current]; return it ? (it.type === 'video' ? video : it.type === 'audio' ? audio : null) : null; };
-const setMode = (m) => { viewer.className = 'mode-' + m; document.body.dataset.mode = m; layoutVideo(); };
+const setMode = (m) => {
+  viewer.className = 'mode-' + m; document.body.dataset.mode = m;
+  if (m === 'youtube') youtubeUpdateNav();
+  else { $('btnPrev').disabled = false; $('btnNext').disabled = false; $('btnPrev').title = 'Précédent (P)'; $('btnNext').title = 'Suivant (N)'; }
+  layoutVideo();
+};
 
 // ================= Messages à l'écran =================
 let osdT, toastT;
@@ -1621,7 +1622,10 @@ viewer.addEventListener('wheel', (e) => {
 // ================= Boutons principaux =================
 $('btnPlay').onclick = togglePlay;
 $('btnNext').onclick = () => next(1);
-$('btnPrev').onclick = () => { const m = activeMedia(); if (m && m.currentTime > 3) m.currentTime = 0; else next(-1); };
+$('btnPrev').onclick = () => {
+  if (document.body.dataset.mode === 'youtube') { next(-1); return; }
+  const m = activeMedia(); if (m && m.currentTime > 3) m.currentTime = 0; else next(-1);
+};
 $('btnStop').onclick = () => { const m = activeMedia(); if (m) { m.pause(); m.currentTime = 0; saveProg(); } stopSlideshow(); };
 $('btnSlide').onclick = toggleSlideshow;
 $('btnShuffle').onclick = () => { shuffle = !shuffle; $('btnShuffle').classList.toggle('on', shuffle); osd('Aléatoire ' + (shuffle ? 'activé' : 'désactivé')); };
@@ -2312,10 +2316,12 @@ function renderResume() {
  let youtubeQueue = [], youtubeQueueIndex = -1;
  try { ytKeyInput.value = localStorage.getItem('mwrs_youtube_api_key') || ''; } catch (_) {}
  function youtubeUpdateNav() {
-   const prev = $('youtubePrev'), nextBtn = $('youtubeNext');
    const hasCurrent = youtubeQueueIndex >= 0 && youtubeQueueIndex < youtubeQueue.length;
-   if (prev) prev.disabled = !hasCurrent || youtubeQueueIndex <= 0;
-   if (nextBtn) nextBtn.disabled = !hasCurrent || youtubeQueueIndex >= youtubeQueue.length - 1;
+   const inYoutube = document.body.dataset.mode === 'youtube';
+   $('btnPrev').disabled = inYoutube && (!hasCurrent || youtubeQueueIndex <= 0);
+   $('btnNext').disabled = inYoutube && (!hasCurrent || youtubeQueueIndex >= youtubeQueue.length - 1);
+   $('btnPrev').title = inYoutube ? 'Vidéo précédente (P)' : 'Précédent (P)';
+   $('btnNext').title = inYoutube ? 'Vidéo suivante (N)' : 'Suivant (N)';
  }
  function youtubePlay(id, title='') {
    if (!/^[\w-]{6,20}$/.test(id)) return;
@@ -2376,8 +2382,6 @@ function renderResume() {
      });
    } catch (err) { $('youtubeStatus').textContent = 'Recherche impossible : ' + (err.message || 'vérifiez la clé API, son autorisation et le quota.'); }
  }
- $('youtubePrev')?.addEventListener('click', () => youtubeMove(-1));
- $('youtubeNext')?.addEventListener('click', () => youtubeMove(1));
  $('youtubeSearchForm')?.addEventListener('submit', e => { e.preventDefault(); youtubeSearch($('youtubeQuery').value); });
  $('youtubeCategories')?.addEventListener('click', e => { const b=e.target.closest('button[data-yt-query]'); if(!b)return; $('youtubeQuery').value=b.dataset.ytQuery; youtubeSearch(b.dataset.ytQuery); });
  $('youtubeForm')?.addEventListener('submit', e => {
