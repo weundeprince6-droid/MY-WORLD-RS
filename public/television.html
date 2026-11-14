@@ -1809,8 +1809,12 @@ viewer.addEventListener('wheel', (e) => {
 
 // ================= Boutons principaux =================
 $('btnPlay').onclick = togglePlay;
-$('btnNext').onclick = () => next(1);
+$('btnNext').onclick = () => {
+  if (tvActive) { tvNavigateStation(1); return; }
+  next(1);
+};
 $('btnPrev').onclick = () => {
+  if (tvActive) { tvNavigateStation(-1); return; }
   if (document.body.dataset.mode === 'youtube') { next(-1); return; }
   const m = activeMedia(); if (m && m.currentTime > 3) m.currentTime = 0; else next(-1);
 };
@@ -2491,6 +2495,7 @@ function renderResume() {
  const youtubeTab = $('youtubeTab'), youtubePane = $('youtubePane'), youtubeFrame = $('youtubeFrame');
  const tvTab = $('tvTab');
  let tvActive = false;
+  let tvCurrentStationKey = 'france24';
   const tvPane = $('tvPane'), tvStationFrame = $('tvStationFrame');
   const tvStations = {
     france24: {name:'FRANCE 24', category:'Francophone', url:'https://www.youtube-nocookie.com/embed/a47ckXKZjxI?autoplay=1&rel=0', official:'https://www.youtube.com/watch?v=a47ckXKZjxI', note:'Flux YouTube de FRANCE 24.'},
@@ -2504,6 +2509,7 @@ function renderResume() {
   };
   function tvSelectStation(key) {
     const station = tvStations[key]; if (!station) return;
+    tvCurrentStationKey = key;
     tvStationFrame.src = station.url;
     $('tvOpenOfficial').href = station.official;
     $('tvOpenOfficial').textContent = 'Ouvrir sur YouTube ↗';
@@ -2511,6 +2517,15 @@ function renderResume() {
     $('tvStations').querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.tvStation === key));
     $('nowPlaying').textContent = '📺 TV · ' + station.name;
     setMode('tv'); updatePlayBtn();
+  }
+  function tvNavigateStation(direction) {
+    const keys = Object.keys(tvStations);
+    if (!keys.length) return;
+    let index = keys.indexOf(tvCurrentStationKey);
+    if (index < 0) index = 0;
+    index = (index + direction + keys.length) % keys.length;
+    tvSelectStation(keys[index]);
+    osd('📺 ' + tvStations[keys[index]].name);
   }
   function tvHide() {
     if (tvPane) tvPane.hidden = true;
