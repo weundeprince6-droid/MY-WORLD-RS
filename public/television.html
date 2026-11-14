@@ -486,6 +486,10 @@ body.gold #titleBar{background:#1a1a18!important}
         <button type="button" data-yt-query="technologie">Technologie</button>
       </div>
       <p id="youtubeStatus" role="status" style="font-size:12px;color:var(--muted)">Enregistrez votre clé API, puis recherchez une vidéo ou choisissez une catégorie. Vous pouvez aussi coller directement un lien ci-dessous.</p>
+      <div id="youtubePlaybackNav" style="display:flex;gap:8px;margin:8px 0 12px">
+        <button id="youtubePrev" type="button" disabled style="flex:1">⏮ Vidéo précédente</button>
+        <button id="youtubeNext" type="button" disabled style="flex:1">Vidéo suivante ⏭</button>
+      </div>
       <div id="youtubeResults" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:10px;margin:10px 0"></div>
       <form id="youtubeForm" style="display:flex;gap:7px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:12px;margin-top:12px">
         <input id="youtubeUrl" type="url" required placeholder="Ou collez un lien YouTube…" aria-label="Lien de la vidéo YouTube" style="flex:1;min-width:150px;padding:9px;border-radius:8px;border:1px solid var(--border);background:var(--panel2);color:var(--text)" />
@@ -1150,7 +1154,11 @@ function tvProgrammerSuivant() {
   tvNextInterval = setInterval(() => { left--; if (count.isConnected) count.textContent = 'Lecture dans ' + left + ' s'; }, 1000);
   tvNextTimer = setTimeout(lancer, 5000);
 }
-const next = (dir = 1) => { tvAnnulerSuivant(); const n = nextIndex(dir); if (n !== -1) play(n); };
+const next = (dir = 1) => {
+  tvAnnulerSuivant();
+  if (document.body.dataset.mode === 'youtube') { youtubeMove(dir); return; }
+  const n = nextIndex(dir); if (n !== -1) play(n);
+};
 
 function togglePlay() {
   const m = activeMedia();
@@ -2301,13 +2309,38 @@ function renderResume() {
  function youtubeHide() { youtubePane.hidden = true; if (!tvDriveActive && mesFilmsPane.hidden) $('playlist').hidden = false; }
  youtubeTab?.addEventListener('click', youtubeShow);
  const ytKeyInput = $('youtubeApiKey'), ytResults = $('youtubeResults');
+ let youtubeQueue = [], youtubeQueueIndex = -1;
  try { ytKeyInput.value = localStorage.getItem('mwrs_youtube_api_key') || ''; } catch (_) {}
+ function youtubeUpdateNav() {
+   const prev = $('youtubePrev'), nextBtn = $('youtubeNext');
+   const hasCurrent = youtubeQueueIndex >= 0 && youtubeQueueIndex < youtubeQueue.length;
+   if (prev) prev.disabled = !hasCurrent || youtubeQueueIndex <= 0;
+   if (nextBtn) nextBtn.disabled = !hasCurrent || youtubeQueueIndex >= youtubeQueue.length - 1;
+ }
  function youtubePlay(id, title='') {
    if (!/^[\w-]{6,20}$/.test(id)) return;
+   youtubeQueueIndex = youtubeQueue.findIndex(v => v.id === id);
+   youtubeUpdateNav();
    saveProg(); stopAll();
    youtubeFrame.src = 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(id) + '?autoplay=1&rel=0';
    setMode('youtube'); $('nowPlaying').textContent = 'YouTube · ' + (title || id);
-   $('youtubeStatus').textContent = 'Lecture lancée. Certaines vidéos interdisent l’intégration et ne pourront pas être lues ici.';
+   $('youtubeStatus').textContent = youtubeQueueIndex >= 0
+     ? 'Lecture ' + (youtubeQueueIndex + 1) + ' sur ' + youtubeQueue.length + '. Utilisez Vidéo suivante pour continuer.'
+     : 'Lecture lancée. Pour passer à la vidéo suivante, lancez une vidéo depuis les résultats de recherche.';
+ }
+ function youtubeMove(dir) {
+   if (youtubeQueueIndex < 0) {
+     $('youtubeStatus').textContent = 'Lancez d’abord une vidéo depuis les résultats de recherche pour utiliser la lecture suivante.';
+     return;
+   }
+   const target = youtubeQueueIndex + dir;
+   if (target < 0 || target >= youtubeQueue.length) {
+     $('youtubeStatus').textContent = dir > 0 ? 'Fin des résultats. Effectuez une nouvelle recherche pour continuer.' : 'Vous êtes déjà sur la première vidéo des résultats.';
+     youtubeUpdateNav();
+     return;
+   }
+   const item = youtubeQueue[target];
+   youtubePlay(item.id, item.title);
  }
  $('youtubeSaveKey')?.addEventListener('click', () => {
    const key = ytKeyInput.value.trim();
@@ -2327,8 +2360,10 @@ function renderResume() {
      const data = await response.json();
      if (!response.ok) throw new Error(data.error?.message || 'Erreur API YouTube');
      const videos = (data.items || []).filter(x => x.id && x.id.videoId);
+     youtubeQueue = videos.map(x => ({ id: x.id.videoId, title: x.snippet?.title || 'Vidéo YouTube' }));
+     youtubeQueueIndex = -1; youtubeUpdateNav();
      if (!videos.length) { $('youtubeStatus').textContent = 'Aucune vidéo trouvée pour cette recherche.'; return; }
-     $('youtubeStatus').textContent = videos.length + ' vidéo(s) trouvée(s). Sélectionnez une miniature pour lire.';
+     $('youtubeStatus').textContent = videos.length + ' vidéo(s) trouvée(s). Sélectionnez une miniature pour lire, puis utilisez Vidéo suivante.';
      videos.forEach(item => {
        const id = item.id.videoId, sn = item.snippet || {};
        const card = document.createElement('button'); card.type = 'button';
@@ -2340,6 +2375,8 @@ function renderResume() {
      });
    } catch (err) { $('youtubeStatus').textContent = 'Recherche impossible : ' + (err.message || 'vérifiez la clé API, son autorisation et le quota.'); }
  }
+ $('youtubePrev')?.addEventListener('click', () => youtubeMove(-1));
+ $('youtubeNext')?.addEventListener('click', () => youtubeMove(1));
  $('youtubeSearchForm')?.addEventListener('submit', e => { e.preventDefault(); youtubeSearch($('youtubeQuery').value); });
  $('youtubeCategories')?.addEventListener('click', e => { const b=e.target.closest('button[data-yt-query]'); if(!b)return; $('youtubeQuery').value=b.dataset.ytQuery; youtubeSearch(b.dataset.ytQuery); });
  $('youtubeForm')?.addEventListener('submit', e => {
