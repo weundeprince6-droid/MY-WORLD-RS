@@ -559,22 +559,6 @@
           </section>
             <section class="finance-sousvue" id="pane-budget-mensuel" role="tabpanel" data-finance-pane="budget-mensuel">
             <div class="section-heading"><div><p class="eyebrow">GESTION FINANCIÈRE</p><h2>Budget mensuel</h2><p>Suivez vos revenus, dépenses, économies et prévisions dans un espace indépendant.</p></div><span class="section-icon">📊</span></div>
-            <iframe id="budget-mensuel-frame" title="Gestionnaire Budget mensuel" src="budget-mensuel.html?v=20261114-plein-ecran1" scrolling="no" style="display:block;width:100%;height:900px;min-height:700px;border:0;background:transparent;overflow:hidden"></iframe>
-            <script>
-              (function(){
-                var frame=document.getElementById("budget-mensuel-frame");
-                if(!frame)return;
-                window.addEventListener("message",function(event){
-                  if(event.origin!==window.location.origin||event.source!==frame.contentWindow)return;
-                  var data=event.data||{};
-                  if(data.type!=="mwrs-budget-height")return;
-                  var height=Number(data.height);
-                  if(Number.isFinite(height)&&height>=500&&height<=20000){
-                    frame.style.height=Math.ceil(height)+"px";
-                  }
-                });
-              })();
-            </script>
             <section class="budget-reglages" id="budget-soldes-comptes" aria-label="Soldes des comptes disponibles">
               <div class="budget-reglages-entete">
                 <div class="budget-reglages-icone" aria-hidden="true">👁</div>
@@ -601,6 +585,23 @@
               </div>
 
             </section>
+            <iframe id="budget-mensuel-frame" title="Gestionnaire Budget mensuel" src="budget-mensuel.html?v=20261114-plein-ecran1" scrolling="no" style="display:block;width:100%;height:900px;min-height:700px;border:0;background:transparent;overflow:hidden"></iframe>
+            <script>
+              (function(){
+                var frame=document.getElementById("budget-mensuel-frame");
+                if(!frame)return;
+                window.addEventListener("message",function(event){
+                  if(event.origin!==window.location.origin||event.source!==frame.contentWindow)return;
+                  var data=event.data||{};
+                  if(data.type!=="mwrs-budget-height")return;
+                  var height=Number(data.height);
+                  if(Number.isFinite(height)&&height>=500&&height<=20000){
+                    frame.style.height=Math.ceil(height)+"px";
+                  }
+                });
+              })();
+            </script>
+
           </section>
           </section>
           
