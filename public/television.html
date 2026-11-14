@@ -2353,6 +2353,7 @@ function renderResume() {
    if (!key) { $('youtubeStatus').textContent = 'Ajoutez et enregistrez votre clé API YouTube Data pour rechercher.'; ytKeyInput.focus(); return; }
    if (!query.trim()) return;
    $('youtubeStatus').textContent = 'Recherche YouTube en cours…'; ytResults.replaceChildren();
+   youtubeQueue = []; youtubeQueueIndex = -1; youtubeUpdateNav();
    try {
      const url = new URL('https://www.googleapis.com/youtube/v3/search');
      url.search = new URLSearchParams({part:'snippet',type:'video',maxResults:'18',q:query.trim(),key}).toString();
