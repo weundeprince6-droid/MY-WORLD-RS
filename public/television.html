@@ -536,6 +536,9 @@ body.gold #titleBar{background:#1a1a18!important}
         <div class="tv-stations" id="tvStations">
           <button type="button" data-tv-station="france24" class="active">🇫🇷 France 24</button>
           <button type="button" data-tv-station="euronews">🌐 Euronews FR</button>
+          <button type="button" data-tv-station="africanews">🌍 Africanews</button>
+          <button type="button" data-tv-station="franceinfo">🇫🇷 franceinfo</button>
+          <button type="button" data-tv-station="citizen">🇰🇪 Citizen TV · Kiswahili</button>
         </div>
         <div class="tv-view">
           <p id="tvStatus" class="tv-help">Chaînes et vidéos issues de YouTube uniquement. Si un direct est hors ligne ou bloqué, ouvrez la chaîne sur YouTube.</p>
@@ -2441,8 +2444,11 @@ function renderResume() {
  let tvActive = false;
   const tvPane = $('tvPane'), tvStationFrame = $('tvStationFrame');
   const tvStations = {
-    france24: {name:'FRANCE 24', url:'https://www.youtube-nocookie.com/embed/a47ckXKZjxI?autoplay=1&rel=0', official:'https://www.youtube.com/watch?v=a47ckXKZjxI', note:'Flux YouTube de FRANCE 24.'},
-    euronews: {name:'Euronews FR', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCW2QcKZiU8aUGg4yxCIditg&autoplay=1', official:'https://www.youtube.com/@euronewsfr/live', note:'Flux YouTube en français, selon disponibilité du direct.'}
+    france24: {name:'FRANCE 24', category:'Francophone', url:'https://www.youtube-nocookie.com/embed/a47ckXKZjxI?autoplay=1&rel=0', official:'https://www.youtube.com/watch?v=a47ckXKZjxI', note:'Flux YouTube de FRANCE 24.'},
+    euronews: {name:'Euronews FR', category:'Francophone', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCW2QcKZiU8aUGg4yxCIditg&autoplay=1', official:'https://www.youtube.com/@euronewsfr/live', note:'Flux YouTube en français, selon disponibilité du direct.'},
+    africanews: {name:'Africanews', category:'Francophone', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UC1_E8NeF5QHY2dtdLRBCCLA&autoplay=1', official:'https://www.youtube.com/@africanews/live', note:'Actualités africaines et internationales en direct.'},
+    franceinfo: {name:'franceinfo', category:'Francophone', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCO6K_kkdP-lnSCiO3tPx7WA&autoplay=1', official:'https://www.youtube.com/@franceinfo/live', note:'Chaîne d’information française en continu.'},
+    citizen: {name:'Citizen TV Kenya', category:'Kiswahili', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UChBQgieUidXV1CmDxSdRm3g&autoplay=1', official:'https://www.youtube.com/@citizentvkenya/live', note:'Actualités et émissions en kiswahili et en anglais.'}
   };
   function tvSelectStation(key) {
     const station = tvStations[key]; if (!station) return;
