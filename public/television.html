@@ -1195,12 +1195,15 @@ const next = (dir = 1) => {
 
 let youtubePaused = false, youtubeCurrentTime = 0, youtubeDuration = 0, youtubePlayerState = -1;
 function youtubeCommand(command, args = []) {
+  // L’API du lecteur YouTube peut mettre un instant à être prête après le chargement de l’iframe.
+  // On renvoie donc la commande quelques fois : pause/reprise et volume ne sont pas perdus.
   const envoyer = () => { try {
     const frame = $('youtubeFrame'); if (!frame || !frame.contentWindow) return;
     frame.contentWindow.postMessage(JSON.stringify({ event:'listening', id:'mwrs-player' }), '*');
     frame.contentWindow.postMessage(JSON.stringify({ event:'command', func:command, args }), '*');
   } catch (_) {} };
-  envoyer(); setTimeout(envoyer, 250); setTimeout(envoyer, 700);
+  envoyer();
+  [150, 350, 700, 1200, 1800].forEach(delai => setTimeout(envoyer, delai));
 }
 function youtubeSyncInfo(info) {
   if (!info || document.body.dataset.mode !== 'youtube') return;
@@ -1229,7 +1232,9 @@ $('youtubeFrame')?.addEventListener('load', () => {
 });
 function togglePlay() {
   if (document.body.dataset.mode === 'youtube') {
-    youtubePaused = !youtubePaused;
+    // S’appuyer d’abord sur l’état réel reçu de YouTube, puis sur l’état local au démarrage.
+    const doitMettreEnPause = youtubePlayerState === 1 || (youtubePlayerState === -1 && !youtubePaused);
+    youtubePaused = doitMettreEnPause;
     youtubeCommand(youtubePaused ? 'pauseVideo' : 'playVideo');
     updatePlayBtn();
     $('youtubeStatus').textContent = youtubePaused ? 'Vidéo mise en pause. Appuyez sur ▶ pour reprendre.' : 'Reprise de la lecture YouTube.';
@@ -1397,7 +1402,10 @@ function stepSpeed(d) { const i = clamp(SPEEDS.indexOf(speed) + d, 0, SPEEDS.len
 function applyVolume() {
   if (gainNode) gainNode.gain.value = S.muted ? 0 : S.vol / 100;
   $('volume').value = S.vol; $('btnMute').textContent = S.muted || S.vol === 0 ? '🔇' : S.vol < 50 ? '🔉' : '🔊';
-  if (document.body.dataset.mode === 'youtube') { youtubeCommand(S.muted || S.vol === 0 ? 'mute' : 'unMute'); if (!S.muted && S.vol > 0) youtubeCommand('setVolume', [Math.min(100, S.vol)]); }
+  if (document.body.dataset.mode === 'youtube') {
+    if (S.muted || S.vol === 0) youtubeCommand('mute');
+    else { youtubeCommand('setVolume', [Math.min(100, S.vol)]); youtubeCommand('unMute'); }
+  }
   saveS();
 }
 function setVolume(v) { S.vol = clamp(Math.round(v), 0, 200); S.muted = false; applyVolume(); osd('Volume ' + S.vol + ' %'); }
