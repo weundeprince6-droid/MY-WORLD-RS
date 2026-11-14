@@ -1161,7 +1161,20 @@ const next = (dir = 1) => {
   const n = nextIndex(dir); if (n !== -1) play(n);
 };
 
+let youtubePaused = false;
+function youtubeCommand(command) {
+  try {
+    youtubeFrame.contentWindow.postMessage(JSON.stringify({ event:'command', func:command, args:[] }), 'https://www.youtube-nocookie.com');
+  } catch (_) {}
+}
 function togglePlay() {
+  if (document.body.dataset.mode === 'youtube') {
+    youtubePaused = !youtubePaused;
+    youtubeCommand(youtubePaused ? 'pauseVideo' : 'playVideo');
+    updatePlayBtn();
+    $('youtubeStatus').textContent = youtubePaused ? 'Vidéo mise en pause. Appuyez sur ▶ pour reprendre.' : 'Reprise de la lecture YouTube.';
+    return;
+  }
   const m = activeMedia();
   if (m) { m.paused ? m.play() : m.pause(); }
   else if (items[current]?.type === 'image') toggleSlideshow();
@@ -1169,7 +1182,9 @@ function togglePlay() {
 }
 function updatePlayBtn() {
   const m = activeMedia();
-  $('btnPlay').textContent = (m ? !m.paused : !!slideTimer) ? '⏸' : '▶';
+  const playing = document.body.dataset.mode === 'youtube' ? !youtubePaused : (m ? !m.paused : !!slideTimer);
+  $('btnPlay').textContent = playing ? '⏸' : '▶';
+  $('btnPlay').title = document.body.dataset.mode === 'youtube' ? 'Pause / Reprendre (Espace)' : 'Lecture / Pause (Espace)';
   $('btnSlide').classList.toggle('on', !!slideTimer);
 }
 
@@ -2328,8 +2343,9 @@ function renderResume() {
    youtubeQueueIndex = youtubeQueue.findIndex(v => v.id === id);
    youtubeUpdateNav();
    saveProg(); stopAll();
-   youtubeFrame.src = 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(id) + '?autoplay=1&rel=0';
-   setMode('youtube'); $('nowPlaying').textContent = 'YouTube · ' + (title || id);
+   youtubePaused = false;
+   youtubeFrame.src = 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(id) + '?autoplay=1&rel=0&enablejsapi=1&origin=' + encodeURIComponent(location.origin);
+   setMode('youtube'); updatePlayBtn(); $('nowPlaying').textContent = 'YouTube · ' + (title || id);
    $('youtubeStatus').textContent = youtubeQueueIndex >= 0
      ? 'Lecture ' + (youtubeQueueIndex + 1) + ' sur ' + youtubeQueue.length + '. Utilisez Vidéo suivante pour continuer.'
      : 'Lecture lancée. Pour passer à la vidéo suivante, lancez une vidéo depuis les résultats de recherche.';
