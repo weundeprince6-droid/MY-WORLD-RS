@@ -2286,7 +2286,7 @@ function renderResume() {
    setMode('youtube'); $('nowPlaying').textContent = 'YouTube · ' + id;
    $('youtubeStatus').textContent = 'Vidéo chargée dans le lecteur. Si elle ne démarre pas, son propriétaire peut avoir désactivé l’intégration.';
  });
- $('youtubeBack')?.addEventListener('click', () => { youtubeFrame.src = 'about:blank'; setMode(current < 0 ? 'empty' : items[current].type); });
+ $('youtubeBack')?.addEventListener('click', () => { youtubeFrame.src = 'about:blank'; youtubeHide(); $('tabs').querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.filter === 'all')); filter = 'all'; renderList(); setMode(current < 0 ? 'empty' : items[current].type); });
  function tvDriveShow() {
    youtubeHide(); cacherOngletMesFilms();
    tvDriveActive = true; $('playlist').hidden = true; tvDrivePane.hidden = false;
