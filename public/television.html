@@ -1355,7 +1355,7 @@ $('youtubeFrame')?.addEventListener('load', () => {
   applyVolume();
 });
 function togglePlay() {
-  if (typeof radioActive !== 'undefined' && radioActive) { if (radioAudio.paused) radioAudio.play().catch(() => {}); else radioAudio.pause(); updatePlayBtn(); return; }
+  if (typeof radioActive !== 'undefined' && radioActive) { if (radioStations[radioCurrentKey]?.embedUrl) { $('radioStatus').textContent='Utilisez le bouton Lecture du lecteur intégré Radio Okapi.'; return; } if (radioAudio.paused) radioAudio.play().catch(() => {}); else radioAudio.pause(); updatePlayBtn(); return; }
   if (document.body.dataset.mode === 'youtube') {
     // S’appuyer d’abord sur l’état réel reçu de YouTube, puis sur l’état local au démarrage.
     const doitMettreEnPause = youtubePlayerState === 1 || (youtubePlayerState === -1 && !youtubePaused);
