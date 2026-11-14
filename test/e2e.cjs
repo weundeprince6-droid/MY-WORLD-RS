@@ -444,6 +444,19 @@ srv.listen(8765, async () => {
     const ok = /^70[, ]/.test(dep.disp) && /à encaisser/.test(dep.note) && dep.v === '100' && dep.ro && dev === 'FC' && /FC$/.test(aff) && !!prime && prime.corps.fields.kind.stringValue === 'income' && !!patch && !!transport && transport.type === 'expense' && transport.amount === 30 && supprime;
     return { ok, detail: JSON.stringify({ dep, dev, aff, prime: !!prime, patch: !!patch, transport, supprime, statut }) };
   }));
+  res.push(await scenario('Tableau de bord : finances et projets sans répétition', {}, async (p, appels, logs, etat) => {
+    etat.devise = 'FC';
+    await p.click('#bouton-connexion'); await p.waitForTimeout(3500);
+    const d = await p.evaluate(() => ({
+      solde: document.getElementById('dash-solde').textContent.replace(/\s/g, ' '),
+      finances: document.getElementById('dashboard-finances').textContent.replace(/\s/g, ' '),
+      projets: document.getElementById('dashboard-projets').textContent.trim(),
+      tuileKpi: !!document.getElementById('dash-kpis'),
+      cartes: document.querySelectorAll('.dashboard-feature, .dashboard-grid .feature-card').length,
+    }));
+    const ok = /^70[, ]/.test(d.solde) && /70,00 FC/.test(d.finances) && /à encaisser/.test(d.finances) && !d.tuileKpi && d.projets.length > 0;
+    return { ok, detail: JSON.stringify(d) };
+  }));
   res.push(await scenario('Taux de change : la saisie dans Budget mensuel est enregistrée', {}, async (p, appels, logs, etat) => {
     etat.devise = 'FC';
     await p.click('#bouton-connexion'); await p.waitForTimeout(3000);

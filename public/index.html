@@ -120,8 +120,9 @@
             <div class="dashboard-metrics" aria-label="Résumé des données">
               <article class="dashboard-metric"><span class="metric-icon">✉</span><div><span class="metric-label">Messages importants</span><strong id="dash-messages">—</strong><small id="dash-messages-note">Gmail</small></div><button class="metric-link" data-go="messages" aria-label="Ouvrir les messages">↗</button></article>
               <article class="dashboard-metric"><span class="metric-icon">▦</span><div><span class="metric-label">Rendez-vous aujourd'hui</span><strong id="dash-agenda">—</strong><small id="dash-agenda-note">Google Agenda</small></div><button class="metric-link" data-go="agenda" aria-label="Ouvrir l'agenda">↗</button></article>
-              <article class="dashboard-metric"><span class="metric-icon">▤</span><div><span class="metric-label">Indicateurs disponibles</span><strong id="dash-kpis">—</strong><small id="dash-kpis-note">AVEC LA SAGESSE · ESE DB</small></div><button class="metric-link" data-go="bases" aria-label="Ouvrir les indicateurs">↗</button></article>
+              <article class="dashboard-metric"><span class="metric-icon">💰</span><div><span class="metric-label">Solde à ma disposition</span><strong id="dash-solde">—</strong><small id="dash-solde-note">Porte-Monnaie</small></div><button class="metric-link" data-go="finances" aria-label="Ouvrir le Porte-Monnaie">↗</button></article>
               <article class="dashboard-metric"><span class="metric-icon">◎</span><div><span class="metric-label">Messages sociaux</span><strong id="dash-social">—</strong><small id="dash-social-note">Telegram · Facebook</small></div><button class="metric-link" data-go="social" aria-label="Ouvrir les réseaux sociaux">↗</button></article>
+              <article class="dashboard-metric"><span class="metric-icon">⚑</span><div><span class="metric-label">Projets en cours</span><strong id="dash-projets">—</strong><small id="dash-projets-note">Notes &amp; Projets</small></div><button class="metric-link" data-go="notes" aria-label="Ouvrir les projets">↗</button></article>
             </div>
             <div class="dashboard-grid">
               <article class="feature-card feature-purple"><div class="feature-icon">▶</div><div><span class="feature-label">DIVERTISSEMENT</span><h3>Média</h3><p>Vos vidéos, musiques MP3, photos et documents, rangés par dossier.</p><button class="text-link" id="dash-media" type="button">Ouvrir le lecteur <span>→</span></button></div></article>
@@ -130,7 +131,9 @@
               <section class="carte dashboard-detail"><div class="card-heading"><div><p class="eyebrow">FINANCES & ACTIVITÉS</p><h2>Chiffres essentiels</h2></div><button class="text-link" data-go="bases">Tout voir →</button></div><div id="dashboard-kpis" class="dashboard-kpi-list"><p class="vide">Les indicateurs apparaîtront après actualisation.</p></div></section>
               <section class="carte dashboard-detail"><div class="card-heading"><div><p class="eyebrow">ORGANISATION</p><h2>Prochains rendez-vous</h2></div><button class="text-link" data-go="agenda">Agenda →</button></div><ul id="dashboard-agenda" class="liste"><li class="vide">Chargement de l'agenda…</li></ul></section>
               <section class="carte dashboard-detail"><div class="card-heading"><div><p class="eyebrow">COMMUNICATION</p><h2>Dernières nouvelles</h2></div><button class="text-link" data-go="messages">Gmail →</button></div><ul id="dashboard-activity" class="liste"><li class="vide">Chargement des messages…</li></ul></section>
-            </div>
+            <section class="carte dashboard-detail"><div class="card-heading"><div><p class="eyebrow">ARGENT</p><h2>Mes finances</h2></div><button class="text-link" data-go="finances">Porte-Monnaie →</button></div><ul id="dashboard-finances" class="liste"><li class="vide">Chargement des comptes…</li></ul></section>
+              <section class="carte dashboard-detail"><div class="card-heading"><div><p class="eyebrow">À SUIVRE</p><h2>Projets et échéances</h2></div><button class="text-link" data-go="notes">Notes &amp; Projets →</button></div><ul id="dashboard-projets" class="liste"><li class="vide">Chargement des projets…</li></ul></section>
+</div>
             <section class="carte dashboard-alerts"><div class="card-heading"><div><p class="eyebrow">À NE PAS MANQUER</p><h2>Alertes et rappels</h2></div><span class="heading-icon">⚑</span></div><ul id="liste-alertes" class="liste alertes"></ul></section>
           </section>
 <section class="tab-pane" id="pane-communication" role="tabpanel" data-root-pane="communication" hidden>
@@ -675,7 +678,7 @@
       setTimeout(function(){if(!window.__appPret)montrer("L'application n'a pas démarré. Vérifiez votre connexion internet (les composants Firebase se chargent depuis Google), désactivez un éventuel bloqueur de publicités, puis rechargez. Sans internet : l'application doit d'abord avoir été ouverte deux fois avec internet sur cet appareil pour s'installer hors ligne. Appuyez sur F12 > Console pour voir le détail.");},6000);
     })();
   </script>
-  <script type="module" src="app.js?v=20261113-finances1"></script>
+  <script type="module" src="app.js?v=20261114-tableau-bord1"></script>
   <div id="tv-fenetre" class="tv-fenetre" hidden><div class="tv-barre"><strong>📺 Télévision</strong><span class="tv-actions"><button type="button" id="tv-masquer" aria-label="Mettre en arrière-plan" title="Mettre en arrière-plan : la lecture continue">━</button><button type="button" id="tv-fermer" aria-label="Fermer le lecteur" title="Fermer et arrêter la lecture">✖</button></span></div><div id="tv-zone" class="tv-zone"></div></div>
   <div id="tv-mini" class="tv-mini" hidden><span class="tv-mini-pastille">🎵</span><span id="tv-mini-titre" class="tv-mini-titre">Télévision en lecture</span><button type="button" id="tv-mini-afficher" aria-label="Afficher le lecteur" title="Afficher le lecteur">▣</button><button type="button" id="tv-mini-arreter" title="Arrêter la lecture">✕</button></div>
 </body>

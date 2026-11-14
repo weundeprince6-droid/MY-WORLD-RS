@@ -1896,8 +1896,6 @@ function rendreDashboard() {
   el("dash-agenda").textContent = etat.agenda.aujourdhui.length.toLocaleString("fr-FR");
   el("dash-agenda-note").textContent = etat.agenda.aVenir.length + " rendez-vous à venir";
   const kpisOk = etat.kpis.filter(k => !k.erreur && k.valeur !== "—");
-  el("dash-kpis").textContent = kpisOk.length.toLocaleString("fr-FR");
-  el("dash-kpis-note").textContent = etat.kpis.some(k => k.erreur) ? "Certaines données sont indisponibles" : "AVEC LA SAGESSE · ESE DB";
   el("dash-social").textContent = etat.social.length.toLocaleString("fr-FR");
   el("dash-social-note").textContent = etat.social.length ? "Messages enregistrés" : "Aucun nouveau message";
 
@@ -1922,6 +1920,52 @@ function rendreDashboard() {
   el("dashboard-activity").innerHTML = activites.length ? activites.map(a =>
     '<li><div class="ligne"><strong>' + echapper(a.nom || "Message") + '</strong><span class="meta">' + echapper(a.type) + '</span></div><div class="extrait">' + echapper(a.texte || "Sans objet") + '</div></li>'
   ).join("") : '<li class="vide">Aucun message récent à afficher.</li>';
+  try { rendreDashboardFinancesProjets(); } catch {}
+}
+
+// ---------- Tableau de bord : Finances et Projets (données propres à ces onglets, résumées une seule fois ici) ----------
+function rendreDashboardFinancesProjets() {
+  const el = (id) => $(id);
+  // Finances : solde par devise, reste à encaisser, dernières opérations
+  const liste = el("dashboard-finances");
+  if (liste) {
+    if (!walletAccounts.length) {
+      liste.innerHTML = '<li class="vide">' + (walletLoaded ? "Aucun compte : créez-en un dans le Porte-Monnaie." : "Chargement des comptes…") + "</li>";
+    } else {
+      const parDevise = {};
+      for (const a of walletAccounts) { const d = String(a.currency || "—").toUpperCase(); parDevise[d] = (parDevise[d] || 0) + Number(a.balance || 0); }
+      const aEnc = {};
+      try { for (const p of [...calculerPartsRistourne(), ...calculerPartsCaisse()]) if (p.aEnregistrer > 0) aEnc[p.devise] = (aEnc[p.devise] || 0) + p.aEnregistrer; } catch {}
+      const lignes = Object.entries(parDevise).map(([d, v]) =>
+        '<li><div class="ligne"><strong>Solde disponible en ' + echapper(d) + '</strong><span class="meta">' + echapper(formatMontantDevise(v, d)) + '</span></div>' +
+        (aEnc[d] ? '<div class="extrait">+ ' + echapper(formatMontantDevise(aEnc[d], d)) + ' à encaisser</div>' : '') + '</li>');
+      const ops = walletTransactions.filter(t => t.kind === "income" || t.kind === "expense").slice(0, 3).map(t =>
+        '<li><div class="ligne"><strong>' + echapper(t.description || t.category || (t.kind === "income" ? "Entrée" : "Sortie")) + '</strong><span class="meta">' +
+        (t.kind === "income" ? "+" : "−") + echapper(formatMontantDevise(t.amount, t.currency)) + '</span></div><div class="extrait">' + echapper(String(t.date || "").slice(0, 10)) + " · " + echapper(t.accountName || "") + "</div></li>");
+      liste.innerHTML = lignes.join("") + ops.join("");
+    }
+  }
+  // Tuile « Solde à ma disposition » : tous les comptes dans la devise du budget (taux commun)
+  if (el("dash-solde")) {
+    if (!walletAccounts.length) { el("dash-solde").textContent = "—"; el("dash-solde-note").textContent = walletLoaded ? "Aucun compte" : "Porte-Monnaie"; }
+    else {
+      let dev = "FC"; try { dev = (localStorage.getItem("budget_devise") || "FC").toUpperCase(); } catch {}
+      let total = 0, exclus = 0;
+      for (const a of walletAccounts) { const v = convertirDevise(Number(a.balance || 0), a.currency, dev); if (v === null) exclus++; else total += v; }
+      el("dash-solde").textContent = formatMontantDevise(total, dev);
+      el("dash-solde-note").textContent = exclus ? exclus + " compte(s) à convertir : renseignez le taux" : walletAccounts.length + " compte(s) · taux commun";
+    }
+  }
+  // Projets
+  const projets = notesItems.filter(n => n.type === "project" && n.status !== "done");
+  if (el("dash-projets")) { el("dash-projets").textContent = notesLoaded ? projets.length.toLocaleString("fr-FR") : "—"; el("dash-projets-note").textContent = notesLoaded ? (projets.filter(p => p.status === "doing").length + " en cours") : "Notes & Projets"; }
+  const lp = el("dashboard-projets");
+  if (lp) {
+    const tries = [...projets].sort((a, b) => (a.due || "9999").localeCompare(b.due || "9999")).slice(0, 5);
+    lp.innerHTML = tries.length ? tries.map(p =>
+      '<li><div class="ligne"><strong>' + echapper(p.title || "Projet") + '</strong><span class="meta">' + echapper(notesStatusLabel(p.status)) + '</span></div><div class="extrait">' + (p.due ? "Échéance : " + echapper(notesDate(p.due)) : "Sans échéance") + "</div></li>"
+    ).join("") : '<li class="vide">' + (notesLoaded ? "Aucun projet en cours." : "Chargement des projets…") + "</li>";
+  }
 }
 
 function tout_rendre() {
@@ -1947,8 +1991,10 @@ async function tout() {
   try {
     if (!$("pane-drive")?.hidden) chargerDrive({ nouvelleRecherche: true });
     if (!$("pane-notes")?.hidden) notesLoad(true);
-    if (walletLoaded) chargerWallet(true);
   } catch {}
+  // Le tableau de bord a besoin des comptes et des projets : on les charge sans attendre que vous ouvriez ces onglets
+  chargerWallet(walletLoaded).then(rendreDashboard).catch(() => {});
+  notesLoad(false).then(rendreDashboard).catch(() => {});
 }
 
 // ---------- Mon Porte-Monnaie : données privées par utilisateur Firebase ----------
@@ -2914,6 +2960,17 @@ function budgetComptesSelectionnes() {
   } catch { return walletAccounts.map(a => a.id); }
 }
 let budgetCompteIndex = 0;
+// Cartes « Solde à ma disposition » et « Solde final estimé » du budget : tous les comptes (convertis au taux commun) + ce qui reste à encaisser
+function budgetPublierSoldes() {
+  let dev = "FC"; try { dev = (localStorage.getItem("budget_devise") || "").toUpperCase(); if (!dev) { dev = "FC"; localStorage.setItem("budget_devise", dev); } } catch {}
+  const ids = new Set(budgetComptesSelectionnes());
+  let disponible = 0, nbComptes = 0, exclus = 0, aEncaisser = 0;
+  for (const a of walletAccounts.filter(x => ids.has(x.id))) { const v = convertirDevise(Number(a.balance || 0), a.currency, dev); if (v === null) exclus++; else { disponible += v; nbComptes++; } }
+  try { for (const p of [...calculerPartsRistourne(), ...calculerPartsCaisse()]) { if (!(p.aEnregistrer > 0)) continue; const v = convertirDevise(p.aEnregistrer, p.devise, dev); if (v !== null) aEncaisser += v; } } catch {}
+  const soldes = JSON.stringify({ devise: dev, disponible: Math.round(disponible * 100) / 100, aEncaisser: Math.round(aEncaisser * 100) / 100, nbComptes, exclus, taux: tauxUsdFc() });
+  let avant = null; try { avant = localStorage.getItem("budget_soldes"); localStorage.setItem("budget_soldes", soldes); } catch {}
+  if (avant !== soldes) { const f = $("budget-mensuel-frame"); try { f?.contentWindow?.location.reload(); } catch { if (f) f.src = f.src; } }
+}
 function budgetRendreSoldesComptes() {
   const zone = $("budget-comptes-soldes"), statut = $("budget-comptes-statut");
   const precedent = $("budget-compte-precedent");
@@ -2947,6 +3004,7 @@ function budgetRendreSoldesComptes() {
   if (statut) statut.textContent = "Compte " + (budgetCompteIndex + 1) + " sur " + walletAccounts.length + " · Lecture seule.";
   if (precedent) precedent.disabled = walletAccounts.length < 2;
   if (suivant) suivant.disabled = walletAccounts.length < 2;
+  budgetPublierSoldes();
 }
 $("budget-compte-precedent")?.addEventListener("click", () => {
   if (!walletAccounts.length) return;
@@ -2970,11 +3028,11 @@ $("budget-taux-usd-fc")?.addEventListener("change", (ev) => {
   if (ev.target.value === "" || !Number.isFinite(value) || value <= 0) {
     try { localStorage.removeItem(BUDGET_TAUX); } catch {}
     if (status) status.textContent = "Taux non renseigné";
-    transfertTauxAuto(); return;
+    transfertTauxAuto(); budgetRendreSoldesComptes(); return;
   }
   try { localStorage.setItem(BUDGET_TAUX, String(value)); } catch {}
   if (status) status.textContent = "Taux enregistré";
-  transfertTauxAuto();
+  transfertTauxAuto(); budgetRendreSoldesComptes();
 });
 const tauxUsdFc = () => { try { const v = Number(localStorage.getItem(BUDGET_TAUX)); return v > 0 ? v : 0; } catch { return 0; } };
 function convertirDevise(montant, de, vers) {
