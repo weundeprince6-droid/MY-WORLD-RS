@@ -468,6 +468,7 @@ body.gold #titleBar{background:#1a1a18!important}
         <button type="button" id="mesFilmsTab">Mes films et séries</button>
         <button type="button" id="tvDriveTab">Google Drive</button>
         <button type="button" id="youtubeTab">▶ YouTube</button>
+        <button type="button" id="tvTab">📺 TV</button>
         <button type="button" id="matchsTab">⚽ Matchs en direct</button>
         <button type="button" id="fifaTab">🏆 FIFA+</button>
       </div>
@@ -2414,11 +2415,32 @@ function renderResume() {
  let tvDriveActive = false, tvDriveBlobUrl = null;
  function tvDriveSend(action, extra={}) { parent.postMessage({ source:'mwrs-tv-drive', action, ...extra }, '*'); }
  const youtubeTab = $('youtubeTab'), youtubePane = $('youtubePane'), youtubeFrame = $('youtubeFrame');
+ const tvTab = $('tvTab');
+ let tvActive = false;
+ function tvHide() {
+   if (!tvActive) return;
+   tvActive = false;
+   if (youtubeFrame && youtubeFrame.src.includes('a47ckXKZjxI')) youtubeFrame.src = 'about:blank';
+   youtubePaused = true; youtubePlayerState = -1; youtubeCurrentTime = 0;
+   youtubeQueue = []; youtubeQueueIndex = -1;
+   if (typeof youtubeUpdateNav === 'function') youtubeUpdateNav();
+ }
+ function tvShow() {
+   fifaHide(); matchsHide(); tvDriveHide(); youtubeHide(); cacherOngletMesFilms();
+   tvActive = true; $('playlist').hidden = true;
+   $('tabs').querySelectorAll('button').forEach(b => b.classList.toggle('active', b === tvTab));
+   youtubeQueue = [{ id: 'a47ckXKZjxI', title: 'FRANCE 24 en direct' }];
+   youtubeQueueIndex = 0; youtubeUpdateNav();
+   youtubePlay('a47ckXKZjxI', 'FRANCE 24 en direct');
+   $('nowPlaying').textContent = '📺 TV · FRANCE 24 en direct';
+   $('youtubeStatus') && ($('youtubeStatus').textContent = 'Direct officiel de FRANCE 24 sur YouTube. Les commandes du lecteur (lecture, pause, volume et plein écran) restent disponibles.');
+ }
+ tvTab?.addEventListener('click', tvShow);
  const matchsTab = $('matchsTab'), matchsPane = $('matchsPane');
  const fifaTab = $('fifaTab'), fifaPane = $('fifaPane');
  let fifaActive = false;
  function fifaShow() {
-   tvDriveHide(); youtubeHide(); matchsHide(); cacherOngletMesFilms();
+   tvHide(); tvDriveHide(); youtubeHide(); matchsHide(); cacherOngletMesFilms();
    fifaActive = true; $('playlist').hidden = true; fifaPane.hidden = false;
    $('tabs').querySelectorAll('button').forEach(b => b.classList.toggle('active', b === fifaTab));
    setMode('fifa'); $('nowPlaying').textContent = '🏆 FIFA+ · Football'; updatePlayBtn();
@@ -2435,7 +2457,7 @@ function renderResume() {
  });
  let matchsActive = false;
  function matchsShow() {
-   fifaHide(); tvDriveHide(); youtubeHide(); cacherOngletMesFilms();
+   tvHide(); fifaHide(); tvDriveHide(); youtubeHide(); cacherOngletMesFilms();
    matchsActive = true; $('playlist').hidden = true; matchsPane.hidden = false;
    $('tabs').querySelectorAll('button').forEach(b => b.classList.toggle('active', b === matchsTab));
    setMode('matchs'); $('nowPlaying').textContent = '⚽ Kooralive · Matchs en direct'; updatePlayBtn();
@@ -2461,7 +2483,7 @@ function renderResume() {
    } catch (_) { return ''; }
  }
  function youtubeShow() {
-   fifaHide(); matchsHide(); tvDriveHide(); cacherOngletMesFilms(); youtubePane.hidden = false;
+   tvHide(); fifaHide(); matchsHide(); tvDriveHide(); cacherOngletMesFilms(); youtubePane.hidden = false;
    $('tabs').querySelectorAll('button').forEach(b => b.classList.toggle('active', b === youtubeTab));
    if (document.body.dataset.mode !== 'youtube') setMode('empty');
    ytMajRetour(); $('youtubeQuery').focus();
@@ -2585,7 +2607,7 @@ function renderResume() {
  });
  $('youtubeBack')?.addEventListener('click', () => { youtubeFrame.src = 'about:blank'; youtubeHide(); $('tabs').querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.filter === 'all')); filter = 'all'; renderList(); setMode(current < 0 ? 'empty' : items[current].type); });
  function tvDriveShow() {
-   fifaHide(); matchsHide(); youtubeHide(); cacherOngletMesFilms();
+   tvHide(); fifaHide(); matchsHide(); youtubeHide(); cacherOngletMesFilms();
    tvDriveActive = true; $('playlist').hidden = true; tvDrivePane.hidden = false;
    $('tabs').querySelectorAll('button').forEach(b=>b.classList.toggle('active',b===tvDriveTab));
    tvDriveStatus.textContent='Connexion à Google Drive…'; tvDriveSend('list');
