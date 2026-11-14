@@ -1206,7 +1206,7 @@ function youtubeSyncInfo(info) {
 }
 window.addEventListener('message', event => {
   let host = ''; try { host = new URL(event.origin).hostname; } catch (_) {}
-  if (!/(^|\\.)youtube(-nocookie)?\\.com$/.test(host)) return;
+  if (!/(^|\.)youtube(-nocookie)?\.com$/.test(host)) return;
   let data = event.data; try { if (typeof data === 'string') data = JSON.parse(data); } catch (_) { return; }
   if (data?.event === 'infoDelivery') youtubeSyncInfo(data.info);
   if (data?.event === 'onStateChange') {
