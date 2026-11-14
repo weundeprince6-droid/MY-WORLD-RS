@@ -1,11 +1,13 @@
 {
   "projects": {
-    "default": "avec-la-sagesse"
+    "default": "my-world-rs"
   },
   "targets": {
-    "avec-la-sagesse": {
+    "my-world-rs": {
       "hosting": {
-        "dashboard": ["my-world-rs"]
+        "dashboard": [
+          "my-world-rs"
+        ]
       }
     }
   }
