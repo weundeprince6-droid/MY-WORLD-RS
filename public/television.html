@@ -488,20 +488,6 @@ body.gold #titleBar{background:#1a1a18!important}
         <strong style="font-size:16px;flex:1">▶ YouTube · Explorer</strong>
         <button id="youtubeBack" type="button">← Mes fichiers</button>
       </div>
-      <div style="display:grid;gap:7px;padding:10px;background:var(--panel2);border:1px solid var(--border);border-radius:10px;margin-bottom:12px">
-        <label for="youtubeApiKey" style="font-size:12px;color:var(--muted)">Clé API YouTube Data (facultative : sans clé, la recherche utilise votre compte Google)</label>
-        <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <input id="youtubeApiKey" type="password" autocomplete="off" placeholder="Collez votre clé API Google" style="flex:1;min-width:140px;padding:9px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text)" />
-          <button id="youtubeSaveKey" type="button">Enregistrer</button>
-        </div>
-        <small style="color:var(--muted)">La clé reste dans ce navigateur. Restreignez-la à l’API YouTube Data v3 et au domaine de votre application.</small>
-      </div>
-      <div id="youtubeEspace" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:9px">
-        <strong style="font-size:12.5px;color:var(--muted)">Mon espace YouTube (compte Google)</strong>
-        <button type="button" data-yt-espace="subscriptions">📺 Abonnements</button>
-        <button type="button" data-yt-espace="liked">👍 Vidéos aimées</button>
-        <button type="button" data-yt-espace="playlists">🎞 Mes playlists</button>
-      </div>
       <form id="youtubeSearchForm" style="display:flex;gap:7px;margin-bottom:9px">
         <input id="youtubeQuery" type="search" required placeholder="Rechercher une vidéo, un artiste, un sujet…" style="flex:1;min-width:0;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--panel2);color:var(--text)" />
         <button type="submit" class="on">Rechercher</button>
@@ -609,7 +595,7 @@ body.gold #titleBar{background:#1a1a18!important}
     <div class="panel-head"><strong>Réglages du lecteur</strong><button id="btnPanelClose" type="button" title="Fermer les réglages" aria-label="Fermer les réglages">✕</button></div>
     <div class="ptabs" id="ptabs">
       <button data-p="video" class="active">Vidéo</button><button data-p="audio">Audio</button>
-      <button data-p="subs">Sous-titres</button><button data-p="marks">Repères</button><button data-p="history">Historique</button><button data-p="opts">Options</button>
+      <button data-p="subs">Sous-titres</button><button data-p="marks">Repères</button><button data-p="history">Historique</button><button data-p="opts">Options</button><button data-p="youtube">YouTube</button>
     </div>
 
     <section class="psec active" data-p="video">
@@ -693,6 +679,25 @@ body.gold #titleBar{background:#1a1a18!important}
         <tr><td>S, R</td><td>Aléatoire, répétition</td></tr>
         <tr><td>Ctrl + O</td><td>Ouvrir des fichiers</td></tr>
       </table>
+    </section>
+    <section class="psec" data-p="youtube">
+      <h3>Configuration YouTube</h3>
+      <p class="small">Gérez ici la clé API et l’accès à votre espace YouTube lié au compte Google de MY WORLD RS.</p>
+      <div style="display:grid;gap:7px;padding:10px;background:var(--panel2);border:1px solid var(--border);border-radius:10px;margin-bottom:12px">
+        <label for="youtubeApiKey" style="font-size:12px;color:var(--muted)">Clé API YouTube Data (facultative : sans clé, la recherche utilise votre compte Google)</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <input id="youtubeApiKey" type="password" autocomplete="off" placeholder="Collez votre clé API Google" style="flex:1;min-width:140px;padding:9px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text)" />
+          <button id="youtubeSaveKey" type="button">Enregistrer</button>
+        </div>
+        <small style="color:var(--muted)">La clé reste dans ce navigateur. Restreignez-la à l’API YouTube Data v3 et au domaine de votre application.</small>
+      </div>
+      <div id="youtubeEspace" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:9px">
+        <strong style="font-size:12.5px;color:var(--muted)">Mon espace YouTube (compte Google)</strong>
+        <button type="button" data-yt-espace="subscriptions">📺 Abonnements</button>
+        <button type="button" data-yt-espace="liked">👍 Vidéos aimées</button>
+        <button type="button" data-yt-espace="playlists">🎞 Mes playlists</button>
+      </div>
+      <p class="small">La clé API est enregistrée uniquement dans ce navigateur. Ne la partagez pas. Pour la recherche, limitez-la à YouTube Data API v3 et au domaine de votre application.</p>
     </section>
   </div></aside>
 </div>
@@ -1740,7 +1745,7 @@ function showTab(p) {
   document.querySelectorAll('#ptabs button').forEach((b) => b.classList.toggle('active', b.dataset.p === p));
   document.querySelectorAll('.psec').forEach((s) => s.classList.toggle('active', s.dataset.p === p));
 }
-$('btnPanel').onclick = () => $('app').classList.toggle('panel-open');
+$('btnPanel').onclick = () => openPanel('youtube');
 $('btnPanelClose').onclick = () => $('app').classList.remove('panel-open');;
 $('ptabs').onclick = (e) => { const b = e.target.closest('button'); if (b) showTab(b.dataset.p); };
 $('clearReadHistory').onclick = () => {
