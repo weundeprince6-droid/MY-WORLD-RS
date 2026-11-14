@@ -582,14 +582,17 @@ body.gold #titleBar{background:#1a1a18!important}
         <div class="tv-head"><strong>📻 RADIO · Stations francophones</strong><button id="radioBack" type="button">← Mes fichiers</button></div>
         <p class="tv-help">Choisissez une station pour écouter son direct.</p>
         <div class="tv-stations" id="radioStations">
-          <strong style="width:100%;padding:5px 2px">🇫🇷 France · Radio France</strong>
+          <strong style="width:100%;padding:5px 2px">🇨🇩 République démocratique du Congo</strong>
+          <button type="button" data-radio-station="radiookapi">Radio Okapi</button>
+          <a href="https://topcongo.live/" target="_blank" rel="noopener noreferrer" style="padding:9px 12px;color:var(--text)">Top Congo FM · site officiel ↗</a>
+          <strong style="width:100%;padding:8px 2px 5px">🇫🇷 France · Radio France</strong>
           <button type="button" data-radio-station="franceinter" class="active">France Inter</button><button type="button" data-radio-station="franceinfo">franceinfo</button>
           <button type="button" data-radio-station="franceculture">France Culture</button><button type="button" data-radio-station="francemusique">France Musique</button>
           <button type="button" data-radio-station="fip">FIP</button><button type="button" data-radio-station="mouv">Mouv’</button>
           <strong style="width:100%;padding:8px 2px 5px">🌍 International · Francophone</strong><button type="button" data-radio-station="rfi">RFI Monde</button>
         </div>
         <div style="display:flex;flex-direction:column;gap:10px;align-items:stretch;margin:18px auto;max-width:760px;padding:18px;background:var(--panel);border:1px solid var(--border);border-radius:14px">
-          <strong id="radioNowPlaying" style="font-size:18px">📻 France Inter</strong><audio id="radioAudio" controls preload="none" style="width:100%"></audio>
+          <strong id="radioNowPlaying" style="font-size:18px">📻 France Inter</strong><audio id="radioAudio" controls preload="none" style="width:100%"></audio><div id="radioEmbedWrap" hidden style="width:100%;min-height:150px"><iframe id="radioEmbedFrame" title="Lecteur radio officiel" src="about:blank" loading="lazy" allow="autoplay" style="width:100%;height:170px;border:0;border-radius:10px"></iframe></div>
           <div style="display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap">
             <button type="button" id="radioPrev">⏮ Précédente</button><button type="button" id="radioPlay">▶ Lecture / Pause</button><button type="button" id="radioNext">Suivante ⏭</button>
             <a id="radioOfficial" href="https://www.radiofrance.fr/franceinter" target="_blank" rel="noopener noreferrer" style="padding:8px 12px;color:var(--text)">Site officiel ↗</a>
@@ -2517,7 +2520,7 @@ function renderResume() {
  function tvDriveSend(action, extra={}) { parent.postMessage({ source:'mwrs-tv-drive', action, ...extra }, '*'); }
  const youtubeTab = $('youtubeTab'), youtubePane = $('youtubePane'), youtubeFrame = $('youtubeFrame');
  const tvTab = $('tvTab');
- const radioTab = $('radioTab'), radioPane = $('radioPane'), radioAudio = $('radioAudio');
+ const radioTab = $('radioTab'), radioPane = $('radioPane'), radioAudio = $('radioAudio'), radioEmbedWrap = $('radioEmbedWrap'), radioEmbedFrame = $('radioEmbedFrame');
  let radioActive = false, radioCurrentKey = 'franceinter';
  const radioStations = {
   franceinter:{name:'France Inter',url:'https://icecast.radiofrance.fr/franceinter-midfi.mp3?id=openapi',official:'https://www.radiofrance.fr/franceinter'},
@@ -2526,14 +2529,17 @@ function renderResume() {
   francemusique:{name:'France Musique',url:'https://icecast.radiofrance.fr/francemusique-midfi.mp3?id=openapi',official:'https://www.radiofrance.fr/francemusique'},
   fip:{name:'FIP',url:'https://icecast.radiofrance.fr/fip-midfi.mp3?id=openapi',official:'https://www.radiofrance.fr/fip'},
   mouv:{name:'Mouv’',url:'https://icecast.radiofrance.fr/mouv-midfi.mp3?id=openapi',official:'https://www.radiofrance.fr/mouv'},
-  rfi:{name:'RFI Monde',url:'https://live02.rfi.fr/rfimonde-64.mp3',official:'https://www.rfi.fr/fr/'}
+  rfi:{name:'RFI Monde',url:'https://live02.rfi.fr/rfimonde-64.mp3',official:'https://www.rfi.fr/fr/'},
+  radiookapi:{name:'Radio Okapi',embedUrl:'https://public-player-widget.webradiosite.com/?auto_play=1&color=1&cover=1&current_track=1&embed=0&identifier=Radio+Okapi+player2&info=https%3A%2F%2Fpublic-player-widget.webradiosite.com%2Fapp%2Fplayer%2Finfo%2F253848%3Fhash%3Da2faa4400f663794aab3db33a998d516f29d83d9&link=1&link_to=https%3A%2F%2Fwww.radiookapi.net&locale=fr-fr&popup=0&schedules=1&share=1&source=11370&theme=light',official:'https://www.radiookapi.net/page/ecouter-radio-okapi-en-ligne'}
  };
  function radioSelect(key,autoplay=true) {
-  const station=radioStations[key];if(!station)return;radioCurrentKey=key;radioAudio.pause();radioAudio.src=station.url;radioAudio.load();
+  const station=radioStations[key];if(!station)return;radioCurrentKey=key;radioAudio.pause();
+  if(station.embedUrl){radioAudio.hidden=true;radioAudio.removeAttribute('src');radioAudio.load();radioEmbedFrame.src=station.embedUrl;radioEmbedWrap.hidden=false;$('radioPlay').hidden=true;}
+  else{radioEmbedFrame.src='about:blank';radioEmbedWrap.hidden=true;radioAudio.hidden=false;radioAudio.src=station.url;radioAudio.load();$('radioPlay').hidden=false;}
   $('radioNowPlaying').textContent='📻 '+station.name;$('radioOfficial').href=station.official;$('nowPlaying').textContent='📻 RADIO · '+station.name;
   $('radioStations').querySelectorAll('[data-radio-station]').forEach(b=>b.classList.toggle('active',b.dataset.radioStation===key));
-  $('radioStatus').textContent='Connexion au direct de '+station.name+'…';setMode('audio');updatePlayBtn();
-  if(autoplay)radioAudio.play().then(()=>{$('radioStatus').textContent='En direct · '+station.name;updatePlayBtn();}).catch(()=>{$('radioStatus').textContent='Lecture non démarrée. Appuyez sur ▶ ou ouvrez le site officiel.';updatePlayBtn();});
+  $('radioStatus').textContent=station.embedUrl?'Lecteur officiel Radio Okapi chargé. Appuyez sur Lecture dans ce lecteur.':'Connexion au direct de '+station.name+'…';setMode('audio');updatePlayBtn();
+  if(autoplay&&!station.embedUrl)radioAudio.play().then(()=>{$('radioStatus').textContent='En direct · '+station.name;updatePlayBtn();}).catch(()=>{$('radioStatus').textContent='Lecture non démarrée. Appuyez sur ▶ ou ouvrez le site officiel.';updatePlayBtn();});
  }
  function radioNavigate(direction){const keys=Object.keys(radioStations);let i=keys.indexOf(radioCurrentKey);i=(i+direction+keys.length)%keys.length;radioSelect(keys[i]);osd('📻 '+radioStations[keys[i]].name);}
  function radioHide(){if(!radioPane)return;radioPane.hidden=true;if(radioActive){radioActive=false;radioAudio.pause();radioAudio.removeAttribute('src');radioAudio.load();}}
@@ -2545,6 +2551,7 @@ function renderResume() {
  radioAudio?.addEventListener('playing',()=>{$('radioStatus').textContent='En direct · '+radioStations[radioCurrentKey].name;updatePlayBtn();});
  radioAudio?.addEventListener('pause',updatePlayBtn);
  radioAudio?.addEventListener('error',()=>{$('radioStatus').textContent='Ce flux ne répond pas pour le moment. Essayez le site officiel de la station.';updatePlayBtn();});
+ radioEmbedFrame?.addEventListener('load',()=>{if(radioCurrentKey==='radiookapi')$('radioStatus').textContent='Lecteur officiel Radio Okapi intégré. Appuyez sur Lecture dans le lecteur.';});
  $('radioBack')?.addEventListener('click',()=>{radioHide();$('tabs').querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.filter==='all'));filter='all';renderList();setMode(current<0?'empty':items[current].type);$('nowPlaying').textContent=current<0?'Aucun média':items[current].name;});
  $('tabs')?.addEventListener('click',e=>{if(!e.target.closest('#radioTab'))radioHide();});
  let tvActive = false;
