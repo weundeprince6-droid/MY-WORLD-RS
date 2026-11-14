@@ -2623,3 +2623,61 @@ html[data-theme="gold"] #pane-agenda #agenda-anniversaire .agenda-anniversaire-c
 .finance-switch-btn.actif{background:var(--primary-soft);border-color:var(--primary);color:var(--primary)}
 .finance-sousvue[hidden]{display:none!important}
 @media(max-width:520px){.finance-switch{display:grid;grid-template-columns:1fr}.finance-switch-btn{width:100%;min-width:0;font-size:14px}}
+
+/* Tableau de bord : grille compacte, sans colonnes orphelines ni trous entre les cartes. */
+#pane-dashboard .dashboard-metrics{
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  align-items:stretch;
+}
+#pane-dashboard .dashboard-grid{
+  grid-template-columns:minmax(0,1fr);
+}
+#pane-dashboard .dashboard-detail-grid{
+  display:block;
+  column-count:2;
+  column-gap:14px;
+  column-fill:balance;
+}
+#pane-dashboard .dashboard-detail{
+  display:inline-block;
+  width:100%;
+  margin:0 0 14px;
+  vertical-align:top;
+  break-inside:avoid;
+  -webkit-column-break-inside:avoid;
+}
+#pane-dashboard .dashboard-detail:first-child{
+  grid-row:auto;
+}
+#pane-dashboard .dashboard-alerts{
+  margin-top:0;
+}
+@media(max-width:1100px){
+  #pane-dashboard .dashboard-metrics{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+@media(max-width:760px){
+  #pane-dashboard .dashboard-detail-grid{
+    column-count:1;
+  }
+  #pane-dashboard .dashboard-detail{
+    margin-bottom:12px;
+  }
+  #pane-dashboard .dashboard-grid{
+    grid-template-columns:minmax(0,1fr);
+  }
+}
+@media(max-width:390px){
+  #pane-dashboard .dashboard-metric{
+    padding:10px 9px;
+    gap:7px;
+  }
+  #pane-dashboard .dashboard-metric strong{
+    font-size:20px;
+  }
+  #pane-dashboard .metric-label{
+    font-size:9px;
+  }
+}
+
