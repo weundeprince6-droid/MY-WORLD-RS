@@ -1209,6 +1209,17 @@ window.addEventListener('message', event => {
   if (!/(^|\\.)youtube(-nocookie)?\\.com$/.test(host)) return;
   let data = event.data; try { if (typeof data === 'string') data = JSON.parse(data); } catch (_) { return; }
   if (data?.event === 'infoDelivery') youtubeSyncInfo(data.info);
+  if (data?.event === 'onStateChange') {
+    youtubePlayerState = Number(data.info);
+    youtubePaused = youtubePlayerState !== 1; updatePlayBtn();
+    if (youtubePlayerState === 0) youtubeEnded();
+  }
+});
+youtubeFrame.addEventListener('load', () => {
+  if (document.body.dataset.mode !== 'youtube') return;
+  ['onStateChange','onPlaybackRateChange','onPlaybackQualityChange'].forEach(name => youtubeCommand('addEventListener', [name]));
+  youtubeCommand('setPlaybackRate', [speed]);
+  applyVolume();
 });
 function togglePlay() {
   if (document.body.dataset.mode === 'youtube') {
