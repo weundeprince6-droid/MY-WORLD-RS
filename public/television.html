@@ -506,6 +506,7 @@ body.gold #titleBar{background:#1a1a18!important}
         <button type="button" id="tvDriveTab">Google Drive</button>
         <button type="button" id="youtubeTab">▶ YouTube</button>
         <button type="button" id="tvTab">📺 TV</button>
+        <button type="button" id="radioTab">📻 RADIO</button>
         <button type="button" id="matchsTab">⚽ Matchs en direct</button>
         <button type="button" id="fifaTab">🏆 FIFA+</button>
       </div>
@@ -577,6 +578,24 @@ body.gold #titleBar{background:#1a1a18!important}
         </main>
       </div>
     </section>
+      <section id="radioPane" hidden style="flex:1;min-height:0;overflow:auto;padding:12px;background:var(--bg);color:var(--text)">
+        <div class="tv-head"><strong>📻 RADIO · Stations francophones</strong><button id="radioBack" type="button">← Mes fichiers</button></div>
+        <p class="tv-help">Choisissez une station pour écouter son direct.</p>
+        <div class="tv-stations" id="radioStations">
+          <strong style="width:100%;padding:5px 2px">🇫🇷 France · Radio France</strong>
+          <button type="button" data-radio-station="franceinter" class="active">France Inter</button><button type="button" data-radio-station="franceinfo">franceinfo</button>
+          <button type="button" data-radio-station="franceculture">France Culture</button><button type="button" data-radio-station="francemusique">France Musique</button>
+          <button type="button" data-radio-station="fip">FIP</button><button type="button" data-radio-station="mouv">Mouv’</button>
+          <strong style="width:100%;padding:8px 2px 5px">🌍 International · Francophone</strong><button type="button" data-radio-station="rfi">RFI Monde</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;align-items:stretch;margin:18px auto;max-width:760px;padding:18px;background:var(--panel);border:1px solid var(--border);border-radius:14px">
+          <strong id="radioNowPlaying" style="font-size:18px">📻 France Inter</strong><audio id="radioAudio" controls preload="none" style="width:100%"></audio>
+          <div style="display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap">
+            <button type="button" id="radioPrev">⏮ Précédente</button><button type="button" id="radioPlay">▶ Lecture / Pause</button><button type="button" id="radioNext">Suivante ⏭</button>
+            <a id="radioOfficial" href="https://www.radiofrance.fr/franceinter" target="_blank" rel="noopener noreferrer" style="padding:8px 12px;color:var(--text)">Site officiel ↗</a>
+          </div><p id="radioStatus" class="tv-help" role="status">Sélectionnez une station pour commencer l’écoute.</p>
+        </div>
+      </section>
       <section id="tvPane" hidden>
         <div class="tv-head"><strong>📺 TV · Chaînes francophones</strong><button id="tvBack" type="button">← Mes fichiers</button><a id="tvOpenOfficial" href="https://www.youtube.com/watch?v=a47ckXKZjxI" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--panel2);color:var(--text);text-decoration:none">Ouvrir la chaîne ↗</a></div>
         <div class="tv-stations" id="tvStations">
@@ -1333,6 +1352,7 @@ $('youtubeFrame')?.addEventListener('load', () => {
   applyVolume();
 });
 function togglePlay() {
+  if (typeof radioActive !== 'undefined' && radioActive) { if (radioAudio.paused) radioAudio.play().catch(() => {}); else radioAudio.pause(); updatePlayBtn(); return; }
   if (document.body.dataset.mode === 'youtube') {
     // S’appuyer d’abord sur l’état réel reçu de YouTube, puis sur l’état local au démarrage.
     const doitMettreEnPause = youtubePlayerState === 1 || (youtubePlayerState === -1 && !youtubePaused);
@@ -1349,7 +1369,7 @@ function togglePlay() {
 }
 function updatePlayBtn() {
   const m = activeMedia();
-  const playing = document.body.dataset.mode === 'youtube' ? !youtubePaused : (m ? !m.paused : !!slideTimer);
+  const playing = typeof radioActive !== 'undefined' && radioActive ? !radioAudio.paused : (document.body.dataset.mode === 'youtube' ? !youtubePaused : (m ? !m.paused : !!slideTimer));
   $('btnPlay').textContent = playing ? '⏸' : '▶';
   $('btnPlay').title = document.body.dataset.mode === 'youtube' ? 'Pause / Reprendre (Espace)' : 'Lecture / Pause (Espace)';
   $('btnSlide').classList.toggle('on', !!slideTimer);
@@ -1810,15 +1830,18 @@ viewer.addEventListener('wheel', (e) => {
 // ================= Boutons principaux =================
 $('btnPlay').onclick = togglePlay;
 $('btnNext').onclick = () => {
+  if (typeof radioActive !== 'undefined' && radioActive) { radioNavigate(1); return; }
   if (tvActive) { tvNavigateStation(1); return; }
   next(1);
 };
 $('btnPrev').onclick = () => {
+  if (typeof radioActive !== 'undefined' && radioActive) { radioNavigate(-1); return; }
   if (tvActive) { tvNavigateStation(-1); return; }
   if (document.body.dataset.mode === 'youtube') { next(-1); return; }
   const m = activeMedia(); if (m && m.currentTime > 3) m.currentTime = 0; else next(-1);
 };
 $('btnStop').onclick = () => {
+  if (typeof radioActive !== 'undefined' && radioActive) { radioAudio.pause(); radioAudio.currentTime = 0; updatePlayBtn(); $('radioStatus').textContent = 'Lecture arrêtée.'; return; }
   if (document.body.dataset.mode === 'youtube') { youtubeCommand('stopVideo'); youtubeCurrentTime = 0; youtubePaused = true; $('seek').value = 0; $('curTime').textContent = '0:00'; updatePlayBtn(); $('youtubeStatus').textContent = 'Lecture arrêtée.'; return; }
   const m = activeMedia(); if (m) { m.pause(); m.currentTime = 0; saveProg(); } stopSlideshow();
 };
@@ -2494,6 +2517,36 @@ function renderResume() {
  function tvDriveSend(action, extra={}) { parent.postMessage({ source:'mwrs-tv-drive', action, ...extra }, '*'); }
  const youtubeTab = $('youtubeTab'), youtubePane = $('youtubePane'), youtubeFrame = $('youtubeFrame');
  const tvTab = $('tvTab');
+ const radioTab = $('radioTab'), radioPane = $('radioPane'), radioAudio = $('radioAudio');
+ let radioActive = false, radioCurrentKey = 'franceinter';
+ const radioStations = {
+  franceinter:{name:'France Inter',url:'https://icecast.radiofrance.fr/franceinter-midfi.mp3?id=openapi',official:'https://www.radiofrance.fr/franceinter'},
+  franceinfo:{name:'franceinfo',url:'https://icecast.radiofrance.fr/franceinfo-midfi.mp3?id=openapi',official:'https://www.radiofrance.fr/franceinfo'},
+  franceculture:{name:'France Culture',url:'https://icecast.radiofrance.fr/franceculture-midfi.mp3?id=openapi',official:'https://www.radiofrance.fr/franceculture'},
+  francemusique:{name:'France Musique',url:'https://icecast.radiofrance.fr/francemusique-midfi.mp3?id=openapi',official:'https://www.radiofrance.fr/francemusique'},
+  fip:{name:'FIP',url:'https://icecast.radiofrance.fr/fip-midfi.mp3?id=openapi',official:'https://www.radiofrance.fr/fip'},
+  mouv:{name:'Mouv’',url:'https://icecast.radiofrance.fr/mouv-midfi.mp3?id=openapi',official:'https://www.radiofrance.fr/mouv'},
+  rfi:{name:'RFI Monde',url:'https://live02.rfi.fr/rfimonde-64.mp3',official:'https://www.rfi.fr/fr/'}
+ };
+ function radioSelect(key,autoplay=true) {
+  const station=radioStations[key];if(!station)return;radioCurrentKey=key;radioAudio.pause();radioAudio.src=station.url;radioAudio.load();
+  $('radioNowPlaying').textContent='📻 '+station.name;$('radioOfficial').href=station.official;$('nowPlaying').textContent='📻 RADIO · '+station.name;
+  $('radioStations').querySelectorAll('[data-radio-station]').forEach(b=>b.classList.toggle('active',b.dataset.radioStation===key));
+  $('radioStatus').textContent='Connexion au direct de '+station.name+'…';setMode('audio');updatePlayBtn();
+  if(autoplay)radioAudio.play().then(()=>{$('radioStatus').textContent='En direct · '+station.name;updatePlayBtn();}).catch(()=>{$('radioStatus').textContent='Lecture non démarrée. Appuyez sur ▶ ou ouvrez le site officiel.';updatePlayBtn();});
+ }
+ function radioNavigate(direction){const keys=Object.keys(radioStations);let i=keys.indexOf(radioCurrentKey);i=(i+direction+keys.length)%keys.length;radioSelect(keys[i]);osd('📻 '+radioStations[keys[i]].name);}
+ function radioHide(){if(!radioPane)return;radioPane.hidden=true;if(radioActive){radioActive=false;radioAudio.pause();radioAudio.removeAttribute('src');radioAudio.load();}}
+ function radioShow(){tvHide();fifaHide();matchsHide();tvDriveHide();youtubeHide();cacherOngletMesFilms();radioActive=true;$('playlist').hidden=true;radioPane.hidden=false;$('tabs').querySelectorAll('button').forEach(b=>b.classList.toggle('active',b===radioTab));radioSelect(radioCurrentKey,true);}
+ radioTab?.addEventListener('click',radioShow);
+ $('radioStations')?.addEventListener('click',e=>{const b=e.target.closest('[data-radio-station]');if(b)radioSelect(b.dataset.radioStation,true);});
+ $('radioPrev')?.addEventListener('click',()=>radioNavigate(-1));$('radioNext')?.addEventListener('click',()=>radioNavigate(1));
+ $('radioPlay')?.addEventListener('click',()=>{if(radioAudio.paused)radioAudio.play().catch(()=>{});else radioAudio.pause();});
+ radioAudio?.addEventListener('playing',()=>{$('radioStatus').textContent='En direct · '+radioStations[radioCurrentKey].name;updatePlayBtn();});
+ radioAudio?.addEventListener('pause',updatePlayBtn);
+ radioAudio?.addEventListener('error',()=>{$('radioStatus').textContent='Ce flux ne répond pas pour le moment. Essayez le site officiel de la station.';updatePlayBtn();});
+ $('radioBack')?.addEventListener('click',()=>{radioHide();$('tabs').querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.filter==='all'));filter='all';renderList();setMode(current<0?'empty':items[current].type);$('nowPlaying').textContent=current<0?'Aucun média':items[current].name;});
+ $('tabs')?.addEventListener('click',e=>{if(!e.target.closest('#radioTab'))radioHide();});
  let tvActive = false;
   let tvCurrentStationKey = 'france24';
   const tvPane = $('tvPane'), tvStationFrame = $('tvStationFrame');
@@ -2535,7 +2588,7 @@ function renderResume() {
     if (!tvDriveActive && mesFilmsPane.hidden && youtubePane.hidden && !matchsActive) $('playlist').hidden = false;
   }
   function tvShow() {
-    fifaHide(); matchsHide(); tvDriveHide(); youtubeHide(); cacherOngletMesFilms();
+    radioHide(); fifaHide(); matchsHide(); tvDriveHide(); youtubeHide(); cacherOngletMesFilms();
     tvActive = true; $('playlist').hidden = true; tvPane.hidden = false;
     $('tabs').querySelectorAll('button').forEach(b => b.classList.toggle('active', b === tvTab));
     tvSelectStation('france24');
