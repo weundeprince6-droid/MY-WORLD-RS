@@ -1187,22 +1187,29 @@ const next = (dir = 1) => {
   const n = nextIndex(dir); if (n !== -1) play(n);
 };
 
-let youtubePaused = false;
-function youtubeCommand(command) {
-  // Le lecteur YouTube peut ignorer la première commande pendant son initialisation.
-  // On établit d'abord le canal de communication puis on renvoie la commande.
-  const envoyer = () => {
-    try {
-      const frame = $('youtubeFrame');
-      if (!frame || !frame.contentWindow) return;
-      frame.contentWindow.postMessage(JSON.stringify({ event:'listening', id:'mwrs-player' }), '*');
-      frame.contentWindow.postMessage(JSON.stringify({ event:'command', func:command, args:'' }), '*');
-    } catch (_) {}
-  };
-  envoyer();
-  setTimeout(envoyer, 250);
-  setTimeout(envoyer, 700);
+let youtubePaused = false, youtubeCurrentTime = 0, youtubeDuration = 0, youtubePlayerState = -1;
+function youtubeCommand(command, args = []) {
+  const envoyer = () => { try {
+    const frame = $('youtubeFrame'); if (!frame || !frame.contentWindow) return;
+    frame.contentWindow.postMessage(JSON.stringify({ event:'listening', id:'mwrs-player' }), '*');
+    frame.contentWindow.postMessage(JSON.stringify({ event:'command', func:command, args }), '*');
+  } catch (_) {} };
+  envoyer(); setTimeout(envoyer, 250); setTimeout(envoyer, 700);
 }
+function youtubeSyncInfo(info) {
+  if (!info || document.body.dataset.mode !== 'youtube') return;
+  if (info.currentTime != null) youtubeCurrentTime = Number(info.currentTime) || 0;
+  if (info.duration != null) youtubeDuration = Number(info.duration) || 0;
+  if (info.playerState != null) { youtubePlayerState = Number(info.playerState); youtubePaused = youtubePlayerState !== 1; updatePlayBtn(); if (youtubePlayerState === 0) youtubeEnded(); }
+  $('curTime').textContent = fmt(youtubeCurrentTime); $('durTime').textContent = fmt(youtubeDuration);
+  if (!seeking && youtubeDuration > 0) $('seek').value = youtubeCurrentTime / youtubeDuration * 1000;
+}
+window.addEventListener('message', event => {
+  let host = ''; try { host = new URL(event.origin).hostname; } catch (_) {}
+  if (!/(^|\\.)youtube(-nocookie)?\\.com$/.test(host)) return;
+  let data = event.data; try { if (typeof data === 'string') data = JSON.parse(data); } catch (_) { return; }
+  if (data?.event === 'infoDelivery') youtubeSyncInfo(data.info);
+});
 function togglePlay() {
   if (document.body.dataset.mode === 'youtube') {
     youtubePaused = !youtubePaused;
@@ -1350,27 +1357,30 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) saveP
 
 // ----- Progression, vitesse, volume -----
 $('seek').addEventListener('input', () => {
-  seeking = true;
-  const m = activeMedia();
-  if (m?.duration) $('curTime').textContent = fmt(+$('seek').value / 1000 * m.duration);
+  seeking = true; const m = activeMedia(), d = document.body.dataset.mode === 'youtube' ? youtubeDuration : m?.duration;
+  if (d) $('curTime').textContent = fmt(+$('seek').value / 1000 * d);
 });
 $('seek').addEventListener('change', () => {
   const m = activeMedia();
-  if (m?.duration) m.currentTime = +$('seek').value / 1000 * m.duration;
+  if (document.body.dataset.mode === 'youtube' && youtubeDuration) { youtubeCurrentTime = +$('seek').value / 1000 * youtubeDuration; youtubeCommand('seekTo', [youtubeCurrentTime, true]); }
+  else if (m?.duration) m.currentTime = +$('seek').value / 1000 * m.duration;
   seeking = false;
 });
-function seekBy(d) { const m = activeMedia(); if (!m) return; m.currentTime = clamp(m.currentTime + d, 0, m.duration || 1e9); osd((d > 0 ? '+' : '') + d + ' s  •  ' + fmt(m.currentTime)); }
+function seekBy(d) {
+  if (document.body.dataset.mode === 'youtube') { const t = clamp(youtubeCurrentTime + d, 0, youtubeDuration || 1e9); youtubeCommand('seekTo', [t, true]); youtubeCurrentTime = t; $('curTime').textContent = fmt(t); osd((d > 0 ? '+' : '') + d + ' s  •  ' + fmt(t)); return; }
+  const m = activeMedia(); if (!m) return; m.currentTime = clamp(m.currentTime + d, 0, m.duration || 1e9); osd((d > 0 ? '+' : '') + d + ' s  •  ' + fmt(m.currentTime));
+}
 
 SPEEDS.forEach((v) => { const o = document.createElement('option'); o.value = v; o.textContent = v + '×'; $('speed').appendChild(o); });
 $('speed').value = '1';
-function setSpeed(v) { speed = v; audio.defaultPlaybackRate = video.defaultPlaybackRate = v; audio.playbackRate = video.playbackRate = v; $('speed').value = String(v); osd('Vitesse ' + v + '×'); }
+function setSpeed(v) { speed = v; audio.defaultPlaybackRate = video.defaultPlaybackRate = v; audio.playbackRate = video.playbackRate = v; $('speed').value = String(v); if (document.body.dataset.mode === 'youtube') youtubeCommand('setPlaybackRate', [v]); osd('Vitesse ' + v + '×'); }
 $('speed').onchange = (e) => setSpeed(+e.target.value);
 function stepSpeed(d) { const i = clamp(SPEEDS.indexOf(speed) + d, 0, SPEEDS.length - 1); setSpeed(SPEEDS[i]); }
 
 function applyVolume() {
   if (gainNode) gainNode.gain.value = S.muted ? 0 : S.vol / 100;
-  $('volume').value = S.vol;
-  $('btnMute').textContent = S.muted || S.vol === 0 ? '🔇' : S.vol < 50 ? '🔉' : '🔊';
+  $('volume').value = S.vol; $('btnMute').textContent = S.muted || S.vol === 0 ? '🔇' : S.vol < 50 ? '🔉' : '🔊';
+  if (document.body.dataset.mode === 'youtube') { youtubeCommand(S.muted || S.vol === 0 ? 'mute' : 'unMute'); if (!S.muted && S.vol > 0) youtubeCommand('setVolume', [Math.min(100, S.vol)]); }
   saveS();
 }
 function setVolume(v) { S.vol = clamp(Math.round(v), 0, 200); S.muted = false; applyVolume(); osd('Volume ' + S.vol + ' %'); }
@@ -1677,9 +1687,12 @@ $('btnPrev').onclick = () => {
   if (document.body.dataset.mode === 'youtube') { next(-1); return; }
   const m = activeMedia(); if (m && m.currentTime > 3) m.currentTime = 0; else next(-1);
 };
-$('btnStop').onclick = () => { const m = activeMedia(); if (m) { m.pause(); m.currentTime = 0; saveProg(); } stopSlideshow(); };
+$('btnStop').onclick = () => {
+  if (document.body.dataset.mode === 'youtube') { youtubeCommand('stopVideo'); youtubeCurrentTime = 0; youtubePaused = true; $('seek').value = 0; $('curTime').textContent = '0:00'; updatePlayBtn(); $('youtubeStatus').textContent = 'Lecture arrêtée.'; return; }
+  const m = activeMedia(); if (m) { m.pause(); m.currentTime = 0; saveProg(); } stopSlideshow();
+};
 $('btnSlide').onclick = toggleSlideshow;
-$('btnShuffle').onclick = () => { shuffle = !shuffle; $('btnShuffle').classList.toggle('on', shuffle); osd('Aléatoire ' + (shuffle ? 'activé' : 'désactivé')); };
+$('btnShuffle').onclick = () => { shuffle = !shuffle; $('btnShuffle').classList.toggle('on', shuffle); osd('Aléatoire ' + (shuffle ? 'activé' : 'désactivé')); if (document.body.dataset.mode === 'youtube') $('youtubeStatus').textContent = shuffle ? 'Lecture aléatoire activée pour les résultats.' : 'Lecture aléatoire désactivée.'; };
 $('btnRepeat').onclick = () => {
   repeat = repeat === 'off' ? 'all' : repeat === 'all' ? 'one' : 'off';
   $('btnRepeat').textContent = repeat === 'one' ? '🔂' : '🔁';
@@ -1687,8 +1700,9 @@ $('btnRepeat').onclick = () => {
   osd(repeat === 'off' ? 'Fin de liste : le lecteur s\'arrête' : repeat === 'all' ? 'Fin de liste : la liste recommence' : 'Le titre en cours se répète');
   $('btnRepeat').title = repeat === 'off' ? 'Fin de liste : arrêt (clic pour changer)' : repeat === 'all' ? 'Fin de liste : recommence la liste (clic pour changer)' : 'Répète le titre en cours (clic pour changer)';
   osd('Répétition : ' + { off: 'non', all: 'liste', one: 'un seul' }[repeat]);
+  if (document.body.dataset.mode === 'youtube') $('youtubeStatus').textContent = 'Répétition ' + { off: 'désactivée', all: 'de la liste', one: 'de cette vidéo' }[repeat] + '.';
 };
-const toggleFull = () => { document.fullscreenElement ? document.exitFullscreen() : stage.requestFullscreen(); };
+const toggleFull = () => { const target = document.body.dataset.mode === 'youtube' ? $('viewer') : stage; document.fullscreenElement ? document.exitFullscreen() : target.requestFullscreen(); };
 $('btnFull').onclick = toggleFull;
 video.addEventListener('click', togglePlay);
 video.addEventListener('dblclick', toggleFull);
@@ -2371,8 +2385,8 @@ function renderResume() {
  function youtubeUpdateNav() {
    const hasCurrent = youtubeQueueIndex >= 0 && youtubeQueueIndex < youtubeQueue.length;
    const inYoutube = document.body.dataset.mode === 'youtube';
-   $('btnPrev').disabled = inYoutube && (!hasCurrent || youtubeQueueIndex <= 0);
-   $('btnNext').disabled = inYoutube && (!hasCurrent || youtubeQueueIndex >= youtubeQueue.length - 1);
+   $('btnPrev').disabled = inYoutube && (!hasCurrent || (youtubeQueueIndex <= 0 && repeat !== 'all' && !shuffle));
+   $('btnNext').disabled = inYoutube && (!hasCurrent || (youtubeQueueIndex >= youtubeQueue.length - 1 && repeat !== 'all' && !shuffle));
    $('btnPrev').title = inYoutube ? 'Vidéo précédente (P)' : 'Précédent (P)';
    $('btnNext').title = inYoutube ? 'Vidéo suivante (N)' : 'Suivant (N)';
  }
@@ -2393,14 +2407,20 @@ function renderResume() {
      $('youtubeStatus').textContent = 'Lancez d’abord une vidéo depuis les résultats de recherche pour utiliser la lecture suivante.';
      return;
    }
-   const target = youtubeQueueIndex + dir;
-   if (target < 0 || target >= youtubeQueue.length) {
-     $('youtubeStatus').textContent = dir > 0 ? 'Fin des résultats. Effectuez une nouvelle recherche pour continuer.' : 'Vous êtes déjà sur la première vidéo des résultats.';
-     youtubeUpdateNav();
-     return;
+   let target = youtubeQueueIndex + dir;
+   if (shuffle && youtubeQueue.length > 1) { const choices = youtubeQueue.map((_, i) => i).filter(i => i !== youtubeQueueIndex); target = choices[Math.floor(Math.random() * choices.length)]; }
+   else if (target < 0 || target >= youtubeQueue.length) {
+     if (repeat === 'all' && youtubeQueue.length) target = dir > 0 ? 0 : youtubeQueue.length - 1;
+     else { $('youtubeStatus').textContent = dir > 0 ? 'Fin des résultats. Effectuez une nouvelle recherche pour continuer.' : 'Vous êtes déjà sur la première vidéo des résultats.'; youtubeUpdateNav(); return; }
    }
-   const item = youtubeQueue[target];
-   youtubePlay(item.id, item.title);
+   const item = youtubeQueue[target]; youtubePlay(item.id, item.title);
+ }
+ function youtubeEnded() {
+   if (youtubePlayerState !== 0 || document.body.dataset.mode !== 'youtube') return;
+   if (repeat === 'one') { youtubeCurrentTime = 0; youtubeCommand('seekTo', [0, true]); youtubeCommand('playVideo'); youtubePaused = false; updatePlayBtn(); return; }
+   if (stopAfter) { stopAfter = false; $('sleep').value = '0'; youtubePaused = true; updatePlayBtn(); $('youtubeStatus').textContent = 'Arrêt programmé.'; return; }
+   if (youtubeQueueIndex >= 0 && youtubeQueueIndex < youtubeQueue.length - 1 || repeat === 'all' || shuffle) { youtubeMove(1); return; }
+   youtubePaused = true; updatePlayBtn(); $('youtubeStatus').textContent = 'Fin de la vidéo.';
  }
  // Espace YouTube relié au compte Google de l'appli (lecture seule)
  function youtubeEspaceDemander(kind, extra = {}) {
