@@ -2705,10 +2705,10 @@ async function tvYoutube(msg) {
     } else if (msg.kind === "playlists") {
       const d = await googleYouTube(yt + "playlists?part=snippet&mine=true&maxResults=50");
       items = (d.items || []).map(x => ({ type: "playlist", id: x.id, title: x.snippet?.title || "Playlist", thumb: miniature(x.snippet) }));
-    } else if (msg.kind === "playlist" && /^[\\w-]{6,64}$/.test(msg.id || "")) {
+    } else if (msg.kind === "playlist" && /^[\w-]{6,64}$/.test(msg.id || "")) {
       const d = await googleYouTube(yt + "playlistItems?part=snippet&maxResults=40&playlistId=" + encodeURIComponent(msg.id));
       items = (d.items || []).filter(x => x.snippet?.resourceId?.videoId).map(x => vid(x.snippet.resourceId.videoId, x.snippet));
-    } else if (msg.kind === "channel" && /^[\\w-]{6,64}$/.test(msg.id || "")) {
+    } else if (msg.kind === "channel" && /^[\w-]{6,64}$/.test(msg.id || "")) {
       const c = await googleYouTube(yt + "channels?part=contentDetails&id=" + encodeURIComponent(msg.id));
       const up = c.items?.[0]?.contentDetails?.relatedPlaylists?.uploads;
       if (!up) throw new Error("Chaîne introuvable.");
