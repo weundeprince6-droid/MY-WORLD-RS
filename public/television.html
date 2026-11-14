@@ -1216,7 +1216,7 @@ window.addEventListener('message', event => {
     if (youtubePlayerState === 0) youtubeEnded();
   }
 });
-youtubeFrame.addEventListener('load', () => {
+$('youtubeFrame')?.addEventListener('load', () => {
   if (document.body.dataset.mode !== 'youtube') return;
   ['onStateChange','onPlaybackRateChange','onPlaybackQualityChange'].forEach(name => youtubeCommand('addEventListener', [name]));
   youtubeCommand('setPlaybackRate', [speed]);
