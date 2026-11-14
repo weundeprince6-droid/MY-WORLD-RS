@@ -2715,7 +2715,7 @@ function renderResume() {
    } catch (err) { $('youtubeStatus').textContent = 'Recherche impossible : ' + (err.message || 'vérifiez la clé API, son autorisation et le quota.'); }
  }
  $('youtubeSearchForm')?.addEventListener('submit', e => { e.preventDefault(); youtubeSearch($('youtubeQuery').value); });
- $('youtubeCategories')?.addEventListener('click', e => { const b=e.target.closest('button[data-yt-query]'); if(!b)return; $('youtubeQuery').value=b.dataset.ytQuery; youtubeSearch(b.dataset.ytQuery); });
+
  $('youtubeForm')?.addEventListener('submit', e => {
    e.preventDefault(); const id = youtubeId($('youtubeUrl').value);
    if (!/^[\w-]{6,20}$/.test(id)) { $('youtubeStatus').textContent = 'Lien YouTube non reconnu. Collez un lien youtube.com ou youtu.be valide.'; return; }
