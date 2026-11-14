@@ -1178,9 +1178,19 @@ const next = (dir = 1) => {
 
 let youtubePaused = false;
 function youtubeCommand(command) {
-  try {
-    youtubeFrame.contentWindow.postMessage(JSON.stringify({ event:'command', func:command, args:[] }), 'https://www.youtube-nocookie.com');
-  } catch (_) {}
+  // Le lecteur YouTube peut ignorer la première commande pendant son initialisation.
+  // On établit d'abord le canal de communication puis on renvoie la commande.
+  const envoyer = () => {
+    try {
+      const frame = $('youtubeFrame');
+      if (!frame || !frame.contentWindow) return;
+      frame.contentWindow.postMessage(JSON.stringify({ event:'listening', id:'mwrs-player' }), '*');
+      frame.contentWindow.postMessage(JSON.stringify({ event:'command', func:command, args:'' }), '*');
+    } catch (_) {}
+  };
+  envoyer();
+  setTimeout(envoyer, 250);
+  setTimeout(envoyer, 700);
 }
 function togglePlay() {
   if (document.body.dataset.mode === 'youtube') {
