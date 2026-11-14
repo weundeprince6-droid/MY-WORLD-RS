@@ -535,16 +535,12 @@ body.gold #titleBar{background:#1a1a18!important}
         <div class="tv-head"><strong>📺 TV · Chaînes francophones</strong><button id="tvBack" type="button">← Mes fichiers</button><a id="tvOpenOfficial" href="https://www.youtube.com/watch?v=a47ckXKZjxI" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--panel2);color:var(--text);text-decoration:none">Ouvrir la chaîne ↗</a></div>
         <div class="tv-stations" id="tvStations">
           <button type="button" data-tv-station="france24" class="active">🇫🇷 France 24</button>
-          <button type="button" data-tv-station="tv5">🌍 TV5MONDE Afrique</button>
-          <button type="button" data-tv-station="africa24">🌍 Africa24</button>
+          <button type="button" data-tv-station="tv5">🌍 TV5MONDE Info</button>
           <button type="button" data-tv-station="rtnc">🇨🇩 RTNC · RDC</button>
-          <button type="button" data-tv-station="rts">🇸🇳 RTS · Sénégal</button>
-          <button type="button" data-tv-station="rtb">🇧🇫 RTB · Burkina</button>
-          <button type="button" data-tv-station="ortm">🇲🇱 ORTM · Mali</button>
           <button type="button" data-tv-station="euronews">🌐 Euronews FR</button>
         </div>
         <div class="tv-view">
-          <p id="tvStatus" class="tv-help">Sélectionnez une chaîne. Si son diffuseur interdit l'intégration, utilisez « Ouvrir la chaîne ».</p>
+          <p id="tvStatus" class="tv-help">Chaînes et vidéos issues de YouTube uniquement. Si un direct est hors ligne ou bloqué, ouvrez la chaîne sur YouTube.</p>
           <iframe id="tvStationFrame" title="Chaîne de télévision francophone" src="https://www.youtube-nocookie.com/embed/a47ckXKZjxI?autoplay=0&rel=0" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
         </div>
       </section>
@@ -2447,21 +2443,17 @@ function renderResume() {
  let tvActive = false;
   const tvPane = $('tvPane'), tvStationFrame = $('tvStationFrame');
   const tvStations = {
-    france24: {name:'FRANCE 24 en direct', url:'https://www.youtube-nocookie.com/embed/a47ckXKZjxI?autoplay=1&rel=0', official:'https://www.youtube.com/watch?v=a47ckXKZjxI', note:'Flux YouTube officiel de FRANCE 24.'},
-    tv5: {name:'TV5MONDE Afrique', url:'https://afrique.tv5monde.com/', official:'https://afrique.tv5monde.com/', note:'Site officiel TV5MONDE Afrique, avec direct et programmes selon disponibilité.'},
-    africa24: {name:'Africa24', url:'https://africa24tv.com/live/', official:'https://africa24tv.com/live/', note:'Direct et actualités panafricaines.'},
-    rtnc: {name:'RTNC · RDC', url:'https://www.rtnc2026.com/fr', official:'https://www.rtnc2026.com/fr', note:'Site RTNC : direct national et journaux.'},
-    rts: {name:'RTS · Sénégal', url:'https://www.rts.sn/tv/rts-5', official:'https://www.rts.sn/tv/rts-5', note:'RTS 5 en direct et programmes.'},
-    rtb: {name:'RTB · Burkina Faso', url:'https://www.rtb.bf/television-en-direct/', official:'https://www.rtb.bf/television-en-direct/', note:'Page officielle RTB Télévision en direct.'},
-    ortm: {name:'ORTM · Mali', url:'https://ortm.net/', official:'https://ortm.net/', note:'Site ORTM avec rubrique Direct TV.'},
-    euronews: {name:'Euronews en français', url:'https://fr.euronews.com/live', official:'https://fr.euronews.com/live', note:'Actualités internationales en français.'}
+    france24: {name:'FRANCE 24', url:'https://www.youtube-nocookie.com/embed/a47ckXKZjxI?autoplay=1&rel=0', official:'https://www.youtube.com/watch?v=a47ckXKZjxI', note:'Flux YouTube de FRANCE 24.'},
+    tv5: {name:'TV5MONDE Info', url:'https://www.youtube-nocookie.com/embed/-7_nV8qfa9Q?autoplay=1&rel=0', official:'https://www.youtube.com/@tv5mondeinfo', note:'Vidéo officielle TV5MONDE Info sur YouTube.'},
+    rtnc: {name:'RTNC · RDC', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UC3c5awvKeU7TOauQCdMj_-w&autoplay=1', official:'https://www.youtube.com/@RTNCOFFICIELLE-f2w', note:'Flux YouTube de la chaîne officielle RTNC, s’il est en direct.'},
+    euronews: {name:'Euronews FR', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCW2QcKZiU8aUGg4yxCIditg&autoplay=1', official:'https://www.youtube.com/@euronewsfr/live', note:'Flux YouTube en français, selon disponibilité du direct.'}
   };
   function tvSelectStation(key) {
     const station = tvStations[key]; if (!station) return;
     tvStationFrame.src = station.url;
     $('tvOpenOfficial').href = station.official;
-    $('tvOpenOfficial').textContent = 'Ouvrir ' + station.name + ' ↗';
-    $('tvStatus').textContent = station.note + ' Si le lecteur reste vide, le diffuseur peut interdire l’intégration : utilisez le bouton « Ouvrir ».';
+    $('tvOpenOfficial').textContent = 'Ouvrir sur YouTube ↗';
+    $('tvStatus').textContent = station.note + ' Si YouTube indique que la vidéo n’est pas disponible, utilisez « Ouvrir sur YouTube ».';
     $('tvStations').querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.tvStation === key));
     $('nowPlaying').textContent = '📺 TV · ' + station.name;
     setMode('tv'); updatePlayBtn();
