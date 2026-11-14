@@ -38,6 +38,8 @@ input[type=search]{width:100%;padding:8px 10px;border-radius:8px;border:1px soli
 #playlist li.over{outline:2px dashed var(--accent)}
 #playlist li .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #playlist li .st{font-size:11px;color:var(--accent2)}
+#playlist li .fav{width:15px;height:15px;margin:0 2px 0 0;accent-color:#f5b301;cursor:pointer;flex:none}
+#playlist li.vide-fav{color:var(--muted);font-size:12.5px;padding:14px 12px;cursor:default;white-space:normal}
 #playlist li .rm{opacity:0;border:none;background:none;color:var(--muted);cursor:pointer;padding:0 4px}
 #playlist li:hover .rm{opacity:1}
 #playlist li .pbar{position:absolute;left:10px;right:10px;bottom:2px;height:2px;background:var(--accent2);transform-origin:left;border-radius:2px}
@@ -442,6 +444,7 @@ body.gold #titleBar{background:#1a1a18!important}
         <button data-filter="video">Vidéo</button>
         <button data-filter="image">Photos</button>
         <button data-filter="doc">Documents</button>
+        <button data-filter="favoris" id="favorisTab" title="Fichiers cochés ★">★ Favoris</button>
         <button type="button" id="mesFilmsTab">Mes films et séries</button>
         <button type="button" id="tvDriveTab">Google Drive</button>
       </div>
@@ -866,7 +869,11 @@ async function addFolderDialog() {
 }
 
 // ================= Liste de lecture =================
-const visible = () => items.map((_, i) => i).filter((i) => (filter === 'all' || items[i].type === filter) && items[i].name.toLowerCase().includes(query));
+// Favoris : fichiers cochés par l'utilisateur (mémorisés par clé de fichier)
+let favoris = {};
+try { favoris = JSON.parse(localStorage.getItem('lp_favoris') || '{}') || {}; } catch (e) {}
+const saveFav = () => { try { localStorage.setItem('lp_favoris', JSON.stringify(favoris)); } catch (e) {} };
+const visible = () => items.map((_, i) => i).filter((i) => (filter === 'all' || (filter === 'favoris' ? !!favoris[items[i].key] : items[i].type === filter)) && items[i].name.toLowerCase().includes(query));
 
 function renderList() {
   const ul = $('playlist'); ul.innerHTML = '';
@@ -891,7 +898,10 @@ function renderList() {
     li.classList.add('sousgrp');
     if (i === current) li.classList.add('current');
     const p = prog[it.key];
-    li.innerHTML = '<span>' + ICONS[it.type] + '</span><span class="nm"></span><span class="st"></span><button class="rm" title="Retirer">✕</button>';
+    li.innerHTML = '<input type="checkbox" class="fav" title="Cocher pour ajouter aux favoris" aria-label="Ajouter aux favoris"><span>' + ICONS[it.type] + '</span><span class="nm"></span><span class="st"></span><button class="rm" title="Retirer">✕</button>';
+    const cf = li.querySelector('.fav'); cf.checked = !!favoris[it.key];
+    cf.onclick = (e) => e.stopPropagation();
+    cf.onchange = () => { if (cf.checked) favoris[it.key] = 1; else delete favoris[it.key]; saveFav(); if (filter === 'favoris') renderList(); else majCompteurFavoris(); };
     li.querySelector('.nm').textContent = it.name;
     li.querySelector('.nm').title = it.path;
     const st = li.querySelector('.st');
@@ -910,7 +920,17 @@ function renderList() {
     };
     ul.appendChild(li);
   }
+  if (filter === 'favoris' && !vis.length) {
+    const v = document.createElement('li'); v.className = 'vide-fav';
+    v.textContent = 'Aucun favori. Dans « Tout », cochez la case ☐ devant un fichier pour le retrouver ici.';
+    ul.appendChild(v);
+  }
+  majCompteurFavoris();
   $('count').textContent = items.length + (items.length > 1 ? ' éléments' : ' élément');
+}
+function majCompteurFavoris() {
+  const n = items.filter((it) => favoris[it.key]).length;
+  const b = $('favorisTab'); if (b) b.textContent = '★ Favoris' + (n ? ' (' + n + ')' : '');
 }
 
 function collapsedGroups() { try { return new Set(JSON.parse(localStorage.getItem('lp.dossiersReplies') || '[]')); } catch { return new Set(); } }
