@@ -40,6 +40,8 @@ const SCOPES = [
   // Télécharger, déplacer, renommer et mettre à la corbeille n'importe quel fichier de Drive
   "https://www.googleapis.com/auth/drive",
   "https://www.googleapis.com/auth/documents",
+  // Espace YouTube (abonnements, vidéos aimées, playlists) dans le lecteur, en lecture seule
+  "https://www.googleapis.com/auth/youtube.readonly",
   "https://www.googleapis.com/auth/spreadsheets",
 ];
 
@@ -2626,6 +2628,45 @@ async function tvHtml() {
   return r.text();
 }
 
+// Espace YouTube du lecteur : abonnements, vidéos aimées, playlists, recherche — avec le compte Google connecté (lecture seule)
+async function tvYoutube(msg) {
+  const rep = (d) => tvDriveRepondre({ action: "yt", kind: msg.kind, ...d });
+  if (!jetonGoogle) { rep({ error: "Connectez-vous à Google pour voir votre espace YouTube." }); return; }
+  const yt = "https://www.googleapis.com/youtube/v3/";
+  const miniature = (sn) => sn?.thumbnails?.medium?.url || sn?.thumbnails?.default?.url || "";
+  const vid = (id, sn) => ({ type: "video", id, title: sn?.title || "Vidéo", channel: sn?.channelTitle || sn?.videoOwnerChannelTitle || "", thumb: miniature(sn) });
+  try {
+    let items = [];
+    if (msg.kind === "subscriptions") {
+      const d = await google(yt + "subscriptions?part=snippet&mine=true&maxResults=50&order=alphabetical");
+      items = (d.items || []).map(x => ({ type: "channel", id: x.snippet?.resourceId?.channelId, title: x.snippet?.title || "Chaîne", thumb: miniature(x.snippet) })).filter(x => x.id);
+    } else if (msg.kind === "liked") {
+      const d = await google(yt + "videos?part=snippet&myRating=like&maxResults=30");
+      items = (d.items || []).map(x => vid(x.id, x.snippet));
+    } else if (msg.kind === "playlists") {
+      const d = await google(yt + "playlists?part=snippet&mine=true&maxResults=50");
+      items = (d.items || []).map(x => ({ type: "playlist", id: x.id, title: x.snippet?.title || "Playlist", thumb: miniature(x.snippet) }));
+    } else if (msg.kind === "playlist" && /^[\w-]{6,64}$/.test(msg.id || "")) {
+      const d = await google(yt + "playlistItems?part=snippet&maxResults=40&playlistId=" + encodeURIComponent(msg.id));
+      items = (d.items || []).filter(x => x.snippet?.resourceId?.videoId).map(x => vid(x.snippet.resourceId.videoId, x.snippet));
+    } else if (msg.kind === "channel" && /^[\w-]{6,64}$/.test(msg.id || "")) {
+      const c = await google(yt + "channels?part=contentDetails&id=" + encodeURIComponent(msg.id));
+      const up = c.items?.[0]?.contentDetails?.relatedPlaylists?.uploads;
+      if (!up) throw new Error("Chaîne introuvable.");
+      const d = await google(yt + "playlistItems?part=snippet&maxResults=30&playlistId=" + encodeURIComponent(up));
+      items = (d.items || []).filter(x => x.snippet?.resourceId?.videoId).map(x => vid(x.snippet.resourceId.videoId, x.snippet));
+    } else if (msg.kind === "search" && typeof msg.q === "string" && msg.q.trim()) {
+      const d = await google(yt + "search?part=snippet&type=video&maxResults=18&q=" + encodeURIComponent(msg.q.trim()));
+      items = (d.items || []).filter(x => x.id?.videoId).map(x => vid(x.id.videoId, x.snippet));
+    } else { rep({ error: "Demande YouTube non reconnue." }); return; }
+    rep({ items, titre: msg.titre || "" });
+  } catch (e) {
+    const t = String(e?.message || e);
+    rep({ error: /insufficient|scope|403|permission/i.test(t) && !/accessNotConfigured|has not been used|disabled/i.test(t)
+      ? "YouTube n'est pas encore autorisé : déconnectez-vous puis reconnectez-vous à Google en acceptant l'accès à YouTube."
+      : /accessNotConfigured|has not been used|disabled/i.test(t) ? "L'API « YouTube Data API v3 » n'est pas activée dans votre projet Google Cloud (my-world-rs)." : "YouTube : " + t });
+  }
+}
 let tvDriveIframe = null;
 function tvDriveRepondre(data) {
   const frame = document.querySelector("#tv-zone iframe");
@@ -2642,6 +2683,8 @@ window.addEventListener("message", async (event) => {
       const data = await google("https://www.googleapis.com/drive/v3/files?pageSize=100&orderBy=name&fields=files(id,name,mimeType,modifiedTime,size)&q=" + q);
       driveListeAffichee = data.files || [];
       tvDriveRepondre({ action: "list", files: driveListeAffichee.map(f => ({ id:f.id, name:f.name, mimeType:f.mimeType, modifiedTime:f.modifiedTime })) });
+    } else if (msg.action === "yt") {
+      await tvYoutube(msg);
     } else if (msg.action === "open" && typeof msg.id === "string") {
       const f = driveListeAffichee.find(x => x.id === msg.id);
       if (!f) throw new Error("Fichier non trouvé. Actualisez la liste.");

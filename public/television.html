@@ -489,12 +489,18 @@ body.gold #titleBar{background:#1a1a18!important}
         <button id="youtubeBack" type="button">← Mes fichiers</button>
       </div>
       <div style="display:grid;gap:7px;padding:10px;background:var(--panel2);border:1px solid var(--border);border-radius:10px;margin-bottom:12px">
-        <label for="youtubeApiKey" style="font-size:12px;color:var(--muted)">Clé API YouTube Data (nécessaire pour la recherche)</label>
+        <label for="youtubeApiKey" style="font-size:12px;color:var(--muted)">Clé API YouTube Data (facultative : sans clé, la recherche utilise votre compte Google)</label>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
           <input id="youtubeApiKey" type="password" autocomplete="off" placeholder="Collez votre clé API Google" style="flex:1;min-width:140px;padding:9px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text)" />
           <button id="youtubeSaveKey" type="button">Enregistrer</button>
         </div>
         <small style="color:var(--muted)">La clé reste dans ce navigateur. Restreignez-la à l’API YouTube Data v3 et au domaine de votre application.</small>
+      </div>
+      <div id="youtubeEspace" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:9px">
+        <strong style="font-size:12.5px;color:var(--muted)">Mon espace YouTube (compte Google)</strong>
+        <button type="button" data-yt-espace="subscriptions">📺 Abonnements</button>
+        <button type="button" data-yt-espace="liked">👍 Vidéos aimées</button>
+        <button type="button" data-yt-espace="playlists">🎞 Mes playlists</button>
       </div>
       <form id="youtubeSearchForm" style="display:flex;gap:7px;margin-bottom:9px">
         <input id="youtubeQuery" type="search" required placeholder="Rechercher une vidéo, un artiste, un sujet…" style="flex:1;min-width:0;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--panel2);color:var(--text)" />
@@ -2396,6 +2402,35 @@ function renderResume() {
    const item = youtubeQueue[target];
    youtubePlay(item.id, item.title);
  }
+ // Espace YouTube relié au compte Google de l'appli (lecture seule)
+ function youtubeEspaceDemander(kind, extra = {}) {
+   $('youtubeStatus').textContent = 'Chargement depuis votre compte YouTube…'; ytResults.replaceChildren();
+   tvDriveSend('yt', { kind, ...extra });
+ }
+ function youtubeEspaceAfficher(d) {
+   ytResults.replaceChildren();
+   if (d.error) { $('youtubeStatus').textContent = d.error; return; }
+   const items = d.items || [];
+   const videos = items.filter(x => x.type === 'video');
+   youtubeQueue = videos.map(v => ({ id: v.id, title: v.title })); youtubeQueueIndex = -1; youtubeUpdateNav();
+   const noms = { subscriptions: 'Vos abonnements', liked: 'Vos vidéos aimées', playlists: 'Vos playlists' };
+   $('youtubeStatus').textContent = (d.titre || noms[d.kind] || 'Résultats') + ' : ' + items.length + ' élément(s).' + (videos.length ? ' Sélectionnez une miniature pour lire.' : '');
+   if (!items.length) { $('youtubeStatus').textContent += ' Rien à afficher.'; return; }
+   items.forEach(it => {
+     const card = document.createElement('button'); card.type = 'button';
+     card.style.cssText = 'padding:0;overflow:hidden;text-align:left;white-space:normal;display:flex;flex-direction:column;gap:5px';
+     const img = document.createElement('img'); img.src = it.thumb || ''; img.alt = ''; img.loading = 'lazy'; img.style.cssText = 'width:100%;aspect-ratio:16/9;object-fit:cover;background:#000' + (it.type === 'channel' ? ';border-radius:50%;aspect-ratio:1/1;width:56%;margin:10px auto 0' : '');
+     const title = document.createElement('span'); title.textContent = (it.type === 'playlist' ? '🎞 ' : it.type === 'channel' ? '📺 ' : '') + it.title; title.style.cssText = 'font-size:12px;font-weight:600;padding:0 7px;line-height:1.35';
+     const sub = document.createElement('small'); sub.textContent = it.channel || ''; sub.style.cssText = 'font-size:11px;color:var(--muted);padding:0 7px 7px';
+     card.append(img, title, sub);
+     card.addEventListener('click', () => {
+       if (it.type === 'video') youtubePlay(it.id, it.title);
+       else youtubeEspaceDemander(it.type, { id: it.id, titre: it.title });
+     });
+     ytResults.append(card);
+   });
+ }
+ $('youtubeEspace')?.addEventListener('click', e => { const b = e.target.closest('button[data-yt-espace]'); if (b) youtubeEspaceDemander(b.dataset.ytEspace); });
  $('youtubeSaveKey')?.addEventListener('click', () => {
    const key = ytKeyInput.value.trim();
    if (!key) { $('youtubeStatus').textContent = 'Collez d’abord votre clé API YouTube Data.'; return; }
@@ -2404,8 +2439,8 @@ function renderResume() {
  });
  async function youtubeSearch(query) {
    const key = (ytKeyInput.value || '').trim();
-   if (!key) { $('youtubeStatus').textContent = 'Ajoutez et enregistrez votre clé API YouTube Data pour rechercher.'; ytKeyInput.focus(); return; }
    if (!query.trim()) return;
+   if (!key) { youtubeEspaceDemander('search', { q: query.trim(), titre: 'Résultats pour « ' + query.trim() + ' »' }); return; }
    $('youtubeStatus').textContent = 'Recherche YouTube en cours…'; ytResults.replaceChildren();
    youtubeQueue = []; youtubeQueueIndex = -1; youtubeUpdateNav();
    try {
@@ -2451,6 +2486,7 @@ function renderResume() {
  window.addEventListener('message',e=>{
    if(e.source!==parent||!e.data||e.data.source!=='mwrs-drive')return;
    const d=e.data;
+   if(d.action==='yt'){youtubeEspaceAfficher(d);return;}
    if(d.action==='list'){
      tvDriveStatus.textContent=d.error||((d.files||[]).length+' fichier(s) Google Drive');
      tvDriveList.innerHTML='';

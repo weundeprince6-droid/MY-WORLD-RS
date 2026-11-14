@@ -79,6 +79,14 @@ async function scenario(nom, { mode = 'ok', sdkBloque = false, quotaGmail = fals
     if (u.includes('/messages/m1')) return route.fulfill(json({ id: 'm1', threadId: 't1', labelIds: ['UNREAD', 'IMPORTANT'], snippet: 'Merci de régler avant le 5', internalDate: String(Date.now()), payload: { headers: [{ name: 'From', value: 'Marie Dupont <marie@ex.com>' }, { name: 'Subject', value: 'Rappel facture urgente' }] } }));
     if (u.includes('/messages/m2')) return route.fulfill(json({ id: 'm2', threadId: 't2', labelIds: ['CATEGORY_PROMOTIONS'], snippet: 'promo', internalDate: '1', payload: { headers: [{ name: 'From', value: 'Shop <no-reply@gmail.com>' }, { name: 'Subject', value: 'Promotion -50%' }] } }));
     if (driveRefus && u.includes('drive/v3/files') && (u.includes('alt=media') || u.includes('/export'))) return route.fulfill({ status: 403, headers: { ...CORS, 'content-type': 'application/json' }, body: JSON.stringify({ error: { message: 'insufficient' } }) });
+    if (u.includes('googleapis.com/youtube/v3/')) {
+      etat.youtube = etat.youtube || []; etat.youtube.push(u);
+      const th = { medium: { url: 'data:image/gif;base64,R0lGODlhAQABAAAAACw=' } };
+      if (u.includes('/subscriptions')) return route.fulfill(json({ items: [{ snippet: { title: 'Chaîne Un', resourceId: { channelId: 'UCchaine0001' }, thumbnails: th } }] }));
+      if (u.includes('/channels')) return route.fulfill(json({ items: [{ contentDetails: { relatedPlaylists: { uploads: 'UUchaine0001' } } }] }));
+      if (u.includes('/playlistItems')) return route.fulfill(json({ items: [{ snippet: { title: 'Vidéo de la chaîne', videoOwnerChannelTitle: 'Chaîne Un', resourceId: { videoId: 'vid00000001' }, thumbnails: th } }] }));
+      return route.fulfill(json({ items: [] }));
+    }
     if (u.includes('drive/v3/files') && u.includes('/export')) return route.fulfill({ status: 200, headers: { ...CORS, 'Content-Type': 'application/pdf' }, body: 'PDFDATA' });
     if (u.includes('drive/v3/files') && u.includes('alt=media')) return route.fulfill({ status: 200, headers: { ...CORS, 'Content-Type': 'application/pdf' }, body: 'PDFDATA' });
     if (u.includes('drive/v3/files') && m === 'PATCH') { etat.drivePatch = etat.drivePatch || []; etat.drivePatch.push({ url: u, body: route.request().postData() }); return route.fulfill(json({ id: 'd4', parents: ['d3'] })); }
@@ -456,6 +464,17 @@ srv.listen(8765, async () => {
     }));
     const ok = /^70[, ]/.test(d.solde) && /70,00 FC/.test(d.finances) && /à encaisser/.test(d.finances) && !d.tuileKpi && d.projets.length > 0;
     return { ok, detail: JSON.stringify(d) };
+  }));
+  res.push(await scenario('Lecteur YouTube : espace du compte Google (abonnements puis vidéos de la chaîne)', {}, async (p, appels, logs, etat) => {
+    await p.click('#bouton-connexion'); await p.waitForTimeout(3000);
+    await p.click('#tv-ouvrir'); await p.waitForTimeout(2000);
+    const fr = p.frames().find((f) => f !== p.mainFrame() && f.url() === 'about:srcdoc') || p.frames()[1];
+    await fr.click('#youtubeTab'); await fr.click('[data-yt-espace="subscriptions"]'); await p.waitForTimeout(1200);
+    const chaines = await fr.$$eval('#youtubeResults button', (l) => l.map((x) => x.textContent.trim()));
+    await fr.click('#youtubeResults button'); await p.waitForTimeout(1200);
+    const videos = await fr.$$eval('#youtubeResults button', (l) => l.map((x) => x.textContent.trim()));
+    const ok = chaines.length === 1 && /Chaîne Un/.test(chaines[0]) && videos.length === 1 && /Vidéo de la chaîne/.test(videos[0]) && (etat.youtube || []).some((u) => u.includes('mine=true'));
+    return { ok, detail: JSON.stringify({ chaines, videos, appels: etat.youtube }) };
   }));
   res.push(await scenario('Taux de change : la saisie dans Budget mensuel est enregistrée', {}, async (p, appels, logs, etat) => {
     etat.devise = 'FC';
