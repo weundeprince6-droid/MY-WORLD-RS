@@ -52,6 +52,7 @@ input[type=search]{width:100%;padding:8px 10px;border-radius:8px;border:1px soli
 #viewer>.layer{display:none}
 #viewer.mode-empty #empty{display:block}
 #viewer.mode-video #video{display:block}
+#viewer.mode-youtube #youtubeFrame{display:block;position:absolute;inset:0;width:100%;height:100%;border:0;background:#000}
 #viewer.mode-audio #visualizer,#viewer.mode-audio #audioInfo{display:flex}
 #viewer.mode-image #imageBox{display:flex}
 #empty{text-align:center;color:#9a9ab0;padding:20px}#empty .big{font-size:56px;margin-bottom:12px}
@@ -447,6 +448,7 @@ body.gold #titleBar{background:#1a1a18!important}
         <button data-filter="favoris" id="favorisTab" title="Fichiers cochés ★">★ Favoris</button>
         <button type="button" id="mesFilmsTab">Mes films et séries</button>
         <button type="button" id="tvDriveTab">Google Drive</button>
+        <button type="button" id="youtubeTab">▶ YouTube</button>
       </div>
     <ul id="playlist"></ul>
     <section id="mesFilmsPane" hidden style="flex:1;min-height:0;overflow:auto;padding:10px">
@@ -457,6 +459,16 @@ body.gold #titleBar{background:#1a1a18!important}
       </div>
       <p id="mesFilmsStatus" style="font-size:12px;color:var(--muted)">Choisissez le dossier qui contient vos films et séries.</p>
       <div id="mesFilmsList"></div>
+    </section>
+    <section id="youtubePane" hidden style="flex:1;min-height:0;overflow:auto;padding:12px">
+      <strong>▶ YouTube dans le lecteur</strong>
+      <p style="font-size:12px;color:var(--muted);line-height:1.5">Collez le lien d’une vidéo YouTube pour la lire directement dans la zone vidéo.</p>
+      <form id="youtubeForm" style="display:grid;gap:8px">
+        <input id="youtubeUrl" type="url" required placeholder="https://www.youtube.com/watch?v=…" aria-label="Lien de la vidéo YouTube" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--panel2);color:var(--text)" />
+        <button type="submit" class="on">▶ Lire dans le lecteur</button>
+      </form>
+      <p id="youtubeStatus" role="status" style="font-size:12px;color:var(--muted)">Les vidéos dont l’intégration est autorisée peuvent être lues ici.</p>
+      <button id="youtubeBack" type="button">← Retour aux fichiers</button>
     </section>
     <section id="tvDrivePane" hidden style="flex:1;min-height:0;overflow:auto;padding:10px">
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px"><strong style="flex:1">Google Drive</strong><button id="tvDriveRefresh" type="button">↻ Actualiser</button></div>
@@ -474,6 +486,7 @@ body.gold #titleBar{background:#1a1a18!important}
         <div id="resume"></div>
       </div>
       <video id="video" class="layer" playsinline></video>
+      <iframe id="youtubeFrame" class="layer" title="Lecteur YouTube" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
       <canvas id="visualizer" class="layer"></canvas>
       <div id="audioInfo" class="layer"><div id="audioIcon">🎵</div><div id="audioTitle"></div></div>
       <div id="imageBox" class="layer"><img id="image" alt="" draggable="false" />
@@ -994,6 +1007,7 @@ function releaseUrl() { if (curUrl) { URL.revokeObjectURL(curUrl); curUrl = null
 function stopAll() {
   audio.pause(); audio.removeAttribute('src'); audio.load();
   video.pause(); video.removeAttribute('src'); video.load();
+  const yf = $('youtubeFrame'); if (yf) yf.src = 'about:blank';
   releaseUrl();
 }
 
@@ -1642,8 +1656,9 @@ $('btnClear').onclick = () => {
 };
 $('tabs').onclick = (e) => {
   const b = e.target.closest('button'); if (!b) return;
-  if (b.id === 'tvDriveTab' || b.id === 'mesFilmsTab') return;
+  if (b.id === 'tvDriveTab' || b.id === 'mesFilmsTab' || b.id === 'youtubeTab') return;
   if (typeof tvDriveHide === 'function') tvDriveHide();
+  if (typeof youtubeHide === 'function') youtubeHide();
   filter = b.dataset.filter;
   document.querySelectorAll('#tabs button').forEach((x) => x.classList.toggle('active', x === b));
   renderList();
@@ -2233,7 +2248,7 @@ function renderResume() {
    } catch (e) { if (e.name !== 'AbortError') mesFilmsStatus.textContent = 'Sélection du dossier impossible. Vérifiez les autorisations du site dans Edge.'; }
  }
  function afficherOngletMesFilms() {
-   tvDriveHide(); $('playlist').hidden = true; mesFilmsPane.hidden = false;
+   tvDriveHide(); youtubeHide(); $('playlist').hidden = true; mesFilmsPane.hidden = false;
    document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('active', b === mesFilmsTab));
    if (!mesFilmsItems.length) synchroniserMesFilms(false);
  }
@@ -2244,13 +2259,41 @@ function renderResume() {
  const tvDriveTab = $('tvDriveTab'), tvDrivePane = $('tvDrivePane'), tvDriveList = $('tvDriveList'), tvDriveStatus = $('tvDriveStatus');
  let tvDriveActive = false, tvDriveBlobUrl = null;
  function tvDriveSend(action, extra={}) { parent.postMessage({ source:'mwrs-tv-drive', action, ...extra }, '*'); }
+ const youtubeTab = $('youtubeTab'), youtubePane = $('youtubePane'), youtubeFrame = $('youtubeFrame');
+ function youtubeId(value) {
+   try {
+     const u = new URL(value.trim());
+     if (!['youtube.com','www.youtube.com','m.youtube.com','youtu.be','www.youtube-nocookie.com','youtube-nocookie.com'].includes(u.hostname)) return '';
+     if (u.hostname.includes('youtu.be')) return u.pathname.split('/').filter(Boolean)[0] || '';
+     if (u.pathname === '/watch') return u.searchParams.get('v') || '';
+     const m = u.pathname.match(/^\/(?:embed|shorts|live)\/([\w-]{6,})/);
+     return m ? m[1] : '';
+   } catch (_) { return ''; }
+ }
+ function youtubeShow() {
+   tvDriveHide(); cacherOngletMesFilms(); $('playlist').hidden = true; youtubePane.hidden = false;
+   $('tabs').querySelectorAll('button').forEach(b => b.classList.toggle('active', b === youtubeTab));
+   if (document.body.dataset.mode !== 'youtube') setMode('empty');
+   $('youtubeUrl').focus();
+ }
+ function youtubeHide() { youtubePane.hidden = true; if (!tvDriveActive && mesFilmsPane.hidden) $('playlist').hidden = false; }
+ youtubeTab?.addEventListener('click', youtubeShow);
+ $('youtubeForm')?.addEventListener('submit', e => {
+   e.preventDefault(); const id = youtubeId($('youtubeUrl').value);
+   if (!/^[\w-]{6,20}$/.test(id)) { $('youtubeStatus').textContent = 'Lien YouTube non reconnu. Collez un lien youtube.com ou youtu.be valide.'; return; }
+   saveProg(); stopAll();
+   youtubeFrame.src = 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(id) + '?autoplay=1&rel=0';
+   setMode('youtube'); $('nowPlaying').textContent = 'YouTube · ' + id;
+   $('youtubeStatus').textContent = 'Vidéo chargée dans le lecteur. Si elle ne démarre pas, son propriétaire peut avoir désactivé l’intégration.';
+ });
+ $('youtubeBack')?.addEventListener('click', () => { youtubeFrame.src = 'about:blank'; setMode(current < 0 ? 'empty' : items[current].type); });
  function tvDriveShow() {
-   cacherOngletMesFilms();
+   youtubeHide(); cacherOngletMesFilms();
    tvDriveActive = true; $('playlist').hidden = true; tvDrivePane.hidden = false;
    $('tabs').querySelectorAll('button').forEach(b=>b.classList.toggle('active',b===tvDriveTab));
    tvDriveStatus.textContent='Connexion à Google Drive…'; tvDriveSend('list');
  }
- function tvDriveHide() { tvDriveActive=false; tvDrivePane.hidden=true; $('playlist').hidden=false; mesFilmsPane.hidden=true; }
+ function tvDriveHide() { tvDriveActive=false; tvDrivePane.hidden=true; if (youtubePane.hidden && mesFilmsPane.hidden) $('playlist').hidden=false; mesFilmsPane.hidden=true; }
  tvDriveTab?.addEventListener('click',tvDriveShow);
  $('tvDriveRefresh')?.addEventListener('click',()=>{tvDriveStatus.textContent='Actualisation…';tvDriveSend('list');});
  tvDriveList?.addEventListener('click',e=>{const b=e.target.closest('[data-tv-drive-id]');if(!b)return;tvDriveStatus.textContent='Ouverture…';tvDriveSend('open',{id:b.dataset.tvDriveId});});
