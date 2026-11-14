@@ -71,6 +71,7 @@ $("bouton-deconnexion").addEventListener("click", async () => {
   } catch (e) { console.warn("Révocation Google non confirmée :", e); }
   try { if (fb) await fb.signOut(fb.auth); } catch { /* ignoré */ }
   jetonGoogle = null; jetonGoogleExpireA = 0; utilisateurConnecte = null; uidSessionTraitee = null;
+  effacerJetonYouTube();
   if (minuterieVerrouillage) clearTimeout(minuterieVerrouillage);
   minuterieVerrouillage = null;
   $("pin-gate").hidden = true;
@@ -104,6 +105,7 @@ const sdkPret = (async () => {
       utilisateurConnecte = user || null;
       if (!user) {
         uidSessionTraitee = null; jetonGoogle = null; jetonGoogleExpireA = 0;
+        effacerJetonYouTube();
         if (minuterieVerrouillage) clearTimeout(minuterieVerrouillage);
         minuterieVerrouillage = null;
         $("pin-gate").hidden = true;
@@ -373,6 +375,8 @@ function chargerGis() {
   }
   return chargementGis;
 }
+// Précharge la bibliothèque afin que la demande YouTube puisse s’ouvrir au clic de l’utilisateur.
+if (reglages.googleClientId) chargerGis().catch((e) => console.info("Google Identity Services indisponible :", e?.message));
 async function renouvelerJetonSilencieux(email) {
   const clientId = reglages.googleClientId;
   if (!clientId) throw new Error("googleClientId non configuré.");
@@ -2631,10 +2635,15 @@ async function tvHtml() {
 const CLE_JETON_YOUTUBE = "mwrs.youtube.jeton";
 let jetonYouTube = null;
 let jetonYouTubeExpireA = 0;
+function effacerJetonYouTube() {
+  jetonYouTube = null;
+  jetonYouTubeExpireA = 0;
+  try { localStorage.removeItem(CLE_JETON_YOUTUBE); } catch {}
+}
 function lireJetonYouTube() {
   try {
     const saved = JSON.parse(localStorage.getItem(CLE_JETON_YOUTUBE) || "null");
-    if (saved?.token && Date.now() < saved.expireA - 60000) {
+    if (saved?.uid === fb?.auth.currentUser?.uid && saved.token && Date.now() < saved.expireA - 60000) {
       jetonYouTube = saved.token;
       jetonYouTubeExpireA = saved.expireA;
       return jetonYouTube;
@@ -2664,7 +2673,7 @@ async function obtenirJetonYouTube() {
         }
         jetonYouTube = result.access_token;
         jetonYouTubeExpireA = Date.now() + (Number(result.expires_in) || 3600) * 1000;
-        try { localStorage.setItem(CLE_JETON_YOUTUBE, JSON.stringify({ token: jetonYouTube, expireA: jetonYouTubeExpireA })); } catch {}
+        try { localStorage.setItem(CLE_JETON_YOUTUBE, JSON.stringify({ uid: fb.auth.currentUser.uid, token: jetonYouTube, expireA: jetonYouTubeExpireA })); } catch {}
         resolve(jetonYouTube);
       },
       error_callback: (error) => reject(new Error(error?.type || "Autorisation YouTube impossible."))
