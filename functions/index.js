@@ -73,7 +73,6 @@ exports.googleOAuthStart = onRequest(
           "https://www.googleapis.com/auth/drive.metadata.readonly",
           "https://www.googleapis.com/auth/drive.file",
           "https://www.googleapis.com/auth/documents",
-          "https://www.googleapis.com/auth/youtube.readonly",
           "https://www.googleapis.com/auth/spreadsheets"
         ].join(" "),
         access_type: "offline",
