@@ -535,8 +535,6 @@ body.gold #titleBar{background:#1a1a18!important}
         <div class="tv-head"><strong>📺 TV · Chaînes francophones</strong><button id="tvBack" type="button">← Mes fichiers</button><a id="tvOpenOfficial" href="https://www.youtube.com/watch?v=a47ckXKZjxI" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--panel2);color:var(--text);text-decoration:none">Ouvrir la chaîne ↗</a></div>
         <div class="tv-stations" id="tvStations">
           <button type="button" data-tv-station="france24" class="active">🇫🇷 France 24</button>
-          <button type="button" data-tv-station="tv5">🌍 TV5MONDE Info</button>
-          <button type="button" data-tv-station="rtnc">🇨🇩 RTNC · RDC</button>
           <button type="button" data-tv-station="euronews">🌐 Euronews FR</button>
         </div>
         <div class="tv-view">
@@ -2444,8 +2442,6 @@ function renderResume() {
   const tvPane = $('tvPane'), tvStationFrame = $('tvStationFrame');
   const tvStations = {
     france24: {name:'FRANCE 24', url:'https://www.youtube-nocookie.com/embed/a47ckXKZjxI?autoplay=1&rel=0', official:'https://www.youtube.com/watch?v=a47ckXKZjxI', note:'Flux YouTube de FRANCE 24.'},
-    tv5: {name:'TV5MONDE Info', url:'https://www.youtube-nocookie.com/embed/-7_nV8qfa9Q?autoplay=1&rel=0', official:'https://www.youtube.com/@tv5mondeinfo', note:'Vidéo officielle TV5MONDE Info sur YouTube.'},
-    rtnc: {name:'RTNC · RDC', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UC3c5awvKeU7TOauQCdMj_-w&autoplay=1', official:'https://www.youtube.com/@RTNCOFFICIELLE-f2w', note:'Flux YouTube de la chaîne officielle RTNC, s’il est en direct.'},
     euronews: {name:'Euronews FR', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCW2QcKZiU8aUGg4yxCIditg&autoplay=1', official:'https://www.youtube.com/@euronewsfr/live', note:'Flux YouTube en français, selon disponibilité du direct.'}
   };
   function tvSelectStation(key) {
