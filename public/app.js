@@ -1945,17 +1945,6 @@ function rendreDashboardFinancesProjets() {
       liste.innerHTML = lignes.join("") + ops.join("");
     }
   }
-  // Tuile « Solde à ma disposition » : tous les comptes dans la devise du budget (taux commun)
-  if (el("dash-solde")) {
-    if (!walletAccounts.length) { el("dash-solde").textContent = "—"; el("dash-solde-note").textContent = walletLoaded ? "Aucun compte" : "Porte-Monnaie"; }
-    else {
-      let dev = "FC"; try { dev = (localStorage.getItem("budget_devise") || "FC").toUpperCase(); } catch {}
-      let total = 0, exclus = 0;
-      for (const a of walletAccounts) { const v = convertirDevise(Number(a.balance || 0), a.currency, dev); if (v === null) exclus++; else total += v; }
-      el("dash-solde").textContent = formatMontantDevise(total, dev);
-      el("dash-solde-note").textContent = exclus ? exclus + " compte(s) à convertir : renseignez le taux" : walletAccounts.length + " compte(s) · taux commun";
-    }
-  }
   // Projets
   const projets = notesItems.filter(n => n.type === "project" && n.status !== "done");
   if (el("dash-projets")) { el("dash-projets").textContent = notesLoaded ? projets.length.toLocaleString("fr-FR") : "—"; el("dash-projets-note").textContent = notesLoaded ? (projets.filter(p => p.status === "doing").length + " en cours") : "Notes & Projets"; }
