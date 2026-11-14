@@ -817,5 +817,46 @@
             }
         }
     </script>
+
+    <script>
+      // Ajuste la hauteur de l'intégration dans MY WORLD RS pour que
+      // tout le budget défile avec la page principale, sans barre de défilement imbriquée.
+      (function(){
+        var pending=false;
+        function envoyerHauteur(){
+          pending=false;
+          if(!window.parent||window.parent===window)return;
+          var body=document.body;
+          var root=document.documentElement;
+          var hauteur=Math.max(
+            body?body.scrollHeight:0,
+            body?body.offsetHeight:0,
+            root?root.scrollHeight:0,
+            root?root.offsetHeight:0
+          );
+          window.parent.postMessage({type:"mwrs-budget-height",height:Math.ceil(hauteur+2)},window.location.origin);
+        }
+        function programmer(){
+          if(pending)return;
+          pending=true;
+          requestAnimationFrame(envoyerHauteur);
+        }
+        window.addEventListener("load",programmer);
+        window.addEventListener("resize",programmer);
+        document.addEventListener("DOMContentLoaded",function(){
+          programmer();
+          if(window.ResizeObserver){
+            var ro=new ResizeObserver(programmer);
+            if(document.body)ro.observe(document.body);
+            ro.observe(document.documentElement);
+          }
+          if(window.MutationObserver&&document.body){
+            var mo=new MutationObserver(programmer);
+            mo.observe(document.body,{subtree:true,childList:true,attributes:true,characterData:true});
+          }
+          [100,350,800,1500].forEach(function(ms){setTimeout(programmer,ms);});
+        });
+      })();
+    </script>
 </body>
 </html>
