@@ -157,7 +157,14 @@ input[type=search]{width:100%;padding:8px 10px;border-radius:8px;border:1px soli
 #titleBar{display:flex;align-items:center;gap:12px}
 #titleBar #nowPlaying{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
 #viewer #youtubePane{position:absolute;inset:0;z-index:6;overflow:auto;padding:16px 20px;background:var(--bg);color:var(--text)}
+#viewer #matchsPane{position:absolute;inset:0;z-index:7;display:flex;flex-direction:column;gap:10px;padding:12px;background:var(--bg);color:var(--text)}
+#viewer #matchsPane[hidden]{display:none!important}
+#matchsFrame{width:100%;height:100%;min-height:0;flex:1;border:0;border-radius:10px;background:#fff}
+#matchsPane .matchs-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+#matchsPane .matchs-head strong{flex:1;min-width:140px}
+#matchsPane .matchs-help{font-size:12px;color:var(--muted);margin:0}
 body:not([data-mode="empty"]):not([data-mode="youtube"]) #viewer #youtubePane{display:none!important}
+body:not([data-mode="matchs"]) #viewer #matchsPane{display:none!important}
 #ytRetour{flex:none;border:1px solid var(--border);background:var(--panel2);color:var(--text);border-radius:999px;padding:4px 12px;font-size:12.5px;cursor:pointer}
 #ytRetour:hover{border-color:var(--accent)}
 #favBtn{flex:none;border:1px solid var(--border);background:var(--panel2);color:var(--text);border-radius:999px;padding:4px 12px;font-size:12.5px;cursor:pointer}
@@ -457,6 +464,7 @@ body.gold #titleBar{background:#1a1a18!important}
         <button type="button" id="mesFilmsTab">Mes films et séries</button>
         <button type="button" id="tvDriveTab">Google Drive</button>
         <button type="button" id="youtubeTab">▶ YouTube</button>
+        <button type="button" id="matchsTab">⚽ Matchs en direct</button>
       </div>
     <ul id="playlist"></ul>
     <section id="mesFilmsPane" hidden style="flex:1;min-height:0;overflow:auto;padding:10px">
@@ -507,6 +515,11 @@ body.gold #titleBar{background:#1a1a18!important}
         <button type="submit">▶ Lire le lien</button>
       </form>
     </section>
+      <section id="matchsPane" hidden>
+        <div class="matchs-head"><strong>⚽ Matchs en direct · Kooralive</strong><button id="matchsBack" type="button">← Mes fichiers</button><a href="https://kooralive.la/" target="_blank" rel="noopener noreferrer" class="button">Ouvrir Kooralive ↗</a></div>
+        <p class="matchs-help">Si le site refuse l’affichage intégré ou si la zone reste vide, utilisez « Ouvrir Kooralive ».</p>
+        <iframe id="matchsFrame" title="Kooralive - Matchs en direct" src="https://kooralive.la/" loading="lazy" referrerpolicy="no-referrer" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
+      </section>
       <video id="video" class="layer" playsinline></video>
       <iframe id="youtubeFrame" class="layer" title="Lecteur YouTube" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
       <canvas id="visualizer" class="layer"></canvas>
@@ -1780,9 +1793,10 @@ $('btnClear').onclick = () => {
 };
 $('tabs').onclick = (e) => {
   const b = e.target.closest('button'); if (!b) return;
-  if (b.id === 'tvDriveTab' || b.id === 'mesFilmsTab' || b.id === 'youtubeTab') return;
+  if (b.id === 'tvDriveTab' || b.id === 'mesFilmsTab' || b.id === 'youtubeTab' || b.id === 'matchsTab') return;
   if (typeof tvDriveHide === 'function') tvDriveHide();
   if (typeof youtubeHide === 'function') youtubeHide();
+  if (typeof matchsHide === 'function') matchsHide();
   filter = b.dataset.filter;
   document.querySelectorAll('#tabs button').forEach((x) => x.classList.toggle('active', x === b));
   renderList();
@@ -2372,7 +2386,7 @@ function renderResume() {
    } catch (e) { if (e.name !== 'AbortError') mesFilmsStatus.textContent = 'Sélection du dossier impossible. Vérifiez les autorisations du site dans Edge.'; }
  }
  function afficherOngletMesFilms() {
-   tvDriveHide(); youtubeHide(); $('playlist').hidden = true; mesFilmsPane.hidden = false;
+   tvDriveHide(); youtubeHide(); matchsHide(); $('playlist').hidden = true; mesFilmsPane.hidden = false;
    document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('active', b === mesFilmsTab));
    if (!mesFilmsItems.length) synchroniserMesFilms(false);
  }
@@ -2384,6 +2398,24 @@ function renderResume() {
  let tvDriveActive = false, tvDriveBlobUrl = null;
  function tvDriveSend(action, extra={}) { parent.postMessage({ source:'mwrs-tv-drive', action, ...extra }, '*'); }
  const youtubeTab = $('youtubeTab'), youtubePane = $('youtubePane'), youtubeFrame = $('youtubeFrame');
+ const matchsTab = $('matchsTab'), matchsPane = $('matchsPane');
+ let matchsActive = false;
+ function matchsShow() {
+   tvDriveHide(); youtubeHide(); cacherOngletMesFilms();
+   matchsActive = true; $('playlist').hidden = true; matchsPane.hidden = false;
+   $('tabs').querySelectorAll('button').forEach(b => b.classList.toggle('active', b === matchsTab));
+   setMode('matchs'); $('nowPlaying').textContent = '⚽ Kooralive · Matchs en direct'; updatePlayBtn();
+ }
+ function matchsHide() {
+   matchsActive = false; if (matchsPane) matchsPane.hidden = true;
+   if (!tvDriveActive && mesFilmsPane.hidden && youtubePane.hidden) $('playlist').hidden = false;
+ }
+ matchsTab?.addEventListener('click', matchsShow);
+ $('matchsBack')?.addEventListener('click', () => {
+   matchsHide(); $('tabs').querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.filter === 'all'));
+   filter = 'all'; renderList(); setMode(current < 0 ? 'empty' : items[current].type);
+   $('nowPlaying').textContent = current < 0 ? 'Aucun média' : items[current].name;
+ });
  function youtubeId(value) {
    try {
      const u = new URL(value.trim());
@@ -2395,12 +2427,12 @@ function renderResume() {
    } catch (_) { return ''; }
  }
  function youtubeShow() {
-   tvDriveHide(); cacherOngletMesFilms(); youtubePane.hidden = false;
+   matchsHide(); tvDriveHide(); cacherOngletMesFilms(); youtubePane.hidden = false;
    $('tabs').querySelectorAll('button').forEach(b => b.classList.toggle('active', b === youtubeTab));
    if (document.body.dataset.mode !== 'youtube') setMode('empty');
    ytMajRetour(); $('youtubeQuery').focus();
  }
- function youtubeHide() { youtubePane.hidden = true; if (!tvDriveActive && mesFilmsPane.hidden) $('playlist').hidden = false; ytMajRetour(); }
+ function youtubeHide() { youtubePane.hidden = true; if (!tvDriveActive && mesFilmsPane.hidden && !matchsActive) $('playlist').hidden = false; ytMajRetour(); }
  function ytMajRetour() { const r = $('ytRetour'); if (r) r.hidden = !(document.body.dataset.mode === 'youtube' && youtubePane.hidden); }
  $('ytRetour')?.addEventListener('click', () => { youtubePane.hidden = false; ytMajRetour(); });
  youtubeTab?.addEventListener('click', youtubeShow);
@@ -2519,7 +2551,7 @@ function renderResume() {
  });
  $('youtubeBack')?.addEventListener('click', () => { youtubeFrame.src = 'about:blank'; youtubeHide(); $('tabs').querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.filter === 'all')); filter = 'all'; renderList(); setMode(current < 0 ? 'empty' : items[current].type); });
  function tvDriveShow() {
-   youtubeHide(); cacherOngletMesFilms();
+   matchsHide(); youtubeHide(); cacherOngletMesFilms();
    tvDriveActive = true; $('playlist').hidden = true; tvDrivePane.hidden = false;
    $('tabs').querySelectorAll('button').forEach(b=>b.classList.toggle('active',b===tvDriveTab));
    tvDriveStatus.textContent='Connexion à Google Drive…'; tvDriveSend('list');
