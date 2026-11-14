@@ -532,7 +532,7 @@ body.gold #titleBar{background:#1a1a18!important}
       </form>
     </section>
       <section id="tvPane" hidden>
-        <div class="tv-head"><strong>📺 TV · Chaînes francophones</strong><button id="tvBack" type="button">← Mes fichiers</button><a id="tvOpenOfficial" href="https://www.youtube.com/watch?v=a47ckXKZjxI" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--panel2);color:var(--text);text-decoration:none">Ouvrir la chaîne ↗</a></div>
+        <div class="tv-head"><strong>📺 TV · Chaînes francophones</strong><button id="tvBack" type="button">← Mes fichiers</button><a id="tvOpenOfficial" href="https://f24.my/YTliveFR" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--panel2);color:var(--text);text-decoration:none">Ouvrir la chaîne ↗</a></div>
         <div class="tv-stations" id="tvStations">
           <button type="button" data-tv-station="france24" class="active">🇫🇷 France 24</button>
           <button type="button" data-tv-station="euronews">🌐 Euronews FR</button>
@@ -542,7 +542,7 @@ body.gold #titleBar{background:#1a1a18!important}
         </div>
         <div class="tv-view">
           <p id="tvStatus" class="tv-help">Chaînes et vidéos issues de YouTube uniquement. Si un direct est hors ligne ou bloqué, ouvrez la chaîne sur YouTube.</p>
-          <iframe id="tvStationFrame" title="Chaîne de télévision francophone" src="https://www.youtube-nocookie.com/embed/a47ckXKZjxI?autoplay=0&rel=0" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
+          <iframe id="tvStationFrame" title="Chaîne de télévision francophone" src="https://www.youtube-nocookie.com/embed/l8PMl7tUDIE?autoplay=1&rel=0" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
         </div>
       </section>
       <section id="fifaPane" hidden>
@@ -2444,7 +2444,7 @@ function renderResume() {
  let tvActive = false;
   const tvPane = $('tvPane'), tvStationFrame = $('tvStationFrame');
   const tvStations = {
-    france24: {name:'FRANCE 24', category:'Francophone', url:'https://www.youtube-nocookie.com/embed/a47ckXKZjxI?autoplay=1&rel=0', official:'https://www.youtube.com/watch?v=a47ckXKZjxI', note:'Flux YouTube de FRANCE 24.'},
+    france24: {name:'FRANCE 24', category:'Francophone', url:'https://www.youtube-nocookie.com/embed/l8PMl7tUDIE?autoplay=1&rel=0', official:'https://f24.my/YTliveFR', note:'Flux YouTube de FRANCE 24.'},
     euronews: {name:'Euronews FR', category:'Francophone', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCW2QcKZiU8aUGg4yxCIditg&autoplay=1', official:'https://www.youtube.com/@euronewsfr/live', note:'Flux YouTube en français, selon disponibilité du direct.'},
     africanews: {name:'Africanews', category:'Francophone', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UC1_E8NeF5QHY2dtdLRBCCLA&autoplay=1', official:'https://www.youtube.com/@africanews/live', note:'Actualités africaines et internationales en direct.'},
     franceinfo: {name:'franceinfo', category:'Francophone', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCO6K_kkdP-lnSCiO3tPx7WA&autoplay=1', official:'https://www.youtube.com/@franceinfo/live', note:'Chaîne d’information française en continu.'},
