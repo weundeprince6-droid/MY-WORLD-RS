@@ -461,14 +461,36 @@ body.gold #titleBar{background:#1a1a18!important}
       <div id="mesFilmsList"></div>
     </section>
     <section id="youtubePane" hidden style="flex:1;min-height:0;overflow:auto;padding:12px">
-      <strong>▶ YouTube dans le lecteur</strong>
-      <p style="font-size:12px;color:var(--muted);line-height:1.5">Collez le lien d’une vidéo YouTube pour la lire directement dans la zone vidéo.</p>
-      <form id="youtubeForm" style="display:grid;gap:8px">
-        <input id="youtubeUrl" type="url" required placeholder="https://www.youtube.com/watch?v=…" aria-label="Lien de la vidéo YouTube" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--panel2);color:var(--text)" />
-        <button type="submit" class="on">▶ Lire dans le lecteur</button>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <strong style="font-size:16px;flex:1">▶ YouTube · Explorer</strong>
+        <button id="youtubeBack" type="button">← Mes fichiers</button>
+      </div>
+      <div style="display:grid;gap:7px;padding:10px;background:var(--panel2);border:1px solid var(--border);border-radius:10px;margin-bottom:12px">
+        <label for="youtubeApiKey" style="font-size:12px;color:var(--muted)">Clé API YouTube Data (nécessaire pour la recherche)</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <input id="youtubeApiKey" type="password" autocomplete="off" placeholder="Collez votre clé API Google" style="flex:1;min-width:140px;padding:9px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text)" />
+          <button id="youtubeSaveKey" type="button">Enregistrer</button>
+        </div>
+        <small style="color:var(--muted)">La clé reste dans ce navigateur. Restreignez-la à l’API YouTube Data v3 et au domaine de votre application.</small>
+      </div>
+      <form id="youtubeSearchForm" style="display:flex;gap:7px;margin-bottom:9px">
+        <input id="youtubeQuery" type="search" required placeholder="Rechercher une vidéo, un artiste, un sujet…" style="flex:1;min-width:0;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--panel2);color:var(--text)" />
+        <button type="submit" class="on">Rechercher</button>
       </form>
-      <p id="youtubeStatus" role="status" style="font-size:12px;color:var(--muted)">Les vidéos dont l’intégration est autorisée peuvent être lues ici.</p>
-      <button id="youtubeBack" type="button">← Retour aux fichiers</button>
+      <div id="youtubeCategories" style="display:flex;gap:6px;overflow-x:auto;padding:2px 0 10px">
+        <button type="button" data-yt-query="musique populaire">Musique</button>
+        <button type="button" data-yt-query="actualités RDC">Actualités</button>
+        <button type="button" data-yt-query="football">Football</button>
+        <button type="button" data-yt-query="films bandes annonces">Bandes-annonces</button>
+        <button type="button" data-yt-query="éducation">Éducation</button>
+        <button type="button" data-yt-query="technologie">Technologie</button>
+      </div>
+      <p id="youtubeStatus" role="status" style="font-size:12px;color:var(--muted)">Enregistrez votre clé API, puis recherchez une vidéo ou choisissez une catégorie. Vous pouvez aussi coller directement un lien ci-dessous.</p>
+      <div id="youtubeResults" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:10px;margin:10px 0"></div>
+      <form id="youtubeForm" style="display:flex;gap:7px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:12px;margin-top:12px">
+        <input id="youtubeUrl" type="url" required placeholder="Ou collez un lien YouTube…" aria-label="Lien de la vidéo YouTube" style="flex:1;min-width:150px;padding:9px;border-radius:8px;border:1px solid var(--border);background:var(--panel2);color:var(--text)" />
+        <button type="submit">▶ Lire le lien</button>
+      </form>
     </section>
     <section id="tvDrivePane" hidden style="flex:1;min-height:0;overflow:auto;padding:10px">
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px"><strong style="flex:1">Google Drive</strong><button id="tvDriveRefresh" type="button">↻ Actualiser</button></div>
@@ -2278,13 +2300,52 @@ function renderResume() {
  }
  function youtubeHide() { youtubePane.hidden = true; if (!tvDriveActive && mesFilmsPane.hidden) $('playlist').hidden = false; }
  youtubeTab?.addEventListener('click', youtubeShow);
+ const ytKeyInput = $('youtubeApiKey'), ytResults = $('youtubeResults');
+ try { ytKeyInput.value = localStorage.getItem('mwrs_youtube_api_key') || ''; } catch (_) {}
+ function youtubePlay(id, title='') {
+   if (!/^[\w-]{6,20}$/.test(id)) return;
+   saveProg(); stopAll();
+   youtubeFrame.src = 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(id) + '?autoplay=1&rel=0';
+   setMode('youtube'); $('nowPlaying').textContent = 'YouTube · ' + (title || id);
+   $('youtubeStatus').textContent = 'Lecture lancée. Certaines vidéos interdisent l’intégration et ne pourront pas être lues ici.';
+ }
+ $('youtubeSaveKey')?.addEventListener('click', () => {
+   const key = ytKeyInput.value.trim();
+   if (!key) { $('youtubeStatus').textContent = 'Collez d’abord votre clé API YouTube Data.'; return; }
+   try { localStorage.setItem('mwrs_youtube_api_key', key); $('youtubeStatus').textContent = 'Clé enregistrée dans ce navigateur. Vous pouvez lancer une recherche.'; }
+   catch (_) { $('youtubeStatus').textContent = 'Impossible d’enregistrer la clé dans ce navigateur.'; }
+ });
+ async function youtubeSearch(query) {
+   const key = (ytKeyInput.value || '').trim();
+   if (!key) { $('youtubeStatus').textContent = 'Ajoutez et enregistrez votre clé API YouTube Data pour rechercher.'; ytKeyInput.focus(); return; }
+   if (!query.trim()) return;
+   $('youtubeStatus').textContent = 'Recherche YouTube en cours…'; ytResults.replaceChildren();
+   try {
+     const url = new URL('https://www.googleapis.com/youtube/v3/search');
+     url.search = new URLSearchParams({part:'snippet',type:'video',maxResults:'18',q:query.trim(),key}).toString();
+     const response = await fetch(url.toString());
+     const data = await response.json();
+     if (!response.ok) throw new Error(data.error?.message || 'Erreur API YouTube');
+     const videos = (data.items || []).filter(x => x.id && x.id.videoId);
+     if (!videos.length) { $('youtubeStatus').textContent = 'Aucune vidéo trouvée pour cette recherche.'; return; }
+     $('youtubeStatus').textContent = videos.length + ' vidéo(s) trouvée(s). Sélectionnez une miniature pour lire.';
+     videos.forEach(item => {
+       const id = item.id.videoId, sn = item.snippet || {};
+       const card = document.createElement('button'); card.type = 'button';
+       card.style.cssText = 'padding:0;overflow:hidden;text-align:left;white-space:normal;display:flex;flex-direction:column;gap:5px';
+       const img = document.createElement('img'); img.src = sn.thumbnails?.medium?.url || sn.thumbnails?.default?.url || ''; img.alt = ''; img.loading = 'lazy'; img.style.cssText = 'width:100%;aspect-ratio:16/9;object-fit:cover;background:#000';
+       const title = document.createElement('span'); title.textContent = sn.title || 'Vidéo YouTube'; title.style.cssText = 'font-size:12px;font-weight:600;padding:0 7px;line-height:1.35';
+       const channel = document.createElement('small'); channel.textContent = sn.channelTitle || ''; channel.style.cssText = 'font-size:11px;color:var(--muted);padding:0 7px 7px';
+       card.append(img,title,channel); card.addEventListener('click',()=>youtubePlay(id,sn.title)); ytResults.append(card);
+     });
+   } catch (err) { $('youtubeStatus').textContent = 'Recherche impossible : ' + (err.message || 'vérifiez la clé API, son autorisation et le quota.'); }
+ }
+ $('youtubeSearchForm')?.addEventListener('submit', e => { e.preventDefault(); youtubeSearch($('youtubeQuery').value); });
+ $('youtubeCategories')?.addEventListener('click', e => { const b=e.target.closest('button[data-yt-query]'); if(!b)return; $('youtubeQuery').value=b.dataset.ytQuery; youtubeSearch(b.dataset.ytQuery); });
  $('youtubeForm')?.addEventListener('submit', e => {
    e.preventDefault(); const id = youtubeId($('youtubeUrl').value);
    if (!/^[\w-]{6,20}$/.test(id)) { $('youtubeStatus').textContent = 'Lien YouTube non reconnu. Collez un lien youtube.com ou youtu.be valide.'; return; }
-   saveProg(); stopAll();
-   youtubeFrame.src = 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(id) + '?autoplay=1&rel=0';
-   setMode('youtube'); $('nowPlaying').textContent = 'YouTube · ' + id;
-   $('youtubeStatus').textContent = 'Vidéo chargée dans le lecteur. Si elle ne démarre pas, son propriétaire peut avoir désactivé l’intégration.';
+   youtubePlay(id);
  });
  $('youtubeBack')?.addEventListener('click', () => { youtubeFrame.src = 'about:blank'; youtubeHide(); $('tabs').querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.filter === 'all')); filter = 'all'; renderList(); setMode(current < 0 ? 'empty' : items[current].type); });
  function tvDriveShow() {
