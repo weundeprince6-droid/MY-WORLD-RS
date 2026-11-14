@@ -2664,6 +2664,9 @@ async function obtenirJetonYouTube() {
     const client = window.google.accounts.oauth2.initTokenClient({
       client_id: reglages.googleClientId,
       scope: "https://www.googleapis.com/auth/youtube.readonly",
+      // Ne pas fusionner les autorisations déjà accordées (Drive, Gmail…) : Google refuse
+      // de combiner youtube.readonly avec drive.file (« Erreur 400 : invalid_request »).
+      include_granted_scopes: false,
       prompt: "consent",
       login_hint: fb.auth.currentUser.email || undefined,
       callback: (result) => {
