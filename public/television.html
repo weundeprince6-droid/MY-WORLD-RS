@@ -154,6 +154,10 @@ input[type=search]{width:100%;padding:8px 10px;border-radius:8px;border:1px soli
 #info{position:absolute;top:14px;right:16px;background:rgba(0,0,0,.8);color:#fff;padding:12px 16px;border-radius:10px;font-size:13px;line-height:1.7;display:none;z-index:6;max-width:360px}
 #info.show{display:block}
 #viewer.dropping::after{content:'Déposer pour ajouter';position:absolute;inset:10px;border:3px dashed var(--accent);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;background:color-mix(in srgb,var(--accent) 25%,transparent);z-index:8}
+#titleBar{display:flex;align-items:center;gap:12px}
+#titleBar #nowPlaying{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+#favBtn{flex:none;border:1px solid var(--border);background:var(--panel2);color:var(--text);border-radius:999px;padding:4px 12px;font-size:12.5px;cursor:pointer}
+#favBtn:hover{border-color:#f5b301}#favBtn.on{background:#f5b301;color:#1a1a1a;border-color:#f5b301;font-weight:700}
 #titleBar{padding:8px 18px;background:var(--panel);border-top:1px solid var(--border);font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #controls{background:var(--panel);padding:10px 18px 14px}
 #seekRow{display:flex;align-items:center;gap:12px;margin-bottom:8px}
@@ -551,7 +555,7 @@ body.gold #titleBar{background:#1a1a18!important}
       <div id="toast"></div>
       <div id="info"></div>
     </div>
-    <div id="titleBar"><span id="nowPlaying">Aucun média</span></div>
+    <div id="titleBar"><span id="nowPlaying">Aucun média</span><button id="favBtn" type="button" hidden title="Ajouter le fichier lu aux favoris">☆ Ajouter aux favoris</button></div>
     <div id="controls">
       <div id="seekRow">
         <span class="t" id="curTime">0:00</span>
@@ -971,7 +975,18 @@ function renderList() {
 function majCompteurFavoris() {
   const n = items.filter((it) => favoris[it.key]).length;
   const b = $('favorisTab'); if (b) b.textContent = '★ Favoris' + (n ? ' (' + n + ')' : '');
+  // Bouton du fichier en cours de lecture
+  const fb = $('favBtn'), it = items[current];
+  if (fb) {
+    fb.hidden = !it;
+    if (it) { const on = !!favoris[it.key]; fb.classList.toggle('on', on); fb.textContent = on ? '★ Dans les favoris' : '☆ Ajouter aux favoris'; fb.title = on ? 'Retirer ce fichier des favoris' : 'Ajouter ce fichier aux favoris'; }
+  }
 }
+$('favBtn').onclick = () => {
+  const it = items[current]; if (!it) return;
+  if (favoris[it.key]) delete favoris[it.key]; else favoris[it.key] = 1;
+  saveFav(); renderList();
+};
 
 function collapsedGroups() { try { return new Set(JSON.parse(localStorage.getItem('lp.dossiersReplies') || '[]')); } catch { return new Set(); } }
 function saveCollapsed(s) { try { localStorage.setItem('lp.dossiersReplies', JSON.stringify([...s])); } catch {} }
