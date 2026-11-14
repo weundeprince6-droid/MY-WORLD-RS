@@ -1809,7 +1809,8 @@ $('btnClear').onclick = () => {
 };
 $('tabs').onclick = (e) => {
   const b = e.target.closest('button'); if (!b) return;
-  if (b.id === 'tvDriveTab' || b.id === 'mesFilmsTab' || b.id === 'youtubeTab' || b.id === 'matchsTab' || b.id === 'fifaTab') return;
+  if (b.id === 'tvDriveTab' || b.id === 'mesFilmsTab' || b.id === 'youtubeTab' || b.id === 'matchsTab' || b.id === 'fifaTab' || b.id === 'tvTab') return;
+  if (typeof tvHide === 'function') tvHide();
   if (typeof tvDriveHide === 'function') tvDriveHide();
   if (typeof youtubeHide === 'function') youtubeHide();
   if (typeof matchsHide === 'function') matchsHide();
