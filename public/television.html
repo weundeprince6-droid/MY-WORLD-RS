@@ -731,7 +731,8 @@ const fmt = (s) => {
 };
 const fmtSize = (b) => b > 1e9 ? (b / 1e9).toFixed(2) + ' Go' : b > 1e6 ? (b / 1e6).toFixed(1) + ' Mo' : Math.round(b / 1e3) + ' Ko';
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
-const isInput = (e) => e.target.tagName === 'TEXTAREA' || (e.target.tagName === 'INPUT' && (e.target.type === 'search' || e.target.type === 'text'));
+// Toute zone de saisie (texte, mot de passe, lien, recherche, liste…) : les raccourcis clavier ne doivent pas intercepter les touches tapées
+const isInput = (e) => { const t = e.target; if (!t) return false; if (t.isContentEditable || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT') return true; return t.tagName === 'INPUT' && !['checkbox', 'radio', 'range', 'button', 'submit', 'reset', 'file', 'color', 'image'].includes(t.type); };
 
 // ================= Réglages, progression, repères (localStorage) =================
 const defaults = { resume: true, autosub: true, subSize: 28, subBg: true, eq: 'flat', eqGains: Array(10).fill(0), theme: 'dark', vol: 100, muted: false };
