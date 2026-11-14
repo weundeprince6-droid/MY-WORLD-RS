@@ -1844,7 +1844,7 @@ $('btnPrev').onclick = () => {
   const m = activeMedia(); if (m && m.currentTime > 3) m.currentTime = 0; else next(-1);
 };
 $('btnStop').onclick = () => {
-  if (typeof radioActive !== 'undefined' && radioActive) { radioAudio.pause(); radioAudio.currentTime = 0; updatePlayBtn(); $('radioStatus').textContent = 'Lecture arrêtée.'; return; }
+  if (typeof radioActive !== 'undefined' && radioActive) { radioAudio.pause(); radioAudio.currentTime = 0; if (radioStations[radioCurrentKey]?.embedUrl) { radioEmbedFrame.src='about:blank'; radioEmbedWrap.hidden=true; $('radioStatus').textContent='Lecteur arrêté. Sélectionnez Radio Okapi pour le recharger.'; } else $('radioStatus').textContent = 'Lecture arrêtée.'; updatePlayBtn(); return; }
   if (document.body.dataset.mode === 'youtube') { youtubeCommand('stopVideo'); youtubeCurrentTime = 0; youtubePaused = true; $('seek').value = 0; $('curTime').textContent = '0:00'; updatePlayBtn(); $('youtubeStatus').textContent = 'Lecture arrêtée.'; return; }
   const m = activeMedia(); if (m) { m.pause(); m.currentTime = 0; saveProg(); } stopSlideshow();
 };
@@ -2542,7 +2542,7 @@ function renderResume() {
   if(autoplay&&!station.embedUrl)radioAudio.play().then(()=>{$('radioStatus').textContent='En direct · '+station.name;updatePlayBtn();}).catch(()=>{$('radioStatus').textContent='Lecture non démarrée. Appuyez sur ▶ ou ouvrez le site officiel.';updatePlayBtn();});
  }
  function radioNavigate(direction){const keys=Object.keys(radioStations);let i=keys.indexOf(radioCurrentKey);i=(i+direction+keys.length)%keys.length;radioSelect(keys[i]);osd('📻 '+radioStations[keys[i]].name);}
- function radioHide(){if(!radioPane)return;radioPane.hidden=true;if(radioActive){radioActive=false;radioAudio.pause();radioAudio.removeAttribute('src');radioAudio.load();}}
+ function radioHide(){if(!radioPane)return;radioPane.hidden=true;if(radioActive){radioActive=false;radioAudio.pause();radioAudio.removeAttribute('src');radioAudio.load();radioEmbedFrame.src='about:blank';radioEmbedWrap.hidden=true;}}
  function radioShow(){tvHide();fifaHide();matchsHide();tvDriveHide();youtubeHide();cacherOngletMesFilms();radioActive=true;$('playlist').hidden=true;radioPane.hidden=false;$('tabs').querySelectorAll('button').forEach(b=>b.classList.toggle('active',b===radioTab));radioSelect(radioCurrentKey,true);}
  radioTab?.addEventListener('click',radioShow);
  $('radioStations')?.addEventListener('click',e=>{const b=e.target.closest('[data-radio-station]');if(b)radioSelect(b.dataset.radioStation,true);});
