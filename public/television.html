@@ -521,9 +521,14 @@ body.gold #titleBar{background:#1a1a18!important}
       </form>
     </section>
       <section id="fifaPane" hidden>
-        <div class="matchs-head"><strong>🏆 FIFA+ · Football gratuit</strong><button id="fifaBack" type="button">← Mes fichiers</button><a href="https://www.fifa.com/fifaplus/" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--panel2);color:var(--text);text-decoration:none">Ouvrir FIFA+ ↗</a></div>
-        <p class="matchs-help">FIFA+ propose gratuitement des matchs et des contenus de football selon les droits disponibles dans votre pays. Si l’intégration est refusée, ouvrez le site dans un nouvel onglet.</p>
-        <iframe id="fifaFrame" title="FIFA+" src="https://www.fifa.com/fifaplus/" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
+        <div class="matchs-head"><strong>🏆 FIFA+ · Football gratuit</strong><button id="fifaBack" type="button">← Mes fichiers</button></div>
+        <div style="flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:24px;background:var(--panel);border:1px solid var(--border);border-radius:12px">
+          <div style="font-size:54px">🏆</div>
+          <strong style="font-size:20px">Regarder FIFA+ gratuitement</strong>
+          <p style="max-width:520px;color:var(--muted);line-height:1.6;margin:0">FIFA+ bloque l’affichage intégré dans le lecteur. Ouvrez la plateforme officielle dans un nouvel onglet pour regarder les matchs, les résumés et les documentaires disponibles dans votre pays.</p>
+          <a href="https://www.fifa.com/fifaplus/" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;justify-content:center;padding:12px 22px;border-radius:9px;background:var(--accent);color:#fff;text-decoration:none;font-weight:700">▶ Ouvrir FIFA+ ↗</a>
+          <small style="color:var(--muted)">Le catalogue gratuit dépend des droits de diffusion dans votre région.</small>
+        </div>
       </section>
       <section id="matchsPane" hidden>
         <div class="matchs-head"><strong>⚽ Matchs en direct · Kooralive</strong><button id="matchsBack" type="button">← Mes fichiers</button><a href="https://kooralive.la/" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--panel2);color:var(--text);text-decoration:none">Ouvrir Kooralive ↗</a></div>
