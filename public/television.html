@@ -612,7 +612,6 @@ body.gold #titleBar{background:#1a1a18!important}
           <button type="button" data-tv-station="citizen">🇰🇪 Citizen TV · Kiswahili</button>
         </div>
         <div class="tv-view">
-          <div id="tvSecours" style="display:flex;flex-wrap:wrap;gap:8px;margin:6px 0"><button id="tvSecoursRadio" type="button" hidden>🔊 Écouter franceinfo en radio</button></div>
           <p id="tvStatus" class="tv-help">Chaînes et vidéos issues de YouTube uniquement. Si un direct est hors ligne ou bloqué, ouvrez la chaîne sur YouTube.</p>
           <iframe id="tvStationFrame" title="Chaîne de télévision francophone" src="https://www.youtube-nocookie.com/embed/a47ckXKZjxI?autoplay=1&rel=0" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
         </div>
@@ -2574,8 +2573,6 @@ function renderResume() {
     tvStationFrame.src = station.url;
     $('tvOpenOfficial').href = station.official;
     $('tvOpenOfficial').textContent = 'Ouvrir sur YouTube ↗';
-    $('tvSecoursRadio').hidden = !(key==='franceinfo'||key==='franceinter');
-    $('tvSecoursRadio').dataset.radio = key;
     $('tvStatus').textContent = station.note + ' Si YouTube indique que la vidéo n’est pas disponible, utilisez « Ouvrir sur YouTube ».';
     $('tvStations').querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.tvStation === key));
     $('nowPlaying').textContent = '📺 TV · ' + station.name;
@@ -2604,7 +2601,6 @@ function renderResume() {
     tvSelectStation('france24');
   }
   $('tvStations')?.addEventListener('click', e => { const b=e.target.closest('button[data-tv-station]'); if (b) tvSelectStation(b.dataset.tvStation); });
-  $('tvSecoursRadio')?.addEventListener('click', e => { const k=e.currentTarget.dataset.radio||'franceinfo'; radioTab?.click(); setTimeout(()=>radioSelect(k), 50); });
   $('tvBack')?.addEventListener('click', () => { tvHide(); $('tabs').querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.filter==='all')); filter='all'; renderList(); setMode(current<0?'empty':items[current].type); $('nowPlaying').textContent=current<0?'Aucun média':items[current].name; });
   tvTab?.addEventListener('click', tvShow);
  const matchsTab = $('matchsTab'), matchsPane = $('matchsPane');
