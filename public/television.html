@@ -681,13 +681,22 @@ body.gold #titleBar{background:#1a1a18!important}
             <button type="button" class="tv-card" data-tv-station="rfi"><span class="tv-card-flag">🌍</span><span class="tv-card-copy"><strong>RFI</strong><small>Actualités Afrique et monde</small></span><span class="tv-card-tag">FR</span></button>
             <button type="button" class="tv-card" data-tv-station="i24fr"><span class="tv-card-flag">🌐</span><span class="tv-card-copy"><strong>i24NEWS Français</strong><small>Information internationale</small></span><span class="tv-card-tag">FR</span></button>
           </div></section>
+          <section class="tv-category"><div class="tv-category-title"><span>⚽</span><div><strong>Sport</strong><small>Football et actualité sportive</small></div></div><div class="tv-card-grid">
+            <button type="button" class="tv-card" data-tv-station="beinxtra"><span class="tv-card-flag">🏟️</span><span class="tv-card-copy"><strong>beIN SPORTS XTRA</strong><small>Programmes sportifs gratuits · selon disponibilité</small></span><span class="tv-card-tag">SPORT</span></button>
+            <button type="button" class="tv-card" data-tv-station="fifaplus"><span class="tv-card-flag">🏆</span><span class="tv-card-copy"><strong>FIFA+</strong><small>Football, archives et matchs sélectionnés</small></span><span class="tv-card-tag">SPORT</span></button>
+          </div></section>
+          <section class="tv-category"><div class="tv-category-title"><span>🎬</span><div><strong>Documentaires</strong><small>Nature, sciences, histoire et exploration</small></div></div><div class="tv-card-grid">
+            <button type="button" class="tv-card" data-tv-station="arte"><span class="tv-card-flag">🎭</span><span class="tv-card-copy"><strong>ARTE</strong><small>Documentaires et culture</small></span><span class="tv-card-tag">FR</span></button>
+            <button type="button" class="tv-card" data-tv-station="natgeo"><span class="tv-card-flag">🌍</span><span class="tv-card-copy"><strong>National Geographic</strong><small>Nature, science et exploration</small></span><span class="tv-card-tag">DOC</span></button>
+            <button type="button" class="tv-card" data-tv-station="nasa"><span class="tv-card-flag">🚀</span><span class="tv-card-copy"><strong>NASA</strong><small>Espace, missions et science</small></span><span class="tv-card-tag">SCI</span></button>
+          </div></section>
           <section class="tv-category"><div class="tv-category-title"><span>🇰🇪</span><div><strong>Kiswahili</strong><small>Chaînes d’Afrique de l’Est</small></div></div><div class="tv-card-grid">
             <button type="button" class="tv-card" data-tv-station="citizen"><span class="tv-card-flag">🇰🇪</span><span class="tv-card-copy"><strong>Citizen TV Kenya</strong><small>Actualités · Kiswahili / English</small></span><span class="tv-card-tag">KE</span></button>
             <button type="button" class="tv-card" data-tv-station="upendo"><span class="tv-card-flag">🇹🇿</span><span class="tv-card-copy"><strong>Upendo TV</strong><small>Émissions et enseignements en kiswahili</small></span><span class="tv-card-tag">TZ</span></button>
           </div></section>
         </div>
         </div>
-        <div class="tv-intro"><div><span class="tv-live-dot"></span><strong>Vos chaînes en direct</strong><p>Actualités francophones et programmes en kiswahili. Sélectionnez une chaîne pour la regarder.</p></div><span class="tv-count">9 CHAÎNES</span></div>
+        <div class="tv-intro"><div><span class="tv-live-dot"></span><strong>Vos chaînes en direct</strong><p>Actualités francophones et programmes en kiswahili. Sélectionnez une chaîne pour la regarder.</p></div><span class="tv-count">14 CHAÎNES</span></div>
         <div class="tv-view">
           <div class="tv-screen-heading"><div><span class="tv-live-dot"></span><strong id="tvNowTitle">FRANCE 24</strong><small id="tvNowMeta">Direct YouTube · Français</small></div><span class="tv-screen-label">LECTEUR</span></div>
           <iframe id="tvStationFrame" title="Chaîne de télévision en direct sur YouTube" src="https://www.youtube-nocookie.com/embed/a47ckXKZjxI?autoplay=1&rel=0" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
@@ -2694,7 +2703,12 @@ function renderResume() {
     rfi: {name:'RFI', category:'Francophone', language:'Français', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCm4fSpMpPIZ9z6KHoezLUAg&autoplay=1', official:'https://www.youtube.com/@rfi_fr/live', note:'Actualité africaine et internationale, reportages et débats.'},
     i24fr: {name:'i24NEWS Français', category:'Francophone', language:'Français', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCgPYsPyGhhQJQ9zOUQDWDMA&autoplay=1', official:'https://www.youtube.com/@i24NEWS_FR/live', note:'Information internationale en français depuis le Moyen-Orient.'},
     citizen: {name:'Citizen TV Kenya', category:'Kiswahili', language:'Kiswahili / English', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UChBQgieUidXV1CmDxSdRm3g&autoplay=1', official:'https://www.youtube.com/@citizentvkenya/live', note:'Chaîne kenyane : actualités et émissions en kiswahili et en anglais.'},
-    upendo: {name:'Upendo TV', category:'Kiswahili', language:'Kiswahili', externalOnly:true, official:'https://www.youtube.com/@upendo_media/live', note:'Upendo Media diffuse plusieurs émissions en direct en kiswahili sur YouTube. Ouvrez le direct officiel dans YouTube.'}
+    upendo: {name:'Upendo TV', category:'Kiswahili', language:'Kiswahili', externalOnly:true, official:'https://www.youtube.com/@upendo_media/live', note:'Upendo Media diffuse plusieurs émissions en direct en kiswahili sur YouTube. Ouvrez le direct officiel dans YouTube.'},
+    beinxtra: {name:'beIN SPORTS XTRA', category:'Sport', language:'Selon le programme', externalOnly:true, official:'https://www.beinsportsxtra.com/en/beinsportsxtra', note:'Service sportif gratuit avec programmation variable. Le direct peut dépendre du pays et le flux intégré n’est pas garanti.'},
+    fifaplus: {name:'FIFA+', category:'Sport', language:'Multilingue', externalOnly:true, official:'https://www.fifa.com/fifaplus/', note:'Plateforme officielle FIFA+ : matchs sélectionnés, archives, résumés et documentaires. Disponibilité selon les droits territoriaux.'},
+    arte: {name:'ARTE', category:'Documentaires', language:'Français / Allemand', externalOnly:true, official:'https://www.youtube.com/@arte', note:'Chaîne officielle ARTE : documentaires, culture et sciences. Les vidéos et directs disponibles varient selon la programmation.'},
+    natgeo: {name:'National Geographic', category:'Documentaires', language:'Principalement anglais', externalOnly:true, official:'https://www.youtube.com/@NatGeo', note:'Chaîne officielle National Geographic : nature, sciences, histoire et exploration. Contenus vidéo et directs ponctuels.'},
+    nasa: {name:'NASA', category:'Documentaires', language:'Anglais', externalOnly:true, official:'https://www.youtube.com/@NASA', note:'Chaîne officielle NASA : missions spatiales, science et diffusions en direct selon le calendrier.'}
   };
   function tvSelectStation(key) {
     const station = tvStations[key]; if (!station) return;
