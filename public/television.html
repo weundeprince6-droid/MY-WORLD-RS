@@ -211,6 +211,15 @@ input[type=search]{width:100%;padding:8px 10px;border-radius:8px;border:1px soli
 #tvPane .tv-screen-label{font-size:8px;padding:3px 6px}
 #tvPane iframe{flex:1;min-height:0;border-radius:6px}
 #tvPane .tv-help{font-size:9px;line-height:1.2}
+/* Les chaînes sont regroupées dans un menu unique placé dans l'en-tête */
+#tvPane .tv-head-pro{position:relative}
+#tvPane #tvStations[hidden]{display:none!important}
+#tvPane #tvStations{position:absolute;top:calc(100% + 5px);right:7px;z-index:30;width:min(560px,calc(100vw - 28px));max-height:48vh;overflow:auto;display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:8px;background:var(--panel);border:1px solid var(--border);border-radius:11px;box-shadow:0 12px 32px rgba(0,0,0,.28)}
+#tvPane #tvStations .tv-category{padding:7px}
+#tvPane #tvStations .tv-category-title{margin-bottom:5px}
+#tvPane #tvStations .tv-card-grid{grid-template-columns:1fr}
+#tvPane #tvStations .tv-card{padding:6px}
+#tvPane #tvStationsToggle{font-weight:800;white-space:nowrap}
 @media(max-width:760px){
  #viewer #tvPane{overflow-y:auto!important}
  #tvPane .tv-head-pro{flex-wrap:wrap}
@@ -656,10 +665,10 @@ body.gold #titleBar{background:#1a1a18!important}
       <section id="tvPane" hidden>
         <div class="tv-head tv-head-pro">
           <div class="tv-brand"><span class="tv-brand-icon">📺</span><div><strong>MY WORLD TV</strong><small>Les directs YouTube réunis au même endroit</small></div></div>
-          <div class="tv-head-actions"><a id="tvOpenOfficial" href="https://www.youtube.com/watch?v=a47ckXKZjxI" target="_blank" rel="noopener noreferrer">Ouvrir sur YouTube ↗</a><button id="tvBack" type="button">← Retour</button></div>
+          <div class="tv-head-actions"><button id="tvStationsToggle" type="button" aria-expanded="false" aria-controls="tvStations">📺 Chaînes ▾</button><a id="tvOpenOfficial" href="https://www.youtube.com/watch?v=a47ckXKZjxI" target="_blank" rel="noopener noreferrer">Ouvrir sur YouTube ↗</a><button id="tvBack" type="button">← Retour</button></div>
         </div>
         <div class="tv-intro"><div><span class="tv-live-dot"></span><strong>Vos chaînes en direct</strong><p>Actualités francophones et programmes en kiswahili. Sélectionnez une chaîne pour la regarder.</p></div><span class="tv-count">6 CHAÎNES</span></div>
-        <div class="tv-catalog" id="tvStations">
+        <div class="tv-catalog" id="tvStations" hidden>
           <section class="tv-category"><div class="tv-category-title"><span>🌍</span><div><strong>Francophone</strong><small>Information française et africaine</small></div></div><div class="tv-card-grid">
             <button type="button" class="tv-card active" data-tv-station="france24"><span class="tv-card-flag">🇫🇷</span><span class="tv-card-copy"><strong>France 24</strong><small>Actualités internationales</small></span><span class="tv-card-tag">FR</span></button>
             <button type="button" class="tv-card" data-tv-station="euronews"><span class="tv-card-flag">🌐</span><span class="tv-card-copy"><strong>Euronews FR</strong><small>Actualités européennes</small></span><span class="tv-card-tag">FR</span></button>
@@ -2663,7 +2672,9 @@ function renderResume() {
     $('tabs').querySelectorAll('button').forEach(b => b.classList.toggle('active', b === tvTab));
     tvSelectStation('france24');
   }
-  $('tvStations')?.addEventListener('click', e => { const b=e.target.closest('button[data-tv-station]'); if (b) tvSelectStation(b.dataset.tvStation); });
+  $('tvStationsToggle')?.addEventListener('click', () => { const menu=$('tvStations'), btn=$('tvStationsToggle'); const open=menu.hidden; menu.hidden=!open; btn.setAttribute('aria-expanded',String(open)); });
+  $('tvStations')?.addEventListener('click', e => { const b=e.target.closest('button[data-tv-station]'); if (b) { tvSelectStation(b.dataset.tvStation); $('tvStations').hidden=true; $('tvStationsToggle')?.setAttribute('aria-expanded','false'); } });
+  document.addEventListener('click', e => { if (tvPane && !tvPane.contains(e.target)) { $('tvStations').hidden=true; $('tvStationsToggle')?.setAttribute('aria-expanded','false'); } });
   $('tvBack')?.addEventListener('click', () => { tvHide(); $('tabs').querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.filter==='all')); filter='all'; renderList(); setMode(current<0?'empty':items[current].type); $('nowPlaying').textContent=current<0?'Aucun média':items[current].name; });
   tvTab?.addEventListener('click', tvShow);
  const matchsTab = $('matchsTab'), matchsPane = $('matchsPane');
