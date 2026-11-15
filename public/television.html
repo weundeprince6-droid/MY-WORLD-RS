@@ -1567,7 +1567,7 @@ function persist() {
   clearTimeout(pT);
   pT = setTimeout(() => {
     items.forEach((i) => { if (i.type === 'doc' && i.file) cacherDoc(i, i.file); });
-    DB.set('library', items.filter((i) => i.handle || i.dirHandle).map(({ key, name, path, type, size, mod, parts, handle, dirHandle, subs, dossier }) => ({ key, name, path, type, size, mod, parts, handle, dirHandle, subs, dossier })));
+    DB.set('library', items.filter((i) => i.handle || i.dirHandle).map(({ key, name, path, type, size, mod, parts, handle, dirHandle, subs, dossier, selection }) => ({ key, name, path, type, size, mod, parts, handle, dirHandle, subs, dossier, selection })));
   }, 400);
 }
 
@@ -3604,12 +3604,46 @@ function afficherSync(html, ok) {
   syncBar.innerHTML = '<span class="msg"></span>'; syncBar.firstChild.textContent = html;
   return syncBar;
 }
+// Fichiers glissés un par un : le navigateur ne retient chaque fichier qu'individuellement (une confirmation par fichier).
+// En choisissant leur dossier UNE fois, ils passent sous l'autorisation du dossier : plus qu'une confirmation pour tous.
+const fichiersIsoles = () => items.filter((x) => x.handle && !x.dirHandle);
+async function rattacherIsoles() {
+  const isoles = fichiersIsoles();
+  if (!isoles.length) return;
+  if (!('showDirectoryPicker' in window)) { osd('Chrome ou Edge requis'); return; }
+  let d;
+  try { d = await window.showDirectoryPicker({ mode: 'read' }); } catch (e) { return; }
+  try { await d.requestPermission({ mode: 'read' }); } catch (e) {}
+  osd('Analyse du dossier…');
+  let trouves; try { trouves = await scanDir(d); } catch (e) { osd('Dossier illisible'); return; }
+  const index = new Map(trouves.map((t) => [t.name + '|' + t.size, t]));
+  let n = 0;
+  for (const it of isoles) {
+    const t = index.get(it.name + '|' + it.size);
+    if (!t) continue;
+    it.dirHandle = d; it.parts = t.parts; it.path = t.path; it.dossier = d.name; it.file = t.file; it.subs = t.subs; it.selection = true;
+    delete it.handle; n++;
+  }
+  regrouper(); renderList(); persist();
+  osd(n + ' fichier' + (n > 1 ? 's' : '') + ' rattaché' + (n > 1 ? 's' : '') + ' au dossier « ' + d.name + ' »' + (n < isoles.length ? ' — ' + (isoles.length - n) + ' introuvable(s) ici' : ''));
+  synchroniserTout(false);
+}
+function boutonIsoles(bar) {
+  const n = fichiersIsoles().length;
+  if (!n || !bar) return;
+  const b = document.createElement('button');
+  b.textContent = '📂 Rattacher mes ' + n + ' fichier' + (n > 1 ? 's' : '') + ' glissé' + (n > 1 ? 's' : '') + ' à leur dossier';
+  b.title = 'Choisissez une seule fois le dossier qui contient ces fichiers : plus de confirmation fichier par fichier';
+  b.onclick = rattacherIsoles;
+  bar.appendChild(b);
+}
 function proposerSync(roots, refuses) {
   const noms = roots.map((r) => r.name).join(', ');
   const bar = afficherSync('🔒 ' + roots.length + ' dossier' + (roots.length > 1 ? 's' : '') + ' à synchroniser (' + noms + '). Une seule confirmation pour toute la session.');
   const b = document.createElement('button'); b.className = 'on'; b.textContent = '🔄 Synchroniser mes fichiers';
   b.onclick = () => synchroniserTout(true);
   bar.appendChild(b);
+  boutonIsoles(bar);
   // Dossiers que le navigateur n'a pas autorisés dans le même clic : un bouton par dossier
   for (const r of refuses || []) {
     const bb = document.createElement('button'); bb.textContent = 'Autoriser « ' + r.name + ' »';
@@ -3630,6 +3664,7 @@ async function synchroniserTout(demander) {
       const b = document.createElement('button'); b.className = 'on'; b.textContent = '📁 Choisir un dossier';
       b.onclick = async () => { await addFolderDialog(); synchroniserTout(false); };
       bar.appendChild(b);
+      boutonIsoles(bar);
       return;
     }
     // Toutes les autorisations sont demandées ensemble, dans le geste du clic
@@ -3652,12 +3687,14 @@ async function synchroniserTout(demander) {
       if (types) trouves = trouves.filter((x) => types.includes(x.type));
       const miens = items.filter((x) => x.dirHandle && idx.get(x.dirHandle) === r);
       const parChemin = new Map(miens.map((x) => [x.path, x]));
+      // Dossier rattaché à une sélection de fichiers glissés : on ne met à jour que ces fichiers, sans ajouter le reste du dossier
+      const seulementSelection = miens.length > 0 && miens.every((x) => x.selection);
       const presents = new Set();
       for (const t of trouves) {
         presents.add(t.path);
         const old = parChemin.get(t.path);
         if (old) { old.dirHandle = r; old.file = t.file; old.size = t.size; old.mod = t.mod; old.key = t.key; old.subs = t.subs; }
-        else { items.push(t); ajoutes++; }
+        else if (!seulementSelection) { items.push(t); ajoutes++; }
       }
       for (const m of miens) if (!presents.has(m.path) && (!types || types.includes(m.type))) { m.supprime = true; retires++; }
     }
@@ -3674,6 +3711,7 @@ async function synchroniserTout(demander) {
     regrouper(); renderList(); renderResume(); if (document.body.dataset.mode === 'gallery') renderGalerie(); persist();
     const msg = '✓ Bibliothèque synchronisée : ' + items.length + ' fichiers (+' + ajoutes + ' / −' + retires + '). Plus aucune confirmation pour cette session.';
     if (refuses.length) proposerSync(refuses, refuses);
+    else if (fichiersIsoles().length) { boutonIsoles(afficherSync(msg + ' Il reste des fichiers glissés un par un.', true)); }
     else { afficherSync(msg, true); syncTimer = setTimeout(() => { syncBar.hidden = true; }, 9000); }
   } catch (e) {
     afficherSync('Synchronisation impossible : ' + (e && e.message || e));
