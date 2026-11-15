@@ -12,7 +12,7 @@ function extractScopes(source, declaration) {
   const close = source.indexOf("];", open);
   assert.ok(open !== -1 && close !== -1, `Tableau de scopes invalide : ${declaration}`);
   const block = source.slice(open + 1, close);
-  return [...block.matchAll(/["'](https:\/\/www\.googleapis\.com\/auth\/[^"']+)["']/g)].map((m) => m[1]);
+  return block.match(/https:\/\/www\.googleapis\.com\/auth\/[a-z.]+/g) || [];
 }
 
 test("les autorisations Google de l'application et du Worker restent cohérentes", () => {
