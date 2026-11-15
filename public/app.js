@@ -2795,19 +2795,33 @@ function tvMasquer() {
   maj(); clearInterval(tvMinuteur); tvMinuteur = setInterval(maj, 2000);
 }
 function tvAfficher() { document.getElementById("tv-fenetre").classList.remove("masque"); document.getElementById("tv-mini").hidden = true; clearInterval(tvMinuteur); }
-async function tvOuvrir() {
+async function tvOuvrir(mode = "all") {
   const fen = document.getElementById("tv-fenetre"), zone = document.getElementById("tv-zone");
-  if (zone.querySelector("iframe")) { fen.hidden = false; tvAfficher(); return; } // déjà lancé : on le réaffiche sans le relancer
+  const choisirMode = () => {
+    const f = zone.querySelector("iframe");
+    if (!f) return;
+    try {
+      const doc = f.contentDocument;
+      const cible = mode === "radio" ? "radioTab" : mode === "tv" ? "tvTab" : null;
+      if (cible) doc?.getElementById(cible)?.click();
+    } catch (e) {}
+  };
+  if (zone.querySelector("iframe")) { fen.hidden = false; tvAfficher(); choisirMode(); return; }
   zone.innerHTML = ""; fen.hidden = false; tvAfficher();
   try {
     const f = document.createElement("iframe");
-    f.title = "Télévision"; f.allow = "fullscreen; autoplay; picture-in-picture"; f.setAttribute("allowfullscreen", "");
-    f.srcdoc = await tvHtml(); zone.appendChild(f);
-  } catch (e) { zone.textContent = "Impossible de charger la télévision : " + e.message; zone.style.color = "#fff"; zone.style.padding = "20px"; }
+    f.title = "Télévision et radio"; f.allow = "fullscreen; autoplay; picture-in-picture"; f.setAttribute("allowfullscreen", "");
+    f.srcdoc = await tvHtml();
+    f.addEventListener("load", choisirMode, { once: true });
+    zone.appendChild(f);
+    if (mode !== "all") setTimeout(choisirMode, 250);
+  } catch (e) { zone.textContent = "Impossible de charger les médias : " + e.message; zone.style.color = "#fff"; zone.style.padding = "20px"; }
 }
 function tvFermer() { tvAfficher(); document.getElementById("tv-zone").innerHTML = ""; document.getElementById("tv-fenetre").hidden = true; }
-document.getElementById("tv-ouvrir")?.addEventListener("click", tvOuvrir);
-document.getElementById("dash-media")?.addEventListener("click", tvOuvrir);
+document.getElementById("tv-ouvrir")?.addEventListener("click", () => tvOuvrir("all"));
+document.getElementById("dash-media")?.addEventListener("click", () => tvOuvrir("all"));
+document.getElementById("dash-tv")?.addEventListener("click", () => tvOuvrir("tv"));
+document.getElementById("dash-radio")?.addEventListener("click", () => tvOuvrir("radio"));
 document.getElementById("tv-fermer")?.addEventListener("click", tvFermer);
 document.getElementById("tv-masquer")?.addEventListener("click", tvMasquer);
 document.getElementById("tv-mini-afficher")?.addEventListener("click", tvOuvrir);
