@@ -256,6 +256,14 @@ input[type=search]{width:100%;padding:8px 10px;border-radius:8px;border:1px soli
  #tvPane .tv-head-actions>*{flex:initial}
 }
 
+
+/* Mode TV plein écran : masquer la navigation générale et les commandes multimédia habituelles */
+body.tv-fullscreen #sidebar{display:none!important}
+body.tv-fullscreen #stage{flex:1 1 100%;width:100%;min-width:0;height:100vh}
+body.tv-fullscreen #viewer{flex:1 1 100%;min-height:0;height:100%;width:100%}
+body.tv-fullscreen #titleBar,
+body.tv-fullscreen #controls{display:none!important}
+body.tv-fullscreen #viewer #tvPane{position:absolute;inset:0;width:100%;height:100%;min-height:0}
 /* MY WORLD TV — interface plein écran inspirée de la maquette validée */
 #tvPane .tv-fav{flex:none;padding:3px 6px;border:0;background:transparent;color:#f4bd43;font-size:18px;line-height:1}
 #tvPane .tv-card.is-favorite .tv-fav{color:#ffd45f}
@@ -2804,6 +2812,7 @@ function renderResume() {
     osd('📺 ' + tvStations[keys[index]].name);
   }
   function tvHide() {
+    document.body.classList.remove('tv-fullscreen');
     if (tvPane) tvPane.hidden = true;
     if (!tvActive) return;
     tvActive = false;
@@ -2812,7 +2821,7 @@ function renderResume() {
   }
   function tvShow() {
     radioHide(); fifaHide(); matchsHide(); tvDriveHide(); youtubeHide(); cacherOngletMesFilms();
-    tvActive = true; $('playlist').hidden = true; tvPane.hidden = false;
+    tvActive = true; document.body.classList.add('tv-fullscreen'); $('playlist').hidden = true; tvPane.hidden = false;
     $('tabs').querySelectorAll('button').forEach(b => b.classList.toggle('active', b === tvTab));
     tvSelectStation('france24');
   }
