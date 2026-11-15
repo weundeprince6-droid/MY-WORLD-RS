@@ -4162,16 +4162,31 @@ $("keep-fichiers")?.addEventListener("change", async (e) => {
   let lastMinuteKey = "";
   let dismissedMinuteKey = "";
   let openedMinuteKey = "";
+  const france24DejaOuvert = () => {
+    const fenetre = document.getElementById("tv-fenetre");
+    const lecteur = document.querySelector("#tv-zone iframe");
+    if (!fenetre || fenetre.hidden || !lecteur) return false;
+    try {
+      const doc = lecteur.contentDocument;
+      const paneTV = doc?.getElementById("tvPane");
+      const lecteurStation = doc?.getElementById("tvStationFrame");
+      const carteFrance24 = doc?.querySelector('#tvStations [data-tv-station="france24"].active');
+      const source = lecteurStation?.getAttribute("src") || lecteurStation?.src || "";
+      return !!(paneTV && !paneTV.hidden && carteFrance24 && source && !source.endsWith("about:blank"));
+    } catch { return false; }
+  };
   const rafraichir = () => {
     const now = new Date();
     const m = now.getMinutes();
     const key = now.getFullYear()+"-"+now.getMonth()+"-"+now.getDate()+"-"+now.getHours()+"-"+m;
-    const active = (m === 29 || m === 59) && dismissedMinuteKey !== key;
-    if (active && key !== lastMinuteKey) {
-      lastMinuteKey = key;
-      spot.hidden = false;
-      if (progress) { progress.style.animation = "none"; void progress.offsetWidth; progress.style.animation = ""; }
-    } else if (!active) {
+    const active = (m === 29 || m === 59) && dismissedMinuteKey !== key && !france24DejaOuvert();
+    if (active) {
+      if (key !== lastMinuteKey || spot.hidden) {
+        lastMinuteKey = key;
+        spot.hidden = false;
+        if (progress) { progress.style.animation = "none"; void progress.offsetWidth; progress.style.animation = ""; }
+      }
+    } else {
       spot.hidden = true;
       if (m !== 29 && m !== 59) dismissedMinuteKey = "";
     }
