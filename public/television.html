@@ -612,7 +612,7 @@ body.gold #titleBar{background:#1a1a18!important}
           <button type="button" data-tv-station="citizen">🇰🇪 Citizen TV · Kiswahili</button>
         </div>
         <div class="tv-view">
-          <div id="tvSecours" style="display:flex;flex-wrap:wrap;gap:8px;margin:6px 0"><a id="tvSecoursYt" href="https://www.youtube.com/@franceinfo/live" target="_blank" rel="noopener noreferrer" style="padding:7px 12px;border-radius:8px;background:#c4302b;color:#fff;text-decoration:none;font-weight:600">▶ « Vidéo indisponible » ? Ouvrir le direct sur YouTube</a><button id="tvSecoursRadio" type="button" hidden>🔊 Écouter franceinfo en radio</button></div>
+          <div id="tvSecours" style="display:flex;flex-wrap:wrap;gap:8px;margin:6px 0"><button id="tvSecoursRadio" type="button" hidden>🔊 Écouter franceinfo en radio</button></div>
           <p id="tvStatus" class="tv-help">Chaînes et vidéos issues de YouTube uniquement. Si un direct est hors ligne ou bloqué, ouvrez la chaîne sur YouTube.</p>
           <iframe id="tvStationFrame" title="Chaîne de télévision francophone" src="https://www.youtube-nocookie.com/embed/a47ckXKZjxI?autoplay=1&rel=0" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
         </div>
@@ -2574,7 +2574,6 @@ function renderResume() {
     tvStationFrame.src = station.url;
     $('tvOpenOfficial').href = station.official;
     $('tvOpenOfficial').textContent = 'Ouvrir sur YouTube ↗';
-    $('tvSecoursYt').href = station.official;
     $('tvSecoursRadio').hidden = !(key==='franceinfo'||key==='franceinter');
     $('tvSecoursRadio').dataset.radio = key;
     $('tvStatus').textContent = station.note + ' Si YouTube indique que la vidéo n’est pas disponible, utilisez « Ouvrir sur YouTube ».';
