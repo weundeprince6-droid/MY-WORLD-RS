@@ -2910,7 +2910,7 @@ function renderResume() {
   // YouTube : demander la qualité moyenne (environ 360p) par défaut.
   // YouTube peut toutefois choisir une autre qualité selon le flux et la connexion.
   function tvYoutube360(url) {
-    if (!url || !/youtube(?:-nocookie)?\\.com\\/embed\\//i.test(url)) return url;
+    if (!url || !/youtube(?:-nocookie)?\.com\/embed\//i.test(url)) return url;
     try { const u = new URL(url); u.searchParams.set('vq', 'medium'); return u.toString(); }
     catch { return url + (url.includes('?') ? '&' : '?') + 'vq=medium'; }
   }
