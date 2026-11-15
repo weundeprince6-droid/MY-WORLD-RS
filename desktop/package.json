@@ -1,25 +1,35 @@
 {
   "name": "lecteur-pro",
   "version": "1.0.0",
-  "description": "Lecteur Pro : lecteur audio, vidéo, photo et TV pour Windows",
+  "description": "Lecteur Pro : lecteur audio, vidéo, photo et TV pour Windows (7, 8, 8.1, 10, 11)",
   "main": "main.js",
   "author": "My World RS",
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder --win nsis --publish never"
+    "build": "electron-builder --win nsis --x64 --ia32 --publish never"
   },
   "devDependencies": {
-    "electron": "^35.0.0",
+    "electron": "22.3.27",
     "electron-builder": "^25.1.8"
   },
   "build": {
     "appId": "app.myworldrs.lecteurpro",
     "productName": "Lecteur Pro",
-    "files": ["main.js", "television.html", "icon.png", "package.json"],
-    "directories": { "output": "dist" },
-    "win": { "target": "nsis", "icon": "icon.png" },
+    "files": [
+      "main.js",
+      "television.html",
+      "icon.png",
+      "package.json"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "icon.png"
+    },
     "nsis": {
       "oneClick": true,
       "perMachine": false,
