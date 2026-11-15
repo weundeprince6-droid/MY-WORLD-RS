@@ -733,6 +733,21 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
   background:color-mix(in srgb,var(--accent) 18%,var(--panel2))!important;
   border-color:var(--accent)!important;
 }
+
+/* Navigation des chaînes près des favoris dans la barre inférieure */
+#tvPane .tv-bottom-bar .tv-bottom-channel-nav{display:flex;align-items:center;gap:7px;margin:0 4px;flex:none}
+#tvPane .tv-bottom-bar .tv-bottom-channel-nav button{
+ display:inline-flex;flex-direction:row;align-items:center;justify-content:center;
+ min-width:0;padding:9px 12px;background:var(--panel2);color:var(--text);
+ border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:700;white-space:nowrap
+}
+#tvPane .tv-bottom-bar .tv-bottom-channel-nav button:hover{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 15%,var(--panel2))}
+@media(max-width:800px){
+ #tvPane .tv-bottom-bar{flex-wrap:wrap}
+ #tvPane .tv-bottom-bar .tv-bottom-channel-nav{order:3;margin-left:0}
+ #tvPane .tv-bottom-bar .tv-bottom-channel-nav button{padding:8px 9px;font-size:11px}
+}
+
 </style>
 
 
@@ -869,7 +884,7 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
           <button id="tvRefreshList" class="tv-refresh" type="button">↻ Actualiser la liste</button>
         </aside>
         <main class="tv-main">
-          <div class="tv-main-heading"><span>▣</span><strong>LECTEUR TV</strong><div class="tv-channel-nav"><button id="tvPrevStation" type="button" title="Chaîne précédente">⏮ Précédent</button><button id="tvNextStation" type="button" title="Chaîne suivante">Suivant ⏭</button></div><button id="tvBack" type="button">← Retour</button></div>
+          <div class="tv-main-heading"><span>▣</span><strong>LECTEUR TV</strong><button id="tvBack" type="button">← Retour</button></div>
           <div class="tv-view">
             <div class="tv-video-wrap">
               <span class="tv-live-badge">EN DIRECT</span>
@@ -881,6 +896,7 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
           <div class="tv-bottom-bar">
             <button class="on" type="button" id="tvBottomChannels">▣<span>Chaînes</span></button>
             <button type="button" id="tvBottomFav">☆<span>Favoris</span></button>
+            <div class="tv-channel-nav tv-bottom-channel-nav"><button id="tvPrevStation" type="button" title="Chaîne précédente">⏮ Précédent</button><button id="tvNextStation" type="button" title="Chaîne suivante">Suivant ⏭</button></div>
             <div class="tv-bottom-spacer"></div>
             <span class="tv-volume-label">Le volume se règle dans le lecteur YouTube.</span>
             <span class="tv-count">8 chaînes disponibles</span>
