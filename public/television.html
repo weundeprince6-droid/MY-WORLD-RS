@@ -710,6 +710,29 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
 #tvPane .tv-sidebar #tvStations .tv-card-tag{display:inline-flex!important}
 #tvPane .tv-sidebar #tvStations .tv-fav{display:inline-flex!important;visibility:visible!important}
 
+
+/* Liste des chaînes : suit le thème actif, sans pastille blanche derrière les logos */
+#tvPane .tv-sidebar #tvStations .tv-card,
+#tvPane #tvStations .tv-card{
+  background:var(--panel2)!important;
+  border:1px solid var(--border)!important;
+  color:var(--text)!important;
+}
+#tvPane .tv-sidebar #tvStations .tv-card-copy strong,
+#tvPane #tvStations .tv-card-copy strong{color:var(--text)!important}
+#tvPane .tv-sidebar #tvStations .tv-card-copy small,
+#tvPane #tvStations .tv-card-copy small{color:var(--muted)!important}
+#tvPane .tv-sidebar #tvStations .tv-card-flag,
+#tvPane #tvStations .tv-card-flag{
+  background:transparent!important;
+  color:var(--text)!important;
+  box-shadow:none!important;
+}
+#tvPane .tv-sidebar #tvStations .tv-card.active,
+#tvPane #tvStations .tv-card.active{
+  background:color-mix(in srgb,var(--accent) 18%,var(--panel2))!important;
+  border-color:var(--accent)!important;
+}
 </style>
 
 
