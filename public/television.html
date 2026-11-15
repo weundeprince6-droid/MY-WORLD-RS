@@ -3027,6 +3027,7 @@ function renderResume() {
     if (remaining <= 0 && !tvQuotaBlocked) {
       tvQuotaBlocked = true;
       tvQuotaPersist();
+      tvQuotaSessionStart = 0;
       if (tvStationFrame) tvStationFrame.src = 'about:blank';
       const status = $('tvStatus');
       if (status) status.textContent = '⛔ Temps de télévision épuisé. Appuyez sur « Renouveler 2 h » pour reprendre.';
