@@ -2703,7 +2703,7 @@ async function googleYouTube(url) {
 
 // Espace YouTube du lecteur : son autorisation est indépendante de Gmail, Agenda et Drive.
 async function tvYoutube(msg) {
-  const rep = (d) => tvDriveRepondre({ action: "yt", kind: msg.kind, ...d });
+  const rep = (d) => tvDriveRepondre({ action: "yt", kind: msg.kind, station: msg.station, ...d });
   const yt = "https://www.googleapis.com/youtube/v3/";
   const miniature = (sn) => sn?.thumbnails?.medium?.url || sn?.thumbnails?.default?.url || "";
   const vid = (id, sn) => ({ type: "video", id, title: sn?.title || "Vidéo", channel: sn?.channelTitle || sn?.videoOwnerChannelTitle || "", thumb: miniature(sn) });

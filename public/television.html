@@ -864,7 +864,7 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
           <div class="tv-side-title"><span>📺</span><strong>Chaînes TV</strong></div>
           <input id="tvSearch" type="search" placeholder="Rechercher une chaîne..." aria-label="Rechercher une chaîne">
           <div class="tv-side-filters">
-            <select id="tvCategoryFilter" aria-label="Filtrer les chaînes"><option value="all">Toutes les chaînes</option><option value="Francophone">Francophones</option><option value="English">English</option></select>
+            <select id="tvCategoryFilter" aria-label="Filtrer les chaînes"><option value="all">Toutes les chaînes</option><option value="Francophone">Francophones</option><option value="English">English</option><option value="Sport">Sport</option></select>
             <button id="tvFavoritesToggle" type="button" aria-pressed="false">☆ Favoris</button>
           </div>
           <div class="tv-catalog" id="tvStations">
@@ -2915,6 +2915,11 @@ function renderResume() {
     rfi: {name:'RFI', category:'Francophone', language:'Français', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCm4fSpMpPIZ9z6KHoezLUAg&autoplay=1&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@rfi_fr/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
     africanews_en: {name:'Africanews English', category:'English', language:'English', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UC1_E8NeF5QHY2dtdLRBCCLA&autoplay=1&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@africanews/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
     cnbcafrica: {name:'CNBC Africa', category:'English', language:'English', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCsba91UGiQLFOb5DN3Z_AdQ&autoplay=1&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@CNBCAfrica/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
+    redbull: {name:'Red Bull TV', category:'Sport', language:'Sport', url:'', resolveLive:{q:'Red Bull TV live',channelRe:'red ?bull'}, official:'https://www.youtube.com/@redbull/live', note:'Sports extrêmes et événements Red Bull en direct.'},
+    olympics: {name:'Olympics', category:'Sport', language:'Sport', url:'', resolveLive:{q:'Olympics live',channelRe:'^olympics'}, official:'https://www.youtube.com/@olympics/live', note:'Chaîne officielle olympique : directs et événements.'},
+    daznfoot: {name:'DAZN Football', category:'Sport', language:'Sport', url:'', resolveLive:{q:'DAZN Football live',channelRe:'dazn'}, official:'https://www.youtube.com/@DAZNFootball/live', note:'Football : directs ponctuels et émissions DAZN.'},
+    skysportsnews: {name:'Sky Sports News', category:'Sport', language:'Sport', url:'', resolveLive:{q:'Sky Sports News live',channelRe:'sky sports'}, official:'https://www.youtube.com/@SkySportsNews/live', note:'L’actualité sportive en direct.'},
+    nba: {name:'NBA', category:'Sport', language:'Sport', url:'', resolveLive:{q:'NBA live',channelRe:'^nba'}, official:'https://www.youtube.com/@NBA/live', note:'Basket : directs et émissions de la NBA, selon la programmation.'},
     abcnews: {name:'ABC News Live', category:'English', language:'English', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCBi2mrWuNuyYy4gbM6fU18Q&autoplay=1&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@ABCNews/live', note:'Direct officiel gratuit 24/7. Diffusion vérifiée sans restriction géographique annoncée.'}
   };;
   function tvSelectStation(key) {
@@ -2922,7 +2927,9 @@ function renderResume() {
     tvCurrentStationKey = key;
     // Les services sans lecteur vidéo YouTube sont chargés dans le cadre du lecteur TV,
     // afin de rester dans MY WORLD RS au lieu d'ouvrir un nouvel onglet.
-    tvStationFrame.src = station.externalOnly ? station.official : station.url;
+    let srcStation = station.externalOnly ? station.official : station.url;
+    if (station.resolveLive) { try { const c = localStorage.getItem('mwrs_tv_live_' + key); if (c && /^[\w-]{6,20}$/.test(c)) srcStation = 'https://www.youtube.com/embed/' + c + '?autoplay=1&rel=0&playsinline=1&controls=1'; } catch {} }
+    tvStationFrame.src = srcStation || 'about:blank';
     tvStationFrame.name = 'tvStationFrame';
     const officialLink = $('tvOpenOfficial');
     if (officialLink) {
@@ -2937,6 +2944,7 @@ function renderResume() {
     }
     if (station.resolveLive) tvDriveSend('yt', { kind:'live', ...station.resolveLive, station:key });
     const title = $('tvNowTitle'); if (title) title.textContent = station.name;
+    if (station.resolveLive && !station.url) $('tvStatus').textContent = station.note + ' Recherche du direct en cours…';
     const meta = $('tvNowMeta'); if (meta) meta.textContent = 'YouTube · ' + station.language;
     $('tvStations').querySelectorAll('[data-tv-station]').forEach(b => b.classList.toggle('active', b.dataset.tvStation === key));
     $('nowPlaying').textContent = '📺 TV · ' + station.name;
@@ -2972,7 +2980,7 @@ function renderResume() {
   function tvFilterList(){
     const search=($('tvSearch')?.value||'').trim().toLocaleLowerCase();
     const selected=$('tvCategoryFilter')?.value||'all';
-    const categoryOf=station=>station.category==='Francophone'||station.category==='Francophones'?'Francophone':'English';
+    const categoryOf=station=>station.category==='Francophone'||station.category==='Francophones'?'Francophone':station.category==='Sport'?'Sport':'English';
     const entries=Object.entries(tvStations).filter(([key,station])=>{
       const category=categoryOf(station);
       const matchesText=!search||(String(station.name||'')+' '+String(station.language||'')).toLocaleLowerCase().includes(search);
@@ -2980,12 +2988,12 @@ function renderResume() {
       const matchesFavorite=!tvOnlyFavorites||tvFavorites.includes(key);
       return matchesText&&matchesCategory&&matchesFavorite;
     });
-    const flags={france24:'🇫🇷',euronews:'🌐',franceinfo:'🇫🇷',africanewsfr:'🌍',rfi:'🌍',africanews_en:'🌍',cnbcafrica:'🇿🇦',abcnews:'🇺🇸'};
+    const flags={france24:'🇫🇷',euronews:'🌐',franceinfo:'🇫🇷',africanewsfr:'🌍',rfi:'🌍',africanews_en:'🌍',cnbcafrica:'🇿🇦',abcnews:'🇺🇸',redbull:'🏔️',olympics:'🏅',daznfoot:'⚽',skysportsnews:'🏆',nba:'🏀'};
     const list=$('tvStations');
     if(!list)return;
     list.innerHTML=entries.map(([key,station])=>{
-      const category=categoryOf(station),lang=category==='English'?'EN':'FR';
-      return '<div role="button" tabindex="0" class="tv-card'+(key===tvCurrentStationKey?' active':'')+(tvFavorites.includes(key)?' is-favorite':'')+'" data-tv-station="'+key+'"><span class="tv-card-flag">'+(flags[key]||'📺')+'</span><span class="tv-card-copy"><strong>'+station.name+'</strong><small>'+(category==='English'?'News':'Informations')+'</small></span><span class="tv-card-tag">'+lang+'</span><button class="tv-fav" type="button" data-tv-favorite="1" aria-label="Favori">'+(tvFavorites.includes(key)?'★':'☆')+'</button></div>';
+      const category=categoryOf(station),lang=category==='English'?'EN':category==='Sport'?'SPORT':'FR';
+      return '<div role="button" tabindex="0" class="tv-card'+(key===tvCurrentStationKey?' active':'')+(tvFavorites.includes(key)?' is-favorite':'')+'" data-tv-station="'+key+'"><span class="tv-card-flag">'+(flags[key]||'📺')+'</span><span class="tv-card-copy"><strong>'+station.name+'</strong><small>'+(category==='English'?'News':category==='Sport'?'Sport':'Informations')+'</small></span><span class="tv-card-tag">'+lang+'</span><button class="tv-fav" type="button" data-tv-favorite="1" aria-label="Favori">'+(tvFavorites.includes(key)?'★':'☆')+'</button></div>';
     }).join('');
     list.style.display='flex';
     list.style.visibility='visible';
@@ -3221,9 +3229,10 @@ function renderResume() {
    if(e.source!==parent||!e.data||e.data.source!=='mwrs-drive')return;
    const d=e.data;
    if(d.action==='yt'&&d.kind==='live'){
-     if(!tvActive||!tvStations[tvCurrentStationKey]?.resolveLive)return;
-     if(d.live&&d.live.id){tvStationFrame.src='https://www.youtube.com/embed/'+encodeURIComponent(d.live.id)+'?autoplay=1&rel=0&playsinline=1&controls=1';$('tvStatus').textContent='Direct trouvé : '+(d.live.title||'')+'.';}
+     if(!tvActive||d.station!==tvCurrentStationKey||!tvStations[tvCurrentStationKey]?.resolveLive)return;
+     if(d.live&&d.live.id){try{localStorage.setItem('mwrs_tv_live_'+d.station,d.live.id)}catch{}tvStationFrame.src='https://www.youtube.com/embed/'+encodeURIComponent(d.live.id)+'?autoplay=1&rel=0&playsinline=1&controls=1';$('tvStatus').textContent='Direct trouvé : '+(d.live.title||'')+'.';}
      else if(d.raison==='non-integrable'){$('tvStatus').textContent='La chaîne interdit l’intégration de ce direct dans d’autres sites : il ne peut s’afficher que sur YouTube.';}
+     else if(d.raison==='introuvable'){$('tvStatus').textContent='Aucun direct en cours pour cette chaîne en ce moment. Réessayez plus tard.';}
      else if(d.raison==='autorisation'){$('tvStatus').textContent='Pour retrouver le direct automatiquement, ouvrez une fois « Mon espace YouTube » dans le lecteur YouTube et acceptez l’accès.';}
      return;
    }
