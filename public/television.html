@@ -888,7 +888,7 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
           <div class="tv-view">
             <div class="tv-video-wrap">
               <span class="tv-live-badge">EN DIRECT</span>
-              <iframe id="tvStationFrame" title="Chaîne de télévision en direct sur YouTube" src="https://www.youtube-nocookie.com/embed/a47ckXKZjxI?autoplay=0&mute=0&rel=0&playsinline=1&controls=1" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
+              <iframe id="tvStationFrame" title="Chaîne de télévision en direct sur YouTube" src="https://www.youtube-nocookie.com/embed/a47ckXKZjxI?autoplay=0&mute=0&rel=0&playsinline=1&controls=1&vq=medium" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
             </div>
             <div class="tv-now-bar"><span>📺</span><strong id="tvNowTitle">TV · FRANCE 24</strong><small id="tvNowMeta">YouTube · Français</small><a id="tvOpenOfficial" href="https://www.youtube.com/@France24/live" target="_blank" rel="noopener noreferrer">Ouvrir sur YouTube ↗</a></div>
             <p id="tvStatus" class="tv-help" role="status">Sélectionnez une chaîne pour commencer le direct.</p>
@@ -2907,6 +2907,13 @@ function renderResume() {
  let tvActive = false;
   let tvCurrentStationKey = 'france24';
   const tvPane = $('tvPane'), tvStationFrame = $('tvStationFrame');
+  // YouTube : demander la qualité moyenne (environ 360p) par défaut.
+  // YouTube peut toutefois choisir une autre qualité selon le flux et la connexion.
+  function tvYoutube360(url) {
+    if (!url || !/youtube(?:-nocookie)?\.com\/embed\//i.test(url)) return url;
+    try { const u = new URL(url); u.searchParams.set('vq', 'medium'); return u.toString(); }
+    catch { return url + (url.includes('?') ? '&' : '?') + 'vq=medium'; }
+  }
   const tvStations = {
     france24: {name:'FRANCE 24', category:'Francophone', language:'Français', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCCCPCZNChQdGa9EkATeye4g&autoplay=1&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@FRANCE24/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
     euronews: {name:'Euronews FR', category:'Francophone', language:'Français', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCW2QcKZiU8aUGg4yxCIditg&autoplay=1&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@euronewsfr/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
@@ -2946,7 +2953,7 @@ function renderResume() {
     // afin de rester dans MY WORLD RS au lieu d'ouvrir un nouvel onglet.
     let srcStation = station.externalOnly ? station.official : station.url;
     if (station.resolveLive) { try { const c = localStorage.getItem('mwrs_tv_live_' + key); if (c && /^[\w-]{6,20}$/.test(c)) srcStation = 'https://www.youtube.com/embed/' + c + '?autoplay=1&rel=0&playsinline=1&controls=1'; } catch {} }
-    tvStationFrame.src = srcStation || 'about:blank';
+    tvStationFrame.src = tvYoutube360(srcStation) || 'about:blank';
     tvStationFrame.name = 'tvStationFrame';
     const officialLink = $('tvOpenOfficial');
     if (officialLink) {
@@ -3123,7 +3130,7 @@ function renderResume() {
    youtubeUpdateNav();
    saveProg(); stopAll();
    youtubePaused = false;
-   youtubeFrame.src = 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(id) + '?autoplay=1&rel=0&enablejsapi=1&origin=' + encodeURIComponent(location.origin);
+   youtubeFrame.src = 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(id) + '?autoplay=1&rel=0&enablejsapi=1&origin=' + encodeURIComponent(location.origin) + '&vq=medium';
    setMode('youtube'); youtubePane.hidden = true; ytMajRetour(); updatePlayBtn(); $('nowPlaying').textContent = 'YouTube · ' + (title || id);
    $('youtubeStatus').textContent = youtubeQueueIndex >= 0
      ? 'Lecture ' + (youtubeQueueIndex + 1) + ' sur ' + youtubeQueue.length + '. Utilisez Vidéo suivante pour continuer.'
@@ -3247,7 +3254,7 @@ function renderResume() {
    const d=e.data;
    if(d.action==='yt'&&d.kind==='live'){
      if(!tvActive||d.station!==tvCurrentStationKey||!tvStations[tvCurrentStationKey]?.resolveLive)return;
-     if(d.live&&d.live.id){try{localStorage.setItem('mwrs_tv_live_'+d.station,d.live.id)}catch{}tvStationFrame.src='https://www.youtube.com/embed/'+encodeURIComponent(d.live.id)+'?autoplay=1&rel=0&playsinline=1&controls=1';$('tvStatus').textContent='Direct trouvé : '+(d.live.title||'')+'.';}
+     if(d.live&&d.live.id){try{localStorage.setItem('mwrs_tv_live_'+d.station,d.live.id)}catch{}tvStationFrame.src=tvYoutube360('https://www.youtube.com/embed/'+encodeURIComponent(d.live.id)+'?autoplay=1&rel=0&playsinline=1&controls=1');$('tvStatus').textContent='Direct trouvé : '+(d.live.title||'')+'.';}
      else if(d.raison==='non-integrable'){$('tvStatus').textContent='La chaîne interdit l’intégration de ce direct dans d’autres sites : il ne peut s’afficher que sur YouTube.';}
      else if(d.raison==='introuvable'){$('tvStatus').textContent='Aucun direct en cours pour cette chaîne en ce moment. Réessayez plus tard.';}
      else if(d.raison==='autorisation'){$('tvStatus').textContent='Pour retrouver le direct automatiquement, ouvrez une fois « Mon espace YouTube » dans le lecteur YouTube et acceptez l’accès.';}
