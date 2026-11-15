@@ -674,6 +674,14 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
 #tvPane .tv-empty{padding:14px;color:#aab5c6;font-size:13px}
 @media(max-width:800px){#tvPane .tv-main-heading{gap:7px}#tvPane .tv-channel-nav{margin-left:0}#tvPane .tv-channel-nav button{padding:7px 8px;font-size:10px}}
 
+
+/* Correctif visibilité de la liste : affichage explicite des huit chaînes */
+#tvPane .tv-sidebar #tvStations{display:flex!important;visibility:visible!important;opacity:1!important;flex:1 1 auto!important;min-height:140px!important;max-height:none!important;overflow-y:auto!important;flex-direction:column!important;gap:7px!important}
+#tvPane .tv-sidebar #tvStations .tv-card{display:flex!important;visibility:visible!important;opacity:1!important;min-height:64px!important;width:100%!important;flex:0 0 auto!important}
+#tvPane .tv-sidebar #tvStations .tv-card-copy{display:block!important;visibility:visible!important}
+#tvPane .tv-sidebar #tvStations .tv-card-copy strong{display:block!important;color:#f5f7fb!important}
+#tvPane .tv-sidebar #tvStations .tv-card-copy small{display:block!important;color:#b9c4d4!important}
+
 </style>
 
 
@@ -2882,25 +2890,28 @@ function renderResume() {
   let tvFavorites=[]; try{tvFavorites=JSON.parse(localStorage.getItem(tvFavKey)||'[]')}catch(e){tvFavorites=[]}
   let tvOnlyFavorites=false;
   function tvFilterList(){
-    const q=($('tvSearch')?.value||'').trim().toLowerCase(), cat=$('tvCategoryFilter')?.value||'all';
-    const groups={Francophone:[],English:[]};
-    Object.entries(tvStations).forEach(([key,station])=>{
-      if(!groups[station.category])groups[station.category]=[];
-      groups[station.category].push({key,station});
+    const search=($('tvSearch')?.value||'').trim().toLocaleLowerCase();
+    const selected=$('tvCategoryFilter')?.value||'all';
+    const categoryOf=station=>station.category==='Francophone'||station.category==='Francophones'?'Francophone':'English';
+    const entries=Object.entries(tvStations).filter(([key,station])=>{
+      const category=categoryOf(station);
+      const matchesText=!search||(String(station.name||'')+' '+String(station.language||'')).toLocaleLowerCase().includes(search);
+      const matchesCategory=selected==='all'||selected===category||selected==='Francophones'&&category==='Francophone';
+      const matchesFavorite=!tvOnlyFavorites||tvFavorites.includes(key);
+      return matchesText&&matchesCategory&&matchesFavorite;
     });
-    const renderGroup=(name,icon,label)=> {
-      const rows=(groups[name]||[]).filter(({key,station})=>
-        (!q||(station.name+' '+station.language).toLowerCase().includes(q))&&
-        (cat==='all'||station.category===cat)&&
-        (!tvOnlyFavorites||tvFavorites.includes(key))
-      );
-      if(!rows.length)return '';
-      return '<section class="tv-category"><div class="tv-category-title"><span>'+icon+'</span><div><strong>'+label+'</strong><small>Directs officiels</small></div></div><div class="tv-card-grid">'+rows.map(({key,station})=>
-        '<div role="button" tabindex="0" class="tv-card'+(key===tvCurrentStationKey?' active':'')+(tvFavorites.includes(key)?' is-favorite':'')+'" data-tv-station="'+key+'"><span class="tv-card-flag">'+(key==='france24'?'🇫🇷':key==='euronews'?'🌐':key==='franceinfo'?'🇫🇷':key==='africanewsfr'||key==='rfi'||key==='africanews_en'?'🌍':key==='cnbcafrica'?'🇿🇦':'🇺🇸')+'</span><span class="tv-card-copy"><strong>'+station.name+'</strong><small>'+(station.category==='English'?'News':'Informations')+'</small></span><span class="tv-card-tag">'+(station.category==='English'?'EN':'FR')+'</span><button class="tv-fav" type="button" data-tv-favorite="1" aria-label="Favori">'+(tvFavorites.includes(key)?'★':'☆')+'</button></div>'
-      ).join('')+'</div></section>';
-    };
+    const flags={france24:'🇫🇷',euronews:'🌐',franceinfo:'🇫🇷',africanewsfr:'🌍',rfi:'🌍',africanews_en:'🌍',cnbcafrica:'🇿🇦',abcnews:'🇺🇸'};
     const list=$('tvStations');
-    if(list)list.innerHTML=renderGroup('Francophone','🌍','Francophones')+renderGroup('English','🌐','English')||'<p class="tv-empty">Aucune chaîne ne correspond à ce filtre.</p>';
+    if(!list)return;
+    list.innerHTML=entries.map(([key,station])=>{
+      const category=categoryOf(station),lang=category==='English'?'EN':'FR';
+      return '<div role="button" tabindex="0" class="tv-card'+(key===tvCurrentStationKey?' active':'')+(tvFavorites.includes(key)?' is-favorite':'')+'" data-tv-station="'+key+'"><span class="tv-card-flag">'+(flags[key]||'📺')+'</span><span class="tv-card-copy"><strong>'+station.name+'</strong><small>'+(category==='English'?'News':'Informations')+'</small></span><span class="tv-card-tag">'+lang+'</span><button class="tv-fav" type="button" data-tv-favorite="1" aria-label="Favori">'+(tvFavorites.includes(key)?'★':'☆')+'</button></div>';
+    }).join('');
+    list.style.display='flex';
+    list.style.visibility='visible';
+    list.style.opacity='1';
+    list.style.flexDirection='column';
+    list.style.overflowY='auto';
     $('tvFavoritesToggle')?.classList.toggle('on',tvOnlyFavorites);
     $('tvFavoritesToggle')?.setAttribute('aria-pressed',String(tvOnlyFavorites));
     $('tvBottomFav')?.classList.toggle('on',tvOnlyFavorites);
