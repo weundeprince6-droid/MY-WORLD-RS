@@ -2972,14 +2972,15 @@ function renderResume() {
   // Le navigateur ne peut pas lire le volume réseau réel des iframes YouTube.
   const TV_QUOTA_LIMIT_MS = 105 * 60 * 1000;
   const TV_QUOTA_STORAGE = 'mwrs_tv_daily_quota_v1';
-  let tvQuotaDay = new Date().toLocaleDateString('en-CA');
+  const tvQuotaToday = () => { const d = new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
+  let tvQuotaDay = tvQuotaToday();
   let tvQuotaUsed = 0;
   let tvQuotaSessionStart = 0;
   let tvQuotaBlocked = false;
   function tvQuotaLoad() {
     try {
       const saved = JSON.parse(localStorage.getItem(TV_QUOTA_STORAGE) || '{}');
-      const today = new Date().toLocaleDateString('en-CA');
+      const today = tvQuotaToday();
       if (saved.day === today) tvQuotaUsed = Math.max(0, Math.min(TV_QUOTA_LIMIT_MS, Number(saved.used) || 0));
       else tvQuotaUsed = 0;
       tvQuotaDay = today;
@@ -2993,7 +2994,7 @@ function renderResume() {
     try { localStorage.setItem(TV_QUOTA_STORAGE, JSON.stringify({day:tvQuotaDay,used:Math.min(tvQuotaUsed,TV_QUOTA_LIMIT_MS)})); } catch {}
   }
   function tvQuotaRefresh() {
-    const today = new Date().toLocaleDateString('en-CA');
+    const today = tvQuotaToday();
     if (today !== tvQuotaDay) {
       tvQuotaDay = today; tvQuotaUsed = 0; tvQuotaBlocked = false;
       try { localStorage.setItem(TV_QUOTA_STORAGE, JSON.stringify({day:tvQuotaDay,used:0})); } catch {}
@@ -3006,7 +3007,7 @@ function renderResume() {
     const display = $('tvDailyQuota');
     if (display) {
       display.textContent = remaining > 0
-        ? '📊 TV aujourd’hui : '+usedMins+' min utilisées · '+mins+' min restantes / 1 h 45 (480p estimé)'
+        ? (remaining <= 15*60000 ? '⚠️ Plus que '+mins+' min de TV aujourd’hui · '+usedMins+' min utilisées / 1 h 45 (480p estimé)' : '📊 TV aujourd’hui : '+usedMins+' min utilisées · '+mins+' min restantes / 1 h 45 (480p estimé)')
         : '⛔ Limite TV quotidienne atteinte · retour demain à minuit';
       display.style.borderColor = remaining <= 15*60000 ? '#d99b36' : 'var(--border)';
     }
