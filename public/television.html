@@ -241,19 +241,17 @@ input[type=search]{width:100%;padding:8px 10px;border-radius:8px;border:1px soli
 #tvPane #tvStations .tv-card-grid{grid-template-columns:1fr}
 #tvPane #tvStations .tv-card{padding:6px}
 #tvPane #tvStationsToggle{font-weight:800;white-space:nowrap}
-/* Correctif TV : la zone de lecture reprend toute la hauteur disponible */
+/* Correctif TV : grande zone de lecture, catalogue compact */
 #viewer #tvPane{min-height:0;overflow:hidden}
 #tvPane .tv-view{flex:1 1 0%;min-height:280px;width:100%;box-sizing:border-box}
 #tvPane iframe{display:block;flex:1 1 0%;width:100%;height:auto;min-height:0}
 @media(max-width:760px){
  #viewer #tvPane{overflow-y:auto!important}
- #tvPane .tv-view{flex:1 0 auto;min-height:55vh}
- #tvPane iframe{min-height:38vh}
-}
  #tvPane .tv-head-pro{flex-wrap:wrap}
  #tvPane .tv-catalog{grid-template-columns:1fr;max-height:150px;overflow-y:auto}
  #tvPane .tv-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
- #tvPane .tv-view{min-height:220px;flex:1}
+ #tvPane .tv-view{flex:1 0 auto;min-height:55vh}
+ #tvPane iframe{min-height:38vh}
  #tvPane .tv-head-actions{width:auto}
  #tvPane .tv-head-actions>*{flex:initial}
 }
