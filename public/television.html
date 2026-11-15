@@ -177,6 +177,49 @@ input[type=search]{width:100%;padding:8px 10px;border-radius:8px;border:1px soli
 #tvPane iframe{width:100%;height:100%;min-height:0;flex:1;border:0;border-radius:9px;background:#000}
 #tvPane .tv-help{font-size:11px;color:var(--muted);margin:0;padding:0 3px}
 @media(max-width:760px){#tvPane{overflow-y:auto!important}#tvPane .tv-catalog{grid-template-columns:1fr;max-height:none}#tvPane .tv-card-grid{grid-template-columns:1fr 1fr}#tvPane .tv-view{min-height:260px;flex:1}#tvPane .tv-head-actions{width:100%}#tvPane .tv-head-actions>*{flex:1}}
+
+/* TV compacte : priorité à la surface de lecture */
+#viewer #tvPane{gap:5px;padding:7px}
+#tvPane .tv-head-pro{padding:0 0 5px;gap:6px;flex-wrap:nowrap}
+#tvPane .tv-brand{gap:7px}
+#tvPane .tv-brand-icon{width:29px;height:29px;border-radius:8px;font-size:16px}
+#tvPane .tv-brand strong{font-size:12px;letter-spacing:.4px}
+#tvPane .tv-brand small{font-size:9px;margin-top:0}
+#tvPane .tv-head-actions{gap:5px}
+#tvPane .tv-head-actions a,#tvPane .tv-head-actions button{padding:5px 8px;font-size:10px}
+#tvPane .tv-intro{padding:0;gap:6px;min-height:20px}
+#tvPane .tv-intro strong{font-size:11px}
+#tvPane .tv-intro p{display:none}
+#tvPane .tv-live-dot{width:6px;height:6px;margin-right:5px}
+#tvPane .tv-count{font-size:9px;padding:3px 6px}
+#tvPane .tv-catalog{grid-template-columns:1fr 1fr;gap:6px;max-height:88px;overflow:hidden;padding:0}
+#tvPane .tv-category{padding:5px 6px;border-radius:8px}
+#tvPane .tv-category-title{gap:5px;margin-bottom:4px}
+#tvPane .tv-category-title>span{font-size:13px}
+#tvPane .tv-category-title strong{font-size:10px}
+#tvPane .tv-category-title small{display:none}
+#tvPane .tv-card-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}
+#tvPane .tv-card{gap:5px;padding:4px 5px;border-radius:6px}
+#tvPane .tv-card-flag{font-size:13px}
+#tvPane .tv-card-copy strong{font-size:9px}
+#tvPane .tv-card-copy small{display:none}
+#tvPane .tv-card-tag{font-size:8px;padding:1px 3px}
+#tvPane .tv-view{flex:1;min-height:0;gap:4px;padding:5px;border-radius:9px}
+#tvPane .tv-screen-heading{padding:0 2px}
+#tvPane .tv-screen-heading strong{font-size:10px}
+#tvPane .tv-screen-heading small{font-size:9px;margin:1px 0 0 11px}
+#tvPane .tv-screen-label{font-size:8px;padding:3px 6px}
+#tvPane iframe{flex:1;min-height:0;border-radius:6px}
+#tvPane .tv-help{font-size:9px;line-height:1.2}
+@media(max-width:760px){
+ #viewer #tvPane{overflow-y:auto!important}
+ #tvPane .tv-head-pro{flex-wrap:wrap}
+ #tvPane .tv-catalog{grid-template-columns:1fr;max-height:150px;overflow-y:auto}
+ #tvPane .tv-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #tvPane .tv-view{min-height:220px;flex:1}
+ #tvPane .tv-head-actions{width:auto}
+ #tvPane .tv-head-actions>*{flex:initial}
+}
 #viewer #youtubePane{position:absolute;inset:0;z-index:6;overflow:auto;padding:16px 20px;background:var(--bg);color:var(--text)}
 #viewer #matchsPane{position:absolute;inset:0;z-index:7;display:flex;flex-direction:column;gap:10px;padding:12px;background:var(--bg);color:var(--text)}
 #viewer #matchsPane[hidden]{display:none!important}
