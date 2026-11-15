@@ -11,14 +11,14 @@ function extractScopes(source, declaration) {
   const open = source.indexOf("[", start);
   const close = source.indexOf("];", open);
   assert.ok(open !== -1 && close !== -1, `Tableau de scopes invalide : ${declaration}`);
-  return [...source.slice(open + 1, close).matchAll(/["']([^"']+)["']/g)].map((m) => m[1]);
+  const block = source.slice(open + 1, close);
+  return [...block.matchAll(/["'](https:\/\/www\.googleapis\.com\/auth\/[^"']+)["']/g)].map((m) => m[1]);
 }
 
 test("les autorisations Google de l'application et du Worker restent cohérentes", () => {
   const appScopes = extractScopes(app, "const SCOPES =");
   const workerScopes = extractScopes(worker, "const GOOGLE_SCOPES =");
-  const workerApiScopes = workerScopes.filter((scope) => scope.startsWith("https://www.googleapis.com/auth/"));
-  assert.deepEqual([...appScopes].sort(), [...workerApiScopes].sort(),
+  assert.deepEqual([...appScopes].sort(), [...workerScopes].sort(),
     "Les scopes Google API doivent être identiques dans public/app.js et cloudflare/worker.js.");
 });
 
