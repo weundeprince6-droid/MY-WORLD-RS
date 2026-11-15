@@ -662,6 +662,18 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
  #tvPane .tv-video-wrap{min-height:42vh}
 }
 
+
+#tvPane .tv-main-heading{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+#tvPane .tv-channel-nav{display:flex;align-items:center;gap:7px;margin-left:auto}
+#tvPane .tv-channel-nav button{padding:8px 11px;border:1px solid #47566c;border-radius:8px;background:#172235;color:#f5c45b;font-size:12px;font-weight:700;cursor:pointer}
+#tvPane .tv-channel-nav button:hover{background:#27364b;border-color:#d5a43d}
+#tvPane .tv-card-grid{display:flex!important;flex-direction:column!important;gap:7px}
+#tvPane .tv-card{display:flex!important;width:100%;min-height:66px;flex-shrink:0;cursor:pointer}
+#tvPane .tv-card[hidden]{display:none!important}
+#tvPane .tv-fav{flex:none;padding:4px 7px;border:0;background:transparent;color:#f5c45b;font-size:18px}
+#tvPane .tv-empty{padding:14px;color:#aab5c6;font-size:13px}
+@media(max-width:800px){#tvPane .tv-main-heading{gap:7px}#tvPane .tv-channel-nav{margin-left:0}#tvPane .tv-channel-nav button{padding:7px 8px;font-size:10px}}
+
 </style>
 
 
@@ -798,7 +810,7 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
           <button id="tvRefreshList" class="tv-refresh" type="button">↻ Actualiser la liste</button>
         </aside>
         <main class="tv-main">
-          <div class="tv-main-heading"><span>▣</span><strong>LECTEUR TV</strong><button id="tvBack" type="button">← Retour</button></div>
+          <div class="tv-main-heading"><span>▣</span><strong>LECTEUR TV</strong><div class="tv-channel-nav"><button id="tvPrevStation" type="button" title="Chaîne précédente">⏮ Précédent</button><button id="tvNextStation" type="button" title="Chaîne suivante">Suivant ⏭</button></div><button id="tvBack" type="button">← Retour</button></div>
           <div class="tv-view">
             <div class="tv-video-wrap">
               <span class="tv-live-badge">EN DIRECT</span>
@@ -2871,17 +2883,31 @@ function renderResume() {
   let tvOnlyFavorites=false;
   function tvFilterList(){
     const q=($('tvSearch')?.value||'').trim().toLowerCase(), cat=$('tvCategoryFilter')?.value||'all';
-    $('tvStations')?.querySelectorAll('[data-tv-station]').forEach(btn=>{
-      const key=btn.dataset.tvStation, station=tvStations[key], matchText=!q||(station.name+' '+station.language).toLowerCase().includes(q);
-      const matchCat=cat==='all'||station.category===cat, matchFav=!tvOnlyFavorites||tvFavorites.includes(key);
-      btn.hidden=!(matchText&&matchCat&&matchFav);
-      btn.classList.toggle('is-favorite',tvFavorites.includes(key));
+    const groups={Francophone:[],English:[]};
+    Object.entries(tvStations).forEach(([key,station])=>{
+      if(!groups[station.category])groups[station.category]=[];
+      groups[station.category].push({key,station});
     });
-    $('tvStations')?.querySelectorAll('.tv-category').forEach(group=>{group.hidden=!Array.from(group.querySelectorAll('[data-tv-station]')).some(btn=>!btn.hidden)});
+    const renderGroup=(name,icon,label)=> {
+      const rows=(groups[name]||[]).filter(({key,station})=>
+        (!q||(station.name+' '+station.language).toLowerCase().includes(q))&&
+        (cat==='all'||station.category===cat)&&
+        (!tvOnlyFavorites||tvFavorites.includes(key))
+      );
+      if(!rows.length)return '';
+      return '<section class="tv-category"><div class="tv-category-title"><span>'+icon+'</span><div><strong>'+label+'</strong><small>Directs officiels</small></div></div><div class="tv-card-grid">'+rows.map(({key,station})=>
+        '<div role="button" tabindex="0" class="tv-card'+(key===tvCurrentStationKey?' active':'')+(tvFavorites.includes(key)?' is-favorite':'')+'" data-tv-station="'+key+'"><span class="tv-card-flag">'+(key==='france24'?'🇫🇷':key==='euronews'?'🌐':key==='franceinfo'?'🇫🇷':key==='africanewsfr'||key==='rfi'||key==='africanews_en'?'🌍':key==='cnbcafrica'?'🇿🇦':'🇺🇸')+'</span><span class="tv-card-copy"><strong>'+station.name+'</strong><small>'+(station.category==='English'?'News':'Informations')+'</small></span><span class="tv-card-tag">'+(station.category==='English'?'EN':'FR')+'</span><button class="tv-fav" type="button" data-tv-favorite="1" aria-label="Favori">'+(tvFavorites.includes(key)?'★':'☆')+'</button></div>'
+      ).join('')+'</div></section>';
+    };
+    const list=$('tvStations');
+    if(list)list.innerHTML=renderGroup('Francophone','🌍','Francophones')+renderGroup('English','🌐','English')||'<p class="tv-empty">Aucune chaîne ne correspond à ce filtre.</p>';
     $('tvFavoritesToggle')?.classList.toggle('on',tvOnlyFavorites);
     $('tvFavoritesToggle')?.setAttribute('aria-pressed',String(tvOnlyFavorites));
     $('tvBottomFav')?.classList.toggle('on',tvOnlyFavorites);
   }
+  $('tvPrevStation')?.addEventListener('click',()=>tvNavigateStation(-1));
+  $('tvNextStation')?.addEventListener('click',()=>tvNavigateStation(1));
+  $('tvStations')?.addEventListener('keydown',e=>{const card=e.target.closest('[data-tv-station]');if(card&&(e.key==='Enter'||e.key===' ')){e.preventDefault();tvSelectStation(card.dataset.tvStation)}});
   $('tvStations')?.addEventListener('click', e=>{
     const fav=e.target.closest('[data-tv-favorite]');
     if(fav){const key=fav.closest('[data-tv-station]')?.dataset.tvStation;if(!key)return;tvFavorites=tvFavorites.includes(key)?tvFavorites.filter(x=>x!==key):[...tvFavorites,key];try{localStorage.setItem(tvFavKey,JSON.stringify(tvFavorites))}catch(e){}tvFilterList();return}
