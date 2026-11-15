@@ -257,6 +257,9 @@ input[type=search]{width:100%;padding:8px 10px;border-radius:8px;border:1px soli
 }
 
 /* MY WORLD TV — interface plein écran inspirée de la maquette validée */
+#tvPane .tv-fav{flex:none;padding:3px 6px;border:0;background:transparent;color:#f4bd43;font-size:18px;line-height:1}
+#tvPane .tv-card.is-favorite .tv-fav{color:#ffd45f}
+
 #viewer #tvPane{position:absolute;inset:0;z-index:8;display:flex;flex-direction:row;gap:0;padding:0;overflow:hidden;background:#080d17;color:#f4f6fb}
 #viewer #tvPane[hidden]{display:none!important}
 #tvPane .tv-sidebar{width:344px;min-width:290px;max-width:36%;display:flex;flex-direction:column;gap:13px;padding:18px 16px;background:linear-gradient(180deg,#080d17,#111a29);border:1px solid #273246;border-radius:16px 0 0 16px;min-height:0}
@@ -736,16 +739,16 @@ body.gold #titleBar{background:#1a1a18!important}
           </div>
           <div class="tv-catalog" id="tvStations">
             <section class="tv-category"><div class="tv-category-title"><span>🌍</span><div><strong>Francophone</strong><small>Directs officiels</small></div></div><div class="tv-card-grid">
-              <button type="button" class="tv-card active" data-tv-station="france24"><span class="tv-card-flag">🇫🇷</span><span class="tv-card-copy"><strong>FRANCE 24</strong><small>Informations</small></span><span class="tv-card-tag">FR</span></button>
-              <button type="button" class="tv-card" data-tv-station="euronews"><span class="tv-card-flag">🌐</span><span class="tv-card-copy"><strong>Euronews FR</strong><small>Informations</small></span><span class="tv-card-tag">FR</span></button>
-              <button type="button" class="tv-card" data-tv-station="franceinfo"><span class="tv-card-flag">🇫🇷</span><span class="tv-card-copy"><strong>franceinfo</strong><small>Informations</small></span><span class="tv-card-tag">FR</span></button>
-              <button type="button" class="tv-card" data-tv-station="africanewsfr"><span class="tv-card-flag">🌍</span><span class="tv-card-copy"><strong>Africanews Français</strong><small>Informations</small></span><span class="tv-card-tag">FR</span></button>
-              <button type="button" class="tv-card" data-tv-station="rfi"><span class="tv-card-flag">🌍</span><span class="tv-card-copy"><strong>RFI</strong><small>Informations</small></span><span class="tv-card-tag">FR</span></button>
+              <button type="button" class="tv-card active" data-tv-station="france24"><span class="tv-card-flag">🇫🇷</span><span class="tv-card-copy"><strong>FRANCE 24</strong><small>Informations</small></span><span class="tv-card-tag">FR</span><button class="tv-fav" type="button" data-tv-favorite="</button>" aria-label="Ajouter aux favoris">☆</button></button>
+              <button type="button" class="tv-card" data-tv-station="euronews"><span class="tv-card-flag">🌐</span><span class="tv-card-copy"><strong>Euronews FR</strong><small>Informations</small></span><span class="tv-card-tag">FR</span><button class="tv-fav" type="button" data-tv-favorite="</button>" aria-label="Ajouter aux favoris">☆</button></button>
+              <button type="button" class="tv-card" data-tv-station="franceinfo"><span class="tv-card-flag">🇫🇷</span><span class="tv-card-copy"><strong>franceinfo</strong><small>Informations</small></span><span class="tv-card-tag">FR</span><button class="tv-fav" type="button" data-tv-favorite="</button>" aria-label="Ajouter aux favoris">☆</button></button>
+              <button type="button" class="tv-card" data-tv-station="africanewsfr"><span class="tv-card-flag">🌍</span><span class="tv-card-copy"><strong>Africanews Français</strong><small>Informations</small></span><span class="tv-card-tag">FR</span><button class="tv-fav" type="button" data-tv-favorite="</button>" aria-label="Ajouter aux favoris">☆</button></button>
+              <button type="button" class="tv-card" data-tv-station="rfi"><span class="tv-card-flag">🌍</span><span class="tv-card-copy"><strong>RFI</strong><small>Informations</small></span><span class="tv-card-tag">FR</span><button class="tv-fav" type="button" data-tv-favorite="</button>" aria-label="Ajouter aux favoris">☆</button></button>
             </div></section>
             <section class="tv-category"><div class="tv-category-title"><span>🌐</span><div><strong>English</strong><small>Official live streams</small></div></div><div class="tv-card-grid">
-              <button type="button" class="tv-card" data-tv-station="africanews_en"><span class="tv-card-flag">🌍</span><span class="tv-card-copy"><strong>Africanews English</strong><small>News</small></span><span class="tv-card-tag">EN</span></button>
-              <button type="button" class="tv-card" data-tv-station="cnbcafrica"><span class="tv-card-flag">🇿🇦</span><span class="tv-card-copy"><strong>CNBC Africa</strong><small>Économie</small></span><span class="tv-card-tag">EN</span></button>
-              <button type="button" class="tv-card" data-tv-station="abcnews"><span class="tv-card-flag">🇺🇸</span><span class="tv-card-copy"><strong>ABC News Live</strong><small>Informations</small></span><span class="tv-card-tag">EN</span></button>
+              <button type="button" class="tv-card" data-tv-station="africanews_en"><span class="tv-card-flag">🌍</span><span class="tv-card-copy"><strong>Africanews English</strong><small>News</small></span><span class="tv-card-tag">EN</span><button class="tv-fav" type="button" data-tv-favorite="</button>" aria-label="Ajouter aux favoris">☆</button></button>
+              <button type="button" class="tv-card" data-tv-station="cnbcafrica"><span class="tv-card-flag">🇿🇦</span><span class="tv-card-copy"><strong>CNBC Africa</strong><small>Économie</small></span><span class="tv-card-tag">EN</span><button class="tv-fav" type="button" data-tv-favorite="</button>" aria-label="Ajouter aux favoris">☆</button></button>
+              <button type="button" class="tv-card" data-tv-station="abcnews"><span class="tv-card-flag">🇺🇸</span><span class="tv-card-copy"><strong>ABC News Live</strong><small>Informations</small></span><span class="tv-card-tag">EN</span><button class="tv-fav" type="button" data-tv-favorite="</button>" aria-label="Ajouter aux favoris">☆</button></button>
             </div></section>
           </div>
           <button id="tvRefreshList" class="tv-refresh" type="button">↻ Actualiser la liste</button>
@@ -2831,7 +2834,7 @@ function renderResume() {
   }
   $('tvStations')?.addEventListener('click', e=>{
     const fav=e.target.closest('[data-tv-favorite]');
-    if(fav){const key=fav.dataset.tvFavorite;tvFavorites=tvFavorites.includes(key)?tvFavorites.filter(x=>x!==key):[...tvFavorites,key];try{localStorage.setItem(tvFavKey,JSON.stringify(tvFavorites))}catch(e){}tvFilterList();return}
+    if(fav){const key=fav.closest('[data-tv-station]')?.dataset.tvStation;if(!key)return;tvFavorites=tvFavorites.includes(key)?tvFavorites.filter(x=>x!==key):[...tvFavorites,key];try{localStorage.setItem(tvFavKey,JSON.stringify(tvFavorites))}catch(e){}tvFilterList();return}
     const b=e.target.closest('button[data-tv-station]');if(b)tvSelectStation(b.dataset.tvStation);
   });
   $('tvSearch')?.addEventListener('input',tvFilterList);
