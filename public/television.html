@@ -628,6 +628,40 @@ body.gold #titleBar{background:#1a1a18!important}
 .yt-link-form{display:flex;gap:8px;max-width:620px;border-top:1px solid var(--border);padding-top:12px;margin:18px 0 0}
 .yt-link-form input{flex:1;min-width:0;padding:9px 12px;border-radius:20px;border:1px solid var(--border);background:var(--panel2);color:var(--text)}
 @media(max-width:700px){.yt-topbar{gap:8px;padding:8px}.yt-brand{min-width:0}.yt-brand small{display:none}.yt-top-actions a{display:none}.yt-top-actions button{font-size:11px;padding:6px 8px}.yt-layout{flex-direction:column}.yt-nav{width:100%;flex-direction:row;overflow-x:auto;overflow-y:hidden;border-right:0;border-bottom:1px solid var(--border);padding:6px;gap:5px}.yt-nav button{flex:0 0 auto;gap:6px;padding:8px;font-size:11px}.yt-nav button span{font-size:15px;width:auto}.yt-nav hr,.yt-nav-note{display:none}.yt-main{padding:9px}.yt-results{grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:12px 8px}.yt-card .yt-card-title{font-size:12px}}
+
+/* TV final — plein écran bord à bord, sans colonne vide ni barre du lecteur classique */
+body.tv-fullscreen #app{display:block!important;width:100vw!important;height:100vh!important;overflow:hidden!important}
+body.tv-fullscreen #sidebar{display:none!important;width:0!important;min-width:0!important}
+body.tv-fullscreen #stage{display:block!important;position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;min-width:0!important;max-width:none!important;margin:0!important;padding:0!important}
+body.tv-fullscreen #viewer{display:block!important;position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;background:#05080d!important}
+body.tv-fullscreen #titleBar,body.tv-fullscreen #controls{display:none!important}
+body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-height:0!important;display:flex!important;flex-direction:column!important;gap:0!important;padding:0!important;margin:0!important;border:0!important;border-radius:0!important}
+#tvPane .tv-globalbar{height:52px;min-height:52px;display:flex;align-items:center;gap:18px;padding:0 22px;background:#050608;border-bottom:1px solid #202734;color:#fff}
+#tvPane .tv-global-brand{display:flex;align-items:center;gap:12px;font-size:16px}
+#tvPane .tv-global-brand span{display:grid;place-items:center;width:28px;height:28px;border-radius:6px;background:#087a5c;color:white;font-weight:900;font-size:11px}
+#tvPane .tv-global-caption{margin-left:auto;color:#e9b744;font-size:12px;font-weight:800;letter-spacing:1.5px}
+#tvPane .tv-shell{display:flex;flex:1;min-width:0;min-height:0;width:100%;height:calc(100% - 52px);overflow:hidden}
+#tvPane .tv-sidebar{width:25%;min-width:285px;max-width:390px;height:100%;max-height:none;flex:0 0 25%;border-radius:0;border-width:0 1px 0 0;padding:18px;overflow:hidden}
+#tvPane .tv-catalog{display:flex!important;flex:1 1 auto;min-height:0;overflow-y:auto!important;overflow-x:hidden!important}
+#tvPane .tv-category{display:block!important;flex:0 0 auto}
+#tvPane .tv-category[hidden]{display:none!important}
+#tvPane .tv-card-grid{display:flex!important;flex-direction:column;gap:7px}
+#tvPane .tv-card{min-height:68px;flex-shrink:0}
+#tvPane .tv-main{flex:1 1 0%;width:75%;height:100%;min-height:0;padding:14px 16px 16px;overflow:hidden}
+#tvPane .tv-main-heading{min-height:42px;flex:0 0 42px}
+#tvPane .tv-view{flex:1 1 0%;min-height:0}
+#tvPane .tv-video-wrap{flex:1 1 0%;min-height:0;width:100%;height:100%;border-radius:8px}
+#tvPane .tv-video-wrap iframe{width:100%;height:100%;min-height:0}
+#tvPane .tv-now-bar{flex:0 0 auto}
+#tvPane .tv-bottom-bar{flex:0 0 auto;min-height:72px}
+@media(max-width:800px){
+ body.tv-fullscreen #viewer #tvPane{overflow:auto!important}
+ #tvPane .tv-shell{height:auto;min-height:calc(100% - 52px);flex-direction:column;overflow:auto}
+ #tvPane .tv-sidebar{width:100%;max-width:none;min-width:0;max-height:38vh;height:auto;flex:0 0 auto;border-width:0 0 1px 0}
+ #tvPane .tv-main{width:100%;height:auto;min-height:60vh;overflow:visible}
+ #tvPane .tv-video-wrap{min-height:42vh}
+}
+
 </style>
 
 
@@ -738,6 +772,8 @@ body.gold #titleBar{background:#1a1a18!important}
 <div class="radio-stations-menu" id="radioStations" hidden><strong class="radio-group-title">🇨🇩 République démocratique du Congo</strong><button type="button" data-radio-station="radiookapi">Radio Okapi</button><a href="https://topcongo.live/" target="_blank" rel="noopener noreferrer">Top Congo FM · site officiel ↗</a><strong class="radio-group-title">🇫🇷 France · Radio France</strong><button type="button" data-radio-station="franceinter" class="active">France Inter</button><button type="button" data-radio-station="franceinfo">franceinfo</button><button type="button" data-radio-station="franceculture">France Culture</button><button type="button" data-radio-station="francemusique">France Musique</button><button type="button" data-radio-station="fip">FIP</button><button type="button" data-radio-station="mouv">Mouv’</button><strong class="radio-group-title">🌍 International · Francophone</strong><button type="button" data-radio-station="rfi">RFI Monde</button></div></header>
 <main class="radio-main"><div class="radio-player-card"><div class="radio-live-pill"><span></span> ESPACE RADIO</div><div class="radio-artwork">♫</div><div class="radio-track-label">EN COURS D’ÉCOUTE</div><strong id="radioNowPlaying" class="radio-now-playing">📻 France Inter</strong><p class="radio-subtitle">La radio vous accompagne, où que vous soyez.</p><audio id="radioAudio" controls preload="none"></audio><div id="radioEmbedWrap" hidden class="radio-embed-wrap"><iframe id="radioEmbedFrame" title="Lecteur radio officiel" src="about:blank" loading="lazy" allow="autoplay"></iframe></div><div class="radio-controls"><button type="button" id="radioPrev" aria-label="Station précédente">⏮</button><button type="button" id="radioPlay">▶ Lecture / Pause</button><button type="button" id="radioNext" aria-label="Station suivante">⏭</button></div><a id="radioOfficial" href="https://www.radiofrance.fr/franceinter" target="_blank" rel="noopener noreferrer" class="radio-official-link">Site officiel de la station ↗</a><p id="radioStatus" class="tv-help" role="status">Sélectionnez une station pour commencer l’écoute.</p></div></main></section>>
       <section id="tvPane" hidden>
+        <header class="tv-globalbar"><div class="tv-global-brand"><span>MW</span><strong>My World RS</strong></div><div class="tv-global-caption">TÉLÉVISION EN DIRECT</div></header>
+        <div class="tv-shell">
         <aside class="tv-sidebar">
           <div class="tv-side-title"><span>📺</span><strong>Chaînes TV</strong></div>
           <input id="tvSearch" type="search" placeholder="Rechercher une chaîne..." aria-label="Rechercher une chaîne">
@@ -779,6 +815,7 @@ body.gold #titleBar{background:#1a1a18!important}
             <span class="tv-count">8 chaînes disponibles</span>
           </div>
         </main>
+        </div>
       </section>
       <section id="fifaPane" hidden>
         <div class="matchs-head"><strong>🏆 FIFA+ · Football gratuit</strong><button id="fifaBack" type="button">← Mes fichiers</button></div>
@@ -2772,14 +2809,14 @@ function renderResume() {
   let tvCurrentStationKey = 'france24';
   const tvPane = $('tvPane'), tvStationFrame = $('tvStationFrame');
   const tvStations = {
-    france24: {name:'FRANCE 24', category:'Francophone', language:'Français', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCCCPCZNChQdGa9EkATeye4g&autoplay=0&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@FRANCE24/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
-    euronews: {name:'Euronews FR', category:'Francophone', language:'Français', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCW2QcKZiU8aUGg4yxCIditg&autoplay=0&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@euronewsfr/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
-    franceinfo: {name:'franceinfo', category:'Francophone', language:'Français', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCO6K_kkdP-lnSCiO3tPx7WA&autoplay=0&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@franceinfo/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
-    africanewsfr: {name:'Africanews Français', category:'Francophone', language:'Français', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UC25EuGAePOPvPrUA5cmu3dQ&autoplay=0&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@africanewsfr/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
-    rfi: {name:'RFI', category:'Francophone', language:'Français', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCm4fSpMpPIZ9z6KHoezLUAg&autoplay=0&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@rfi_fr/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
-    africanews_en: {name:'Africanews English', category:'English', language:'English', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UC1_E8NeF5QHY2dtdLRBCCLA&autoplay=0&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@africanews/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
-    cnbcafrica: {name:'CNBC Africa', category:'English', language:'English', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCsba91UGiQLFOb5DN3Z_AdQ&autoplay=0&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@CNBCAfrica/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
-    abcnews: {name:'ABC News Live', category:'English', language:'English', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCBi2mrWuNuyYy4gbM6fU18Q&autoplay=0&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@ABCNews/live', note:'Direct officiel gratuit 24/7. Diffusion vérifiée sans restriction géographique annoncée.'}
+    france24: {name:'FRANCE 24', category:'Francophone', language:'Français', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCCCPCZNChQdGa9EkATeye4g&autoplay=1&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@FRANCE24/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
+    euronews: {name:'Euronews FR', category:'Francophone', language:'Français', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCW2QcKZiU8aUGg4yxCIditg&autoplay=1&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@euronewsfr/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
+    franceinfo: {name:'franceinfo', category:'Francophone', language:'Français', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCO6K_kkdP-lnSCiO3tPx7WA&autoplay=1&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@franceinfo/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
+    africanewsfr: {name:'Africanews Français', category:'Francophone', language:'Français', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UC25EuGAePOPvPrUA5cmu3dQ&autoplay=1&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@africanewsfr/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
+    rfi: {name:'RFI', category:'Francophone', language:'Français', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCm4fSpMpPIZ9z6KHoezLUAg&autoplay=1&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@rfi_fr/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
+    africanews_en: {name:'Africanews English', category:'English', language:'English', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UC1_E8NeF5QHY2dtdLRBCCLA&autoplay=1&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@africanews/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
+    cnbcafrica: {name:'CNBC Africa', category:'English', language:'English', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCsba91UGiQLFOb5DN3Z_AdQ&autoplay=1&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@CNBCAfrica/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
+    abcnews: {name:'ABC News Live', category:'English', language:'English', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCBi2mrWuNuyYy4gbM6fU18Q&autoplay=1&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@ABCNews/live', note:'Direct officiel gratuit 24/7. Diffusion vérifiée sans restriction géographique annoncée.'}
   };;
   function tvSelectStation(key) {
     const station = tvStations[key]; if (!station) return;
@@ -2788,9 +2825,12 @@ function renderResume() {
     // afin de rester dans MY WORLD RS au lieu d'ouvrir un nouvel onglet.
     tvStationFrame.src = station.externalOnly ? station.official : station.url;
     tvStationFrame.name = 'tvStationFrame';
-    $('tvOpenOfficial').href = station.official;
-    $('tvOpenOfficial').target = 'tvStationFrame';
-    $('tvOpenOfficial').textContent = station.externalOnly ? 'Recharger le service dans TV ↻' : 'Ouvrir sur YouTube ↗';
+    const officialLink = $('tvOpenOfficial');
+    if (officialLink) {
+      officialLink.href = station.official;
+      officialLink.target = 'tvStationFrame';
+      officialLink.textContent = station.externalOnly ? 'Recharger le service dans TV ↻' : 'Ouvrir sur YouTube ↗';
+    }
     if (station.externalOnly) {
       $('tvStatus').textContent = station.note + ' Chargement du service officiel dans le lecteur TV. Si le fournisseur interdit l’affichage intégré, son site peut refuser de s’ouvrir dans ce cadre.';
     } else {
@@ -2823,6 +2863,7 @@ function renderResume() {
     radioHide(); fifaHide(); matchsHide(); tvDriveHide(); youtubeHide(); cacherOngletMesFilms();
     tvActive = true; document.body.classList.add('tv-fullscreen'); $('playlist').hidden = true; tvPane.hidden = false;
     $('tabs').querySelectorAll('button').forEach(b => b.classList.toggle('active', b === tvTab));
+    tvFilterList();
     tvSelectStation('france24');
   }
   const tvFavKey='myWorldTvFavorites';
