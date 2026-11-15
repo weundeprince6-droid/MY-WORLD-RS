@@ -2681,3 +2681,25 @@ html[data-theme="gold"] #pane-agenda #agenda-anniversaire .agenda-anniversaire-c
   }
 }
 
+
+
+/* Rappel horaire France 24 : discret, fixe et au-dessus du mini-lecteur. */
+.spot-france24{position:fixed;right:18px;bottom:82px;z-index:9997;width:min(390px,calc(100vw - 28px));padding:12px 14px 10px;border:1px solid #c99b43;border-radius:16px;background:linear-gradient(135deg,#111c2b 0%,#172c32 100%);color:#fff;box-shadow:0 12px 34px #0005;animation:spotF24In .28s ease-out}
+.spot-france24[hidden]{display:none}
+.spot-france24-top,.spot-france24-main{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.spot-france24-live{display:flex;align-items:center;gap:7px;color:#f1c66e;font-size:10px;font-weight:850;letter-spacing:.09em}
+.spot-france24-live i{width:7px;height:7px;border-radius:50%;background:#e5484d;box-shadow:0 0 0 4px #e5484d26;animation:spotF24Pulse 1.4s infinite}
+#spot-france24-close{border:0;background:transparent;color:#cbd5df;font-size:22px;line-height:1;cursor:pointer;padding:0 3px}
+.spot-france24-main{justify-content:flex-start;margin-top:8px}
+.spot-france24-flag{font-size:28px;flex:none}
+.spot-france24-copy{display:flex;flex:1;min-width:0;flex-direction:column;gap:3px}
+.spot-france24-copy strong{font-size:15px;letter-spacing:.04em}
+.spot-france24-copy span{font-size:12px;color:#c8d4df}
+#spot-france24-open{flex:none;border:1px solid #e0b75d;border-radius:10px;background:linear-gradient(135deg,#d5a747,#a97820);color:#201707;font-weight:800;font-size:12px;padding:10px 12px;cursor:pointer;box-shadow:0 3px 9px #0003}
+#spot-france24-open:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.spot-france24-progress{height:3px;margin-top:11px;overflow:hidden;border-radius:5px;background:#ffffff26}
+.spot-france24-progress span{display:block;width:100%;height:100%;background:linear-gradient(90deg,#e4b94e,#f7e2a7);transform-origin:left;animation:spotF24Life 60s linear forwards}
+@keyframes spotF24Life{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+@keyframes spotF24Pulse{50%{opacity:.45}}
+@keyframes spotF24In{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:560px){.spot-france24{right:10px;bottom:76px;width:calc(100vw - 20px);padding:10px 12px}.spot-france24-copy span{font-size:11px}#spot-france24-open{padding:9px 10px;font-size:11px}}

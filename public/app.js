@@ -4135,6 +4135,62 @@ $("keep-fichiers")?.addEventListener("change", async (e) => {
 })();
 
 
+
+/* ---------- Rappel France 24 à HH:29 et HH:59 ---------- */
+(() => {
+  const spot = document.getElementById("spot-france24");
+  const progress = document.getElementById("spot-france24-progress");
+  if (!spot || spot.dataset.initialized === "1") return;
+  spot.dataset.initialized = "1";
+  let lastMinuteKey = "";
+  let dismissedMinuteKey = "";
+  let openedMinuteKey = "";
+  const rafraichir = () => {
+    const now = new Date();
+    const m = now.getMinutes();
+    const key = now.getFullYear()+"-"+now.getMonth()+"-"+now.getDate()+"-"+now.getHours()+"-"+m;
+    const active = (m === 29 || m === 59) && dismissedMinuteKey !== key;
+    if (active && key !== lastMinuteKey) {
+      lastMinuteKey = key;
+      spot.hidden = false;
+      if (progress) { progress.style.animation = "none"; void progress.offsetWidth; progress.style.animation = ""; }
+    } else if (!active) {
+      spot.hidden = true;
+      if (m !== 29 && m !== 59) dismissedMinuteKey = "";
+    }
+  };
+  document.getElementById("spot-france24-close")?.addEventListener("click", () => {
+    const n = new Date(); dismissedMinuteKey = n.getFullYear()+"-"+n.getMonth()+"-"+n.getDate()+"-"+n.getHours()+"-"+n.getMinutes(); spot.hidden = true;
+  });
+  document.getElementById("spot-france24-open")?.addEventListener("click", async () => {
+    const n = new Date(); openedMinuteKey = n.getFullYear()+"-"+n.getMonth()+"-"+n.getDate()+"-"+n.getHours()+"-"+n.getMinutes();
+    const btn = document.getElementById("spot-france24-open");
+    if (btn) { btn.disabled = true; btn.textContent = "Ouverture…"; }
+    try {
+      await tvOuvrir("tv");
+      const frame = document.querySelector("#tv-zone iframe");
+      let essais = 0;
+      const choisirFrance24 = () => {
+        essais++;
+        try {
+          const doc = frame?.contentDocument;
+          const carte = doc?.querySelector('[data-tv-station="france24"]');
+          if (carte) { carte.click(); if (btn) { btn.disabled = false; btn.innerHTML = 'Ouvrir dans TV <span>↗</span>'; } return; }
+        } catch {}
+        if (essais < 25) setTimeout(choisirFrance24, 200);
+        else if (btn) { btn.disabled = false; btn.innerHTML = 'Ouvrir dans TV <span>↗</span>'; }
+      };
+      choisirFrance24();
+    } catch (e) {
+      if (btn) { btn.disabled = false; btn.innerHTML = 'Ouvrir dans TV <span>↗</span>'; }
+      console.warn("Ouverture France 24 impossible", e);
+    }
+  });
+  rafraichir();
+  setInterval(rafraichir, 500);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) rafraichir(); });
+})();
+
 // ---------- Messagerie Gmail en trois panneaux, style WhatsApp Web ----------
 let gmailThreadActif = null;
 let gmailMessageActif = null;
