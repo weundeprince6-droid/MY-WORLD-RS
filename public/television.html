@@ -906,7 +906,7 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
         </aside>
         <main class="tv-main">
           <div class="tv-main-heading"><span>▣</span><strong>LECTEUR TV</strong><button id="tvBack" type="button">← Retour</button></div>
-          <div id="tvDailyQuota" role="status" aria-live="polite" style="margin:8px 0;padding:9px 12px;border:1px solid var(--border);border-radius:10px;background:var(--panel2);font-size:13px;font-weight:700">📊 Limite TV : chargement…</div>
+          <div id="tvDailyQuota" role="status" aria-live="polite" style="margin:8px 0;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--panel2);font-size:13px;font-weight:700"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><span id="tvQuotaText">📊 Limite TV : chargement…</span><button id="tvQuotaRenew" type="button" style="background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700">＋ Ajouter 2 h</button></div><div style="height:6px;margin-top:9px;border-radius:99px;background:var(--border);overflow:hidden"><div id="tvQuotaProgress" style="height:100%;width:0%;background:var(--accent2);transition:width .3s"></div></div><small id="tvQuotaDetail" style="display:block;margin-top:6px;color:var(--muted);font-weight:400">Compteur préventif · qualité 480p estimée</small></div>
           <div class="tv-view">
             <div class="tv-video-wrap">
               <span class="tv-live-badge">EN DIRECT</span>
@@ -2968,59 +2968,83 @@ function renderResume() {
     nba: {name:'NBA', category:'Sport', language:'Sport', url:'', resolveLive:{q:'NBA live',channelRe:'^nba'}, official:'https://www.youtube.com/@NBA/live', note:'Basket : directs et émissions de la NBA, selon la programmation.'},
     abcnews: {name:'ABC News Live', category:'English', language:'English', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCBi2mrWuNuyYy4gbM6fU18Q&autoplay=1&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@ABCNews/live', note:'Direct officiel gratuit 24/7. Diffusion vérifiée sans restriction géographique annoncée.'}
   };;
-  // Limite préventive quotidienne : 1 h 45 de visionnage TV, estimation prudente pour ~1,5 Go en 480p.
-  // Le navigateur ne peut pas lire le volume réseau réel des iframes YouTube.
-  const TV_QUOTA_LIMIT_MS = 105 * 60 * 1000;
-  const TV_QUOTA_STORAGE = 'mwrs_tv_daily_quota_v1';
+  // Limite préventive : 2 h de base par jour, renouvelables par tranches de 2 h.
+  // Le navigateur ne peut pas mesurer précisément le trafic des iframes YouTube.
+  const TV_QUOTA_BASE_MS = 2 * 60 * 60 * 1000;
+  const TV_QUOTA_RENEW_MS = 2 * 60 * 60 * 1000;
+  const TV_QUOTA_STORAGE = 'mwrs_tv_daily_quota_v2';
   const tvQuotaToday = () => { const d = new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
+  const tvQuotaFormat = ms => { const sec=Math.max(0,Math.floor(ms/1000)); const h=String(Math.floor(sec/3600)).padStart(2,'0'); const m=String(Math.floor(sec%3600/60)).padStart(2,'0'); const s=String(sec%60).padStart(2,'0'); return h+':'+m+':'+s; };
   let tvQuotaDay = tvQuotaToday();
   let tvQuotaUsed = 0;
+  let tvQuotaBonus = 0;
   let tvQuotaSessionStart = 0;
   let tvQuotaBlocked = false;
+  function tvQuotaAllowance() { return TV_QUOTA_BASE_MS + tvQuotaBonus; }
+  function tvQuotaElapsed() { return tvQuotaUsed + (tvQuotaSessionStart ? Math.max(0,Date.now()-tvQuotaSessionStart) : 0); }
   function tvQuotaLoad() {
     try {
       const saved = JSON.parse(localStorage.getItem(TV_QUOTA_STORAGE) || '{}');
       const today = tvQuotaToday();
-      if (saved.day === today) tvQuotaUsed = Math.max(0, Math.min(TV_QUOTA_LIMIT_MS, Number(saved.used) || 0));
-      else tvQuotaUsed = 0;
+      if (saved.day === today) {
+        tvQuotaUsed = Math.max(0, Number(saved.used) || 0);
+        tvQuotaBonus = Math.max(0, Number(saved.bonus) || 0);
+      } else { tvQuotaUsed = 0; tvQuotaBonus = 0; }
       tvQuotaDay = today;
-    } catch { tvQuotaUsed = 0; }
+    } catch { tvQuotaUsed = 0; tvQuotaBonus = 0; }
+    tvQuotaBlocked = tvQuotaElapsed() >= tvQuotaAllowance();
   }
   function tvQuotaPersist() {
     if (tvQuotaSessionStart) {
       tvQuotaUsed += Math.max(0, Date.now() - tvQuotaSessionStart);
       tvQuotaSessionStart = Date.now();
     }
-    try { localStorage.setItem(TV_QUOTA_STORAGE, JSON.stringify({day:tvQuotaDay,used:Math.min(tvQuotaUsed,TV_QUOTA_LIMIT_MS)})); } catch {}
+    try { localStorage.setItem(TV_QUOTA_STORAGE, JSON.stringify({day:tvQuotaDay,used:tvQuotaUsed,bonus:tvQuotaBonus})); } catch {}
   }
   function tvQuotaRefresh() {
     const today = tvQuotaToday();
     if (today !== tvQuotaDay) {
-      tvQuotaDay = today; tvQuotaUsed = 0; tvQuotaBlocked = false;
-      try { localStorage.setItem(TV_QUOTA_STORAGE, JSON.stringify({day:tvQuotaDay,used:0})); } catch {}
+      tvQuotaDay = today; tvQuotaUsed = 0; tvQuotaBonus = 0; tvQuotaBlocked = false;
+      try { localStorage.setItem(TV_QUOTA_STORAGE, JSON.stringify({day:tvQuotaDay,used:0,bonus:0})); } catch {}
       if (tvActive) tvQuotaSessionStart = Date.now();
     }
-    const elapsed = tvQuotaUsed + (tvQuotaSessionStart ? Math.max(0,Date.now()-tvQuotaSessionStart) : 0);
-    const remaining = Math.max(0,TV_QUOTA_LIMIT_MS-elapsed);
-    const mins = Math.ceil(remaining/60000);
-    const usedMins = Math.min(105,Math.floor(elapsed/60000));
+    const elapsed = tvQuotaElapsed();
+    const allowance = tvQuotaAllowance();
+    const remaining = Math.max(0, allowance - elapsed);
+    const mins = Math.ceil(remaining / 60000);
+    const label = $('tvQuotaText');
+    const progress = $('tvQuotaProgress');
+    const detail = $('tvQuotaDetail');
+    if (label) label.textContent = remaining > 0
+      ? (remaining <= 15*60000 ? '⚠️ Plus que '+mins+' min disponibles aujourd’hui' : '📊 Temps écoulé : '+tvQuotaFormat(elapsed)+' · restant : '+tvQuotaFormat(remaining))
+      : '⛔ Temps TV épuisé · renouvelez pour continuer';
+    if (progress) progress.style.width = Math.min(100, allowance ? elapsed / allowance * 100 : 100) + '%';
+    if (detail) detail.textContent = 'Utilisé : '+tvQuotaFormat(elapsed)+' / '+tvQuotaFormat(allowance)+' · 480p estimé · renouvellements : '+Math.floor(tvQuotaBonus/TV_QUOTA_RENEW_MS);
     const display = $('tvDailyQuota');
-    if (display) {
-      display.textContent = remaining > 0
-        ? (remaining <= 15*60000 ? '⚠️ Plus que '+mins+' min de TV aujourd’hui · '+usedMins+' min utilisées / 1 h 45 (480p estimé)' : '📊 TV aujourd’hui : '+usedMins+' min utilisées · '+mins+' min restantes / 1 h 45 (480p estimé)')
-        : '⛔ Limite TV quotidienne atteinte · retour demain à minuit';
-      display.style.borderColor = remaining <= 15*60000 ? '#d99b36' : 'var(--border)';
-    }
+    if (display) display.style.borderColor = remaining <= 15*60000 ? '#d99b36' : 'var(--border)';
+    const renew = $('tvQuotaRenew');
+    if (renew) renew.textContent = remaining > 0 ? '＋ Ajouter 2 h' : '↻ Renouveler 2 h';
     if (remaining <= 0 && !tvQuotaBlocked) {
       tvQuotaBlocked = true;
       tvQuotaPersist();
       if (tvStationFrame) tvStationFrame.src = 'about:blank';
       const status = $('tvStatus');
-      if (status) status.textContent = '⛔ Votre limite quotidienne de télévision est atteinte. Le lecteur sera de nouveau disponible demain à minuit.';
-      if (display) display.textContent = '⛔ Limite TV quotidienne atteinte · retour demain à minuit';
+      if (status) status.textContent = '⛔ Temps de télévision épuisé. Appuyez sur « Renouveler 2 h » pour reprendre.';
+      if (label) label.textContent = '⛔ Temps TV épuisé · renouvelez pour continuer';
     }
     return remaining;
   }
+  $('tvQuotaRenew')?.addEventListener('click', () => {
+    tvQuotaPersist();
+    tvQuotaBonus += TV_QUOTA_RENEW_MS;
+    tvQuotaBlocked = false;
+    try { localStorage.setItem(TV_QUOTA_STORAGE, JSON.stringify({day:tvQuotaDay,used:tvQuotaUsed,bonus:tvQuotaBonus})); } catch {}
+    if (tvActive) tvQuotaSessionStart = Date.now();
+    tvQuotaRefresh();
+    if (tvActive) tvSelectStation(tvCurrentStationKey);
+    const status = $('tvStatus');
+    if (status) status.textContent = '✅ 2 heures supplémentaires ajoutées. Bonne séance !';
+  });
   tvQuotaLoad();
   setInterval(() => { if (tvActive && !tvQuotaBlocked) { tvQuotaRefresh(); if (Date.now() % 5000 < 1000) tvQuotaPersist(); } }, 1000);
   window.addEventListener('pagehide', tvQuotaPersist);
