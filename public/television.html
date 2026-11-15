@@ -663,7 +663,7 @@ body.gold #titleBar{background:#1a1a18!important}
       </div>
     </section>
       <section id="radioPane" hidden aria-label="Lecteur radio">
-<header class="radio-head"><div class="radio-brand"><span class="radio-brand-icon">📻</span><span><strong>RADIO</strong><small>Vos stations en direct</small></span></div><div class="radio-head-actions"><button type="button" id="radioStationsToggle" aria-expanded="false" aria-controls="radioStations">☷ Stations ▾</button><button id="radioBack" type="button">← Mes fichiers</button></div>
+<header class="radio-head"><div class="radio-brand"><span class="radio-brand-icon">📻</span><span><strong>RADIO</strong><small>Vos stations en direct</small></span></div><div class="radio-head-actions"><button type="button" id="radioStationsToggle" aria-expanded="false" aria-controls="radioStations">☷ Stations ▾</button><button id="radioClose" type="button" aria-label="Fermer la radio">✕ Fermer la radio</button></div>
 <div class="radio-stations-menu" id="radioStations" hidden><strong class="radio-group-title">🇨🇩 République démocratique du Congo</strong><button type="button" data-radio-station="radiookapi">Radio Okapi</button><a href="https://topcongo.live/" target="_blank" rel="noopener noreferrer">Top Congo FM · site officiel ↗</a><strong class="radio-group-title">🇫🇷 France · Radio France</strong><button type="button" data-radio-station="franceinter" class="active">France Inter</button><button type="button" data-radio-station="franceinfo">franceinfo</button><button type="button" data-radio-station="franceculture">France Culture</button><button type="button" data-radio-station="francemusique">France Musique</button><button type="button" data-radio-station="fip">FIP</button><button type="button" data-radio-station="mouv">Mouv’</button><strong class="radio-group-title">🌍 International · Francophone</strong><button type="button" data-radio-station="rfi">RFI Monde</button></div></header>
 <main class="radio-main"><div class="radio-player-card"><div class="radio-live-pill"><span></span> ESPACE RADIO</div><div class="radio-artwork">♫</div><div class="radio-track-label">EN COURS D’ÉCOUTE</div><strong id="radioNowPlaying" class="radio-now-playing">📻 France Inter</strong><p class="radio-subtitle">La radio vous accompagne, où que vous soyez.</p><audio id="radioAudio" controls preload="none"></audio><div id="radioEmbedWrap" hidden class="radio-embed-wrap"><iframe id="radioEmbedFrame" title="Lecteur radio officiel" src="about:blank" loading="lazy" allow="autoplay"></iframe></div><div class="radio-controls"><button type="button" id="radioPrev" aria-label="Station précédente">⏮</button><button type="button" id="radioPlay">▶ Lecture / Pause</button><button type="button" id="radioNext" aria-label="Station suivante">⏭</button></div><a id="radioOfficial" href="https://www.radiofrance.fr/franceinter" target="_blank" rel="noopener noreferrer" class="radio-official-link">Site officiel de la station ↗</a><p id="radioStatus" class="tv-help" role="status">Sélectionnez une station pour commencer l’écoute.</p></div></main></section>>
       <section id="tvPane" hidden>
@@ -2619,18 +2619,52 @@ function renderResume() {
  function radioNavigate(direction){const keys=Object.keys(radioStations);let i=keys.indexOf(radioCurrentKey);i=(i+direction+keys.length)%keys.length;radioSelect(keys[i]);osd('📻 '+radioStations[keys[i]].name);}
  function radioHide(){if(!radioPane)return;radioPane.hidden=true;if(radioActive){radioActive=false;radioAudio.pause();radioAudio.removeAttribute('src');radioAudio.load();radioEmbedFrame.src='about:blank';radioEmbedWrap.hidden=true;}}
  function radioShow(){tvHide();fifaHide();matchsHide();tvDriveHide();youtubeHide();cacherOngletMesFilms();radioActive=true;$('playlist').hidden=true;radioPane.hidden=false;$('tabs').querySelectorAll('button').forEach(b=>b.classList.toggle('active',b===radioTab));radioSelect(radioCurrentKey,true);}
- $('radioStationsToggle')?.addEventListener('click',()=>{const menu=$('radioStations'),btn=$('radioStationsToggle');const open=menu.hidden;menu.hidden=!open;btn.setAttribute('aria-expanded',String(open));});
-  $('radioStations')?.addEventListener('click',e=>{const b=e.target.closest('[data-radio-station]');if(b){radioSelect(b.dataset.radioStation,true);$('radioStations').hidden=true;$('radioStationsToggle')?.setAttribute('aria-expanded','false');}});
-  document.addEventListener('click',e=>{if(radioPane&&!radioPane.contains(e.target)){$('radioStations').hidden=true;$('radioStationsToggle')?.setAttribute('aria-expanded','false');}});
-  radioTab?.addEventListener('click',radioShow);
- $('radioStations')?.addEventListener('click',e=>{const b=e.target.closest('[data-radio-station]');if(b)radioSelect(b.dataset.radioStation,true);});
- $('radioPrev')?.addEventListener('click',()=>radioNavigate(-1));$('radioNext')?.addEventListener('click',()=>radioNavigate(1));
- $('radioPlay')?.addEventListener('click',()=>{if(radioAudio.paused)radioAudio.play().catch(()=>{});else radioAudio.pause();});
- radioAudio?.addEventListener('playing',()=>{$('radioStatus').textContent='En direct · '+radioStations[radioCurrentKey].name;updatePlayBtn();});
- radioAudio?.addEventListener('pause',updatePlayBtn);
- radioAudio?.addEventListener('error',()=>{$('radioStatus').textContent='Ce flux ne répond pas pour le moment. Essayez le site officiel de la station.';updatePlayBtn();});
- radioEmbedFrame?.addEventListener('load',()=>{if(radioCurrentKey==='radiookapi')$('radioStatus').textContent='Lecteur officiel Radio Okapi intégré. Appuyez sur Lecture dans le lecteur.';});
- $('radioBack')?.addEventListener('click',()=>{radioHide();$('tabs').querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.filter==='all'));filter='all';renderList();setMode(current<0?'empty':items[current].type);$('nowPlaying').textContent=current<0?'Aucun média':items[current].name;});
+ // Commandes Radio : un seul gestionnaire par action, avec fermeture complète.
+ $('radioStationsToggle')?.addEventListener('click',()=>{
+   const menu=$('radioStations'),btn=$('radioStationsToggle');
+   if(!menu||!btn)return;
+   const open=menu.hidden;
+   menu.hidden=!open;
+   btn.setAttribute('aria-expanded',String(open));
+ });
+ $('radioStations')?.addEventListener('click',e=>{
+   const b=e.target.closest('button[data-radio-station]');
+   if(!b)return;
+   radioSelect(b.dataset.radioStation,true);
+   $('radioStations').hidden=true;
+   $('radioStationsToggle')?.setAttribute('aria-expanded','false');
+ });
+ $('radioPrev')?.addEventListener('click',()=>radioNavigate(-1));
+ $('radioNext')?.addEventListener('click',()=>radioNavigate(1));
+ $('radioPlay')?.addEventListener('click',()=>{
+   if(!radioAudio||radioAudio.hidden)return;
+   if(radioAudio.paused){
+     radioAudio.play().then(()=>{$('radioStatus').textContent='En direct · '+radioStations[radioCurrentKey].name;}).catch(()=>{
+       $('radioStatus').textContent='Lecture impossible pour le moment. Essayez le site officiel de la station.';
+     });
+   }else radioAudio.pause();
+ });
+ radioAudio?.addEventListener('playing',()=>{
+   $('radioStatus').textContent='En direct · '+radioStations[radioCurrentKey].name;
+   $('radioPlay').textContent='Ⅱ Pause';
+ });
+ radioAudio?.addEventListener('pause',()=>{if($('radioPlay'))$('radioPlay').textContent='▶ Lecture';});
+ radioAudio?.addEventListener('error',()=>{
+   $('radioStatus').textContent='Ce flux ne répond pas pour le moment. Essayez le site officiel de la station.';
+   if($('radioPlay'))$('radioPlay').textContent='▶ Lecture';
+ });
+ radioEmbedFrame?.addEventListener('load',()=>{
+   if(radioCurrentKey==='radiookapi')$('radioStatus').textContent='Lecteur officiel Radio Okapi chargé. Utilisez sa commande Lecture.';
+ });
+ $('radioClose')?.addEventListener('click',()=>{
+   radioHide();
+   $('radioStations').hidden=true;
+   $('radioStationsToggle')?.setAttribute('aria-expanded','false');
+   $('tabs').querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.filter==='all'));
+   filter='all';renderList();
+   setMode(current<0?'empty':items[current].type);
+   $('nowPlaying').textContent=current<0?'Aucun média':items[current].name;
+ });
  $('tabs')?.addEventListener('click',e=>{if(!e.target.closest('#radioTab'))radioHide();});
  let tvActive = false;
   let tvCurrentStationKey = 'france24';
