@@ -2715,10 +2715,14 @@ function renderResume() {
     tvCurrentStationKey = key;
     tvStationFrame.src = station.externalOnly ? 'about:blank' : station.url;
     $('tvOpenOfficial').href = station.official;
-    $('tvOpenOfficial').textContent = 'Ouvrir sur YouTube ↗';
-    $('tvStatus').textContent = station.externalOnly
-      ? station.note + ' Cette chaîne est ajoutée via sa page YouTube officielle ; son lecteur intégré n’a pas pu être vérifié.'
-      : station.note + ' Si YouTube indique que la vidéo n’est pas disponible, utilisez « Ouvrir sur YouTube ».';
+    $('tvOpenOfficial').textContent = station.externalOnly ? 'Ouvrir le service officiel ↗' : 'Ouvrir sur YouTube ↗';
+    if (station.externalOnly) {
+      // Les services sans flux intégrable doivent tout de même s'ouvrir au clic sur leur carte.
+      const opened = window.open(station.official, '_blank', 'noopener,noreferrer');
+      $('tvStatus').textContent = station.note + (opened ? ' Le service officiel a été ouvert dans un nouvel onglet.' : ' Utilisez le bouton « Ouvrir le service officiel » dans l’en-tête si le navigateur bloque le nouvel onglet.');
+    } else {
+      $('tvStatus').textContent = station.note + ' Si YouTube indique que la vidéo n’est pas disponible, utilisez « Ouvrir sur YouTube ».';
+    }
     const title = $('tvNowTitle'); if (title) title.textContent = station.name;
     const meta = $('tvNowMeta'); if (meta) meta.textContent = 'YouTube · ' + station.language;
     $('tvStations').querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.tvStation === key));
