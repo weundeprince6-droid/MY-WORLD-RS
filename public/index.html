@@ -39,7 +39,7 @@
 /* Navigation des comptes du Budget : boutons lisibles sur mobile. */
 .budget-compte-navigation .btn{min-height:44px;white-space:normal;line-height:1.25;text-align:center}
 @media(max-width:420px){.budget-compte-navigation{flex-direction:column}.budget-compte-navigation .btn{width:100%;flex-basis:auto}}
-</style>
+.dashboard-media-actions{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-top:12px}.dashboard-media-all{white-space:nowrap}.dashboard-media-shortcuts{display:flex;align-items:center;gap:10px;margin-left:auto}.dashboard-media-shortcut{display:flex;align-items:center;gap:9px;min-width:118px;justify-content:center;padding:12px 16px;border:1px solid var(--border);border-radius:13px;background:var(--surface-2,var(--surface));color:var(--text);font:inherit;font-weight:750;font-size:1rem;cursor:pointer;box-shadow:0 3px 10px #00000012;transition:transform .15s ease,border-color .15s ease}.dashboard-media-shortcut:hover{transform:translateY(-2px);border-color:var(--accent,var(--primary))}.dashboard-media-emoji{font-size:1.35rem;line-height:1}@media(max-width:560px){.dashboard-media-actions{align-items:flex-start}.dashboard-media-shortcuts{margin-left:0;width:100%}.dashboard-media-shortcut{flex:1;min-width:0;padding:12px 8px}}</style>
 </head>
 <body>
   <header class="entete">
@@ -124,7 +124,7 @@
               <article class="dashboard-metric"><span class="metric-icon">⚑</span><div><span class="metric-label">Projets en cours</span><strong id="dash-projets">—</strong><small id="dash-projets-note">Notes &amp; Projets</small></div><button class="metric-link" data-go="notes" aria-label="Ouvrir les projets">↗</button></article>
             </div>
             <div class="dashboard-grid">
-              <article class="feature-card feature-purple"><div class="feature-icon">▶</div><div><span class="feature-label">DIVERTISSEMENT</span><h3>Média</h3><p>Accédez directement à vos chaînes TV, radios et autres médias.</p><div class="dashboard-media-shortcuts"><button class="text-link" id="dash-tv" type="button">📺 Télévision <span>→</span></button><button class="text-link" id="dash-radio" type="button">📻 Radio <span>→</span></button><button class="text-link" id="dash-media" type="button">Tous les médias <span>→</span></button></div></div></article>
+              <article class="feature-card feature-purple"><div class="feature-icon">▶</div><div><span class="feature-label">DIVERTISSEMENT</span><h3>Média</h3><p>Accédez directement à vos chaînes TV, radios et autres médias.</p><div class="dashboard-media-actions"><button class="text-link dashboard-media-all" id="dash-media" type="button">Tous les médias <span>→</span></button><div class="dashboard-media-shortcuts"><button class="dashboard-media-shortcut" id="dash-tv" type="button"><span class="dashboard-media-emoji">📺</span><span>Télévision</span></button><button class="dashboard-media-shortcut" id="dash-radio" type="button"><span class="dashboard-media-emoji">📻</span><span>Radio</span></button></div></div></div></article>
             </div>
             <div class="dashboard-detail-grid">
               <section class="carte dashboard-detail"><div class="card-heading"><div><p class="eyebrow">FINANCES & ACTIVITÉS</p><h2>Chiffres essentiels</h2></div><button class="text-link" data-go="bases">Tout voir →</button></div><div id="dashboard-kpis" class="dashboard-kpi-list"><p class="vide">Les indicateurs apparaîtront après actualisation.</p></div></section>
