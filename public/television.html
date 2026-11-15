@@ -2915,7 +2915,7 @@ function renderResume() {
     const officialLink = $('tvOpenOfficial');
     if (officialLink) {
       officialLink.href = station.official;
-      officialLink.target = 'tvStationFrame';
+      officialLink.target = station.externalOnly ? '_blank' : 'tvStationFrame';
       officialLink.textContent = station.externalOnly ? 'Recharger le service dans TV ↻' : 'Ouvrir sur YouTube ↗';
     }
     if (station.externalOnly) {
