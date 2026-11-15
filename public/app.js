@@ -386,6 +386,7 @@ async function renouvelerJetonSilencieux(email) {
     const client = window.google.accounts.oauth2.initTokenClient({
       client_id: clientId,
       scope: SCOPES.join(" "),
+      include_granted_scopes: false,
       prompt: "",
       login_hint: email || undefined,
       callback: (r) => { clearTimeout(minuteur); r?.access_token ? ok(r) : ko(new Error(r?.error || "Renouvellement refusé.")); },
