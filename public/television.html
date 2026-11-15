@@ -241,8 +241,15 @@ input[type=search]{width:100%;padding:8px 10px;border-radius:8px;border:1px soli
 #tvPane #tvStations .tv-card-grid{grid-template-columns:1fr}
 #tvPane #tvStations .tv-card{padding:6px}
 #tvPane #tvStationsToggle{font-weight:800;white-space:nowrap}
+/* Correctif TV : la zone de lecture reprend toute la hauteur disponible */
+#viewer #tvPane{min-height:0;overflow:hidden}
+#tvPane .tv-view{flex:1 1 0%;min-height:280px;width:100%;box-sizing:border-box}
+#tvPane iframe{display:block;flex:1 1 0%;width:100%;height:auto;min-height:0}
 @media(max-width:760px){
  #viewer #tvPane{overflow-y:auto!important}
+ #tvPane .tv-view{flex:1 0 auto;min-height:55vh}
+ #tvPane iframe{min-height:38vh}
+}
  #tvPane .tv-head-pro{flex-wrap:wrap}
  #tvPane .tv-catalog{grid-template-columns:1fr;max-height:150px;overflow-y:auto}
  #tvPane .tv-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -685,7 +692,7 @@ body.gold #titleBar{background:#1a1a18!important}
             <button type="button" class="tv-card" data-tv-station="abcnews"><span class="tv-card-flag">🇺🇸</span><span class="tv-card-copy"><strong>ABC News Live</strong><small>Actualités internationales · 24/7</small></span><span class="tv-card-tag">EN</span></button>
           </div></section>
         </div>
-        <div class="tv-intro"><div><span class="tv-live-dot"></span><strong>Vos chaînes en direct</strong><p>Directs officiels francophones et anglophones vérifiés sans restriction géographique annoncée. Sélectionnez une chaîne pour la regarder.</p></div><span class="tv-count">8 CHAÎNES</span></div>
+        <div class="tv-intro"><div><span class="tv-live-dot"></span><strong>Vos chaînes en direct</strong><p>Directs officiels francophones et anglophones. Sélectionnez une chaîne, puis lancez la lecture pour profiter du son.</p></div><span class="tv-count">8 CHAÎNES</span></div>
         <div class="tv-view">
           <div class="tv-screen-heading"><div><span class="tv-live-dot"></span><strong id="tvNowTitle">FRANCE 24</strong><small id="tvNowMeta">Direct YouTube · Français</small></div><span class="tv-screen-label">LECTEUR</span></div>
           <iframe id="tvStationFrame" title="Chaîne de télévision en direct sur YouTube" src="https://www.youtube-nocookie.com/embed/a47ckXKZjxI?autoplay=1&rel=0" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
@@ -2684,14 +2691,14 @@ function renderResume() {
   let tvCurrentStationKey = 'france24';
   const tvPane = $('tvPane'), tvStationFrame = $('tvStationFrame');
   const tvStations = {
-    france24: {name:'FRANCE 24', category:'Francophone', language:'Français', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCCCPCZNChQdGa9EkATeye4g&autoplay=1&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@FRANCE24/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
-    euronews: {name:'Euronews FR', category:'Francophone', language:'Français', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCW2QcKZiU8aUGg4yxCIditg&autoplay=1&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@euronewsfr/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
-    franceinfo: {name:'franceinfo', category:'Francophone', language:'Français', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCO6K_kkdP-lnSCiO3tPx7WA&autoplay=1&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@franceinfo/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
-    africanewsfr: {name:'Africanews Français', category:'Francophone', language:'Français', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UC25EuGAePOPvPrUA5cmu3dQ&autoplay=1&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@africanewsfr/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
-    rfi: {name:'RFI', category:'Francophone', language:'Français', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCm4fSpMpPIZ9z6KHoezLUAg&autoplay=1&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@rfi_fr/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
-    africanews_en: {name:'Africanews English', category:'English', language:'English', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UC1_E8NeF5QHY2dtdLRBCCLA&autoplay=1&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@africanews/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
-    cnbcafrica: {name:'CNBC Africa', category:'English', language:'English', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCsba91UGiQLFOb5DN3Z_AdQ&autoplay=1&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@CNBCAfrica/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
-    abcnews: {name:'ABC News Live', category:'English', language:'English', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCBi2mrWuNuyYy4gbM6fU18Q&autoplay=1&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@ABCNews/live', note:'Direct officiel gratuit 24/7. Diffusion vérifiée sans restriction géographique annoncée.'}
+    france24: {name:'FRANCE 24', category:'Francophone', language:'Français', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCCCPCZNChQdGa9EkATeye4g&autoplay=0&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@FRANCE24/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
+    euronews: {name:'Euronews FR', category:'Francophone', language:'Français', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCW2QcKZiU8aUGg4yxCIditg&autoplay=0&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@euronewsfr/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
+    franceinfo: {name:'franceinfo', category:'Francophone', language:'Français', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCO6K_kkdP-lnSCiO3tPx7WA&autoplay=0&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@franceinfo/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
+    africanewsfr: {name:'Africanews Français', category:'Francophone', language:'Français', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UC25EuGAePOPvPrUA5cmu3dQ&autoplay=0&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@africanewsfr/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
+    rfi: {name:'RFI', category:'Francophone', language:'Français', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCm4fSpMpPIZ9z6KHoezLUAg&autoplay=0&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@rfi_fr/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
+    africanews_en: {name:'Africanews English', category:'English', language:'English', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UC1_E8NeF5QHY2dtdLRBCCLA&autoplay=0&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@africanews/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
+    cnbcafrica: {name:'CNBC Africa', category:'English', language:'English', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCsba91UGiQLFOb5DN3Z_AdQ&autoplay=0&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@CNBCAfrica/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
+    abcnews: {name:'ABC News Live', category:'English', language:'English', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCBi2mrWuNuyYy4gbM6fU18Q&autoplay=0&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@ABCNews/live', note:'Direct officiel gratuit 24/7. Diffusion vérifiée sans restriction géographique annoncée.'}
   };;
   function tvSelectStation(key) {
     const station = tvStations[key]; if (!station) return;
