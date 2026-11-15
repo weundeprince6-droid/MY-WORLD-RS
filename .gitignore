@@ -5,3 +5,10 @@ firebase-debug.log
 .env.*
 .DS_Store
 dist/
+
+# Application de bureau (fichiers fabriqués au moment de la construction)
+desktop/node_modules/
+desktop/dist/
+desktop/television.html
+desktop/icon.png
+desktop/package-lock.json

@@ -1,0 +1,37 @@
+# Fabrique l'application Windows « Lecteur Pro » et la publie dans l'onglet Releases du dépôt.
+# Lancement : GitHub > Actions > « Application Windows Lecteur Pro » > Run workflow.
+name: Application Windows Lecteur Pro
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Préparer les fichiers de l'application
+        shell: bash
+        run: |
+          cp public/television.html desktop/television.html
+          cp public/icone-512.png desktop/icon.png
+      - name: Installer et construire
+        shell: bash
+        working-directory: desktop
+        run: |
+          npm install
+          npm run build
+      - name: Publier l'installateur
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "lecteur-pro-v${{ github.run_number }}" "desktop/dist/Lecteur-Pro-Installation.exe" \
+            --title "Lecteur Pro pour Windows (v${{ github.run_number }})" \
+            --notes "Téléchargez Lecteur-Pro-Installation.exe puis double-cliquez dessus pour installer."
