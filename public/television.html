@@ -780,6 +780,7 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
         <button type="button" id="mesFilmsTab">Mes films et séries</button>
         <button type="button" id="tvDriveTab">Google Drive</button>
         <button type="button" id="youtubeTab">▶ YouTube</button>
+        <button type="button" id="spotifyTab">♫ Spotify</button>
         <button type="button" id="tvTab">📺 TV</button>
         <button type="button" id="radioTab">📻 RADIO</button>
         <button type="button" id="matchsTab">⚽ Matchs en direct</button>
@@ -857,6 +858,27 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
 <header class="radio-head"><div class="radio-brand"><span class="radio-brand-icon">📻</span><span><strong>RADIO</strong><small>Vos stations en direct</small></span></div><div class="radio-head-actions"><button type="button" id="radioStationsToggle" aria-expanded="false" aria-controls="radioStations">☷ Stations ▾</button><button id="radioClose" type="button" aria-label="Fermer la radio">✕ Fermer la radio</button></div>
 <div class="radio-stations-menu" id="radioStations" hidden><strong class="radio-group-title">🇨🇩 RDC · Informations et généralistes</strong><button type="button" data-radio-station="radiookapi">Radio Okapi</button><button type="button" data-radio-station="topcongo">Top Congo FM</button><button type="button" data-radio-station="digitalcongo">Digital Congo FM</button><button type="button" data-radio-station="bone">B-One Radio</button><button type="button" data-radio-station="rtncradio">RTNC Radio</button><button type="button" data-radio-station="maendeleo">Radio Maendeleo</button><strong class="radio-group-title">🙏 RDC · Gospel et chrétiennes</strong><button type="button" data-radio-station="radiomaria">Radio Maria RDC</button><button type="button" data-radio-station="gospelfm">Gospel FM RDC</button><strong class="radio-group-title">🇫🇷 France · Radio France</strong><button type="button" data-radio-station="franceinter" class="active">France Inter</button><button type="button" data-radio-station="franceinfo">franceinfo</button><button type="button" data-radio-station="franceculture">France Culture</button><button type="button" data-radio-station="francemusique">France Musique</button><button type="button" data-radio-station="fip">FIP</button><button type="button" data-radio-station="mouv">Mouv’</button><button type="button" data-radio-station="iciparis">ici Paris</button><button type="button" data-radio-station="rtl">RTL</button><strong class="radio-group-title">🌍 Afrique et international</strong><button type="button" data-radio-station="rfi">RFI Monde</button><button type="button" data-radio-station="rfiafrique">RFI Afrique</button><button type="button" data-radio-station="africaradio">Africa Radio</button><button type="button" data-radio-station="bbcworld">BBC World Service</button></div></header>
 <main class="radio-main"><div class="radio-player-card"><div class="radio-live-pill"><span></span> ESPACE RADIO</div><div class="radio-artwork">♫</div><div class="radio-track-label">EN COURS D’ÉCOUTE</div><strong id="radioNowPlaying" class="radio-now-playing">📻 France Inter</strong><p class="radio-subtitle">La radio vous accompagne, où que vous soyez.</p><audio id="radioAudio" controls preload="none"></audio><div id="radioEmbedWrap" hidden class="radio-embed-wrap"><iframe id="radioEmbedFrame" title="Lecteur radio officiel" src="about:blank" loading="lazy" allow="autoplay"></iframe></div><div class="radio-controls"><button type="button" id="radioPrev" aria-label="Station précédente">⏮</button><button type="button" id="radioPlay">▶ Lecture / Pause</button><button type="button" id="radioNext" aria-label="Station suivante">⏭</button></div><a id="radioOfficial" href="https://www.radiofrance.fr/franceinter" target="_blank" rel="noopener noreferrer" class="radio-official-link">Site officiel de la station ↗</a><p id="radioStatus" class="tv-help" role="status">Sélectionnez une station pour commencer l’écoute.</p></div></main></section>>
+      <section id="spotifyPane" hidden aria-label="Lecteur Spotify" style="flex:1;min-height:0;overflow:auto;padding:clamp(16px,3vw,30px);background:linear-gradient(145deg,#07150f,#101b16 55%,#101522);color:#f4fff7">
+        <div style="max-width:980px;margin:0 auto">
+          <header style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:22px">
+            <div style="width:48px;height:48px;border-radius:14px;background:#1ed760;color:#07150f;display:grid;place-items:center;font-size:28px;font-weight:900">♫</div>
+            <div style="flex:1;min-width:180px"><h2 style="margin:0;font-size:25px">Spotify</h2><p style="margin:4px 0 0;color:#a9c4b2;font-size:13px">Écoutez votre musique sans quitter MY WORLD RS</p></div>
+            <a href="https://open.spotify.com/" target="_blank" rel="noopener noreferrer" style="color:#1ed760;font-weight:700">Ouvrir Spotify ↗</a>
+          </header>
+          <div style="padding:18px;border:1px solid #294536;border-radius:18px;background:#101e17">
+            <label for="spotifyLink" style="display:block;font-weight:700;margin-bottom:9px">Lien Spotify ou URI d’un titre, album, playlist, artiste ou podcast</label>
+            <div style="display:flex;gap:9px;flex-wrap:wrap">
+              <input id="spotifyLink" type="text" placeholder="https://open.spotify.com/track/… ou spotify:track:…" style="flex:1;min-width:220px;padding:13px;border-radius:10px;border:1px solid #476653;background:#07120c;color:#fff">
+              <button id="spotifyLoad" type="button" style="padding:12px 20px;border:0;border-radius:10px;background:#1ed760;color:#07150f;font-weight:800;cursor:pointer">Charger</button>
+            </div>
+            <p id="spotifyStatus" role="status" style="margin:11px 0 0;color:#b5cbbb;font-size:13px">Collez un lien Spotify puis cliquez sur Charger. La lecture s’affichera ici.</p>
+          </div>
+          <div id="spotifyEmbedWrap" hidden style="margin-top:18px;border-radius:16px;overflow:hidden;background:#000;box-shadow:0 12px 35px #0008">
+            <iframe id="spotifyEmbed" title="Lecteur Spotify intégré" style="display:block;width:100%;height:352px;border:0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+          </div>
+          <p style="margin:16px 2px 0;color:#9eb5a5;font-size:12px;line-height:1.6">Remarque : ce lecteur intégré utilise le lecteur officiel Spotify. Vous pouvez écouter et contrôler la lecture ici. La recherche du catalogue et l’accès automatique à votre bibliothèque ne sont pas activés dans cette version, car l’accès Web API Spotify n’a pas été validé.</p>
+        </div>
+      </section>
       <section id="tvPane" hidden>
         <header class="tv-globalbar"><div class="tv-global-brand"><span>MW</span><strong>My World RS</strong></div><div class="tv-global-caption">TÉLÉVISION EN DIRECT</div></header>
         <div class="tv-shell">
@@ -3090,6 +3112,36 @@ function renderResume() {
      return m ? m[1] : '';
    } catch (_) { return ''; }
  }
+ const spotifyTab = $('spotifyTab'), spotifyPane = $('spotifyPane');
+ const spotifyLink = $('spotifyLink'), spotifyEmbed = $('spotifyEmbed'), spotifyEmbedWrap = $('spotifyEmbedWrap');
+ function spotifyHide() {
+   if (!spotifyPane) return;
+   spotifyPane.hidden = true;
+   if (spotifyEmbed) spotifyEmbed.src = 'about:blank';
+   if (spotifyEmbedWrap) spotifyEmbedWrap.hidden = true;
+ }
+ function spotifyShow() {
+   tvHide(); radioHide(); fifaHide(); matchsHide(); tvDriveHide(); youtubeHide(); cacherOngletMesFilms();
+   spotifyPane.hidden = false; $('playlist').hidden = true;
+   $('tabs').querySelectorAll('button').forEach(b => b.classList.toggle('active', b === spotifyTab));
+   if (document.body.dataset.mode !== 'spotify') setMode('empty');
+   try { const saved = localStorage.getItem('mwrs_spotify_last_link'); if (saved && spotifyLink && !spotifyLink.value) spotifyLink.value = saved; } catch (_) {}
+ }
+ function spotifyLoad() {
+   const raw = (spotifyLink?.value || '').trim();
+   const match = raw.match(/(?:open\.spotify\.com\/(track|album|playlist|artist|show|episode)\/([A-Za-z0-9]+)|spotify:(track|album|playlist|artist|show|episode):([A-Za-z0-9]+))/i);
+   if (!match) { $('spotifyStatus').textContent = 'Lien non reconnu. Collez un lien Spotify valide ou une URI spotify:…'; return; }
+   const type = (match[1] || match[3]).toLowerCase(), id = match[2] || match[4];
+   spotifyEmbed.src = 'https://open.spotify.com/embed/' + type + '/' + encodeURIComponent(id) + '?utm_source=generator&theme=0';
+   spotifyEmbed.style.height = (type === 'track' || type === 'episode') ? '152px' : '352px';
+   spotifyEmbedWrap.hidden = false;
+   $('spotifyStatus').textContent = 'Lecteur Spotify chargé. Appuyez sur Lecture dans le lecteur ci-dessous.';
+   try { localStorage.setItem('mwrs_spotify_last_link', raw); } catch (_) {}
+ }
+ spotifyTab?.addEventListener('click', spotifyShow);
+ $('spotifyLoad')?.addEventListener('click', spotifyLoad);
+ spotifyLink?.addEventListener('keydown', e => { if (e.key === 'Enter') spotifyLoad(); });
+ $('tabs')?.addEventListener('click', e => { if (!e.target.closest('#spotifyTab')) spotifyHide(); });
  function youtubeShow() {
    tvHide(); fifaHide(); matchsHide(); tvDriveHide(); cacherOngletMesFilms(); youtubePane.hidden = false;
    $('tabs').querySelectorAll('button').forEach(b => b.classList.toggle('active', b === youtubeTab));
