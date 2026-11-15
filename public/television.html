@@ -289,6 +289,7 @@ body.tv-fullscreen #viewer #tvPane{position:absolute;inset:0;width:100%;height:1
 #tvPane .tv-card-copy small{font-size:11px;color:#b5bfce;margin-top:5px}
 #tvPane .tv-card-tag{margin-left:auto;font-size:9px;color:#f3bd4d;border-color:#765b2b}
 #tvPane .tv-card[hidden],#tvPane .tv-category[hidden]{display:none!important}
+#tvPane .tv-live-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#ff2d2d;box-shadow:0 0 0 0 rgba(255,45,45,.7);animation:tvPulse 1.6s infinite;margin-right:6px;vertical-align:middle}@keyframes tvPulse{70%{box-shadow:0 0 0 7px rgba(255,45,45,0)}100%{box-shadow:0 0 0 0 rgba(255,45,45,0)}}
 #tvPane .tv-refresh{padding:11px;background:#131d2b;border:1px solid #354258;border-radius:9px;color:#e8edf6;font-size:12px}
 #tvPane .tv-main{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;gap:12px;padding:18px 18px 14px;background:linear-gradient(145deg,#080d17,#0e1725)}
 #tvPane .tv-main-heading{display:flex;align-items:center;gap:12px;padding:0 2px;color:#f4bd43}
@@ -881,6 +882,7 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
               <div role="button" tabindex="0" class="tv-card" data-tv-station="abcnews"><span class="tv-card-flag">🇺🇸</span><span class="tv-card-copy"><strong>ABC News Live</strong><small>Informations</small></span><span class="tv-card-tag">EN</span><button class="tv-fav" type="button" data-tv-favorite="1" aria-label="Ajouter aux favoris">☆</button></div>
             </div></section>
           </div>
+          <button id="tvScanLive" class="tv-refresh" type="button">🔴 Chercher les directs disponibles</button>
           <button id="tvRefreshList" class="tv-refresh" type="button">↻ Actualiser la liste</button>
         </aside>
         <main class="tv-main">
@@ -2989,11 +2991,24 @@ function renderResume() {
     tvActive = true; document.body.classList.add('tv-fullscreen'); $('playlist').hidden = true; tvPane.hidden = false;
     $('tabs').querySelectorAll('button').forEach(b => b.classList.toggle('active', b === tvTab));
     tvFilterList();
+    tvVerifierDirects();
     tvSelectStation('france24');
   }
+  function tvVerifierDirects(){
+    const ids=[];
+    Object.keys(tvStations).forEach(k=>{if(!tvStations[k].resolveLive)return;try{const c=localStorage.getItem('mwrs_tv_live_'+k);if(c)ids.push({station:k,id:c})}catch{}});
+    if(ids.length)tvDriveSend('yt',{kind:'liveStatus',ids});
+  }
+  $('tvScanLive')?.addEventListener('click',()=>{
+    const cibles=[...document.querySelectorAll('#tvStations [data-tv-station]')].map(c=>c.dataset.tvStation).filter(k=>tvStations[k]?.resolveLive).slice(0,12);
+    if(!cibles.length){$('tvStatus').textContent='Aucune chaîne à vérifier dans cette liste : choisissez un filtre (Sport, RDC…).';return;}
+    $('tvStatus').textContent='Recherche des directs disponibles ('+cibles.length+' chaînes)…';
+    tvDriveSend('yt',{kind:'liveScan',stations:cibles.map(k=>({station:k,...tvStations[k].resolveLive}))});
+  });
   const tvFavKey='myWorldTvFavorites';
   let tvFavorites=[]; try{tvFavorites=JSON.parse(localStorage.getItem(tvFavKey)||'[]')}catch(e){tvFavorites=[]}
   let tvOnlyFavorites=false;
+  const tvLiveOn={};
   function tvFilterList(){
     const search=($('tvSearch')?.value||'').trim().toLocaleLowerCase();
     const selected=$('tvCategoryFilter')?.value||'all';
@@ -3010,7 +3025,7 @@ function renderResume() {
     if(!list)return;
     list.innerHTML=entries.map(([key,station])=>{
       const category=categoryOf(station),lang=category==='English'?'EN':category==='Sport'?'SPORT':category==='Congo'?'RDC':'FR';
-      return '<div role="button" tabindex="0" class="tv-card'+(key===tvCurrentStationKey?' active':'')+(tvFavorites.includes(key)?' is-favorite':'')+'" data-tv-station="'+key+'"><span class="tv-card-flag">'+(flags[key]||'📺')+'</span><span class="tv-card-copy"><strong>'+station.name+'</strong><small>'+(category==='English'?'News':category==='Sport'?'Sport':category==='Congo'?'RDC':'Informations')+'</small></span><span class="tv-card-tag">'+lang+'</span><button class="tv-fav" type="button" data-tv-favorite="1" aria-label="Favori">'+(tvFavorites.includes(key)?'★':'☆')+'</button></div>';
+      return '<div role="button" tabindex="0" class="tv-card'+(key===tvCurrentStationKey?' active':'')+(tvFavorites.includes(key)?' is-favorite':'')+'" data-tv-station="'+key+'"><span class="tv-card-flag">'+(flags[key]||'📺')+'</span><span class="tv-card-copy"><strong>'+(tvLiveOn[key]?'<i class="tv-live-dot" title="Direct disponible"></i>':'')+station.name+'</strong><small>'+(category==='English'?'News':category==='Sport'?'Sport':category==='Congo'?'RDC':'Informations')+'</small></span><span class="tv-card-tag">'+lang+'</span><button class="tv-fav" type="button" data-tv-favorite="1" aria-label="Favori">'+(tvFavorites.includes(key)?'★':'☆')+'</button></div>';
     }).join('');
     list.style.display='flex';
     list.style.visibility='visible';
@@ -3245,7 +3260,16 @@ function renderResume() {
  window.addEventListener('message',e=>{
    if(e.source!==parent||!e.data||e.data.source!=='mwrs-drive')return;
    const d=e.data;
+   if(d.action==='yt'&&d.kind==='liveStatus'){
+     Object.entries(d.statuts||{}).forEach(([k,v])=>{tvLiveOn[k]=!!v;if(!v){try{localStorage.removeItem('mwrs_tv_live_'+k)}catch{}}});
+     tvFilterList();return;
+   }
+   if(d.action==='yt'&&d.kind==='liveScan'){
+     if(d.fin){$('tvStatus').textContent=d.raison==='autorisation'?'Pour chercher les directs, ouvrez une fois « Mon espace YouTube » dans le lecteur YouTube et acceptez l’accès.':'Recherche terminée : les chaînes avec un point rouge ont un direct disponible.';}
+     return;
+   }
    if(d.action==='yt'&&d.kind==='live'){
+     if(d.station&&tvStations[d.station]?.resolveLive&&d.raison!=='autorisation'){tvLiveOn[d.station]=!!(d.live&&d.live.id);if(d.live&&d.live.id){try{localStorage.setItem('mwrs_tv_live_'+d.station,d.live.id)}catch{}}tvFilterList();}
      if(!tvActive||d.station!==tvCurrentStationKey||!tvStations[tvCurrentStationKey]?.resolveLive)return;
      if(d.live&&d.live.id){try{localStorage.setItem('mwrs_tv_live_'+d.station,d.live.id)}catch{}tvStationFrame.src='https://www.youtube.com/embed/'+encodeURIComponent(d.live.id)+'?autoplay=1&rel=0&playsinline=1&controls=1';$('tvStatus').textContent='Direct trouvé : '+(d.live.title||'')+'.';}
      else if(d.raison==='non-integrable'){$('tvStatus').textContent='La chaîne interdit l’intégration de ce direct dans d’autres sites : il ne peut s’afficher que sur YouTube.';}

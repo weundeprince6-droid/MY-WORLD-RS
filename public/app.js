@@ -2707,6 +2707,20 @@ async function tvYoutube(msg) {
   const yt = "https://www.googleapis.com/youtube/v3/";
   const miniature = (sn) => sn?.thumbnails?.medium?.url || sn?.thumbnails?.default?.url || "";
   const vid = (id, sn) => ({ type: "video", id, title: sn?.title || "Vidéo", channel: sn?.channelTitle || sn?.videoOwnerChannelTitle || "", thumb: miniature(sn) });
+  if (msg.kind === "liveStatus") {
+    // 1 unité de quota pour jusqu'à 50 directs : indique lesquels sont encore en cours.
+    try {
+      if (!lireJetonYouTube()) { rep({ statuts: {}, raison: "autorisation" }); return; }
+      const ids = (Array.isArray(msg.ids) ? msg.ids : []).map((x) => (x && /^[\w-]{6,20}$/.test(x.id) ? x : null)).filter(Boolean).slice(0, 50);
+      if (!ids.length) { rep({ statuts: {} }); return; }
+      const v = await googleYouTube(yt + "videos?part=liveStreamingDetails&id=" + encodeURIComponent(ids.map((x) => x.id).join(",")));
+      const enCours = new Set((v.items || []).filter((x) => x.liveStreamingDetails?.actualStartTime && !x.liveStreamingDetails?.actualEndTime).map((x) => x.id));
+      const statuts = {};
+      ids.forEach((x) => { statuts[x.station] = enCours.has(x.id); });
+      rep({ statuts });
+    } catch (e) { rep({ statuts: {}, raison: "erreur" }); }
+    return;
+  }
   if (msg.kind === "live") {
     // Retrouve l'identifiant du direct d'une chaîne (sans ouvrir de fenêtre d'autorisation) et vérifie qu'il peut être intégré.
     try {
