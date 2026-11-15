@@ -2665,6 +2665,7 @@ function renderResume() {
    setMode(current<0?'empty':items[current].type);
    $('nowPlaying').textContent=current<0?'Aucun média':items[current].name;
  });
+ radioTab?.addEventListener('click',radioShow);
  $('tabs')?.addEventListener('click',e=>{if(!e.target.closest('#radioTab'))radioHide();});
  let tvActive = false;
   let tvCurrentStationKey = 'france24';
