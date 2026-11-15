@@ -2712,7 +2712,7 @@ async function tvYoutube(msg) {
     try {
       if (!lireJetonYouTube()) { rep({ live: null, raison: "autorisation" }); return; }
       const q = String(msg.q || "").slice(0, 80);
-      const d = await googleYouTube(yt + "search?part=snippet&type=video&eventType=live&maxResults=10&q=" + encodeURIComponent(q));
+      const d = await googleYouTube(yt + "search?part=snippet&type=video&eventType=live&videoEmbeddable=true&maxResults=15&order=" + (msg.order === "viewCount" ? "viewCount" : "relevance") + (msg.lang ? "&relevanceLanguage=" + encodeURIComponent(String(msg.lang).slice(0, 5)) : "") + "&q=" + encodeURIComponent(q));
       const re = new RegExp(String(msg.channelRe || "."), "i");
       const cand = (d.items || []).filter(x => x.id?.videoId && re.test(x.snippet?.channelTitle || ""));
       if (!cand.length) { rep({ live: null, raison: "introuvable" }); return; }
