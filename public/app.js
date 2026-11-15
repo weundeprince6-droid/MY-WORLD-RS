@@ -2707,6 +2707,23 @@ async function tvYoutube(msg) {
   const yt = "https://www.googleapis.com/youtube/v3/";
   const miniature = (sn) => sn?.thumbnails?.medium?.url || sn?.thumbnails?.default?.url || "";
   const vid = (id, sn) => ({ type: "video", id, title: sn?.title || "Vidéo", channel: sn?.channelTitle || sn?.videoOwnerChannelTitle || "", thumb: miniature(sn) });
+  if (msg.kind === "live") {
+    // Retrouve l'identifiant du direct d'une chaîne (sans ouvrir de fenêtre d'autorisation) et vérifie qu'il peut être intégré.
+    try {
+      if (!lireJetonYouTube()) { rep({ live: null, raison: "autorisation" }); return; }
+      const q = String(msg.q || "").slice(0, 80);
+      const d = await googleYouTube(yt + "search?part=snippet&type=video&eventType=live&maxResults=10&q=" + encodeURIComponent(q));
+      const re = new RegExp(String(msg.channelRe || "."), "i");
+      const cand = (d.items || []).filter(x => x.id?.videoId && re.test(x.snippet?.channelTitle || ""));
+      if (!cand.length) { rep({ live: null, raison: "introuvable" }); return; }
+      const ids = cand.map(x => x.id.videoId).join(",");
+      const v = await googleYouTube(yt + "videos?part=status,snippet&id=" + encodeURIComponent(ids));
+      const ok = (v.items || []).find(x => x.status?.embeddable) || null;
+      const premier = (v.items || [])[0] || null;
+      rep({ live: ok ? { id: ok.id, title: ok.snippet?.title || "" } : null, raison: ok ? "" : (premier ? "non-integrable" : "introuvable"), lien: premier ? premier.id : "" });
+    } catch (e) { rep({ live: null, raison: "erreur", detail: String(e?.message || e) }); }
+    return;
+  }
   try {
     await obtenirJetonYouTube();
     let items = [];

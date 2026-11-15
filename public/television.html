@@ -2908,7 +2908,7 @@ function renderResume() {
   const tvStations = {
     france24: {name:'FRANCE 24', category:'Francophone', language:'Français', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCCCPCZNChQdGa9EkATeye4g&autoplay=1&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@FRANCE24/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
     euronews: {name:'Euronews FR', category:'Francophone', language:'Français', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCW2QcKZiU8aUGg4yxCIditg&autoplay=1&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@euronewsfr/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
-    franceinfo: {name:'franceinfo', category:'Francophone', language:'Français', url:'https://www.youtube.com/embed/live_stream?channel=UCO6K_kkdP-lnSCiO3tPx7WA&autoplay=1&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@franceinfo/live', note:'Direct de la chaîne officielle franceinfo sur YouTube. Le lecteur suit le flux en direct lorsque la chaîne le diffuse.'},
+    franceinfo: {name:'franceinfo', category:'Francophone', language:'Français', url:'https://www.youtube.com/embed/live_stream?channel=UCO6K_kkdP-lnSCiO3tPx7WA&autoplay=1&mute=0&rel=0&playsinline=1&controls=1', resolveLive:{q:'franceinfo direct',channelRe:'^franceinfo'}, official:'https://www.youtube.com/@franceinfo/live', note:'Direct de la chaîne officielle franceinfo sur YouTube. Le lecteur suit le flux en direct lorsque la chaîne le diffuse.'},
     africanewsfr: {name:'Africanews Français', category:'Francophone', language:'Français', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UC25EuGAePOPvPrUA5cmu3dQ&autoplay=1&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@africanewsfr/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
     rfi: {name:'RFI', category:'Francophone', language:'Français', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCm4fSpMpPIZ9z6KHoezLUAg&autoplay=1&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@rfi_fr/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
     africanews_en: {name:'Africanews English', category:'English', language:'English', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UC1_E8NeF5QHY2dtdLRBCCLA&autoplay=1&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@africanews/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
@@ -2933,6 +2933,7 @@ function renderResume() {
     } else {
       $('tvStatus').textContent = station.note + ' Si YouTube indique que la vidéo n’est pas disponible, utilisez « Ouvrir sur YouTube ».';
     }
+    if (station.resolveLive) tvDriveSend('yt', { kind:'live', ...station.resolveLive, station:key });
     const title = $('tvNowTitle'); if (title) title.textContent = station.name;
     const meta = $('tvNowMeta'); if (meta) meta.textContent = 'YouTube · ' + station.language;
     $('tvStations').querySelectorAll('[data-tv-station]').forEach(b => b.classList.toggle('active', b.dataset.tvStation === key));
@@ -3217,6 +3218,13 @@ function renderResume() {
  window.addEventListener('message',e=>{
    if(e.source!==parent||!e.data||e.data.source!=='mwrs-drive')return;
    const d=e.data;
+   if(d.action==='yt'&&d.kind==='live'){
+     if(!tvActive||!tvStations[tvCurrentStationKey]?.resolveLive)return;
+     if(d.live&&d.live.id){tvStationFrame.src='https://www.youtube.com/embed/'+encodeURIComponent(d.live.id)+'?autoplay=1&rel=0&playsinline=1&controls=1';$('tvStatus').textContent='Direct trouvé : '+(d.live.title||'')+'.';}
+     else if(d.raison==='non-integrable'){$('tvStatus').textContent='La chaîne interdit l’intégration de ce direct dans d’autres sites : il ne peut s’afficher que sur YouTube.';}
+     else if(d.raison==='autorisation'){$('tvStatus').textContent='Pour retrouver le direct automatiquement, ouvrez une fois « Mon espace YouTube » dans le lecteur YouTube et acceptez l’accès.';}
+     return;
+   }
    if(d.action==='yt'){youtubeEspaceAfficher(d);return;}
    if(d.action==='list'){
      tvDriveStatus.textContent=d.error||((d.files||[]).length+' fichier(s) Google Drive');
