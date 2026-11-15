@@ -255,6 +255,61 @@ input[type=search]{width:100%;padding:8px 10px;border-radius:8px;border:1px soli
  #tvPane .tv-head-actions{width:auto}
  #tvPane .tv-head-actions>*{flex:initial}
 }
+
+/* MY WORLD TV — interface plein écran inspirée de la maquette validée */
+#viewer #tvPane{position:absolute;inset:0;z-index:8;display:flex;flex-direction:row;gap:0;padding:0;overflow:hidden;background:#080d17;color:#f4f6fb}
+#viewer #tvPane[hidden]{display:none!important}
+#tvPane .tv-sidebar{width:344px;min-width:290px;max-width:36%;display:flex;flex-direction:column;gap:13px;padding:18px 16px;background:linear-gradient(180deg,#080d17,#111a29);border:1px solid #273246;border-radius:16px 0 0 16px;min-height:0}
+#tvPane .tv-side-title{display:flex;align-items:center;gap:12px;color:#f5bd43;font-size:22px;padding:3px 5px}
+#tvPane .tv-side-title span{font-size:27px}
+#tvPane #tvSearch{width:100%;padding:12px 13px;border-radius:10px;background:#111927;border:1px solid #354258;color:#fff;font-size:14px}
+#tvPane .tv-side-filters{display:flex;gap:9px}
+#tvPane .tv-side-filters select,#tvPane .tv-side-filters button{flex:1;min-width:0;padding:10px 9px;background:#141e2d;color:#f4f6fb;border:1px solid #354258;border-radius:10px;font-size:12px}
+#tvPane .tv-side-filters button{flex:0 0 112px}
+#tvPane .tv-catalog{display:flex;flex:1;flex-direction:column;gap:9px;max-height:none;overflow:auto;padding:0 2px 2px;background:transparent}
+#tvPane .tv-category{padding:0;background:transparent;border:0}
+#tvPane .tv-category-title{display:none}
+#tvPane .tv-card-grid{display:flex;flex-direction:column;gap:5px}
+#tvPane .tv-card{width:100%;min-height:68px;display:flex;align-items:center;gap:13px;padding:9px 11px;background:#131d2b;border:1px solid transparent;border-radius:9px;color:#f7f8fb;text-align:left}
+#tvPane .tv-card:hover{background:#1a293b;border-color:#53637b;transform:none}
+#tvPane .tv-card.active{background:linear-gradient(110deg,rgba(209,157,53,.25),rgba(209,157,53,.09));border:1px solid #e2ad3c;box-shadow:0 0 0 1px rgba(226,173,60,.12)}
+#tvPane .tv-card-flag{display:grid;place-items:center;width:52px;height:52px;flex:none;border-radius:5px;background:#fff;font-size:28px}
+#tvPane .tv-card-copy strong{font-size:14px;white-space:normal}
+#tvPane .tv-card-copy small{font-size:11px;color:#b5bfce;margin-top:5px}
+#tvPane .tv-card-tag{margin-left:auto;font-size:9px;color:#f3bd4d;border-color:#765b2b}
+#tvPane .tv-card[hidden],#tvPane .tv-category[hidden]{display:none!important}
+#tvPane .tv-refresh{padding:11px;background:#131d2b;border:1px solid #354258;border-radius:9px;color:#e8edf6;font-size:12px}
+#tvPane .tv-main{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;gap:12px;padding:18px 18px 14px;background:linear-gradient(145deg,#080d17,#0e1725)}
+#tvPane .tv-main-heading{display:flex;align-items:center;gap:12px;padding:0 2px;color:#f4bd43}
+#tvPane .tv-main-heading>span{font-size:27px}
+#tvPane .tv-main-heading strong{font-size:16px;letter-spacing:.4px}
+#tvPane .tv-main-heading button{margin-left:auto;background:#172235;border:1px solid #354258;color:#eef2f8}
+#tvPane .tv-view{display:flex;flex:1 1 0%;min-height:0;flex-direction:column;gap:10px;padding:0;background:transparent;border:0;border-radius:0}
+#tvPane .tv-video-wrap{position:relative;display:flex;flex:1 1 0%;min-height:180px;background:#000;border:1px solid #28364b;border-radius:10px;overflow:hidden;box-shadow:0 12px 35px rgba(0,0,0,.35)}
+#tvPane .tv-video-wrap iframe{display:block;width:100%;height:100%;min-height:0;flex:1;border:0;background:#000}
+#tvPane .tv-live-badge{position:absolute;top:12px;right:12px;z-index:2;padding:6px 10px;background:#e21c2b;color:white;border-radius:5px;font-weight:800;font-size:12px;pointer-events:none}
+#tvPane .tv-now-bar{display:flex;align-items:center;gap:9px;padding:13px 14px;background:#121b29;border:1px solid #2c394d;border-radius:10px;color:#f6f7fa}
+#tvPane .tv-now-bar strong{font-size:14px}
+#tvPane .tv-now-bar small{color:#aeb8c8;font-size:11px}
+#tvPane .tv-now-bar a{margin-left:auto;color:#f3bd4d;font-size:11px;text-decoration:none}
+#tvPane .tv-help{margin:0;padding:0 3px;color:#aab5c6;font-size:11px}
+#tvPane .tv-bottom-bar{display:flex;align-items:center;gap:9px;min-height:72px;padding:10px 12px;background:#111a28;border:1px solid #29364a;border-radius:12px}
+#tvPane .tv-bottom-bar button{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:74px;padding:9px;background:#1a2535;border:1px solid transparent;color:#edf1f7;font-size:18px}
+#tvPane .tv-bottom-bar button span{font-size:10px}
+#tvPane .tv-bottom-bar button.on{background:rgba(217,166,62,.18);border-color:#d7a43b;color:#f4bd43}
+#tvPane .tv-bottom-spacer{flex:1}
+#tvPane .tv-volume-label{font-size:11px;color:#aab5c6}
+#tvPane .tv-count{color:#f3bd4d;border-color:#594827;font-size:11px}
+@media(max-width:850px){
+ #viewer #tvPane{overflow:auto;flex-direction:column}
+ #tvPane .tv-sidebar{width:100%;max-width:none;min-width:0;max-height:38vh;border-radius:12px 12px 0 0}
+ #tvPane .tv-catalog{max-height:190px}
+ #tvPane .tv-main{min-height:58vh;padding:12px}
+ #tvPane .tv-video-wrap{min-height:36vh}
+ #tvPane .tv-bottom-bar{flex-wrap:wrap}
+ #tvPane .tv-volume-label{display:none}
+}
+
 #viewer #youtubePane{position:absolute;inset:0;z-index:6;overflow:auto;padding:16px 20px;background:var(--bg);color:var(--text)}
 #viewer #matchsPane{position:absolute;inset:0;z-index:7;display:flex;flex-direction:column;gap:10px;padding:12px;background:var(--bg);color:var(--text)}
 #viewer #matchsPane[hidden]{display:none!important}
@@ -672,30 +727,47 @@ body.gold #titleBar{background:#1a1a18!important}
 <div class="radio-stations-menu" id="radioStations" hidden><strong class="radio-group-title">🇨🇩 République démocratique du Congo</strong><button type="button" data-radio-station="radiookapi">Radio Okapi</button><a href="https://topcongo.live/" target="_blank" rel="noopener noreferrer">Top Congo FM · site officiel ↗</a><strong class="radio-group-title">🇫🇷 France · Radio France</strong><button type="button" data-radio-station="franceinter" class="active">France Inter</button><button type="button" data-radio-station="franceinfo">franceinfo</button><button type="button" data-radio-station="franceculture">France Culture</button><button type="button" data-radio-station="francemusique">France Musique</button><button type="button" data-radio-station="fip">FIP</button><button type="button" data-radio-station="mouv">Mouv’</button><strong class="radio-group-title">🌍 International · Francophone</strong><button type="button" data-radio-station="rfi">RFI Monde</button></div></header>
 <main class="radio-main"><div class="radio-player-card"><div class="radio-live-pill"><span></span> ESPACE RADIO</div><div class="radio-artwork">♫</div><div class="radio-track-label">EN COURS D’ÉCOUTE</div><strong id="radioNowPlaying" class="radio-now-playing">📻 France Inter</strong><p class="radio-subtitle">La radio vous accompagne, où que vous soyez.</p><audio id="radioAudio" controls preload="none"></audio><div id="radioEmbedWrap" hidden class="radio-embed-wrap"><iframe id="radioEmbedFrame" title="Lecteur radio officiel" src="about:blank" loading="lazy" allow="autoplay"></iframe></div><div class="radio-controls"><button type="button" id="radioPrev" aria-label="Station précédente">⏮</button><button type="button" id="radioPlay">▶ Lecture / Pause</button><button type="button" id="radioNext" aria-label="Station suivante">⏭</button></div><a id="radioOfficial" href="https://www.radiofrance.fr/franceinter" target="_blank" rel="noopener noreferrer" class="radio-official-link">Site officiel de la station ↗</a><p id="radioStatus" class="tv-help" role="status">Sélectionnez une station pour commencer l’écoute.</p></div></main></section>>
       <section id="tvPane" hidden>
-        <div class="tv-head tv-head-pro">
-          <div class="tv-brand"><span class="tv-brand-icon">📺</span><div><strong>MY WORLD TV</strong><small>Chaînes internationales · directs et programmes officiels</small></div></div>
-          <div class="tv-head-actions"><button id="tvStationsToggle" type="button" aria-expanded="false" aria-controls="tvStations">📺 Chaînes ▾</button><a id="tvOpenOfficial" href="https://www.youtube.com/watch?v=a47ckXKZjxI" target="_blank" rel="noopener noreferrer">Ouvrir sur YouTube ↗</a><button id="tvBack" type="button">← Retour</button></div>
-
-        <div class="tv-catalog" id="tvStations" hidden>
-          <section class="tv-category"><div class="tv-category-title"><span>🌍</span><div><strong>Francophone</strong><small>Directs officiels sans restriction géographique annoncée</small></div></div><div class="tv-card-grid">
-            <button type="button" class="tv-card active" data-tv-station="france24"><span class="tv-card-flag">🇫🇷</span><span class="tv-card-copy"><strong>France 24</strong><small>Actualités internationales</small></span><span class="tv-card-tag">FR</span></button>
-            <button type="button" class="tv-card" data-tv-station="euronews"><span class="tv-card-flag">🌐</span><span class="tv-card-copy"><strong>Euronews FR</strong><small>Actualités européennes</small></span><span class="tv-card-tag">FR</span></button>
-            <button type="button" class="tv-card" data-tv-station="franceinfo"><span class="tv-card-flag">🇫🇷</span><span class="tv-card-copy"><strong>franceinfo</strong><small>Info en continu</small></span><span class="tv-card-tag">FR</span></button>
-            <button type="button" class="tv-card" data-tv-station="africanewsfr"><span class="tv-card-flag">🌍</span><span class="tv-card-copy"><strong>Africanews Français</strong><small>Actualités africaines</small></span><span class="tv-card-tag">FR</span></button>
-            <button type="button" class="tv-card" data-tv-station="rfi"><span class="tv-card-flag">🌍</span><span class="tv-card-copy"><strong>RFI</strong><small>Actualités Afrique et monde</small></span><span class="tv-card-tag">FR</span></button>
-          </div></section>
-          <section class="tv-category"><div class="tv-category-title"><span>🌐</span><div><strong>English</strong><small>Directs officiels gratuits vérifiés sans restriction géographique annoncée</small></div></div><div class="tv-card-grid">
-            <button type="button" class="tv-card" data-tv-station="africanews_en"><span class="tv-card-flag">🌍</span><span class="tv-card-copy"><strong>Africanews English</strong><small>Actualités africaines</small></span><span class="tv-card-tag">EN</span></button>
-            <button type="button" class="tv-card" data-tv-station="cnbcafrica"><span class="tv-card-flag">🇿🇦</span><span class="tv-card-copy"><strong>CNBC Africa</strong><small>Économie et actualité africaine</small></span><span class="tv-card-tag">EN</span></button>
-            <button type="button" class="tv-card" data-tv-station="abcnews"><span class="tv-card-flag">🇺🇸</span><span class="tv-card-copy"><strong>ABC News Live</strong><small>Actualités internationales · 24/7</small></span><span class="tv-card-tag">EN</span></button>
-          </div></section>
-        </div>
-        <div class="tv-intro"><div><span class="tv-live-dot"></span><strong>Vos chaînes en direct</strong><p>Directs officiels francophones et anglophones. Sélectionnez une chaîne, puis lancez la lecture pour profiter du son.</p></div><span class="tv-count">8 CHAÎNES</span></div>
-        <div class="tv-view">
-          <div class="tv-screen-heading"><div><span class="tv-live-dot"></span><strong id="tvNowTitle">FRANCE 24</strong><small id="tvNowMeta">Direct YouTube · Français</small></div><span class="tv-screen-label">LECTEUR</span></div>
-          <iframe id="tvStationFrame" title="Chaîne de télévision en direct sur YouTube" src="https://www.youtube-nocookie.com/embed/a47ckXKZjxI?autoplay=1&rel=0" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
-          <p id="tvStatus" class="tv-help" role="status">Sélectionnez une chaîne. Si un direct n’est pas disponible dans le lecteur, ouvrez sa page YouTube officielle.</p>
-        </div>
+        <aside class="tv-sidebar">
+          <div class="tv-side-title"><span>📺</span><strong>Chaînes TV</strong></div>
+          <input id="tvSearch" type="search" placeholder="Rechercher une chaîne..." aria-label="Rechercher une chaîne">
+          <div class="tv-side-filters">
+            <select id="tvCategoryFilter" aria-label="Filtrer les chaînes"><option value="all">Toutes les chaînes</option><option value="Francophone">Francophones</option><option value="English">English</option></select>
+            <button id="tvFavoritesToggle" type="button" aria-pressed="false">☆ Favoris</button>
+          </div>
+          <div class="tv-catalog" id="tvStations">
+            <section class="tv-category"><div class="tv-category-title"><span>🌍</span><div><strong>Francophone</strong><small>Directs officiels</small></div></div><div class="tv-card-grid">
+              <button type="button" class="tv-card active" data-tv-station="france24"><span class="tv-card-flag">🇫🇷</span><span class="tv-card-copy"><strong>FRANCE 24</strong><small>Informations</small></span><span class="tv-card-tag">FR</span></button>
+              <button type="button" class="tv-card" data-tv-station="euronews"><span class="tv-card-flag">🌐</span><span class="tv-card-copy"><strong>Euronews FR</strong><small>Informations</small></span><span class="tv-card-tag">FR</span></button>
+              <button type="button" class="tv-card" data-tv-station="franceinfo"><span class="tv-card-flag">🇫🇷</span><span class="tv-card-copy"><strong>franceinfo</strong><small>Informations</small></span><span class="tv-card-tag">FR</span></button>
+              <button type="button" class="tv-card" data-tv-station="africanewsfr"><span class="tv-card-flag">🌍</span><span class="tv-card-copy"><strong>Africanews Français</strong><small>Informations</small></span><span class="tv-card-tag">FR</span></button>
+              <button type="button" class="tv-card" data-tv-station="rfi"><span class="tv-card-flag">🌍</span><span class="tv-card-copy"><strong>RFI</strong><small>Informations</small></span><span class="tv-card-tag">FR</span></button>
+            </div></section>
+            <section class="tv-category"><div class="tv-category-title"><span>🌐</span><div><strong>English</strong><small>Official live streams</small></div></div><div class="tv-card-grid">
+              <button type="button" class="tv-card" data-tv-station="africanews_en"><span class="tv-card-flag">🌍</span><span class="tv-card-copy"><strong>Africanews English</strong><small>News</small></span><span class="tv-card-tag">EN</span></button>
+              <button type="button" class="tv-card" data-tv-station="cnbcafrica"><span class="tv-card-flag">🇿🇦</span><span class="tv-card-copy"><strong>CNBC Africa</strong><small>Économie</small></span><span class="tv-card-tag">EN</span></button>
+              <button type="button" class="tv-card" data-tv-station="abcnews"><span class="tv-card-flag">🇺🇸</span><span class="tv-card-copy"><strong>ABC News Live</strong><small>Informations</small></span><span class="tv-card-tag">EN</span></button>
+            </div></section>
+          </div>
+          <button id="tvRefreshList" class="tv-refresh" type="button">↻ Actualiser la liste</button>
+        </aside>
+        <main class="tv-main">
+          <div class="tv-main-heading"><span>▣</span><strong>LECTEUR TV</strong><button id="tvBack" type="button">← Retour</button></div>
+          <div class="tv-view">
+            <div class="tv-video-wrap">
+              <span class="tv-live-badge">EN DIRECT</span>
+              <iframe id="tvStationFrame" title="Chaîne de télévision en direct sur YouTube" src="https://www.youtube-nocookie.com/embed/a47ckXKZjxI?autoplay=0&mute=0&rel=0&playsinline=1&controls=1" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
+            </div>
+            <div class="tv-now-bar"><span>📺</span><strong id="tvNowTitle">TV · FRANCE 24</strong><small id="tvNowMeta">YouTube · Français</small><a id="tvOpenOfficial" href="https://www.youtube.com/@France24/live" target="_blank" rel="noopener noreferrer">Ouvrir sur YouTube ↗</a></div>
+            <p id="tvStatus" class="tv-help" role="status">Sélectionnez une chaîne pour commencer le direct.</p>
+          </div>
+          <div class="tv-bottom-bar">
+            <button class="on" type="button" id="tvBottomChannels">▣<span>Chaînes</span></button>
+            <button type="button" id="tvBottomFav">☆<span>Favoris</span></button>
+            <div class="tv-bottom-spacer"></div>
+            <span class="tv-volume-label">Le volume se règle dans le lecteur YouTube.</span>
+            <span class="tv-count">8 chaînes disponibles</span>
+          </div>
+        </main>
       </section>
       <section id="fifaPane" hidden>
         <div class="matchs-head"><strong>🏆 FIFA+ · Football gratuit</strong><button id="fifaBack" type="button">← Mes fichiers</button></div>
@@ -2741,9 +2813,33 @@ function renderResume() {
     $('tabs').querySelectorAll('button').forEach(b => b.classList.toggle('active', b === tvTab));
     tvSelectStation('france24');
   }
-  $('tvStationsToggle')?.addEventListener('click', () => { const menu=$('tvStations'), btn=$('tvStationsToggle'); const open=menu.hidden; menu.hidden=!open; btn.setAttribute('aria-expanded',String(open)); });
-  $('tvStations')?.addEventListener('click', e => { const b=e.target.closest('button[data-tv-station]'); if (b) { tvSelectStation(b.dataset.tvStation); $('tvStations').hidden=true; $('tvStationsToggle')?.setAttribute('aria-expanded','false'); } });
-  document.addEventListener('click', e => { if (tvPane && !tvPane.contains(e.target)) { $('tvStations').hidden=true; $('tvStationsToggle')?.setAttribute('aria-expanded','false'); } });
+  const tvFavKey='myWorldTvFavorites';
+  let tvFavorites=[]; try{tvFavorites=JSON.parse(localStorage.getItem(tvFavKey)||'[]')}catch(e){tvFavorites=[]}
+  let tvOnlyFavorites=false;
+  function tvFilterList(){
+    const q=($('tvSearch')?.value||'').trim().toLowerCase(), cat=$('tvCategoryFilter')?.value||'all';
+    $('tvStations')?.querySelectorAll('[data-tv-station]').forEach(btn=>{
+      const key=btn.dataset.tvStation, station=tvStations[key], matchText=!q||(station.name+' '+station.language).toLowerCase().includes(q);
+      const matchCat=cat==='all'||station.category===cat, matchFav=!tvOnlyFavorites||tvFavorites.includes(key);
+      btn.hidden=!(matchText&&matchCat&&matchFav);
+      btn.classList.toggle('is-favorite',tvFavorites.includes(key));
+    });
+    $('tvStations')?.querySelectorAll('.tv-category').forEach(group=>{group.hidden=!Array.from(group.querySelectorAll('[data-tv-station]')).some(btn=>!btn.hidden)});
+    $('tvFavoritesToggle')?.classList.toggle('on',tvOnlyFavorites);
+    $('tvFavoritesToggle')?.setAttribute('aria-pressed',String(tvOnlyFavorites));
+    $('tvBottomFav')?.classList.toggle('on',tvOnlyFavorites);
+  }
+  $('tvStations')?.addEventListener('click', e=>{
+    const fav=e.target.closest('[data-tv-favorite]');
+    if(fav){const key=fav.dataset.tvFavorite;tvFavorites=tvFavorites.includes(key)?tvFavorites.filter(x=>x!==key):[...tvFavorites,key];try{localStorage.setItem(tvFavKey,JSON.stringify(tvFavorites))}catch(e){}tvFilterList();return}
+    const b=e.target.closest('button[data-tv-station]');if(b)tvSelectStation(b.dataset.tvStation);
+  });
+  $('tvSearch')?.addEventListener('input',tvFilterList);
+  $('tvCategoryFilter')?.addEventListener('change',tvFilterList);
+  $('tvFavoritesToggle')?.addEventListener('click',()=>{tvOnlyFavorites=!tvOnlyFavorites;tvFilterList()});
+  $('tvBottomFav')?.addEventListener('click',()=>{tvOnlyFavorites=!tvOnlyFavorites;tvFilterList()});
+  $('tvBottomChannels')?.addEventListener('click',()=>{tvOnlyFavorites=false;$('tvSearch').value='';$('tvCategoryFilter').value='all';tvFilterList()});
+  $('tvRefreshList')?.addEventListener('click',()=>{tvFilterList();if(tvCurrentStationKey)tvSelectStation(tvCurrentStationKey)});
   $('tvBack')?.addEventListener('click', () => { tvHide(); $('tabs').querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.filter==='all')); filter='all'; renderList(); setMode(current<0?'empty':items[current].type); $('nowPlaying').textContent=current<0?'Aucun média':items[current].name; });
   tvTab?.addEventListener('click', tvShow);
  const matchsTab = $('matchsTab'), matchsPane = $('matchsPane');
