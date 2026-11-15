@@ -180,11 +180,11 @@ input[type=search]{width:100%;padding:8px 10px;border-radius:8px;border:1px soli
 
 /* Radio redesign */
 #viewer #radioPane:not([hidden]){display:flex;flex-direction:column;gap:10px;min-height:0;flex:1;overflow:auto;padding:10px;background:var(--bg);color:var(--text)}
-#radioPane .radio-head{position:relative;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 2px 10px;border-bottom:1px solid var(--border)}
+#radioPane .radio-head{position:relative;z-index:40;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 2px 10px;border-bottom:1px solid var(--border)}
 #radioPane .radio-brand{display:flex;align-items:center;gap:9px}#radioPane .radio-brand-icon{display:grid;place-items:center;width:36px;height:36px;border-radius:11px;background:rgba(34,197,94,.13);font-size:19px}
 #radioPane .radio-brand strong{display:block;font-size:13px;letter-spacing:1px}#radioPane .radio-brand small{display:block;color:var(--muted);font-size:10px;margin-top:2px}
 #radioPane .radio-head-actions{display:flex;gap:6px}#radioPane .radio-head-actions button{padding:7px 10px;border:1px solid var(--border);border-radius:9px;background:var(--panel);color:var(--text);font-size:11px;font-weight:700}
-#radioPane .radio-stations-menu[hidden]{display:none!important}#radioPane .radio-stations-menu{position:absolute;right:0;top:calc(100% + 5px);z-index:35;display:grid;grid-template-columns:1fr 1fr;gap:6px;width:min(420px,calc(100vw - 30px));max-height:55vh;overflow:auto;padding:10px;background:var(--panel);border:1px solid var(--border);border-radius:12px;box-shadow:0 14px 35px rgba(0,0,0,.3)}
+#radioPane .radio-stations-menu[hidden]{display:none!important}#radioPane .radio-stations-menu{position:absolute;right:0;top:calc(100% + 5px);z-index:60;pointer-events:auto;display:grid;grid-template-columns:1fr 1fr;gap:6px;width:min(420px,calc(100vw - 30px));max-height:55vh;overflow:auto;padding:10px;background:var(--panel);border:1px solid var(--border);border-radius:12px;box-shadow:0 14px 35px rgba(0,0,0,.3)}
 #radioPane .radio-stations-menu .radio-group-title{grid-column:1/-1;padding:5px 3px 2px;font-size:10px;color:var(--muted)}
 #radioPane .radio-stations-menu button,#radioPane .radio-stations-menu a{display:flex;align-items:center;min-height:34px;padding:7px 9px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:11px;text-decoration:none}
 #radioPane .radio-stations-menu button.active{border-color:#22c55e;background:rgba(34,197,94,.13);font-weight:800}
@@ -2619,21 +2619,33 @@ function renderResume() {
  function radioNavigate(direction){const keys=Object.keys(radioStations);let i=keys.indexOf(radioCurrentKey);i=(i+direction+keys.length)%keys.length;radioSelect(keys[i]);osd('📻 '+radioStations[keys[i]].name);}
  function radioHide(){if(!radioPane)return;radioPane.hidden=true;if(radioActive){radioActive=false;radioAudio.pause();radioAudio.removeAttribute('src');radioAudio.load();radioEmbedFrame.src='about:blank';radioEmbedWrap.hidden=true;}}
  function radioShow(){tvHide();fifaHide();matchsHide();tvDriveHide();youtubeHide();cacherOngletMesFilms();radioActive=true;$('playlist').hidden=true;radioPane.hidden=false;$('tabs').querySelectorAll('button').forEach(b=>b.classList.toggle('active',b===radioTab));radioSelect(radioCurrentKey,true);}
- // Commandes Radio : un seul gestionnaire par action, avec fermeture complète.
- $('radioStationsToggle')?.addEventListener('click',()=>{
-   const menu=$('radioStations'),btn=$('radioStationsToggle');
-   if(!menu||!btn)return;
-   const open=menu.hidden;
-   menu.hidden=!open;
-   btn.setAttribute('aria-expanded',String(open));
- });
- $('radioStations')?.addEventListener('click',e=>{
-   const b=e.target.closest('button[data-radio-station]');
-   if(!b)return;
-   radioSelect(b.dataset.radioStation,true);
-   $('radioStations').hidden=true;
-   $('radioStationsToggle')?.setAttribute('aria-expanded','false');
- });
+ // Menu Stations Radio : gestion directe et fermeture fiable.
+ const radioStationsButton=$('radioStationsToggle'), radioStationsMenu=$('radioStations');
+ if(radioStationsButton&&radioStationsMenu){
+   radioStationsButton.onclick=(e)=>{
+     e.preventDefault();e.stopPropagation();
+     const open=radioStationsMenu.hidden;
+     radioStationsMenu.hidden=!open;
+     radioStationsMenu.style.display=open?'grid':'none';
+     radioStationsButton.setAttribute('aria-expanded',String(open));
+   };
+   radioStationsMenu.onclick=(e)=>{
+     e.stopPropagation();
+     const stationButton=e.target.closest('button[data-radio-station]');
+     if(!stationButton)return;
+     radioSelect(stationButton.dataset.radioStation,true);
+     radioStationsMenu.hidden=true;
+     radioStationsMenu.style.display='none';
+     radioStationsButton.setAttribute('aria-expanded','false');
+   };
+   document.addEventListener('click',(e)=>{
+     if(!e.target.closest('#radioStations')&&!e.target.closest('#radioStationsToggle')){
+       radioStationsMenu.hidden=true;
+       radioStationsMenu.style.display='none';
+       radioStationsButton.setAttribute('aria-expanded','false');
+     }
+   });
+ }
  $('radioPrev')?.addEventListener('click',()=>radioNavigate(-1));
  $('radioNext')?.addEventListener('click',()=>radioNavigate(1));
  $('radioPlay')?.addEventListener('click',()=>{
