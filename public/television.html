@@ -178,6 +178,27 @@ input[type=search]{width:100%;padding:8px 10px;border-radius:8px;border:1px soli
 #tvPane .tv-help{font-size:11px;color:var(--muted);margin:0;padding:0 3px}
 @media(max-width:760px){#tvPane{overflow-y:auto!important}#tvPane .tv-catalog{grid-template-columns:1fr;max-height:none}#tvPane .tv-card-grid{grid-template-columns:1fr 1fr}#tvPane .tv-view{min-height:260px;flex:1}#tvPane .tv-head-actions{width:100%}#tvPane .tv-head-actions>*{flex:1}}
 
+/* Radio redesign */
+#viewer #radioPane:not([hidden]){display:flex;flex-direction:column;gap:10px;min-height:0;flex:1;overflow:auto;padding:10px;background:var(--bg);color:var(--text)}
+#radioPane .radio-head{position:relative;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 2px 10px;border-bottom:1px solid var(--border)}
+#radioPane .radio-brand{display:flex;align-items:center;gap:9px}#radioPane .radio-brand-icon{display:grid;place-items:center;width:36px;height:36px;border-radius:11px;background:rgba(34,197,94,.13);font-size:19px}
+#radioPane .radio-brand strong{display:block;font-size:13px;letter-spacing:1px}#radioPane .radio-brand small{display:block;color:var(--muted);font-size:10px;margin-top:2px}
+#radioPane .radio-head-actions{display:flex;gap:6px}#radioPane .radio-head-actions button{padding:7px 10px;border:1px solid var(--border);border-radius:9px;background:var(--panel);color:var(--text);font-size:11px;font-weight:700}
+#radioPane .radio-stations-menu[hidden]{display:none!important}#radioPane .radio-stations-menu{position:absolute;right:0;top:calc(100% + 5px);z-index:35;display:grid;grid-template-columns:1fr 1fr;gap:6px;width:min(420px,calc(100vw - 30px));max-height:55vh;overflow:auto;padding:10px;background:var(--panel);border:1px solid var(--border);border-radius:12px;box-shadow:0 14px 35px rgba(0,0,0,.3)}
+#radioPane .radio-stations-menu .radio-group-title{grid-column:1/-1;padding:5px 3px 2px;font-size:10px;color:var(--muted)}
+#radioPane .radio-stations-menu button,#radioPane .radio-stations-menu a{display:flex;align-items:center;min-height:34px;padding:7px 9px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:11px;text-decoration:none}
+#radioPane .radio-stations-menu button.active{border-color:#22c55e;background:rgba(34,197,94,.13);font-weight:800}
+#radioPane .radio-main{display:flex;flex:1;min-height:270px;align-items:center;justify-content:center;padding:8px}
+#radioPane .radio-player-card{display:flex;flex-direction:column;align-items:center;gap:10px;width:min(100%,650px);padding:24px 20px 18px;border:1px solid var(--border);border-radius:18px;background:var(--panel);box-shadow:0 12px 35px rgba(0,0,0,.12);text-align:center}
+#radioPane .radio-live-pill{display:flex;align-items:center;gap:6px;padding:5px 9px;border-radius:20px;background:rgba(34,197,94,.12);color:#22c55e;font-size:9px;font-weight:900;letter-spacing:1px}
+#radioPane .radio-live-pill span{width:6px;height:6px;border-radius:50%;background:#22c55e;box-shadow:0 0 9px #22c55e}
+#radioPane .radio-artwork{display:grid;place-items:center;width:clamp(100px,18vw,145px);height:clamp(100px,18vw,145px);border-radius:24px;background:linear-gradient(145deg,#064e3b,#166534 55%,#1d4ed8);color:white;font-size:70px;box-shadow:0 12px 28px rgba(22,101,52,.25)}
+#radioPane .radio-track-label{font-size:9px;font-weight:900;letter-spacing:1.6px;color:var(--muted)}#radioPane .radio-now-playing{font-size:clamp(18px,3vw,25px);line-height:1.2}#radioPane .radio-subtitle{margin:0;color:var(--muted);font-size:11px}
+#radioPane #radioAudio{width:min(100%,440px);margin:5px 0}#radioPane .radio-embed-wrap{width:100%;min-height:150px}#radioPane .radio-embed-wrap iframe{width:100%;height:170px;border:0;border-radius:10px}
+#radioPane .radio-controls{display:flex;align-items:center;justify-content:center;gap:9px}#radioPane .radio-controls button{min-width:43px;min-height:38px;padding:8px 12px;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);font-weight:800}
+#radioPane .radio-controls #radioPlay{min-width:145px;border-color:#16a34a;background:#15803d;color:white}#radioPane .radio-official-link{color:var(--text);font-size:10px;text-decoration:none;opacity:.8}#radioPane #radioStatus{margin:0;font-size:10px;text-align:center}
+@media(max-width:600px){#viewer #radioPane:not([hidden]){padding:8px}#radioPane .radio-main{padding:4px;min-height:240px}#radioPane .radio-player-card{padding:18px 12px 14px}#radioPane .radio-head-actions button{padding:6px 8px;font-size:10px}}
+
 /* TV compacte : priorité à la surface de lecture */
 #viewer #tvPane{gap:5px;padding:7px}
 #tvPane .tv-head-pro{padding:0 0 5px;gap:6px;flex-wrap:nowrap}
@@ -641,26 +662,10 @@ body.gold #titleBar{background:#1a1a18!important}
         </main>
       </div>
     </section>
-      <section id="radioPane" hidden style="flex:1;min-height:0;overflow:auto;padding:12px;background:var(--bg);color:var(--text)">
-        <div class="tv-head"><strong>📻 RADIO · Stations francophones</strong><button id="radioBack" type="button">← Mes fichiers</button></div>
-        <p class="tv-help">Choisissez une station pour écouter son direct.</p>
-        <div class="tv-stations" id="radioStations">
-          <strong style="width:100%;padding:5px 2px">🇨🇩 République démocratique du Congo</strong>
-          <button type="button" data-radio-station="radiookapi">Radio Okapi</button>
-          <a href="https://topcongo.live/" target="_blank" rel="noopener noreferrer" style="padding:9px 12px;color:var(--text)">Top Congo FM · site officiel ↗</a>
-          <strong style="width:100%;padding:8px 2px 5px">🇫🇷 France · Radio France</strong>
-          <button type="button" data-radio-station="franceinter" class="active">France Inter</button><button type="button" data-radio-station="franceinfo">franceinfo</button>
-          <button type="button" data-radio-station="franceculture">France Culture</button><button type="button" data-radio-station="francemusique">France Musique</button>
-          <button type="button" data-radio-station="fip">FIP</button><button type="button" data-radio-station="mouv">Mouv’</button>
-          <strong style="width:100%;padding:8px 2px 5px">🌍 International · Francophone</strong><button type="button" data-radio-station="rfi">RFI Monde</button>
-        <div style="display:flex;flex-direction:column;gap:10px;align-items:stretch;margin:18px auto;max-width:760px;padding:18px;background:var(--panel);border:1px solid var(--border);border-radius:14px">
-          <strong id="radioNowPlaying" style="font-size:18px">📻 France Inter</strong><audio id="radioAudio" controls preload="none" style="width:100%"></audio><div id="radioEmbedWrap" hidden style="width:100%;min-height:150px"><iframe id="radioEmbedFrame" title="Lecteur radio officiel" src="about:blank" loading="lazy" allow="autoplay" style="width:100%;height:170px;border:0;border-radius:10px"></iframe></div>
-          <div style="display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap">
-            <button type="button" id="radioPrev">⏮ Précédente</button><button type="button" id="radioPlay">▶ Lecture / Pause</button><button type="button" id="radioNext">Suivante ⏭</button>
-            <a id="radioOfficial" href="https://www.radiofrance.fr/franceinter" target="_blank" rel="noopener noreferrer" style="padding:8px 12px;color:var(--text)">Site officiel ↗</a>
-          </div><p id="radioStatus" class="tv-help" role="status">Sélectionnez une station pour commencer l’écoute.</p>
-        </div>
-      </section>
+      <section id="radioPane" hidden aria-label="Lecteur radio">
+<header class="radio-head"><div class="radio-brand"><span class="radio-brand-icon">📻</span><span><strong>RADIO</strong><small>Vos stations en direct</small></span></div><div class="radio-head-actions"><button type="button" id="radioStationsToggle" aria-expanded="false" aria-controls="radioStations">☷ Stations ▾</button><button id="radioBack" type="button">← Mes fichiers</button></div>
+<div class="radio-stations-menu" id="radioStations" hidden><strong class="radio-group-title">🇨🇩 République démocratique du Congo</strong><button type="button" data-radio-station="radiookapi">Radio Okapi</button><a href="https://topcongo.live/" target="_blank" rel="noopener noreferrer">Top Congo FM · site officiel ↗</a><strong class="radio-group-title">🇫🇷 France · Radio France</strong><button type="button" data-radio-station="franceinter" class="active">France Inter</button><button type="button" data-radio-station="franceinfo">franceinfo</button><button type="button" data-radio-station="franceculture">France Culture</button><button type="button" data-radio-station="francemusique">France Musique</button><button type="button" data-radio-station="fip">FIP</button><button type="button" data-radio-station="mouv">Mouv’</button><strong class="radio-group-title">🌍 International · Francophone</strong><button type="button" data-radio-station="rfi">RFI Monde</button></div></header>
+<main class="radio-main"><div class="radio-player-card"><div class="radio-live-pill"><span></span> ESPACE RADIO</div><div class="radio-artwork">♫</div><div class="radio-track-label">EN COURS D’ÉCOUTE</div><strong id="radioNowPlaying" class="radio-now-playing">📻 France Inter</strong><p class="radio-subtitle">La radio vous accompagne, où que vous soyez.</p><audio id="radioAudio" controls preload="none"></audio><div id="radioEmbedWrap" hidden class="radio-embed-wrap"><iframe id="radioEmbedFrame" title="Lecteur radio officiel" src="about:blank" loading="lazy" allow="autoplay"></iframe></div><div class="radio-controls"><button type="button" id="radioPrev" aria-label="Station précédente">⏮</button><button type="button" id="radioPlay">▶ Lecture / Pause</button><button type="button" id="radioNext" aria-label="Station suivante">⏭</button></div><a id="radioOfficial" href="https://www.radiofrance.fr/franceinter" target="_blank" rel="noopener noreferrer" class="radio-official-link">Site officiel de la station ↗</a><p id="radioStatus" class="tv-help" role="status">Sélectionnez une station pour commencer l’écoute.</p></div></main></section>>
       <section id="tvPane" hidden>
         <div class="tv-head tv-head-pro">
           <div class="tv-brand"><span class="tv-brand-icon">📺</span><div><strong>MY WORLD TV</strong><small>Les directs YouTube réunis au même endroit</small></div></div>
@@ -2614,7 +2619,10 @@ function renderResume() {
  function radioNavigate(direction){const keys=Object.keys(radioStations);let i=keys.indexOf(radioCurrentKey);i=(i+direction+keys.length)%keys.length;radioSelect(keys[i]);osd('📻 '+radioStations[keys[i]].name);}
  function radioHide(){if(!radioPane)return;radioPane.hidden=true;if(radioActive){radioActive=false;radioAudio.pause();radioAudio.removeAttribute('src');radioAudio.load();radioEmbedFrame.src='about:blank';radioEmbedWrap.hidden=true;}}
  function radioShow(){tvHide();fifaHide();matchsHide();tvDriveHide();youtubeHide();cacherOngletMesFilms();radioActive=true;$('playlist').hidden=true;radioPane.hidden=false;$('tabs').querySelectorAll('button').forEach(b=>b.classList.toggle('active',b===radioTab));radioSelect(radioCurrentKey,true);}
- radioTab?.addEventListener('click',radioShow);
+ $('radioStationsToggle')?.addEventListener('click',()=>{const menu=$('radioStations'),btn=$('radioStationsToggle');const open=menu.hidden;menu.hidden=!open;btn.setAttribute('aria-expanded',String(open));});
+  $('radioStations')?.addEventListener('click',e=>{const b=e.target.closest('[data-radio-station]');if(b){radioSelect(b.dataset.radioStation,true);$('radioStations').hidden=true;$('radioStationsToggle')?.setAttribute('aria-expanded','false');}});
+  document.addEventListener('click',e=>{if(radioPane&&!radioPane.contains(e.target)){$('radioStations').hidden=true;$('radioStationsToggle')?.setAttribute('aria-expanded','false');}});
+  radioTab?.addEventListener('click',radioShow);
  $('radioStations')?.addEventListener('click',e=>{const b=e.target.closest('[data-radio-station]');if(b)radioSelect(b.dataset.radioStation,true);});
  $('radioPrev')?.addEventListener('click',()=>radioNavigate(-1));$('radioNext')?.addEventListener('click',()=>radioNavigate(1));
  $('radioPlay')?.addEventListener('click',()=>{if(radioAudio.paused)radioAudio.play().catch(()=>{});else radioAudio.pause();});
