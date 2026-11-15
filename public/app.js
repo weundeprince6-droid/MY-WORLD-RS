@@ -640,7 +640,8 @@ async function seConnecter() {
     await fb.setPersistence(fb.auth, fb.browserLocalPersistence);
     const fournisseur = new fb.GoogleAuthProvider();
     SCOPES.forEach((scope) => fournisseur.addScope(scope));
-    fournisseur.setCustomParameters({ prompt: "select_account" });
+    // include_granted_scopes=false : ne pas rajouter YouTube (déjà accordé) à la demande, Google refuse drive.file + youtube.readonly ensemble
+    fournisseur.setCustomParameters({ prompt: "select_account", include_granted_scopes: "false" });
     const resultat = await fb.signInWithPopup(fb.auth, fournisseur);
     utilisateurConnecte = resultat.user;
     if (!emailAutorise(resultat.user)) {

@@ -94,7 +94,7 @@ async function start(request, env) {
     scope: GOOGLE_SCOPES.join(" "),
     access_type: "offline",
     prompt: "consent select_account",
-    include_granted_scopes: "true",
+    include_granted_scopes: "false",
     state
   });
   if (user.email) params.set("login_hint", user.email);
