@@ -150,6 +150,11 @@ input[type=search]{width:100%;padding:8px 10px;border-radius:8px;border:1px soli
 #osd{position:absolute;top:14px;left:16px;background:rgba(0,0,0,.65);color:#fff;padding:6px 12px;border-radius:8px;font-size:15px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:6}
 #osd.show{opacity:1}
 #toast{position:absolute;bottom:60px;left:50%;transform:translateX(-50%);background:rgba(20,20,30,.92);color:#fff;padding:8px 14px;border-radius:10px;display:none;align-items:center;gap:12px;z-index:7;font-size:14px;border:1px solid #3a3a4f}
+#syncBar[hidden]{display:none}
+#syncBar{margin:8px 10px 0;padding:9px 11px;border:1px solid var(--accent);border-radius:10px;background:var(--panel2);display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12.5px}
+#syncBar.ok{border-color:var(--accent2);color:var(--accent2)}
+#syncBar .msg{flex:1;min-width:140px}
+#syncBar button{padding:6px 12px;font-size:13px}
 #toast.show{display:flex}#toast button{padding:4px 10px;font-size:13px}
 #info{position:absolute;top:14px;right:16px;background:rgba(0,0,0,.8);color:#fff;padding:12px 16px;border-radius:10px;font-size:13px;line-height:1.7;display:none;z-index:6;max-width:360px}
 #info.show{display:block}
@@ -804,6 +809,7 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
         <button type="button" id="matchsTab">⚽ Matchs en direct</button>
         <button type="button" id="fifaTab">🏆 FIFA+</button>
       </div>
+    <div id="syncBar" hidden></div>
     <ul id="playlist"></ul>
     <section id="mesFilmsPane" hidden style="flex:1;min-height:0;overflow:auto;padding:10px">
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
@@ -3494,6 +3500,98 @@ window.addEventListener('keydown', (e) => {
   }
 });
 
+// ================= Synchronisation de toute la bibliothèque à l'ouverture =================
+// Une seule confirmation (un clic) autorise tous les dossiers enregistrés pour la session :
+// les nouveaux fichiers sont ajoutés, ceux qui ont disparu sont retirés, sans demande fichier par fichier.
+const syncBar = $('syncBar');
+let syncTimer = null;
+async function racinesDossiers() {
+  const objets = new Set();
+  for (const it of items) if (it.dirHandle) objets.add(it.dirHandle);
+  if (mesFilmsFolder) objets.add(mesFilmsFolder);
+  const roots = [], idx = new Map();
+  for (const h of objets) {
+    let r = null;
+    for (const u of roots) { try { if (await u.isSameEntry(h)) { r = u; break; } } catch (e) {} }
+    if (!r) { r = h; roots.push(h); }
+    idx.set(h, r);
+  }
+  return { roots, idx };
+}
+function afficherSync(html, ok) {
+  clearTimeout(syncTimer);
+  syncBar.hidden = false; syncBar.className = ok ? 'ok' : '';
+  syncBar.innerHTML = '<span class="msg"></span>'; syncBar.firstChild.textContent = html;
+  return syncBar;
+}
+function proposerSync(roots, refuses) {
+  const noms = roots.map((r) => r.name).join(', ');
+  const bar = afficherSync('🔒 ' + roots.length + ' dossier' + (roots.length > 1 ? 's' : '') + ' à synchroniser (' + noms + '). Une seule confirmation pour toute la session.');
+  const b = document.createElement('button'); b.className = 'on'; b.textContent = '🔄 Synchroniser mes fichiers';
+  b.onclick = () => synchroniserTout(true);
+  bar.appendChild(b);
+  // Dossiers que le navigateur n'a pas autorisés dans le même clic : un bouton par dossier
+  for (const r of refuses || []) {
+    const bb = document.createElement('button'); bb.textContent = 'Autoriser « ' + r.name + ' »';
+    bb.onclick = async () => { try { await r.requestPermission({ mode: 'read' }); } catch (e) {} synchroniserTout(false); };
+    bar.appendChild(bb);
+  }
+}
+let syncEnCours = false;
+async function synchroniserTout(demander) {
+  if (syncEnCours) return;
+  syncEnCours = true;
+  try {
+    const { roots, idx } = await racinesDossiers();
+    if (!roots.length) { syncBar.hidden = true; return; }
+    // Toutes les autorisations sont demandées ensemble, dans le geste du clic
+    const etat = await Promise.all(roots.map(async (r) => {
+      try {
+        let p = await r.queryPermission({ mode: 'read' });
+        if (p !== 'granted' && demander) p = await r.requestPermission({ mode: 'read' });
+        return p === 'granted';
+      } catch (e) { return false; }
+    }));
+    const ok = roots.filter((_, i) => etat[i]), refuses = roots.filter((_, i) => !etat[i]);
+    if (!ok.length) { proposerSync(roots, demander ? refuses : []); return; }
+    afficherSync('Synchronisation en cours…');
+    let types = null; try { types = JSON.parse(localStorage.getItem('lp.typesChoisis') || 'null'); } catch (e) {}
+    const cur = items[current];
+    let ajoutes = 0, retires = 0;
+    for (const r of ok) {
+      let trouves;
+      try { trouves = await scanDir(r); } catch (e) { continue; }
+      if (types) trouves = trouves.filter((x) => types.includes(x.type));
+      const miens = items.filter((x) => x.dirHandle && idx.get(x.dirHandle) === r);
+      const parChemin = new Map(miens.map((x) => [x.path, x]));
+      const presents = new Set();
+      for (const t of trouves) {
+        presents.add(t.path);
+        const old = parChemin.get(t.path);
+        if (old) { old.dirHandle = r; old.file = t.file; old.size = t.size; old.mod = t.mod; old.key = t.key; old.subs = t.subs; }
+        else { items.push(t); ajoutes++; }
+      }
+      for (const m of miens) if (!presents.has(m.path) && (!types || types.includes(m.type))) { m.supprime = true; retires++; }
+    }
+    // Doublons éventuels (même dossier, même chemin) : on garde le premier
+    const vus = new Set();
+    items = items.filter((x) => {
+      if (x.supprime) return false;
+      if (!x.dirHandle) return true;
+      const k = (idx.get(x.dirHandle) ? roots.indexOf(idx.get(x.dirHandle)) : '?') + '|' + x.path;
+      if (vus.has(k)) return false; vus.add(k); return true;
+    });
+    if (cur && !items.includes(cur)) { try { saveProg(); stopAll(); stopSlideshow(); } catch (e) {} current = -1; setMode('empty'); $('nowPlaying').textContent = 'Aucun média'; updatePlayBtn(); }
+    else current = cur ? items.indexOf(cur) : -1;
+    regrouper(); renderList(); renderResume(); if (document.body.dataset.mode === 'gallery') renderGalerie(); persist();
+    const msg = '✓ Bibliothèque synchronisée : ' + items.length + ' fichiers (+' + ajoutes + ' / −' + retires + '). Plus aucune confirmation pour cette session.';
+    if (refuses.length) proposerSync(refuses, refuses);
+    else { afficherSync(msg, true); syncTimer = setTimeout(() => { syncBar.hidden = true; }, 9000); }
+  } catch (e) {
+    afficherSync('Synchronisation impossible : ' + (e && e.message || e));
+  } finally { syncEnCours = false; }
+}
+
 // ================= Démarrage =================
 (async function init() {
   applyTheme(); subsEl.style.setProperty('--sub', S.subSize); subsEl.classList.toggle('bg', S.subBg);
@@ -3512,6 +3610,8 @@ window.addEventListener('keydown', (e) => {
   mesFilmsFolder = await DB.get('mesFilmsFolder');
   if (mesFilmsFolder) await synchroniserMesFilms(false);
   renderResume();
+  // Tous les dossiers : synchro silencieuse si déjà autorisés, sinon un bouton de confirmation s'affiche
+  try { await synchroniserTout(false); } catch (e) {}
 })();
 })();
 </script>
