@@ -906,6 +906,7 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
         </aside>
         <main class="tv-main">
           <div class="tv-main-heading"><span>▣</span><strong>LECTEUR TV</strong><button id="tvBack" type="button">← Retour</button></div>
+          <div id="tvDailyQuota" role="status" aria-live="polite" style="margin:8px 0;padding:9px 12px;border:1px solid var(--border);border-radius:10px;background:var(--panel2);font-size:13px;font-weight:700">📊 Limite TV : chargement…</div>
           <div class="tv-view">
             <div class="tv-video-wrap">
               <span class="tv-live-badge">EN DIRECT</span>
@@ -2967,7 +2968,66 @@ function renderResume() {
     nba: {name:'NBA', category:'Sport', language:'Sport', url:'', resolveLive:{q:'NBA live',channelRe:'^nba'}, official:'https://www.youtube.com/@NBA/live', note:'Basket : directs et émissions de la NBA, selon la programmation.'},
     abcnews: {name:'ABC News Live', category:'English', language:'English', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCBi2mrWuNuyYy4gbM6fU18Q&autoplay=1&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@ABCNews/live', note:'Direct officiel gratuit 24/7. Diffusion vérifiée sans restriction géographique annoncée.'}
   };;
+  // Limite préventive quotidienne : 1 h 45 de visionnage TV, estimation prudente pour ~1,5 Go en 480p.
+  // Le navigateur ne peut pas lire le volume réseau réel des iframes YouTube.
+  const TV_QUOTA_LIMIT_MS = 105 * 60 * 1000;
+  const TV_QUOTA_STORAGE = 'mwrs_tv_daily_quota_v1';
+  let tvQuotaDay = new Date().toLocaleDateString('en-CA');
+  let tvQuotaUsed = 0;
+  let tvQuotaSessionStart = 0;
+  let tvQuotaBlocked = false;
+  function tvQuotaLoad() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(TV_QUOTA_STORAGE) || '{}');
+      const today = new Date().toLocaleDateString('en-CA');
+      if (saved.day === today) tvQuotaUsed = Math.max(0, Math.min(TV_QUOTA_LIMIT_MS, Number(saved.used) || 0));
+      else tvQuotaUsed = 0;
+      tvQuotaDay = today;
+    } catch { tvQuotaUsed = 0; }
+  }
+  function tvQuotaPersist() {
+    if (tvQuotaSessionStart) {
+      tvQuotaUsed += Math.max(0, Date.now() - tvQuotaSessionStart);
+      tvQuotaSessionStart = Date.now();
+    }
+    try { localStorage.setItem(TV_QUOTA_STORAGE, JSON.stringify({day:tvQuotaDay,used:Math.min(tvQuotaUsed,TV_QUOTA_LIMIT_MS)})); } catch {}
+  }
+  function tvQuotaRefresh() {
+    const today = new Date().toLocaleDateString('en-CA');
+    if (today !== tvQuotaDay) {
+      tvQuotaDay = today; tvQuotaUsed = 0; tvQuotaBlocked = false;
+      try { localStorage.setItem(TV_QUOTA_STORAGE, JSON.stringify({day:tvQuotaDay,used:0})); } catch {}
+      if (tvActive) tvQuotaSessionStart = Date.now();
+    }
+    const elapsed = tvQuotaUsed + (tvQuotaSessionStart ? Math.max(0,Date.now()-tvQuotaSessionStart) : 0);
+    const remaining = Math.max(0,TV_QUOTA_LIMIT_MS-elapsed);
+    const mins = Math.ceil(remaining/60000);
+    const usedMins = Math.min(105,Math.floor(elapsed/60000));
+    const display = $('tvDailyQuota');
+    if (display) {
+      display.textContent = remaining > 0
+        ? '📊 TV aujourd’hui : '+usedMins+' min utilisées · '+mins+' min restantes / 1 h 45 (480p estimé)'
+        : '⛔ Limite TV quotidienne atteinte · retour demain à minuit';
+      display.style.borderColor = remaining <= 15*60000 ? '#d99b36' : 'var(--border)';
+    }
+    if (remaining <= 0 && !tvQuotaBlocked) {
+      tvQuotaBlocked = true;
+      tvQuotaPersist();
+      if (tvStationFrame) tvStationFrame.src = 'about:blank';
+      const status = $('tvStatus');
+      if (status) status.textContent = '⛔ Votre limite quotidienne de télévision est atteinte. Le lecteur sera de nouveau disponible demain à minuit.';
+      if (display) display.textContent = '⛔ Limite TV quotidienne atteinte · retour demain à minuit';
+    }
+    return remaining;
+  }
+  tvQuotaLoad();
+  setInterval(() => { if (tvActive && !tvQuotaBlocked) { tvQuotaRefresh(); if (Date.now() % 5000 < 1000) tvQuotaPersist(); } }, 1000);
+  window.addEventListener('pagehide', tvQuotaPersist);
   function tvSelectStation(key) {
+    if (tvQuotaRefresh() <= 0 || tvQuotaBlocked) {
+      if (tvStationFrame) tvStationFrame.src = 'about:blank';
+      return;
+    }
     const station = tvStations[key]; if (!station) return;
     tvCurrentStationKey = key;
     // Les services sans lecteur vidéo YouTube sont chargés dans le cadre du lecteur TV,
@@ -3008,16 +3068,20 @@ function renderResume() {
     document.body.classList.remove('tv-fullscreen');
     if (tvPane) tvPane.hidden = true;
     if (!tvActive) return;
+    tvQuotaPersist();
+    tvQuotaSessionStart = 0;
     tvActive = false;
     if (tvStationFrame) tvStationFrame.src = 'about:blank';
     if (!tvDriveActive && mesFilmsPane.hidden && youtubePane.hidden && !matchsActive) $('playlist').hidden = false;
   }
   function tvShow() {
     radioHide(); fifaHide(); matchsHide(); tvDriveHide(); youtubeHide(); cacherOngletMesFilms();
-    tvActive = true; document.body.classList.add('tv-fullscreen'); $('playlist').hidden = true; tvPane.hidden = false;
+    tvActive = true;
+    if (tvQuotaRefresh() > 0 && !tvQuotaBlocked) tvQuotaSessionStart = Date.now();
+    document.body.classList.add('tv-fullscreen'); $('playlist').hidden = true; tvPane.hidden = false;
     $('tabs').querySelectorAll('button').forEach(b => b.classList.toggle('active', b === tvTab));
     tvFilterList();
-    tvSelectStation('france24');
+    if (tvQuotaRefresh() > 0 && !tvQuotaBlocked) tvSelectStation('france24');
   }
   const tvFavKey='myWorldTvFavorites';
   let tvFavorites=[]; try{tvFavorites=JSON.parse(localStorage.getItem(tvFavKey)||'[]')}catch(e){tvFavorites=[]}
