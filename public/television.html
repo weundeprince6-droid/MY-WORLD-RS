@@ -3623,7 +3623,15 @@ async function synchroniserTout(demander) {
   syncEnCours = true;
   try {
     const { roots, idx } = await racinesDossiers();
-    if (!roots.length) { syncBar.hidden = true; return; }
+    if (!roots.length) {
+      // Aucun dossier enregistré : on propose d'en choisir un (une seule fois), il sera ensuite resynchronisé à chaque ouverture
+      if (!('showDirectoryPicker' in window)) { afficherSync('La synchronisation automatique demande Chrome ou Edge (ordinateur).'); return; }
+      const bar = afficherSync('📁 Aucun dossier enregistré. Choisissez vos dossiers une seule fois : ils seront resynchronisés à chaque ouverture, avec une seule confirmation.');
+      const b = document.createElement('button'); b.className = 'on'; b.textContent = '📁 Choisir un dossier';
+      b.onclick = async () => { await addFolderDialog(); synchroniserTout(false); };
+      bar.appendChild(b);
+      return;
+    }
     // Toutes les autorisations sont demandées ensemble, dans le geste du clic
     const etat = await Promise.all(roots.map(async (r) => {
       try {
