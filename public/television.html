@@ -864,7 +864,7 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
           <div class="tv-side-title"><span>📺</span><strong>Chaînes TV</strong></div>
           <input id="tvSearch" type="search" placeholder="Rechercher une chaîne..." aria-label="Rechercher une chaîne">
           <div class="tv-side-filters">
-            <select id="tvCategoryFilter" aria-label="Filtrer les chaînes"><option value="all">Toutes les chaînes</option><option value="Francophone">Francophones</option><option value="English">English</option><option value="Sport">Sport</option></select>
+            <select id="tvCategoryFilter" aria-label="Filtrer les chaînes"><option value="all">Toutes les chaînes</option><option value="Francophone">Francophones</option><option value="English">English</option><option value="Sport">Sport</option><option value="Congo">🇨🇩 RDC</option></select>
             <button id="tvFavoritesToggle" type="button" aria-pressed="false">☆ Favoris</button>
           </div>
           <div class="tv-catalog" id="tvStations">
@@ -2913,6 +2913,15 @@ function renderResume() {
     franceinfo: {name:'franceinfo', category:'Francophone', language:'Français', url:'https://www.youtube.com/embed/live_stream?channel=UCO6K_kkdP-lnSCiO3tPx7WA&autoplay=1&mute=0&rel=0&playsinline=1&controls=1', resolveLive:{q:'franceinfo direct',channelRe:'^franceinfo'}, official:'https://www.youtube.com/@franceinfo/live', note:'Direct de la chaîne officielle franceinfo sur YouTube. Le lecteur suit le flux en direct lorsque la chaîne le diffuse.'},
     tv5monde: {name:'TV5MONDE', category:'Francophone', language:'Français', url:'', resolveLive:{q:'TV5MONDE direct',channelRe:'tv5'}, official:'https://www.youtube.com/@TV5MONDE/live', note:'TV5MONDE, la chaîne francophone mondiale, en direct.'},
     tv5info: {name:'TV5MONDE Info', category:'Francophone', language:'Français', url:'', resolveLive:{q:'TV5MONDE Info direct',channelRe:'tv5'}, official:'https://www.youtube.com/@TV5MONDEinfo/live', note:'L’information de TV5MONDE en direct.'},
+    rdcdirect: {name:'RDC en direct', category:'Congo', language:'RDC', url:'', resolveLive:{q:'Kinshasa direct RDC',channelRe:'',order:'viewCount',lang:'fr'}, official:'https://www.youtube.com/results?search_query=RDC+direct+Kinshasa&sp=EgJAAQ%253D%253D', note:'Direct congolais le plus suivi en ce moment (intégrable).'},
+    rtnc: {name:'RTNC', category:'Congo', language:'RDC', url:'', resolveLive:{q:'RTNC direct',channelRe:'rtnc|radio.?t.l.vision nationale'}, official:'https://www.youtube.com/results?search_query=RTNC+direct&sp=EgJAAQ%253D%253D', note:'Radio-Télévision Nationale Congolaise.'},
+    bonetv: {name:'B-One TV', category:'Congo', language:'RDC', url:'', resolveLive:{q:'B-One TV direct',channelRe:'b.?one'}, official:'https://www.youtube.com/results?search_query=B-One+TV+direct&sp=EgJAAQ%253D%253D', note:'B-One TV, Kinshasa.'},
+    digitalcongotv: {name:'Digital Congo TV', category:'Congo', language:'RDC', url:'', resolveLive:{q:'Digital Congo direct',channelRe:'digital ?congo'}, official:'https://www.youtube.com/results?search_query=Digital+Congo+direct&sp=EgJAAQ%253D%253D', note:'Digital Congo, Kinshasa.'},
+    tele50: {name:'Télé 50', category:'Congo', language:'RDC', url:'', resolveLive:{q:'Télé 50 direct',channelRe:'t.l. ?50'}, official:'https://www.youtube.com/results?search_query=T%C3%A9l%C3%A9+50+direct&sp=EgJAAQ%253D%253D', note:'Télé 50, Kinshasa.'},
+    antennea: {name:'Antenne A', category:'Congo', language:'RDC', url:'', resolveLive:{q:'Antenne A direct',channelRe:'antenne ?a'}, official:'https://www.youtube.com/results?search_query=Antenne+A+direct&sp=EgJAAQ%253D%253D', note:'Antenne A, Kinshasa.'},
+    topcongotv: {name:'Top Congo TV', category:'Congo', language:'RDC', url:'', resolveLive:{q:'Top Congo direct',channelRe:'top ?congo'}, official:'https://www.youtube.com/results?search_query=Top+Congo+direct&sp=EgJAAQ%253D%253D', note:'Top Congo, Kinshasa.'},
+    okapitv: {name:'Radio Okapi (vidéo)', category:'Congo', language:'RDC', url:'', resolveLive:{q:'Radio Okapi direct',channelRe:'okapi'}, official:'https://www.youtube.com/results?search_query=Radio+Okapi+direct&sp=EgJAAQ%253D%253D', note:'Radio Okapi en vidéo, quand un direct est disponible.'},
+    actualitecd: {name:'Actualité.cd', category:'Congo', language:'RDC', url:'', resolveLive:{q:'actualite.cd direct',channelRe:'actualit'}, official:'https://www.youtube.com/results?search_query=actualite.cd+direct&sp=EgJAAQ%253D%253D', note:'Actualité.cd : l’actualité congolaise.'},
     africanewsfr: {name:'Africanews Français', category:'Francophone', language:'Français', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UC25EuGAePOPvPrUA5cmu3dQ&autoplay=1&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@africanewsfr/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
     rfi: {name:'RFI', category:'Francophone', language:'Français', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCm4fSpMpPIZ9z6KHoezLUAg&autoplay=1&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@rfi_fr/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
     africanews_en: {name:'Africanews English', category:'English', language:'English', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UC1_E8NeF5QHY2dtdLRBCCLA&autoplay=1&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@africanews/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
@@ -2988,7 +2997,7 @@ function renderResume() {
   function tvFilterList(){
     const search=($('tvSearch')?.value||'').trim().toLocaleLowerCase();
     const selected=$('tvCategoryFilter')?.value||'all';
-    const categoryOf=station=>station.category==='Francophone'||station.category==='Francophones'?'Francophone':station.category==='Sport'?'Sport':'English';
+    const categoryOf=station=>station.category==='Francophone'||station.category==='Francophones'?'Francophone':station.category==='Sport'?'Sport':station.category==='Congo'?'Congo':'English';
     const entries=Object.entries(tvStations).filter(([key,station])=>{
       const category=categoryOf(station);
       const matchesText=!search||(String(station.name||'')+' '+String(station.language||'')).toLocaleLowerCase().includes(search);
@@ -2996,12 +3005,12 @@ function renderResume() {
       const matchesFavorite=!tvOnlyFavorites||tvFavorites.includes(key);
       return matchesText&&matchesCategory&&matchesFavorite;
     });
-    const flags={france24:'🇫🇷',euronews:'🌐',franceinfo:'🇫🇷',tv5monde:'🌍',tv5info:'🌍',africanewsfr:'🌍',rfi:'🌍',africanews_en:'🌍',cnbcafrica:'🇿🇦',abcnews:'🇺🇸',redbull:'🏔️',sportfoot:'⚽',sportfr:'🇫🇷',sportbasket:'🏀',sportcombat:'🥊',sportauto:'🏎️',sportafrique:'🌍',olympics:'🏅',daznfoot:'⚽',skysportsnews:'🏆',nba:'🏀'};
+    const flags={france24:'🇫🇷',euronews:'🌐',franceinfo:'🇫🇷',rdcdirect:'🇨🇩',rtnc:'🇨🇩',bonetv:'🇨🇩',digitalcongotv:'🇨🇩',tele50:'🇨🇩',antennea:'🇨🇩',topcongotv:'🇨🇩',okapitv:'🇨🇩',actualitecd:'🇨🇩',tv5monde:'🌍',tv5info:'🌍',africanewsfr:'🌍',rfi:'🌍',africanews_en:'🌍',cnbcafrica:'🇿🇦',abcnews:'🇺🇸',redbull:'🏔️',sportfoot:'⚽',sportfr:'🇫🇷',sportbasket:'🏀',sportcombat:'🥊',sportauto:'🏎️',sportafrique:'🌍',olympics:'🏅',daznfoot:'⚽',skysportsnews:'🏆',nba:'🏀'};
     const list=$('tvStations');
     if(!list)return;
     list.innerHTML=entries.map(([key,station])=>{
-      const category=categoryOf(station),lang=category==='English'?'EN':category==='Sport'?'SPORT':'FR';
-      return '<div role="button" tabindex="0" class="tv-card'+(key===tvCurrentStationKey?' active':'')+(tvFavorites.includes(key)?' is-favorite':'')+'" data-tv-station="'+key+'"><span class="tv-card-flag">'+(flags[key]||'📺')+'</span><span class="tv-card-copy"><strong>'+station.name+'</strong><small>'+(category==='English'?'News':category==='Sport'?'Sport':'Informations')+'</small></span><span class="tv-card-tag">'+lang+'</span><button class="tv-fav" type="button" data-tv-favorite="1" aria-label="Favori">'+(tvFavorites.includes(key)?'★':'☆')+'</button></div>';
+      const category=categoryOf(station),lang=category==='English'?'EN':category==='Sport'?'SPORT':category==='Congo'?'RDC':'FR';
+      return '<div role="button" tabindex="0" class="tv-card'+(key===tvCurrentStationKey?' active':'')+(tvFavorites.includes(key)?' is-favorite':'')+'" data-tv-station="'+key+'"><span class="tv-card-flag">'+(flags[key]||'📺')+'</span><span class="tv-card-copy"><strong>'+station.name+'</strong><small>'+(category==='English'?'News':category==='Sport'?'Sport':category==='Congo'?'RDC':'Informations')+'</small></span><span class="tv-card-tag">'+lang+'</span><button class="tv-fav" type="button" data-tv-favorite="1" aria-label="Favori">'+(tvFavorites.includes(key)?'★':'☆')+'</button></div>';
     }).join('');
     list.style.display='flex';
     list.style.visibility='visible';
