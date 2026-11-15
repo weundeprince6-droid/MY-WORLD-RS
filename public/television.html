@@ -160,12 +160,23 @@ input[type=search]{width:100%;padding:8px 10px;border-radius:8px;border:1px soli
 #viewer #tvPane[hidden]{display:none!important}
 #tvPane .tv-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 #tvPane .tv-head strong{flex:1;min-width:130px}
-#tvPane .tv-stations{display:flex;gap:6px;flex-wrap:wrap;overflow:auto;max-height:116px;padding:2px}
-#tvPane .tv-stations button{font-size:12px;padding:7px 10px;white-space:nowrap}
-#tvPane .tv-stations button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
-#tvPane .tv-view{display:flex;flex:1;min-height:0;flex-direction:column;gap:8px}
-#tvPane iframe{width:100%;height:100%;min-height:0;flex:1;border:0;border-radius:10px;background:#000}
-#tvPane .tv-help{font-size:12px;color:var(--muted);margin:0}
+#tvPane .tv-head-pro{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;padding:2px 2px 12px;border-bottom:1px solid var(--border)}
+#tvPane .tv-brand{display:flex;align-items:center;gap:12px}.tv-brand-icon{display:grid;place-items:center;width:44px;height:44px;border-radius:13px;background:linear-gradient(145deg,var(--accent),var(--accent2));font-size:23px}.tv-brand strong{display:block;font-size:17px;letter-spacing:.7px}.tv-brand small{display:block;color:var(--muted);font-size:11px;margin-top:3px}
+#tvPane .tv-head-actions{display:flex;align-items:center;gap:8px}#tvPane .tv-head-actions a,#tvPane .tv-head-actions button{display:inline-flex;align-items:center;justify-content:center;padding:8px 12px;border-radius:9px;border:1px solid var(--border);background:var(--panel2);color:var(--text);text-decoration:none;font-size:12px}
+#tvPane .tv-head-actions a{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+#tvPane .tv-intro{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:2px 2px 0}.tv-intro strong{font-size:15px}.tv-intro p{font-size:12px;color:var(--muted);margin:4px 0 0}.tv-live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#e34d58;box-shadow:0 0 0 4px rgba(227,77,88,.14);margin-right:9px;vertical-align:1px}.tv-count,.tv-screen-label{font-size:10px;letter-spacing:1.2px;font-weight:800;color:var(--accent2);border:1px solid var(--border);border-radius:999px;padding:6px 9px;white-space:nowrap}
+#tvPane .tv-catalog{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-height:190px;overflow:auto;padding:2px 2px 5px}
+#tvPane .tv-category{min-width:0;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:10px}
+.tv-category-title{display:flex;align-items:center;gap:9px;margin-bottom:9px}.tv-category-title>span{font-size:21px}.tv-category-title strong{display:block;font-size:12px}.tv-category-title small{display:block;color:var(--muted);font-size:10px;margin-top:2px}
+#tvPane .tv-card-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+#tvPane .tv-card{display:flex;align-items:center;gap:8px;min-width:0;text-align:left;padding:9px 8px;border-radius:10px;background:var(--panel2);border:1px solid var(--border);color:var(--text);transition:border-color .15s,background .15s,transform .15s}
+#tvPane .tv-card:hover{border-color:var(--accent2);transform:translateY(-1px)}#tvPane .tv-card.active{background:color-mix(in srgb,var(--accent) 24%,var(--panel2));border-color:var(--accent2);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent2) 35%,transparent)}
+.tv-card-flag{font-size:20px;flex:none}.tv-card-copy{display:block;min-width:0;flex:1}.tv-card-copy strong{display:block;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tv-card-copy small{display:block;font-size:9px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tv-card-tag{font-size:9px;font-weight:800;color:var(--accent2);padding:3px 5px;border:1px solid var(--border);border-radius:5px}
+#tvPane .tv-view{display:flex;flex:1;min-height:160px;flex-direction:column;gap:7px;background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:9px}
+#tvPane .tv-screen-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:2px 3px}.tv-screen-heading strong{font-size:12px}.tv-screen-heading small{display:block;color:var(--muted);font-size:10px;margin:3px 0 0 17px}
+#tvPane iframe{width:100%;height:100%;min-height:0;flex:1;border:0;border-radius:9px;background:#000}
+#tvPane .tv-help{font-size:11px;color:var(--muted);margin:0;padding:0 3px}
+@media(max-width:760px){#tvPane{overflow-y:auto!important}#tvPane .tv-catalog{grid-template-columns:1fr;max-height:none}#tvPane .tv-card-grid{grid-template-columns:1fr 1fr}#tvPane .tv-view{min-height:260px;flex:1}#tvPane .tv-head-actions{width:100%}#tvPane .tv-head-actions>*{flex:1}}
 #viewer #youtubePane{position:absolute;inset:0;z-index:6;overflow:auto;padding:16px 20px;background:var(--bg);color:var(--text)}
 #viewer #matchsPane{position:absolute;inset:0;z-index:7;display:flex;flex-direction:column;gap:10px;padding:12px;background:var(--bg);color:var(--text)}
 #viewer #matchsPane[hidden]{display:none!important}
@@ -600,20 +611,27 @@ body.gold #titleBar{background:#1a1a18!important}
         </div>
       </section>
       <section id="tvPane" hidden>
-        <div class="tv-head"><strong>📺 TV · Chaînes francophones</strong><button id="tvBack" type="button">← Mes fichiers</button><a id="tvOpenOfficial" href="https://www.youtube.com/watch?v=a47ckXKZjxI" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--panel2);color:var(--text);text-decoration:none">Ouvrir la chaîne ↗</a></div>
-        <div class="tv-stations" id="tvStations">
-          <button type="button" data-tv-station="france24" class="active">🇫🇷 France 24</button>
-          <button type="button" data-tv-station="euronews">🌐 Euronews FR</button>
-          <button type="button" data-tv-station="africanews">🌍 Africanews</button>
-          <button type="button" data-tv-station="franceinfo">🇫🇷 franceinfo</button>
-          <button type="button" data-tv-station="africanewsfr">🌍 Africanews FR</button>
-          <button type="button" data-tv-station="rfi">📻 RFI en direct</button>
-          <button type="button" data-tv-station="franceinter">📻 France Inter</button>
-          <button type="button" data-tv-station="citizen">🇰🇪 Citizen TV · Kiswahili</button>
+        <div class="tv-head tv-head-pro">
+          <div class="tv-brand"><span class="tv-brand-icon">📺</span><div><strong>MY WORLD TV</strong><small>Les directs YouTube réunis au même endroit</small></div></div>
+          <div class="tv-head-actions"><a id="tvOpenOfficial" href="https://www.youtube.com/watch?v=a47ckXKZjxI" target="_blank" rel="noopener noreferrer">Ouvrir sur YouTube ↗</a><button id="tvBack" type="button">← Retour</button></div>
+        </div>
+        <div class="tv-intro"><div><span class="tv-live-dot"></span><strong>Vos chaînes en direct</strong><p>Actualités francophones et programmes en kiswahili. Sélectionnez une chaîne pour la regarder.</p></div><span class="tv-count">6 CHAÎNES</span></div>
+        <div class="tv-catalog" id="tvStations">
+          <section class="tv-category"><div class="tv-category-title"><span>🌍</span><div><strong>Francophone</strong><small>Information française et africaine</small></div></div><div class="tv-card-grid">
+            <button type="button" class="tv-card active" data-tv-station="france24"><span class="tv-card-flag">🇫🇷</span><span class="tv-card-copy"><strong>France 24</strong><small>Actualités internationales</small></span><span class="tv-card-tag">FR</span></button>
+            <button type="button" class="tv-card" data-tv-station="euronews"><span class="tv-card-flag">🌐</span><span class="tv-card-copy"><strong>Euronews FR</strong><small>Actualités européennes</small></span><span class="tv-card-tag">FR</span></button>
+            <button type="button" class="tv-card" data-tv-station="franceinfo"><span class="tv-card-flag">🇫🇷</span><span class="tv-card-copy"><strong>franceinfo</strong><small>Info en continu</small></span><span class="tv-card-tag">FR</span></button>
+            <button type="button" class="tv-card" data-tv-station="africanewsfr"><span class="tv-card-flag">🌍</span><span class="tv-card-copy"><strong>Africanews</strong><small>L’Afrique en français</small></span><span class="tv-card-tag">FR</span></button>
+          </div></section>
+          <section class="tv-category"><div class="tv-category-title"><span>🇰🇪</span><div><strong>Kiswahili</strong><small>Chaînes d’Afrique de l’Est</small></div></div><div class="tv-card-grid">
+            <button type="button" class="tv-card" data-tv-station="citizen"><span class="tv-card-flag">🇰🇪</span><span class="tv-card-copy"><strong>Citizen TV Kenya</strong><small>Actualités · Kiswahili / English</small></span><span class="tv-card-tag">KE</span></button>
+            <button type="button" class="tv-card" data-tv-station="upendo"><span class="tv-card-flag">🇹🇿</span><span class="tv-card-copy"><strong>Upendo TV</strong><small>Émissions et enseignements en kiswahili</small></span><span class="tv-card-tag">TZ</span></button>
+          </div></section>
         </div>
         <div class="tv-view">
-          <p id="tvStatus" class="tv-help">Chaînes et vidéos issues de YouTube uniquement. Si un direct est hors ligne ou bloqué, ouvrez la chaîne sur YouTube.</p>
-          <iframe id="tvStationFrame" title="Chaîne de télévision francophone" src="https://www.youtube-nocookie.com/embed/a47ckXKZjxI?autoplay=1&rel=0" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
+          <div class="tv-screen-heading"><div><span class="tv-live-dot"></span><strong id="tvNowTitle">FRANCE 24</strong><small id="tvNowMeta">Direct YouTube · Français</small></div><span class="tv-screen-label">LECTEUR</span></div>
+          <iframe id="tvStationFrame" title="Chaîne de télévision en direct sur YouTube" src="https://www.youtube-nocookie.com/embed/a47ckXKZjxI?autoplay=1&rel=0" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
+          <p id="tvStatus" class="tv-help" role="status">Sélectionnez une chaîne. Si un direct n’est pas disponible dans le lecteur, ouvrez sa page YouTube officielle.</p>
         </div>
       </section>
       <section id="fifaPane" hidden>
@@ -2558,22 +2576,24 @@ function renderResume() {
   let tvCurrentStationKey = 'france24';
   const tvPane = $('tvPane'), tvStationFrame = $('tvStationFrame');
   const tvStations = {
-    france24: {name:'FRANCE 24', category:'Francophone', url:'https://www.youtube-nocookie.com/embed/a47ckXKZjxI?autoplay=1&rel=0', official:'https://www.youtube.com/watch?v=a47ckXKZjxI', note:'Flux YouTube de FRANCE 24.'},
-    euronews: {name:'Euronews FR', category:'Francophone', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCW2QcKZiU8aUGg4yxCIditg&autoplay=1', official:'https://www.youtube.com/@euronewsfr/live', note:'Flux YouTube en français, selon disponibilité du direct.'},
-    africanews: {name:'Africanews', category:'Francophone', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UC1_E8NeF5QHY2dtdLRBCCLA&autoplay=1', official:'https://www.youtube.com/@africanews/live', note:'Actualités africaines et internationales en direct.'},
-    franceinfo: {name:'franceinfo', category:'Francophone', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCO6K_kkdP-lnSCiO3tPx7WA&autoplay=1&mute=1&rel=0&playsinline=1', official:'https://www.youtube.com/@franceinfo/live', note:'Direct officiel franceinfo sur YouTube (lecteur intégré en mode confidentialité). Si YouTube bloque l’intégration, ouvrez le direct officiel.'},
-    africanewsfr: {name:'Africanews FR', category:'Francophone', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UC25EuGAePOPvPrUA5cmu3dQ&autoplay=1', official:'https://www.youtube.com/@africanewsfr/live', note:'Actualité africaine et internationale en français, en direct.'},
-    rfi: {name:'RFI en direct', category:'Francophone', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCm4fSpMpPIZ9z6KHoezLUAg&autoplay=1', official:'https://www.youtube.com/channel/UCm4fSpMpPIZ9z6KHoezLUAg/live', note:'RFI filmée en direct : l’actualité du monde et de l’Afrique.'},
-    franceinter: {name:'France Inter', category:'Francophone', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCJldRgT_D7Am-ErRHQZ90uw&autoplay=1', official:'https://www.youtube.com/@franceinter/live', note:'France Inter filmée en direct (radio généraliste).'},
-    citizen: {name:'Citizen TV Kenya', category:'Kiswahili', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UChBQgieUidXV1CmDxSdRm3g&autoplay=1', official:'https://www.youtube.com/@citizentvkenya/live', note:'Actualités et émissions en kiswahili et en anglais.'}
+    france24: {name:'FRANCE 24', category:'Francophone', language:'Français', url:'https://www.youtube-nocookie.com/embed/a47ckXKZjxI?autoplay=1&rel=0', official:'https://www.youtube.com/watch?v=a47ckXKZjxI', note:'Direct officiel de France 24 en français.'},
+    euronews: {name:'Euronews FR', category:'Francophone', language:'Français', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCW2QcKZiU8aUGg4yxCIditg&autoplay=1', official:'https://www.youtube.com/@euronewsfr/live', note:'Actualités européennes et internationales en français.'},
+    franceinfo: {name:'franceinfo', category:'Francophone', language:'Français', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCO6K_kkdP-lnSCiO3tPx7WA&autoplay=1&mute=1&rel=0&playsinline=1', official:'https://www.youtube.com/@franceinfo/live', note:'Direct d’information en continu sur YouTube.'},
+    africanewsfr: {name:'Africanews', category:'Francophone', language:'Français', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UC25EuGAePOPvPrUA5cmu3dQ&autoplay=1', official:'https://www.youtube.com/@africanewsfr/live', note:'Actualité africaine et internationale en français.'},
+    citizen: {name:'Citizen TV Kenya', category:'Kiswahili', language:'Kiswahili / English', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UChBQgieUidXV1CmDxSdRm3g&autoplay=1', official:'https://www.youtube.com/@citizentvkenya/live', note:'Chaîne kenyane : actualités et émissions en kiswahili et en anglais.'},
+    upendo: {name:'Upendo TV', category:'Kiswahili', language:'Kiswahili', externalOnly:true, official:'https://www.youtube.com/@upendo_media/live', note:'Upendo Media diffuse plusieurs émissions en direct en kiswahili sur YouTube. Ouvrez le direct officiel dans YouTube.'}
   };
   function tvSelectStation(key) {
     const station = tvStations[key]; if (!station) return;
     tvCurrentStationKey = key;
-    tvStationFrame.src = station.url;
+    tvStationFrame.src = station.externalOnly ? 'about:blank' : station.url;
     $('tvOpenOfficial').href = station.official;
     $('tvOpenOfficial').textContent = 'Ouvrir sur YouTube ↗';
-    $('tvStatus').textContent = station.note + ' Si YouTube indique que la vidéo n’est pas disponible, utilisez « Ouvrir sur YouTube ».';
+    $('tvStatus').textContent = station.externalOnly
+      ? station.note + ' Cette chaîne est ajoutée via sa page YouTube officielle ; son lecteur intégré n’a pas pu être vérifié.'
+      : station.note + ' Si YouTube indique que la vidéo n’est pas disponible, utilisez « Ouvrir sur YouTube ».';
+    const title = $('tvNowTitle'); if (title) title.textContent = station.name;
+    const meta = $('tvNowMeta'); if (meta) meta.textContent = 'YouTube · ' + station.language;
     $('tvStations').querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.tvStation === key));
     $('nowPlaying').textContent = '📺 TV · ' + station.name;
     setMode('tv'); updatePlayBtn();
