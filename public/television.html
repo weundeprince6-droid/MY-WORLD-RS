@@ -2713,13 +2713,15 @@ function renderResume() {
   function tvSelectStation(key) {
     const station = tvStations[key]; if (!station) return;
     tvCurrentStationKey = key;
-    tvStationFrame.src = station.externalOnly ? 'about:blank' : station.url;
+    // Les services sans lecteur vidéo YouTube sont chargés dans le cadre du lecteur TV,
+    // afin de rester dans MY WORLD RS au lieu d'ouvrir un nouvel onglet.
+    tvStationFrame.src = station.externalOnly ? station.official : station.url;
+    tvStationFrame.name = 'tvStationFrame';
     $('tvOpenOfficial').href = station.official;
-    $('tvOpenOfficial').textContent = station.externalOnly ? 'Ouvrir le service officiel ↗' : 'Ouvrir sur YouTube ↗';
+    $('tvOpenOfficial').target = 'tvStationFrame';
+    $('tvOpenOfficial').textContent = station.externalOnly ? 'Recharger le service dans TV ↻' : 'Ouvrir sur YouTube ↗';
     if (station.externalOnly) {
-      // Les services sans flux intégrable doivent tout de même s'ouvrir au clic sur leur carte.
-      const opened = window.open(station.official, '_blank', 'noopener,noreferrer');
-      $('tvStatus').textContent = station.note + (opened ? ' Le service officiel a été ouvert dans un nouvel onglet.' : ' Utilisez le bouton « Ouvrir le service officiel » dans l’en-tête si le navigateur bloque le nouvel onglet.');
+      $('tvStatus').textContent = station.note + ' Chargement du service officiel dans le lecteur TV. Si le fournisseur interdit l’affichage intégré, son site peut refuser de s’ouvrir dans ce cadre.';
     } else {
       $('tvStatus').textContent = station.note + ' Si YouTube indique que la vidéo n’est pas disponible, utilisez « Ouvrir sur YouTube ».';
     }
