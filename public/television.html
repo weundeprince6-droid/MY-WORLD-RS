@@ -841,12 +841,13 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
   box-shadow:0 8px 24px rgba(0,0,0,.12)!important;
 }
 /* Matchs en direct : plein écran (la zone du match occupe tout l'écran) */
-#matchsExit{display:none}
-#matchsPane:fullscreen{padding:0!important;gap:0!important;background:#000!important}
-#matchsPane:fullscreen .matchs-head,#matchsPane:fullscreen .matchs-help{display:none!important}
-#matchsPane:fullscreen #matchsFrame{border:0!important;border-radius:0!important;box-shadow:none!important;height:100%!important}
-#matchsPane:fullscreen #matchsExit{display:block;position:absolute;top:10px;right:12px;z-index:10;padding:7px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.35);background:rgba(0,0,0,.55);color:#fff;cursor:pointer;opacity:.55}
-#matchsPane:fullscreen #matchsExit:hover{opacity:1}
+#matchsFloat{display:none}
+#matchsPane.focus,#matchsPane:fullscreen{padding:0!important;gap:0!important;background:#000!important}
+#matchsPane.focus .matchs-head,#matchsPane.focus .matchs-help,#matchsPane:fullscreen .matchs-head,#matchsPane:fullscreen .matchs-help{display:none!important}
+#matchsPane.focus #matchsFrame,#matchsPane:fullscreen #matchsFrame{border:0!important;border-radius:0!important;box-shadow:none!important;height:100%!important}
+#matchsPane.focus #matchsFloat,#matchsPane:fullscreen #matchsFloat{display:flex;position:absolute;top:10px;right:12px;z-index:10;gap:6px}
+#matchsFloat button{padding:7px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.35);background:rgba(0,0,0,.55);color:#fff;cursor:pointer;opacity:.55}
+#matchsFloat button:hover{opacity:1}
 #fifaPane>div:not(.matchs-head){
   border:1px solid var(--border)!important;border-radius:16px!important;
   box-shadow:0 8px 24px rgba(0,0,0,.10)!important;
@@ -1049,9 +1050,9 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
         </div>
       </section>
       <section id="matchsPane" hidden>
-        <div class="matchs-head"><strong>⚽ Matchs en direct · Kooralive</strong><button id="matchsBack" type="button">← Mes fichiers</button><button id="matchsFull" type="button" title="Afficher la zone du match en plein écran">⛶ Plein écran</button><a href="https://kooralive.la/" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--panel2);color:var(--text);text-decoration:none">Ouvrir Kooralive ↗</a></div>
-        <p class="matchs-help">Cliquez sur un match : il s’ouvre en plein écran (Échap pour revenir). Sinon, utilisez « ⛶ Plein écran ». Si le site refuse l’affichage intégré ou si la zone reste vide, utilisez « Ouvrir Kooralive ».</p>
-        <button id="matchsExit" type="button">✕ Quitter le plein écran</button>
+        <div class="matchs-head"><strong>⚽ Matchs en direct · Kooralive</strong><button id="matchsBack" type="button">← Mes fichiers</button><button id="matchsFocus" type="button" title="Afficher seulement la zone du match, sans les barres du lecteur">🎯 Zone du match seule</button><button id="matchsFull" type="button" title="Afficher la zone du match en plein écran">⛶ Plein écran</button><a href="https://kooralive.la/" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--panel2);color:var(--text);text-decoration:none">Ouvrir Kooralive ↗</a></div>
+        <p class="matchs-help">Cliquez sur un match : seule la zone du match s’affiche (bouton « ← Liste des matchs » pour revenir). « ⛶ Plein écran » agrandit encore. Si le site refuse l’affichage intégré ou si la zone reste vide, utilisez « Ouvrir Kooralive ».</p>
+        <div id="matchsFloat"><button id="matchsList" type="button">← Liste des matchs</button><button id="matchsFS" type="button">⛶ Plein écran</button></div>
         <iframe id="matchsFrame" title="Kooralive - Matchs en direct" src="https://kooralive.la/" loading="lazy" referrerpolicy="no-referrer" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
       </section>
       <video id="video" class="layer" playsinline></video>
@@ -3301,22 +3302,27 @@ function renderResume() {
    $('tabs').querySelectorAll('button').forEach(b => b.classList.toggle('active', b === matchsTab));
    setMode('matchs'); $('nowPlaying').textContent = '⚽ Kooralive · Matchs en direct'; updatePlayBtn();
  }
- // Plein écran de la zone « Matchs en direct »
+ // Zone « Matchs en direct » : zone du match seule (comme les chaînes YouTube), plein écran en option
  const matchsFrame = $('matchsFrame');
+ const MATCHS_ACCUEIL = 'https://kooralive.la/';
  function matchsPleinEcran() { try { const f = matchsPane.requestFullscreen || matchsPane.webkitRequestFullscreen; const r = f && f.call(matchsPane); if (r && r.catch) r.catch(() => {}); } catch (e) {} }
  function matchsQuitterPE() { try { if (document.fullscreenElement === matchsPane) document.exitFullscreen(); } catch (e) {} }
- $('matchsFull')?.addEventListener('click', matchsPleinEcran);
- $('matchsExit')?.addEventListener('click', matchsQuitterPE);
+ const matchsMajBtn = () => { const b = $('matchsFS'); if (b) b.textContent = document.fullscreenElement === matchsPane ? '✕ Quitter le plein écran' : '⛶ Plein écran'; };
+ document.addEventListener('fullscreenchange', matchsMajBtn);
+ function matchsZoneSeule(on) { matchsPane.classList.toggle('focus', !!on); const b = $('matchsFocus'); if (b) b.textContent = on ? '☰ Afficher les barres' : '🎯 Zone du match seule'; }
+ $('matchsFocus')?.addEventListener('click', () => matchsZoneSeule(!matchsPane.classList.contains('focus')));
+ $('matchsFull')?.addEventListener('click', () => { matchsZoneSeule(true); matchsPleinEcran(); });
+ $('matchsFS')?.addEventListener('click', () => { if (document.fullscreenElement === matchsPane) matchsQuitterPE(); else matchsPleinEcran(); });
+ $('matchsList')?.addEventListener('click', () => { matchsQuitterPE(); matchsZoneSeule(false); matchsChargements = 0; matchsFrame.src = MATCHS_ACCUEIL; });
  let matchsChargements = 0;
  matchsFrame?.addEventListener('load', () => {
    matchsChargements++;
-   // 1er chargement = page d'accueil du site. Ensuite, un clic sur un match change de page :
-   // le clic dans le cadre donne le focus à celui-ci et reste « récent » quelques secondes → plein écran automatique.
-   if (matchsChargements > 1 && matchsActive && document.fullscreenElement !== matchsPane
-       && document.activeElement === matchsFrame && navigator.userActivation && navigator.userActivation.isActive) matchsPleinEcran();
+   // 1er chargement = page d'accueil du site. Un chargement suivant déclenché par un clic dans le cadre = un match choisi :
+   // on n'affiche plus que la zone du match.
+   if (matchsChargements > 1 && matchsActive && document.activeElement === matchsFrame) matchsZoneSeule(true);
  });
  function matchsHide() {
-   matchsQuitterPE();
+   matchsQuitterPE(); if (matchsPane) matchsZoneSeule(false);
    matchsActive = false; if (matchsPane) matchsPane.hidden = true;
    if (!tvDriveActive && mesFilmsPane.hidden && youtubePane.hidden) $('playlist').hidden = false;
  }
