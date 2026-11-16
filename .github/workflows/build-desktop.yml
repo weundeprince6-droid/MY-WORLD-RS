@@ -32,6 +32,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "lecteur-pro-v${{ github.run_number }}" "desktop/dist/Lecteur-Pro-Installation.exe" \
+          gh release create "lecteur-pro-v${{ github.run_number }}" \
+            "desktop/dist/Lecteur-Pro-Installation-x64.exe" "desktop/dist/Lecteur-Pro-Installation-ia32.exe" \
             --title "Lecteur Pro pour Windows (v${{ github.run_number }})" \
-            --notes "Téléchargez Lecteur-Pro-Installation.exe puis double-cliquez dessus pour installer."
+            --notes "Deux versions : choisissez celle de votre ordinateur. x64 = Windows 64 bits (le plus courant), ia32 = Windows 32 bits. Téléchargez, puis double-cliquez pour installer."

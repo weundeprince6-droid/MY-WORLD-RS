@@ -1,6 +1,6 @@
 {
   "name": "lecteur-pro",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Lecteur Pro : lecteur audio, vidéo, photo et TV pour Windows (7, 8, 8.1, 10, 11)",
   "main": "main.js",
   "author": "My World RS",
@@ -8,7 +8,7 @@
   "private": true,
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder --win nsis --x64 --ia32 --publish never"
+    "build": "electron-builder --win nsis --x64 --publish never && electron-builder --win nsis --ia32 --publish never"
   },
   "devDependencies": {
     "electron": "22.3.27",
@@ -36,7 +36,12 @@
       "perMachine": false,
       "runAfterFinish": true,
       "createDesktopShortcut": true,
-      "artifactName": "Lecteur-Pro-Installation.${ext}"
-    }
+      "artifactName": "Lecteur-Pro-Installation-${arch}.${ext}"
+    },
+    "compression": "maximum",
+    "electronLanguages": [
+      "fr",
+      "en-US"
+    ]
   }
 }
