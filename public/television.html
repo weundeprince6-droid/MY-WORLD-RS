@@ -1338,7 +1338,7 @@ const openDB = () => dbP || (dbP = new Promise((res, rej) => {
   r.onerror = () => rej(r.error);
 }));
 const DB = {
-  async get(k) { try { const db = await openDB(); return await new Promise((res) => { const q = db.transaction('kv').objectStore('kv').get(k); q.onsuccess = () => res(q.result); q.onerror = () => res(undefined); }); } catch (e) { return undefined; } },
+  async get(k) { try { const db = await openDB(); return await new Promise((res) => { const q = db.transaction('kv').objectStore('kv').get(k); q.onsuccess = () => res(window.__reviveNat ? window.__reviveNat(q.result) : q.result); q.onerror = () => res(undefined); }); } catch (e) { return undefined; } },
   async set(k, v) { try { const db = await openDB(); return await new Promise((res) => { const tx = db.transaction('kv', 'readwrite'); tx.objectStore('kv').put(v, k); tx.oncomplete = () => res(true); tx.onerror = tx.onabort = () => res(false); }); } catch (e) { return false; } }
 };
 
@@ -1662,7 +1662,7 @@ async function play(i) {
   try { localStorage.setItem('lp_last', it.key); } catch (e) {}
 
   if (it.type === 'doc') {
-    setMode('doc'); ouvrirDocument(it, file);
+    setMode('doc'); ouvrirDocument(it, file.materialiser ? await file.materialiser() : file);
   } else if (it.type === 'image') {
     setMode('image'); resetZoom(); image.src = curUrl; majCompteurImage();
   } else {
