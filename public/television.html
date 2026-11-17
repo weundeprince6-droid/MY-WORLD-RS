@@ -769,7 +769,7 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
   border-color:var(--accent)!important;
 }
 
-/* Navigation des chaînes près des favoris dans la barre inférieure */
+\n#tvPane .tv-open-free-library{display:inline-flex;align-items:center;padding:8px 11px;border:1px solid var(--accent);border-radius:8px;background:color-mix(in srgb,var(--accent) 16%,var(--panel2));color:var(--text);text-decoration:none;font-size:12px;font-weight:700}\n#tvPane .tv-open-free-library:hover{background:var(--accent);color:#fff}\n/* Navigation des chaînes près des favoris dans la barre inférieure */
 #tvPane .tv-bottom-bar .tv-bottom-channel-nav{display:flex;align-items:center;gap:7px;margin:0 4px;flex:none}
 #tvPane .tv-bottom-bar .tv-bottom-channel-nav button{
  display:inline-flex;flex-direction:row;align-items:center;justify-content:center;
@@ -1038,7 +1038,7 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
           <button id="tvRefreshList" class="tv-refresh" type="button">↻ Actualiser la liste</button>
         </aside>
         <main class="tv-main">
-          <div class="tv-main-heading"><span>▣</span><strong>LECTEUR TV</strong><button id="tvBack" type="button">← Retour</button></div>
+          <div class="tv-main-heading"><span>▣</span><strong>LECTEUR TV</strong><a class="tv-open-free-library" href="tv-direct.html" target="_blank" rel="noopener noreferrer">📡 Chaînes gratuites hors YouTube ↗</a><button id="tvBack" type="button">← Retour</button></div>
           <div class="tv-view">
             <div class="tv-video-wrap">
               <span class="tv-live-badge">EN DIRECT</span>
