@@ -127,7 +127,7 @@ function configurerPont() {
   });
 
   // Téléchargement de vidéos YouTube (voir plus haut)
-  ipcMain.handle('nat:dl-info', async (e) => (sur(e) ? { dossier: dossierDl(), outilsPrets: outilsPrets(), occupe: jobs.size } : null));
+  ipcMain.handle('nat:dl-info', async (e) => (sur(e) ? { dossier: dossierDl(), outilsPrets: outilsPrets(), occupe: jobs.size, indisponible: choixDl().mode === 'indisponible' ? choixDl().message : '' } : null));
   ipcMain.handle('nat:dl-dossier', async (e) => {
     if (!sur(e)) return null;
     const r = await dialog.showOpenDialog(fenetre, { title: 'Dossier des téléchargements', defaultPath: dossierDl(), properties: ['openDirectory', 'createDirectory'] });
@@ -153,9 +153,13 @@ function configurerPont() {
 const SORTIE_DEPOT = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/';
 const SORTIE_FFMPEG = 'https://github.com/yt-dlp/FFmpeg-Builds/releases/latest/download/';
 const dossierOutils = () => path.join(app.getPath('userData'), 'outils');
-const cheminYtdlp = () => path.join(dossierOutils(), 'yt-dlp.exe');
+const choixDl = () => TL.choixOutils(process.arch, os.release());
+const dossierPython = () => path.join(dossierOutils(), 'python');
+// yt-dlp.exe (Windows 10/11) ou yt-dlp.pyz lancé par un Python intégré (Windows 8.1)
+const cheminYtdlp = () => path.join(dossierOutils(), choixDl().mode === 'python' ? 'yt-dlp.pyz' : 'yt-dlp.exe');
+const cheminPython = () => path.join(dossierPython(), 'python.exe');
 const cheminFfmpeg = () => path.join(dossierOutils(), 'ffmpeg.exe');
-const outilsPrets = () => fs.existsSync(cheminYtdlp()) && fs.existsSync(cheminFfmpeg());
+const outilsPrets = () => fs.existsSync(cheminYtdlp()) && fs.existsSync(cheminFfmpeg()) && (choixDl().mode !== 'python' || fs.existsSync(cheminPython()));
 const fichierReglagesDl = () => path.join(app.getPath('userData'), 'telechargements.json');
 function dossierDl() {
   try { const d = JSON.parse(fs.readFileSync(fichierReglagesDl(), 'utf8')).dossier; if (typeof d === 'string' && d) return d; } catch (e) {}
@@ -181,7 +185,7 @@ const supprimerSilencieux = (p) => { try { fs.unlinkSync(p); } catch (e) {} };
 
 // Télécharge yt-dlp (première installation ou mise à jour) ; l'ancien fichier n'est remplacé qu'une fois le nouveau vérifié
 async function installerYtdlp(surProgres) {
-  const nom = TL.choixOutils(process.arch, os.release()).ytdlp, tmp = cheminYtdlp() + '.tmp';
+  const nom = choixDl().ytdlp, tmp = cheminYtdlp() + '.tmp';
   fs.mkdirSync(dossierOutils(), { recursive: true });
   try {
     const sommes = TL.lireSommes(await httpGet(SORTIE_DEPOT + 'SHA2-256SUMS'));
@@ -190,8 +194,22 @@ async function installerYtdlp(surProgres) {
     fs.renameSync(tmp, cheminYtdlp());
   } finally { supprimerSilencieux(tmp); }
 }
+// Windows 8.1 : petit Python intégré (python.org), configuré pour trouver yt-dlp.pyz placé à côté de son dossier
+async function installerPython(surProgres) {
+  const { zip: nom, md5 } = choixDl().python, tmp = path.join(dossierOutils(), nom + '.tmp'), dest = dossierPython();
+  fs.mkdirSync(dossierOutils(), { recursive: true });
+  try {
+    await telechargerFichier('https://www.python.org/ftp/python/3.12.10/' + nom, tmp, surProgres);
+    await TL.verifierMd5(tmp, md5);
+    fs.rmSync(dest, { recursive: true, force: true });
+    await TL.extraireToutDuZip(tmp, dest);
+    const pth = fs.readdirSync(dest).find((f) => /^python\d+\._pth$/i.test(f));
+    if (!pth || !fs.existsSync(cheminPython())) throw new Error('Python intégré incomplet');
+    fs.appendFileSync(path.join(dest, pth), '\r\n..\\yt-dlp.pyz\r\n');
+  } catch (err) { fs.rmSync(dest, { recursive: true, force: true }); throw err; } finally { supprimerSilencieux(tmp); }
+}
 async function installerFfmpeg(surProgres, surExtraction) {
-  const nom = TL.choixOutils(process.arch, os.release()).ffmpegZip, zip = path.join(dossierOutils(), nom + '.tmp');
+  const nom = choixDl().ffmpegZip, zip = path.join(dossierOutils(), nom + '.tmp');
   fs.mkdirSync(dossierOutils(), { recursive: true });
   try {
     const sommes = TL.lireSommes(await httpGet(SORTIE_FFMPEG + 'checksums.sha256'));
@@ -212,6 +230,7 @@ function preparerOutils(emettre) {
     installation = (async () => {
       emettre({ type: 'outils', pct: 0 });
       if (!fs.existsSync(cheminYtdlp())) await installerYtdlp((r, t) => t && emettre({ type: 'outils', pct: Math.round(r / t * 8) }));
+      if (choixDl().mode === 'python' && !fs.existsSync(cheminPython())) await installerPython();
       if (!fs.existsSync(cheminFfmpeg())) await installerFfmpeg((r, t) => t && emettre({ type: 'outils', pct: 8 + Math.round(r / t * 86) }), () => emettre({ type: 'outils', pct: 95 }));
     })().finally(() => { installation = null; });
   }
@@ -242,7 +261,8 @@ function lancerYtdlp(job, id, format, dossier, emettre) {
     const fichierChemin = path.join(app.getPath('temp'), 'lecteurpro-dl-' + job + '.txt');
     supprimerSilencieux(fichierChemin);
     const args = TL.argsYtdlp({ id, format, dossier, ffmpeg: dossierOutils(), fichierChemin });
-    const enfant = spawn(cheminYtdlp(), args, { windowsHide: true, env: { ...process.env, PYTHONIOENCODING: 'utf-8' } });
+    const python = choixDl().mode === 'python';
+    const enfant = spawn(python ? cheminPython() : cheminYtdlp(), python ? ['-c', 'import yt_dlp; yt_dlp.main()', ...args] : args, { windowsHide: true, env: { ...process.env, PYTHONIOENCODING: 'utf-8' } });
     jobs.get(job).enfant = enfant;
     let reste = '', journal = '';
     const lire = (morceau) => {
@@ -264,6 +284,7 @@ function lancerYtdlp(job, id, format, dossier, emettre) {
 
 async function telecharger(job, id, format, emettre) {
   try {
+    if (choixDl().mode === 'indisponible') return emettre({ type: 'erreur', message: choixDl().message });
     await preparerOutils(emettre);
     await majYtdlpSiVieux(false);
     const dossier = dossierDl();

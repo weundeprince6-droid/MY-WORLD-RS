@@ -3576,7 +3576,7 @@ function renderResume() {
  async function dlOuvrir(id, titre) {
    const d = $('ytDlDialog'); dlId = id; dlEtat(''); $('ytDlNom').textContent = titre || ('youtube.com/watch?v=' + id);
    if (dlJob) { dlAffichage('cours'); } else dlAffichage(dlApp() ? 'choix' : 'absent');
-   if (dlApp() && !dlJob) { try { const i = await dlApp().info(); $('ytDlDossier').textContent = i ? '📁 ' + i.dossier : ''; if (i && !i.outilsPrets) dlEtat('Au premier téléchargement, l’application installe ses outils (environ 150 Mo, une seule fois).'); } catch (_) {} }
+   if (dlApp() && !dlJob) { try { const i = await dlApp().info(); $('ytDlDossier').textContent = i ? '📁 ' + i.dossier : ''; if (i && i.indisponible) { $('ytDlForm').hidden = true; $('ytDlGo').hidden = true; dlEtat('⚠ ' + i.indisponible); } else if (i && !i.outilsPrets) dlEtat('Au premier téléchargement, l’application installe ses outils (environ 150 Mo, une seule fois).'); } catch (_) {} }
    if (!d.open) d.showModal();
  }
  function dlSurEvenement(m) {
