@@ -140,3 +140,15 @@ window.addEventListener('message', async (e) => {
     window.postMessage({ source: 'mwrs-drive', action: 'error', message: 'Google Drive n’est pas disponible dans l’application Windows : utilisez le lecteur dans votre navigateur.' }, '*');
   }
 });
+
+// Téléchargement de vidéos YouTube (MP4 / MP3) : la page appelle cette petite interface, le travail est fait par l'application
+const ecouteursDl = new Set();
+ipcRenderer.on('nat:dl-event', (_e, m) => { for (const f of [...ecouteursDl]) { try { f(m); } catch (err) {} } });
+window.mwrsTelechargement = {
+  info: () => inv('nat:dl-info'),
+  changerDossier: () => inv('nat:dl-dossier'),
+  lancer: (id, format) => inv('nat:dl-start', { id, format }),
+  annuler: (job) => inv('nat:dl-cancel', job),
+  afficher: (chemin) => inv('nat:dl-show', chemin),
+  ecouter: (f) => { ecouteursDl.add(f); return () => ecouteursDl.delete(f); }
+};

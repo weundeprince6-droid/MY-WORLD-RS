@@ -1,10 +1,15 @@
 // Lecteur Pro — application de bureau Windows (Electron 22, compatible Windows 7 / 8 / 8.1 / 10 / 11).
 //  • Accès DIRECT aux dossiers de l'ordinateur : ils sont mémorisés d'une ouverture à l'autre, sans confirmation.
 //  • Les directs YouTube (sport, franceinfo, RDC…) sont retrouvés ici, sans connexion Google.
+//  • Téléchargement de vidéos YouTube en MP4 ou MP3 (usage personnel), avec yt-dlp et ffmpeg installés au premier usage.
 const { app, BrowserWindow, session, shell, Menu, ipcMain, dialog, protocol } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const https = require('https');
+const os = require('os');
+const { spawn, execFile } = require('child_process');
+const { pipeline } = require('stream/promises');
+const TL = require('./telechargement.js');
 
 const ORIGINE = 'https://weundeprince6-droid.github.io';
 const URL_EN_LIGNE = ORIGINE + '/MY-WORLD-RS/television.html';
@@ -120,6 +125,161 @@ function configurerPont() {
     if (!sur(e) || !o || typeof o.q !== 'string') return null;
     try { return await ytDirect(o); } catch (err) { return null; }
   });
+
+  // Téléchargement de vidéos YouTube (voir plus haut)
+  ipcMain.handle('nat:dl-info', async (e) => (sur(e) ? { dossier: dossierDl(), outilsPrets: outilsPrets(), occupe: jobs.size } : null));
+  ipcMain.handle('nat:dl-dossier', async (e) => {
+    if (!sur(e)) return null;
+    const r = await dialog.showOpenDialog(fenetre, { title: 'Dossier des téléchargements', defaultPath: dossierDl(), properties: ['openDirectory', 'createDirectory'] });
+    if (r.canceled || !r.filePaths[0]) return null;
+    autoriser(r.filePaths[0]); memoriserDossierDl(r.filePaths[0]); return r.filePaths[0];
+  });
+  ipcMain.handle('nat:dl-start', async (e, o) => {
+    if (!sur(e) || !o) return { erreur: 'refusé' };
+    const id = TL.idVideo(o.id);
+    if (!id || !TL.FORMATS.includes(o.format)) return { erreur: 'Lien ou format invalide.' };
+    if (jobs.size >= 2) return { erreur: 'Deux téléchargements sont déjà en cours : attendez la fin de l’un d’eux.' };
+    const job = ++compteurJobs; jobs.set(job, { enfant: null, annule: false });
+    const envoyer = (m) => { try { if (!e.sender.isDestroyed()) e.sender.send('nat:dl-event', { job, ...m }); } catch (err) {} };
+    telecharger(job, id, o.format, envoyer);
+    return { job };
+  });
+  ipcMain.handle('nat:dl-cancel', async (e, job) => { if (sur(e)) arreter(job); });
+  ipcMain.handle('nat:dl-show', async (e, p) => { if (sur(e) && estAutorise(p) && fs.existsSync(p)) shell.showItemInFolder(p); });
+}
+
+// ---------- Téléchargement de vidéos YouTube (usage personnel) ----------
+// L'installateur reste léger : yt-dlp et ffmpeg sont téléchargés (et vérifiés) au premier usage, dans le profil de l'application.
+const SORTIE_DEPOT = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/';
+const SORTIE_FFMPEG = 'https://github.com/yt-dlp/FFmpeg-Builds/releases/latest/download/';
+const dossierOutils = () => path.join(app.getPath('userData'), 'outils');
+const cheminYtdlp = () => path.join(dossierOutils(), 'yt-dlp.exe');
+const cheminFfmpeg = () => path.join(dossierOutils(), 'ffmpeg.exe');
+const outilsPrets = () => fs.existsSync(cheminYtdlp()) && fs.existsSync(cheminFfmpeg());
+const fichierReglagesDl = () => path.join(app.getPath('userData'), 'telechargements.json');
+function dossierDl() {
+  try { const d = JSON.parse(fs.readFileSync(fichierReglagesDl(), 'utf8')).dossier; if (typeof d === 'string' && d) return d; } catch (e) {}
+  return path.join(app.getPath('downloads'), 'Lecteur Pro');
+}
+function memoriserDossierDl(d) { try { fs.writeFileSync(fichierReglagesDl(), JSON.stringify({ dossier: d })); } catch (e) {} }
+
+function telechargerFichier(url, dest, surProgres, redirections = 6) {
+  return new Promise((resolve, reject) => {
+    const req = https.get(url, { headers: { 'User-Agent': 'LecteurPro' } }, (res) => {
+      if ([301, 302, 303, 307, 308].includes(res.statusCode) && res.headers.location && redirections > 0) {
+        res.resume(); return resolve(telechargerFichier(new URL(res.headers.location, url).toString(), dest, surProgres, redirections - 1));
+      }
+      if (res.statusCode !== 200) { res.resume(); return reject(new Error('HTTP ' + res.statusCode)); }
+      const total = parseInt(res.headers['content-length'], 10) || 0; let recu = 0;
+      res.on('data', (c) => { recu += c.length; if (surProgres) surProgres(recu, total); });
+      pipeline(res, fs.createWriteStream(dest)).then(resolve, reject);
+    });
+    req.on('error', reject); req.setTimeout(30000, () => req.destroy(new Error('délai dépassé')));
+  });
+}
+const supprimerSilencieux = (p) => { try { fs.unlinkSync(p); } catch (e) {} };
+
+// Télécharge yt-dlp (première installation ou mise à jour) ; l'ancien fichier n'est remplacé qu'une fois le nouveau vérifié
+async function installerYtdlp(surProgres) {
+  const nom = TL.choixOutils(process.arch, os.release()).ytdlp, tmp = cheminYtdlp() + '.tmp';
+  fs.mkdirSync(dossierOutils(), { recursive: true });
+  try {
+    const sommes = TL.lireSommes(await httpGet(SORTIE_DEPOT + 'SHA2-256SUMS'));
+    await telechargerFichier(SORTIE_DEPOT + nom, tmp, surProgres);
+    await TL.verifierFichier(tmp, sommes, nom);
+    fs.renameSync(tmp, cheminYtdlp());
+  } finally { supprimerSilencieux(tmp); }
+}
+async function installerFfmpeg(surProgres, surExtraction) {
+  const nom = TL.choixOutils(process.arch, os.release()).ffmpegZip, zip = path.join(dossierOutils(), nom + '.tmp');
+  fs.mkdirSync(dossierOutils(), { recursive: true });
+  try {
+    const sommes = TL.lireSommes(await httpGet(SORTIE_FFMPEG + 'checksums.sha256'));
+    await telechargerFichier(SORTIE_FFMPEG + nom, zip, surProgres);
+    await TL.verifierFichier(zip, sommes, nom);
+    surExtraction();
+    for (const exe of ['ffprobe', 'ffmpeg']) { // ffmpeg en dernier : sa présence signale que tout est prêt
+      const dest = path.join(dossierOutils(), exe + '.exe');
+      await TL.extraireDuZip(zip, new RegExp('/bin/' + exe + '\\.exe$'), dest + '.tmp');
+      fs.renameSync(dest + '.tmp', dest);
+    }
+  } finally { supprimerSilencieux(zip); supprimerSilencieux(path.join(dossierOutils(), 'ffmpeg.exe.tmp')); supprimerSilencieux(path.join(dossierOutils(), 'ffprobe.exe.tmp')); }
+}
+let installation = null;
+function preparerOutils(emettre) {
+  if (outilsPrets()) return Promise.resolve();
+  if (!installation) {
+    installation = (async () => {
+      emettre({ type: 'outils', pct: 0 });
+      if (!fs.existsSync(cheminYtdlp())) await installerYtdlp((r, t) => t && emettre({ type: 'outils', pct: Math.round(r / t * 8) }));
+      if (!fs.existsSync(cheminFfmpeg())) await installerFfmpeg((r, t) => t && emettre({ type: 'outils', pct: 8 + Math.round(r / t * 86) }), () => emettre({ type: 'outils', pct: 95 }));
+    })().finally(() => { installation = null; });
+  }
+  return installation;
+}
+let ytdlpMisAJour = false;
+async function majYtdlpSiVieux(force) {
+  if (ytdlpMisAJour) return;
+  try {
+    if (!force && Date.now() - fs.statSync(cheminYtdlp()).mtimeMs < 7 * 864e5) return;
+    ytdlpMisAJour = true; await installerYtdlp();
+  } catch (e) { /* on garde la version présente */ }
+}
+
+const jobs = new Map(); // identifiant -> { enfant, annule }
+let compteurJobs = 0;
+function arreter(job) {
+  const j = jobs.get(job); if (!j) return;
+  j.annule = true;
+  if (j.enfant && j.enfant.pid) {
+    if (process.platform === 'win32') execFile('taskkill', ['/pid', String(j.enfant.pid), '/T', '/F'], () => {}); // yt-dlp.exe lance un second processus
+    else j.enfant.kill();
+  }
+}
+
+function lancerYtdlp(job, id, format, dossier, emettre) {
+  return new Promise((resolve) => {
+    const fichierChemin = path.join(app.getPath('temp'), 'lecteurpro-dl-' + job + '.txt');
+    supprimerSilencieux(fichierChemin);
+    const args = TL.argsYtdlp({ id, format, dossier, ffmpeg: dossierOutils(), fichierChemin });
+    const enfant = spawn(cheminYtdlp(), args, { windowsHide: true, env: { ...process.env, PYTHONIOENCODING: 'utf-8' } });
+    jobs.get(job).enfant = enfant;
+    let reste = '', journal = '';
+    const lire = (morceau) => {
+      journal = (journal + morceau).slice(-6000);
+      reste += morceau; const lignes = reste.split(/\r?\n|\r/); reste = lignes.pop();
+      for (const l of lignes) { const r = TL.lireLigne(l); if (r) emettre({ type: r.phase ? 'phase' : 'progres', ...r }); }
+    };
+    enfant.stdout.setEncoding('utf8'); enfant.stderr.setEncoding('utf8');
+    enfant.stdout.on('data', lire); enfant.stderr.on('data', (c) => { journal = (journal + c).slice(-6000); });
+    enfant.on('error', (err) => resolve({ code: -1, journal: String(err && err.message) }));
+    enfant.on('close', (code) => {
+      let chemin = '';
+      try { chemin = fs.readFileSync(fichierChemin, 'utf8').split(/\r?\n/).filter(Boolean).pop() || ''; } catch (e) {}
+      supprimerSilencieux(fichierChemin);
+      resolve({ code, journal, chemin });
+    });
+  });
+}
+
+async function telecharger(job, id, format, emettre) {
+  try {
+    await preparerOutils(emettre);
+    await majYtdlpSiVieux(false);
+    const dossier = dossierDl();
+    fs.mkdirSync(dossier, { recursive: true }); autoriser(dossier);
+    emettre({ type: 'progres', pct: 0 });
+    let r = await lancerYtdlp(job, id, format, dossier, emettre);
+    if (r.code !== 0 && !jobs.get(job).annule && !ytdlpMisAJour && TL.peutVenirDuVieuxOutil(r.journal)) {
+      emettre({ type: 'maj' }); await majYtdlpSiVieux(true);
+      r = await lancerYtdlp(job, id, format, dossier, emettre);
+    }
+    if (jobs.get(job).annule) return emettre({ type: 'annule' });
+    if (r.code === 0 && r.chemin && fs.existsSync(r.chemin)) return emettre({ type: 'fini', chemin: r.chemin, nom: path.basename(r.chemin) });
+    emettre({ type: 'erreur', message: TL.messageErreur(r.journal) });
+  } catch (err) {
+    emettre({ type: 'erreur', message: jobs.get(job) && jobs.get(job).annule ? 'Annulé.' : 'Installation des outils impossible : ' + (err && err.message ? err.message : 'erreur inconnue') + '. Vérifiez votre connexion Internet.' });
+  } finally { jobs.delete(job); }
 }
 
 function httpGet(url, essais = 4) {
@@ -195,4 +355,5 @@ app.whenReady().then(() => {
   protocol.registerStreamProtocol('lecteurfile', servirFichier);
   configurerPermissions(); configurerPont(); creerFenetre();
 });
+app.on('before-quit', () => { for (const j of [...jobs.keys()]) arreter(j); });
 app.on('window-all-closed', () => app.quit());
