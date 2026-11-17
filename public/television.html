@@ -642,6 +642,26 @@ body.gold #titleBar{background:#1a1a18!important}
 .yt-card small{font-size:11px;color:var(--muted);padding:0 2px}.yt-card.yt-channel img{width:92px;aspect-ratio:1;border-radius:50%;align-self:center;margin:12px auto 2px}
 .yt-link-form{display:flex;gap:8px;max-width:620px;border-top:1px solid var(--border);padding-top:12px;margin:18px 0 0}
 .yt-link-form input{flex:1;min-width:0;padding:9px 12px;border-radius:20px;border:1px solid var(--border);background:var(--panel2);color:var(--text)}
+.yt-card{position:relative}
+.yt-dl-chip{position:absolute;top:6px;right:6px;z-index:2;display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:rgba(0,0,0,.72);color:#fff;font-size:15px;cursor:pointer;border:1px solid rgba(255,255,255,.25);opacity:.85}
+.yt-dl-chip:hover,.yt-dl-chip:focus-visible{opacity:1;border-color:var(--accent);outline:none}
+#ytDlNow{flex:none;border:1px solid var(--border);background:var(--panel2);color:var(--text);border-radius:999px;padding:4px 12px;font-size:12.5px;cursor:pointer}
+#ytDlNow:hover{border-color:var(--accent)}
+body:not([data-mode="youtube"]) #ytDlNow{display:none}
+#ytDlDialog{max-width:min(460px,92vw);width:100%;border:1px solid var(--border);border-radius:14px;background:var(--panel);color:var(--text);padding:18px}
+#ytDlDialog::backdrop{background:rgba(0,0,0,.6)}
+#ytDlDialog h3{margin:0 0 4px;font-size:16px}
+#ytDlDialog .dl-titre{margin:0 0 12px;font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#ytDlDialog .dl-formats{display:flex;gap:8px;margin-bottom:12px}
+#ytDlDialog .dl-formats label{flex:1;display:flex;flex-direction:column;gap:2px;padding:9px 11px;border:1px solid var(--border);border-radius:10px;background:var(--panel2);cursor:pointer;font-size:14px}
+#ytDlDialog .dl-formats label small{color:var(--muted);font-size:11.5px}
+#ytDlDialog .dl-formats label:has(input:checked){border-color:var(--accent)}
+#ytDlDialog .dl-dossier{display:flex;gap:8px;align-items:center;font-size:12.5px;margin-bottom:10px}
+#ytDlDialog .dl-dossier span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)}
+#ytDlDialog .dl-droits{font-size:11.5px;line-height:1.45;color:var(--muted);margin:0 0 12px}
+#ytDlDialog progress{width:100%;height:10px;margin:4px 0}
+#ytDlDialog .dl-etat{font-size:13px;margin:6px 0;min-height:1.3em}
+#ytDlDialog .dl-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:10px}
 @media(max-width:700px){.yt-topbar{gap:8px;padding:8px}.yt-brand{min-width:0}.yt-brand small{display:none}.yt-top-actions a{display:none}.yt-top-actions button{font-size:11px;padding:6px 8px}.yt-layout{flex-direction:column}.yt-nav{width:100%;flex-direction:row;overflow-x:auto;overflow-y:hidden;border-right:0;border-bottom:1px solid var(--border);padding:6px;gap:5px}.yt-nav button{flex:0 0 auto;gap:6px;padding:8px;font-size:11px}.yt-nav button span{font-size:15px;width:auto}.yt-nav hr,.yt-nav-note{display:none}.yt-main{padding:9px}.yt-results{grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:12px 8px}.yt-card .yt-card-title{font-size:12px}}
 
 /* TV final — plein écran bord à bord, sans colonne vide ni barre du lecteur classique */
@@ -962,6 +982,7 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
           <form id="youtubeForm" class="yt-link-form">
             <input id="youtubeUrl" type="url" required placeholder="Coller un lien YouTube pour le lire…" aria-label="Lien de la vidéo YouTube" />
             <button type="submit">▶ Lire le lien</button>
+            <button type="button" id="youtubeDlLink" title="Télécharger la vidéo de ce lien">⬇ Télécharger</button>
           </form>
         </main>
       </div>
@@ -1099,7 +1120,7 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
       <div id="toast"></div>
       <div id="info"></div>
     </div>
-    <div id="titleBar"><span id="nowPlaying">Aucun média</span><button id="ytRetour" type="button" hidden title="Revenir aux résultats de recherche YouTube">🔍 Recherche YouTube</button><button id="favBtn" type="button" hidden title="Ajouter le fichier lu aux favoris">☆ Ajouter aux favoris</button></div>
+    <div id="titleBar"><span id="nowPlaying">Aucun média</span><button id="ytRetour" type="button" hidden title="Revenir aux résultats de recherche YouTube">🔍 Recherche YouTube</button><button id="ytDlNow" type="button" title="Télécharger cette vidéo YouTube">⬇ Télécharger</button><button id="favBtn" type="button" hidden title="Ajouter le fichier lu aux favoris">☆ Ajouter aux favoris</button></div>
     <div id="controls">
       <div id="seekRow">
         <span class="t" id="curTime">0:00</span>
@@ -1255,6 +1276,30 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
 <input id="folderInput" type="file" webkitdirectory multiple hidden />
 <input id="subInput" type="file" hidden accept=".srt,.vtt,text/vtt" />
 
+<dialog id="ytDlDialog" aria-labelledby="ytDlTitre">
+  <h3 id="ytDlTitre">Télécharger la vidéo</h3>
+  <p class="dl-titre" id="ytDlNom"></p>
+  <div id="ytDlAbsent" hidden>
+    <p class="dl-etat">Le téléchargement fonctionne uniquement dans la dernière version de l’application <strong>Lecteur Pro pour Windows</strong> (installez-la ou mettez-la à jour) : un navigateur n’a pas le droit d’enregistrer les vidéos YouTube.</p>
+    <p class="dl-droits"><a href="https://github.com/weundeprince6-droid/MY-WORLD-RS/releases" target="_blank" rel="noopener noreferrer">Télécharger Lecteur Pro pour Windows ↗</a></p>
+  </div>
+  <div id="ytDlForm">
+    <div class="dl-formats" role="radiogroup" aria-label="Format">
+      <label><span><input type="radio" name="ytDlFormat" value="mp4" checked> Vidéo MP4</span><small>Image et son, jusqu’à 1080p</small></label>
+      <label><span><input type="radio" name="ytDlFormat" value="mp3"> Audio MP3</span><small>Le son seulement, pour la musique</small></label>
+    </div>
+    <div class="dl-dossier"><span id="ytDlDossier"></span><button type="button" id="ytDlChanger">Changer…</button></div>
+    <p class="dl-droits">Pour votre usage personnel uniquement. Respectez les droits d’auteur et les conditions d’utilisation de YouTube : ne téléchargez que ce que vous avez le droit de copier, et ne redistribuez pas les fichiers.</p>
+  </div>
+  <progress id="ytDlBarre" max="100" value="0" hidden></progress>
+  <p class="dl-etat" id="ytDlEtat" role="status" aria-live="polite"></p>
+  <div class="dl-actions">
+    <button type="button" id="ytDlMontrer" hidden>📂 Afficher dans le dossier</button>
+    <button type="button" id="ytDlAnnuler" hidden>Annuler le téléchargement</button>
+    <button type="button" id="ytDlFermer">Fermer</button>
+    <button type="button" id="ytDlGo" style="background:var(--accent);border-color:var(--accent);color:#fff">⬇ Télécharger</button>
+  </div>
+</dialog>
 <script>
 (() => {
 'use strict';
@@ -3377,7 +3422,7 @@ function renderResume() {
  $('ytRetour')?.addEventListener('click', () => { youtubePane.hidden = false; ytMajRetour(); });
  youtubeTab?.addEventListener('click', youtubeShow);
  const ytKeyInput = $('youtubeApiKey'), ytResults = $('youtubeResults');
- let youtubeQueue = [], youtubeQueueIndex = -1;
+ let youtubeQueue = [], youtubeQueueIndex = -1, youtubeCurrentId = '', youtubeCurrentTitle = '';
  const YT_HISTORY_KEY = 'mwrs_youtube_history';
  function youtubeHistoryRead() { try { const a=JSON.parse(localStorage.getItem(YT_HISTORY_KEY)||'[]'); return Array.isArray(a)?a:[]; } catch (_) { return []; } }
  function youtubeRemember(id,title) {
@@ -3401,6 +3446,7 @@ function renderResume() {
  function youtubePlay(id, title='') {
    if (!/^[\w-]{6,20}$/.test(id)) return;
    youtubeQueueIndex = youtubeQueue.findIndex(v => v.id === id);
+   youtubeCurrentId = id; youtubeCurrentTitle = title || '';
    youtubeRemember(id,title);
    youtubeUpdateNav();
    saveProg(); stopAll();
@@ -3451,6 +3497,12 @@ function renderResume() {
      const title = document.createElement('span'); title.className='yt-card-title'; title.textContent = (it.type === 'playlist' ? '🎞 ' : it.type === 'channel' ? '📺 ' : '') + it.title;
      const sub = document.createElement('small'); sub.textContent = it.channel || (it.type === 'playlist' ? 'Playlist' : it.type === 'channel' ? 'Chaîne YouTube' : '');
      card.append(img,title,sub);
+     if (it.type === 'video') {
+       const chip = document.createElement('span'); chip.className = 'yt-dl-chip'; chip.setAttribute('role', 'button'); chip.tabIndex = 0; chip.title = 'Télécharger cette vidéo'; chip.setAttribute('aria-label', 'Télécharger ' + it.title); chip.textContent = '⬇';
+       const ouvrir = (ev) => { ev.stopPropagation(); ev.preventDefault(); dlOuvrir(it.id, it.title); };
+       chip.addEventListener('click', ouvrir); chip.addEventListener('keydown', ev => { if (ev.key === 'Enter' || ev.key === ' ') ouvrir(ev); });
+       card.append(chip);
+     }
      card.addEventListener('click', () => {
        if (it.type === 'video') youtubePlay(it.id, it.title);
        else youtubeEspaceDemander(it.type, { id: it.id, titre: it.title });
@@ -3512,6 +3564,56 @@ function renderResume() {
    if (!/^[\w-]{6,20}$/.test(id)) { $('youtubeStatus').textContent = 'Lien YouTube non reconnu. Collez un lien youtube.com ou youtu.be valide.'; return; }
    youtubePlay(id);
  });
+ // ---- Téléchargement (MP4 / MP3) : uniquement dans l'application Windows « Lecteur Pro » ----
+ const dlApp = () => window.mwrsTelechargement;
+ let dlId = '', dlJob = 0, dlEcoute = null, dlFichier = '', dlDernierPct = 0, dlFlux = 0, dlFluxTotal = 2;
+ const dlEtat = (t) => { $('ytDlEtat').textContent = t; };
+ function dlAffichage(etape) { // 'choix' | 'cours' | 'fini' | 'absent'
+   $('ytDlAbsent').hidden = etape !== 'absent'; $('ytDlForm').hidden = etape !== 'choix';
+   $('ytDlGo').hidden = etape !== 'choix'; $('ytDlAnnuler').hidden = etape !== 'cours';
+   $('ytDlMontrer').hidden = etape !== 'fini'; $('ytDlBarre').hidden = etape !== 'cours';
+ }
+ async function dlOuvrir(id, titre) {
+   const d = $('ytDlDialog'); dlId = id; dlEtat(''); $('ytDlNom').textContent = titre || ('youtube.com/watch?v=' + id);
+   if (dlJob) { dlAffichage('cours'); } else dlAffichage(dlApp() ? 'choix' : 'absent');
+   if (dlApp() && !dlJob) { try { const i = await dlApp().info(); $('ytDlDossier').textContent = i ? '📁 ' + i.dossier : ''; if (i && !i.outilsPrets) dlEtat('Au premier téléchargement, l’application installe ses outils (environ 150 Mo, une seule fois).'); } catch (_) {} }
+   if (!d.open) d.showModal();
+ }
+ function dlSurEvenement(m) {
+   if (m.job !== dlJob) return;
+   if (m.type === 'outils') { $('ytDlBarre').removeAttribute('value'); if (m.pct != null) { $('ytDlBarre').value = m.pct; } dlEtat('Installation des outils de téléchargement… ' + (m.pct != null ? m.pct + ' %' : '') + ' (une seule fois)'); }
+   else if (m.type === 'progres') {
+     if (m.pct < dlDernierPct - 40) dlFlux = Math.min(dlFlux + 1, dlFluxTotal - 1); // la vidéo est finie, le son commence
+     dlDernierPct = m.pct; const g = Math.min(99, Math.round((dlFlux * 100 + m.pct) / dlFluxTotal));
+     $('ytDlBarre').value = g; dlEtat('Téléchargement… ' + g + ' %');
+   }
+   else if (m.type === 'phase') { $('ytDlBarre').value = 99; dlEtat('Finalisation du fichier…'); }
+   else if (m.type === 'maj') dlEtat('Mise à jour de l’outil de téléchargement…');
+   else if (m.type === 'fini') { dlFin(); dlFichier = m.chemin; dlAffichage('fini'); dlEtat('✅ Terminé : ' + m.nom); $('youtubeStatus').textContent = '✅ Vidéo téléchargée : ' + m.nom; }
+   else if (m.type === 'annule') { dlFin(); dlAffichage('choix'); dlEtat('Téléchargement annulé.'); }
+   else if (m.type === 'erreur') { dlFin(); dlAffichage('choix'); dlEtat('⚠ ' + m.message); }
+ }
+ function dlFin() { dlJob = 0; }
+ async function dlLancer() {
+   const format = document.querySelector('input[name="ytDlFormat"]:checked')?.value || 'mp4';
+   dlFichier = ''; dlDernierPct = 0; dlFlux = 0; dlFluxTotal = format === 'mp4' ? 2 : 1;
+   if (!dlEcoute) dlEcoute = dlApp().ecouter(dlSurEvenement);
+   dlAffichage('cours'); $('ytDlBarre').value = 0; dlEtat('Démarrage…');
+   let r; try { r = await dlApp().lancer(dlId, format); } catch (_) { r = { erreur: 'Impossible de démarrer le téléchargement.' }; }
+   if (!r || r.erreur) { dlAffichage('choix'); dlEtat('⚠ ' + ((r && r.erreur) || 'Impossible de démarrer le téléchargement.')); return; }
+   dlJob = r.job;
+ }
+ $('ytDlNow')?.addEventListener('click', () => { if (youtubeCurrentId) dlOuvrir(youtubeCurrentId, youtubeCurrentTitle); });
+ $('youtubeDlLink')?.addEventListener('click', () => {
+   const id = youtubeId($('youtubeUrl').value || '');
+   if (!/^[\w-]{11}$/.test(id)) { $('youtubeStatus').textContent = 'Collez d’abord un lien YouTube valide, puis cliquez sur Télécharger.'; return; }
+   dlOuvrir(id, '');
+ });
+ $('ytDlGo')?.addEventListener('click', dlLancer);
+ $('ytDlChanger')?.addEventListener('click', async () => { try { const d = await dlApp().changerDossier(); if (d) $('ytDlDossier').textContent = '📁 ' + d; } catch (_) {} });
+ $('ytDlAnnuler')?.addEventListener('click', () => { if (dlJob) { dlEtat('Annulation…'); dlApp().annuler(dlJob); } });
+ $('ytDlMontrer')?.addEventListener('click', () => { if (dlFichier) dlApp().afficher(dlFichier); });
+ $('ytDlFermer')?.addEventListener('click', () => $('ytDlDialog').close());
  $('youtubeBack')?.addEventListener('click', () => { youtubeFrame.src = 'about:blank'; youtubeHide(); $('tabs').querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.filter === 'all')); filter = 'all'; renderList(); setMode(current < 0 ? 'empty' : items[current].type); });
  $('youtubeCategories')?.addEventListener('click', e => { const b=e.target.closest('button[data-yt-query]'); if(!b)return; $('youtubeQuery').value=b.dataset.ytQuery; youtubeSearch(b.dataset.ytQuery); });
  function tvDriveShow() {
