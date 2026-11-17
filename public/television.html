@@ -1018,7 +1018,7 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
           <div class="tv-side-title"><span>📺</span><strong>Chaînes TV</strong></div>
           <input id="tvSearch" type="search" placeholder="Rechercher une chaîne..." aria-label="Rechercher une chaîne">
           <div class="tv-side-filters">
-            <select id="tvCategoryFilter" aria-label="Filtrer les chaînes"><option value="all">Toutes les chaînes</option><option value="Francophone">Francophones</option><option value="English">English</option><option value="Sport">Sport</option><option value="Congo">🇨🇩 RDC</option></select>
+            <select id="tvCategoryFilter" aria-label="Filtrer les chaînes"><option value="all">Toutes les chaînes</option><option value="Francophone">Francophones</option><option value="English">English</option><option value="Sport">Sport</option><option value="Congo">🇨🇩 RDC</option><option value="Swahili">🇰🇪 Swahili</option></select>
             <button id="tvFavoritesToggle" type="button" aria-pressed="false">☆ Favoris</button>
           </div>
           <div class="tv-catalog" id="tvStations">
@@ -3112,6 +3112,13 @@ function renderResume() {
     actualitecd: {name:'Actualité.cd', category:'Congo', language:'RDC', url:'', resolveLive:{q:'actualite.cd direct',channelRe:'actualit'}, official:'https://www.youtube.com/results?search_query=actualite.cd+direct&sp=EgJAAQ%253D%253D', note:'Actualité.cd : l’actualité congolaise.'},
     africanewsfr: {name:'Africanews Français', category:'Francophone', language:'Français', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UC25EuGAePOPvPrUA5cmu3dQ&autoplay=1&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@africanewsfr/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
     rfi: {name:'RFI', category:'Francophone', language:'Français', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCm4fSpMpPIZ9z6KHoezLUAg&autoplay=1&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@rfi_fr/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
+    citizentv: {name:'Citizen TV Kenya', category:'Swahili', language:'Kiswahili', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UChBQgieUidXV1CmDxSdRm3g&autoplay=1&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@kenyacitizentv/live', note:'Citizen TV, Kenya : direct officiel en swahili et en anglais.'},
+    ntvkenya: {name:'NTV Kenya', category:'Swahili', language:'Kiswahili', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCqBJ47FjJcl61fmSbcadAVg&autoplay=1&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@ntvkenyaonline/live', note:'NTV, Kenya : direct officiel, informations en swahili et en anglais.'},
+    ktnnews: {name:'KTN News Kenya', category:'Swahili', language:'Kiswahili', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCKVsdeoHExltrWMuK0hOWmg&autoplay=1&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@ktnnews_kenya/live', note:'KTN News, Kenya : chaîne d’information en continu.'},
+    tv47: {name:'TV47 Kenya', category:'Swahili', language:'Kiswahili', url:'', resolveLive:{q:'TV47 Kenya direct',channelRe:'tv47'}, official:'https://www.youtube.com/results?search_query=TV47+Kenya+direct&sp=EgJAAQ%253D%253D', note:'TV47, Kenya : journaux « Habari » en swahili, quand un direct est disponible.'},
+    channelten: {name:'Channel Ten (Tanzanie)', category:'Swahili', language:'Kiswahili', url:'', resolveLive:{q:'Channel Ten Tanzania live',channelRe:'channel ?ten'}, official:'https://www.youtube.com/results?search_query=Channel+Ten+Tanzania+live&sp=EgJAAQ%253D%253D', note:'Channel Ten, Tanzanie : journaux en kiswahili, quand un direct est disponible.'},
+    azamtv: {name:'Azam TV (Tanzanie)', category:'Swahili', language:'Kiswahili', url:'', resolveLive:{q:'Azam TV live',channelRe:'azam'}, official:'https://www.youtube.com/results?search_query=Azam+TV+live&sp=EgJAAQ%253D%253D', note:'Azam TV, Tanzanie : directs, quand un direct est disponible.'},
+    cloudstv: {name:'Clouds TV (Tanzanie)', category:'Swahili', language:'Kiswahili', url:'', resolveLive:{q:'Clouds TV live',channelRe:'clouds'}, official:'https://www.youtube.com/results?search_query=Clouds+TV+live&sp=EgJAAQ%253D%253D', note:'Clouds TV, Tanzanie : directs, quand un direct est disponible.'},
     africanews_en: {name:'Africanews English', category:'English', language:'English', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UC1_E8NeF5QHY2dtdLRBCCLA&autoplay=1&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@africanews/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
     cnbcafrica: {name:'CNBC Africa', category:'English', language:'English', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCsba91UGiQLFOb5DN3Z_AdQ&autoplay=1&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@CNBCAfrica/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
     sportfoot: {name:'Football en direct', category:'Sport', language:'Sport', url:'', resolveLive:{q:'football live',order:'viewCount'}, official:'https://www.youtube.com/results?search_query=football+live&sp=EgJAAQ%253D%253D', note:'Direct de football le plus suivi en ce moment (intégrable).'},
@@ -3281,7 +3288,7 @@ function renderResume() {
   function tvFilterList(){
     const search=($('tvSearch')?.value||'').trim().toLocaleLowerCase();
     const selected=$('tvCategoryFilter')?.value||'all';
-    const categoryOf=station=>station.category==='Francophone'||station.category==='Francophones'?'Francophone':station.category==='Sport'?'Sport':station.category==='Congo'?'Congo':'English';
+    const categoryOf=station=>station.category==='Swahili'?'Swahili':station.category==='Francophone'||station.category==='Francophones'?'Francophone':station.category==='Sport'?'Sport':station.category==='Congo'?'Congo':'English';
     const entries=Object.entries(tvStations).filter(([key,station])=>{
       const category=categoryOf(station);
       const matchesText=!search||(String(station.name||'')+' '+String(station.language||'')).toLocaleLowerCase().includes(search);
@@ -3289,12 +3296,12 @@ function renderResume() {
       const matchesFavorite=!tvOnlyFavorites||tvFavorites.includes(key);
       return matchesText&&matchesCategory&&matchesFavorite;
     });
-    const flags={france24:'🇫🇷',euronews:'🌐',franceinfo:'🇫🇷',rdcdirect:'🇨🇩',rtnc:'🇨🇩',bonetv:'🇨🇩',digitalcongotv:'🇨🇩',tele50:'🇨🇩',antennea:'🇨🇩',topcongotv:'🇨🇩',okapitv:'🇨🇩',actualitecd:'🇨🇩',tv5monde:'🌍',tv5info:'🌍',africanewsfr:'🌍',rfi:'🌍',africanews_en:'🌍',cnbcafrica:'🇿🇦',abcnews:'🇺🇸',redbull:'🏔️',sportfoot:'⚽',sportfr:'🇫🇷',sportbasket:'🏀',sportcombat:'🥊',sportauto:'🏎️',sportafrique:'🌍',olympics:'🏅',daznfoot:'⚽',skysportsnews:'🏆',nba:'🏀'};
+    const flags={france24:'🇫🇷',euronews:'🌐',franceinfo:'🇫🇷',rdcdirect:'🇨🇩',rtnc:'🇨🇩',bonetv:'🇨🇩',digitalcongotv:'🇨🇩',tele50:'🇨🇩',antennea:'🇨🇩',topcongotv:'🇨🇩',okapitv:'🇨🇩',actualitecd:'🇨🇩',tv5monde:'🌍',tv5info:'🌍',africanewsfr:'🌍',rfi:'🌍',africanews_en:'🌍',citizentv:'🇰🇪',ntvkenya:'🇰🇪',ktnnews:'🇰🇪',tv47:'🇰🇪',channelten:'🇹🇿',azamtv:'🇹🇿',cloudstv:'🇹🇿',cnbcafrica:'🇿🇦',abcnews:'🇺🇸',redbull:'🏔️',sportfoot:'⚽',sportfr:'🇫🇷',sportbasket:'🏀',sportcombat:'🥊',sportauto:'🏎️',sportafrique:'🌍',olympics:'🏅',daznfoot:'⚽',skysportsnews:'🏆',nba:'🏀'};
     const list=$('tvStations');
     if(!list)return;
     list.innerHTML=entries.map(([key,station])=>{
-      const category=categoryOf(station),lang=category==='English'?'EN':category==='Sport'?'SPORT':category==='Congo'?'RDC':'FR';
-      return '<div role="button" tabindex="0" class="tv-card'+(key===tvCurrentStationKey?' active':'')+(tvFavorites.includes(key)?' is-favorite':'')+'" data-tv-station="'+key+'"><span class="tv-card-flag">'+(flags[key]||'📺')+'</span><span class="tv-card-copy"><strong>'+station.name+'</strong><small>'+(category==='English'?'News':category==='Sport'?'Sport':category==='Congo'?'RDC':'Informations')+'</small></span><span class="tv-card-tag">'+lang+'</span><button class="tv-fav" type="button" data-tv-favorite="1" aria-label="Favori">'+(tvFavorites.includes(key)?'★':'☆')+'</button></div>';
+      const category=categoryOf(station),lang=category==='English'?'EN':category==='Sport'?'SPORT':category==='Congo'?'RDC':category==='Swahili'?'SW':'FR';
+      return '<div role="button" tabindex="0" class="tv-card'+(key===tvCurrentStationKey?' active':'')+(tvFavorites.includes(key)?' is-favorite':'')+'" data-tv-station="'+key+'"><span class="tv-card-flag">'+(flags[key]||'📺')+'</span><span class="tv-card-copy"><strong>'+station.name+'</strong><small>'+(category==='English'?'News':category==='Sport'?'Sport':category==='Congo'?'RDC':category==='Swahili'?'Kiswahili':'Informations')+'</small></span><span class="tv-card-tag">'+lang+'</span><button class="tv-fav" type="button" data-tv-favorite="1" aria-label="Favori">'+(tvFavorites.includes(key)?'★':'☆')+'</button></div>';
     }).join('');
     list.style.display='flex';
     list.style.visibility='visible';
