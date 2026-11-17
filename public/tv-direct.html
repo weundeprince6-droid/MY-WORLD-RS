@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TV gratuite — MY WORLD RS</title>
+<style>
+:root{color-scheme:dark;--bg:#10151d;--panel:#192331;--panel2:#222f40;--line:#344356;--text:#f3f6fa;--muted:#a8b5c5;--green:#15966b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px 'Segoe UI',Arial,sans-serif}
+header{display:flex;align-items:center;gap:12px;padding:14px 18px;background:#080d13;border-bottom:1px solid var(--line);flex-wrap:wrap}
+header strong{font-size:17px}header small{color:#f2c45b;margin-left:auto}
+main{display:grid;grid-template-columns:minmax(270px,350px) 1fr;min-height:calc(100vh - 58px)}
+aside{padding:14px;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:10px;min-height:0}
+input,select,button{font:inherit;color:var(--text);background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:9px}
+input{width:100%}button{cursor:pointer}button:hover{border-color:var(--green)}button.active{background:var(--green);border-color:var(--green)}
+.filters{display:flex;gap:7px}.filters>*{min-width:0;flex:1}
+#list{overflow:auto;min-height:240px;display:flex;flex-direction:column;gap:5px}
+.station{display:flex;gap:8px;align-items:center;text-align:left;width:100%;background:transparent;border-color:transparent;padding:9px}
+.station span{min-width:0;flex:1}.station small{display:block;color:var(--muted);font-size:11px;margin-top:3px}
+.station.active{background:#174a3b;border-color:var(--green)}
+#status{font-size:12px;line-height:1.5;color:var(--muted);margin:0}
+.player{padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.screen{background:#000;aspect-ratio:16/9;max-height:calc(100vh - 170px);width:100%;display:grid;place-items:center;border-radius:12px;overflow:hidden}
+video{width:100%;height:100%;background:#000;object-fit:contain}
+#now{font-size:17px;font-weight:700}.actions{display:flex;gap:8px;flex-wrap:wrap}.actions a{color:#a8d8c4}
+.note{color:var(--muted);font-size:11px;line-height:1.5}
+@media(max-width:760px){main{grid-template-columns:1fr;grid-template-rows:minmax(280px,42vh) 1fr}aside{border-right:0;border-bottom:1px solid var(--line)}#list{max-height:34vh}.player{padding:10px}.screen{max-height:none}}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.18/dist/hls.min.js"></script>
+</head>
+<body>
+<header><strong>📺 MY WORLD RS · TV GRATUITE</strong><small>Flux directs hors YouTube</small></header>
+<main>
+<aside>
+<input id="search" type="search" placeholder="Rechercher une chaîne…" aria-label="Rechercher une chaîne">
+<div class="filters"><select id="category"><option value="all">Toutes catégories</option><option value="news">Actualités</option><option value="sports">Sport</option><option value="movies">Films</option><option value="series">Séries</option><option value="documentary">Documentaires</option><option value="entertainment">Divertissement</option><option value="culture">Culture</option><option value="education">Éducation</option><option value="kids">Jeunesse</option><option value="music">Musique</option><option value="weather">Météo</option><option value="africa">Afrique</option></select><button id="reload">↻</button></div>
+<div id="status" role="status" aria-live="polite">Chargement des chaînes gratuites…</div>
+<div id="list"></div>
+<p class="note">Catalogue communautaire IPTV-org : les chaînes et leurs flux sont publiquement référencés. La disponibilité, les droits territoriaux et la stabilité dépendent de chaque diffuseur. Les flux YouTube sont automatiquement exclus.</p>
+</aside>
+<section class="player">
+<div id="now">Choisissez une chaîne</div>
+<div class="screen"><video id="video" controls playsinline autoplay></video></div>
+<div class="actions"><button id="stop">■ Arrêter</button><a id="official" href="#" target="_blank" rel="noopener" hidden>Ouvrir la source ↗</a></div>
+<p id="playstatus" class="note">Sélectionnez une chaîne dans la liste. Si un diffuseur bloque la lecture intégrée, le lien source peut rester accessible.</p>
+<p class="note">Le lecteur utilise HLS.js lorsque nécessaire et la lecture HLS native si le navigateur la prend en charge. Une chaîne peut être indisponible dans votre région ou momentanément hors ligne.</p>
+</section>
+</main>
+<script>
+(() => {
+'use strict';
+const SOURCES = {
+ news:'https://iptv-org.github.io/iptv/categories/news.m3u',
+ sports:'https://iptv-org.github.io/iptv/categories/sports.m3u',
+ movies:'https://iptv-org.github.io/iptv/categories/movies.m3u',
+ series:'https://iptv-org.github.io/iptv/categories/series.m3u',
+ documentary:'https://iptv-org.github.io/iptv/categories/documentary.m3u',
+ entertainment:'https://iptv-org.github.io/iptv/categories/entertainment.m3u',
+ culture:'https://iptv-org.github.io/iptv/categories/culture.m3u',
+ education:'https://iptv-org.github.io/iptv/categories/education.m3u',
+ kids:'https://iptv-org.github.io/iptv/categories/kids.m3u',
+ music:'https://iptv-org.github.io/iptv/categories/music.m3u',
+ weather:'https://iptv-org.github.io/iptv/categories/weather.m3u',
+ africa:'https://iptv-org.github.io/iptv/regions/afr.m3u'
+};
+const $=id=>document.getElementById(id), video=$('video');
+let channels=[], hls=null, current=null;
+const clean=s=>(s||'').replace(/[<>]/g,'').trim();
+function parseM3U(text,category){
+ const lines=text.replace(/^\uFEFF/,'').split(/\r?\n/), out=[];
+ for(let i=0;i<lines.length;i++){
+  const line=lines[i].trim();
+  if(!line.startsWith('#EXTINF'))continue;
+  const url=(lines[i+1]||'').trim();
+  if(!/^https:\/\//i.test(url)||/youtube\.com|youtu\.be|youtube-nocookie\.com/i.test(url))continue;
+  const name=clean(line.split(',').slice(1).join(',')||'Chaîne sans nom');
+  const logo=(line.match(/tvg-logo="([^"]*)"/i)||[])[1]||'';
+  const country=(line.match(/tvg-country="([^"]*)"/i)||[])[1]||'';
+  const group=(line.match(/group-title="([^"]*)"/i)||[])[1]||category;
+  const id=url+'|'+name;
+  out.push({id,name,url,logo,country,group,category});
+ }
+ return out;
+}
+async function load(){
+ $('status').textContent='Récupération des playlists…';
+ const selected=$('category').value;
+ const wanted=selected==='all'?Object.keys(SOURCES):[selected];
+ const results=await Promise.allSettled(wanted.map(async key=>{
+  const response=await fetch(SOURCES[key],{cache:'no-store'});
+  if(!response.ok)throw new Error(key+' : HTTP '+response.status);
+  return parseM3U(await response.text(),key);
+ }));
+ const merged=new Map();let failed=0;
+ results.forEach(r=>{if(r.status==='fulfilled')r.value.forEach(c=>{if(!merged.has(c.url))merged.set(c.url,c)});else failed++});
+ channels=[...merged.values()].sort((a,b)=>a.name.localeCompare(b.name));
+ render();
+ $('status').textContent=channels.length+' chaînes non-YouTube chargées'+(failed?' · '+failed+' playlist(s) indisponible(s)':'')+'.';
+ if(!channels.length)$('status').textContent+=' Vérifiez la connexion ou réessayez.';
+}
+function render(){
+ const q=$('search').value.trim().toLocaleLowerCase();
+ const visible=channels.filter(c=>(c.name+' '+c.country+' '+c.group).toLocaleLowerCase().includes(q));
+ const list=$('list');list.textContent='';
+ visible.slice(0,1500).forEach(c=>{
+  const b=document.createElement('button');b.type='button';b.className='station'+(current&&current.id===c.id?' active':'');
+  const label=document.createElement('span');label.textContent=c.name;
+  const meta=document.createElement('small');meta.textContent=[c.country,c.group].filter(Boolean).join(' · ')||c.category;
+  label.appendChild(meta);b.appendChild(label);b.addEventListener('click',()=>play(c));list.appendChild(b);
+ });
+ if(!visible.length){const p=document.createElement('p');p.className='note';p.textContent='Aucune chaîne trouvée.';list.appendChild(p)}
+}
+function stop(){
+ if(hls){hls.destroy();hls=null}
+ video.pause();video.removeAttribute('src');video.load();current=null;
+}
+function play(c){
+ stop();current=c;$('now').textContent=c.name;$('official').href=c.url;$('official').hidden=false;
+ render();$('playstatus').textContent='Connexion au flux…';
+ if(window.Hls&&Hls.isSupported()){
+  hls=new Hls({enableWorker:true,lowLatencyMode:true,maxBufferLength:20});
+  hls.loadSource(c.url);hls.attachMedia(video);
+  hls.on(Hls.Events.MANIFEST_PARSED,()=>video.play().then(()=>$('playstatus').textContent='Lecture en direct.').catch(()=>$('playstatus').textContent='Flux chargé. Appuyez sur Lecture.'));
+  hls.on(Hls.Events.ERROR,(_,data)=>{if(data.fatal){$('playstatus').textContent='Ce flux ne peut pas être lu ici. Essayez « Ouvrir la source » ou une autre chaîne.';hls.destroy();hls=null}});
+ }else if(video.canPlayType('application/vnd.apple.mpegurl')){
+  video.src=c.url;video.play().then(()=>$('playstatus').textContent='Lecture en direct.').catch(()=>$('playstatus').textContent='Flux chargé. Appuyez sur Lecture.');
+ }else{
+  $('playstatus').textContent='Ce navigateur ne prend pas en charge HLS. Essayez une autre chaîne ou ouvrez la source.';
+ }
+}
+$('search').addEventListener('input',render);
+$('category').addEventListener('change',load);
+$('reload').addEventListener('click',load);
+$('stop').addEventListener('click',()=>{stop();$('now').textContent='Lecture arrêtée';$('playstatus').textContent='Choisissez une autre chaîne.';render()});
+video.addEventListener('error',()=>{$('playstatus').textContent='Erreur de lecture du flux. Il peut être hors ligne ou bloqué dans votre région.'});
+load();
+})();
+</script>
+</body></html>
