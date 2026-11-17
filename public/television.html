@@ -1038,7 +1038,7 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
           <button id="tvRefreshList" class="tv-refresh" type="button">↻ Actualiser la liste</button>
         </aside>
         <main class="tv-main">
-          <div class="tv-main-heading"><span>▣</span><strong>LECTEUR TV</strong><a class="tv-open-free-library" href="tv-direct.html" target="_blank" rel="noopener noreferrer">📡 Chaînes gratuites hors YouTube ↗</a><button id="tvBack" type="button">← Retour</button></div>
+          <div class="tv-main-heading"><span>▣</span><strong>LECTEUR TV</strong><button id="tvFreeToggle" type="button">📡 Chaînes gratuites</button><button id="tvBack" type="button">← Retour</button></div>
           <div class="tv-view">
             <div class="tv-video-wrap">
               <span class="tv-live-badge">EN DIRECT</span>
@@ -3088,6 +3088,18 @@ function renderResume() {
  let tvActive = false;
   let tvCurrentStationKey = 'france24';
   const tvPane = $('tvPane'), tvStationFrame = $('tvStationFrame');
+   let tvFreeEmbedded = false;
+   $('tvFreeToggle')?.addEventListener('click', () => {
+     tvFreeEmbedded = true;
+     tvStationFrame.hidden = false;
+     tvStationFrame.src = 'tv-direct.html';
+     tvStationFrame.title = 'Chaînes gratuites intégrées au lecteur TV';
+     $('tvNowTitle').textContent = 'TV · Chaînes gratuites hors YouTube';
+     $('tvNowMeta').textContent = 'Catalogue IPTV-org · Lecture intégrée';
+     $('tvOpenOfficial').hidden = true;
+     $('tvStatus').textContent = 'Choisissez une chaîne dans le catalogue intégré.';
+     $('nowPlaying').textContent = '📺 TV · Chaînes gratuites hors YouTube';
+   });
   // YouTube : demander la qualité 480p par défaut (le lecteur peut l’ajuster selon le flux).
   // YouTube peut toutefois choisir une autre qualité selon le flux et la connexion.
   function tvYoutube480(url) {
@@ -3195,6 +3207,7 @@ function renderResume() {
       tvQuotaPersist();
       tvQuotaSessionStart = 0;
       if (tvStationFrame) tvStationFrame.src = 'about:blank';
+     tvFreeEmbedded = false;
       const status = $('tvStatus');
       if (status) status.textContent = '⛔ Temps de télévision épuisé. Appuyez sur « Renouveler 2 h » pour reprendre.';
       if (label) label.textContent = '⛔ Temps TV épuisé · renouvelez pour continuer';
@@ -3223,6 +3236,7 @@ function renderResume() {
   setInterval(() => { if (tvActive && !tvQuotaBlocked) { tvQuotaRefresh(); if (Date.now() % 5000 < 1000) tvQuotaPersist(); } }, 1000);
   window.addEventListener('pagehide', tvQuotaPersist);
   function tvSelectStation(key) {
+     tvFreeEmbedded = false;
     if (tvQuotaRefresh() <= 0 || tvQuotaBlocked) {
       if (tvStationFrame) tvStationFrame.src = 'about:blank';
       return;
