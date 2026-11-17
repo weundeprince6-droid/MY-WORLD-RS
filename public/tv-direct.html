@@ -116,16 +116,26 @@ function stop(){
 function play(c){
  stop();current=c;$('now').textContent=c.name;$('official').href=c.url;$('official').hidden=false;
  render();$('playstatus').textContent='Connexion au flux…';
+ const sayPlaying=()=>video.play().then(()=>$('playstatus').textContent='Lecture en direct.').catch(e=>$('playstatus').textContent=e&&e.name==='NotAllowedError'?'Flux chargé. Appuyez sur Lecture.':'Le flux est chargé, mais le navigateur refuse de démarrer la lecture.');
+ const directFile=/\.(mp4|webm|ogg)(?:$|[?#])/i.test(c.url);
+ if(directFile){video.src=c.url;video.load();sayPlaying();return}
  if(window.Hls&&Hls.isSupported()){
-  hls=new Hls({enableWorker:true,lowLatencyMode:true,maxBufferLength:20});
+  let recoveredMedia=false,retriedNetwork=false;
+  hls=new Hls({enableWorker:false,lowLatencyMode:false,maxBufferLength:30,manifestLoadingTimeOut:20000,manifestLoadingMaxRetry:2,levelLoadingMaxRetry:2,fragLoadingMaxRetry:3});
+  hls.on(Hls.Events.MEDIA_ATTACHED,()=>$('playstatus').textContent='Lecteur prêt · chargement du direct…');
   hls.loadSource(c.url);hls.attachMedia(video);
-  hls.on(Hls.Events.MANIFEST_PARSED,()=>video.play().then(()=>$('playstatus').textContent='Lecture en direct.').catch(()=>$('playstatus').textContent='Flux chargé. Appuyez sur Lecture.'));
-  hls.on(Hls.Events.ERROR,(_,data)=>{if(data.fatal){$('playstatus').textContent='Ce flux ne peut pas être lu ici. Essayez « Ouvrir la source » ou une autre chaîne.';hls.destroy();hls=null}});
- }else if(video.canPlayType('application/vnd.apple.mpegurl')){
-  video.src=c.url;video.play().then(()=>$('playstatus').textContent='Lecture en direct.').catch(()=>$('playstatus').textContent='Flux chargé. Appuyez sur Lecture.');
- }else{
-  $('playstatus').textContent='Ce navigateur ne prend pas en charge HLS. Essayez une autre chaîne ou ouvrez la source.';
- }
+  hls.on(Hls.Events.MANIFEST_PARSED,()=>sayPlaying());
+  hls.on(Hls.Events.ERROR,(_,data)=>{
+   if(!data.fatal)return;
+   const detail=String(data.details||'').replace(/_/g,' ');
+   if(data.type===Hls.ErrorTypes.MEDIA_ERROR&&!recoveredMedia){recoveredMedia=true;$('playstatus').textContent='Récupération du flux vidéo…';hls.recoverMediaError();return}
+   if(data.type===Hls.ErrorTypes.NETWORK_ERROR&&!retriedNetwork){retriedNetwork=true;$('playstatus').textContent='Nouvelle tentative de connexion…';hls.startLoad();return}
+   const reason=data.type===Hls.ErrorTypes.NETWORK_ERROR?'Le serveur du diffuseur ne répond pas ou refuse l’accès (réseau/CORS).':data.type===Hls.ErrorTypes.MEDIA_ERROR?'Le codec ou le format vidéo de cette chaîne n’est pas compatible avec ce navigateur.':'La playlist HLS est invalide ou inaccessible.';
+   $('playstatus').textContent='Lecture impossible : '+reason+(detail?' Détail : '+detail+'.':'')+' Essayez une autre chaîne.';
+   hls.destroy();hls=null;
+  });
+ }else if(video.canPlayType('application/vnd.apple.mpegurl')){video.src=c.url;video.load();sayPlaying()}
+ else $('playstatus').textContent='Ce navigateur ne prend pas en charge la lecture HLS. Essayez une chaîne MP4 ou un navigateur compatible.';
 }
 $('search').addEventListener('input',render);
 $('category').addEventListener('change',load);
