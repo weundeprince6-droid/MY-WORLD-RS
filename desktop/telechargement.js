@@ -3,6 +3,7 @@
 // dans test/telechargement.test.mjs. main.js s'en sert pour lancer yt-dlp et ffmpeg.
 const crypto = require('crypto');
 const fs = require('fs');
+const path = require('path');
 const zlib = require('zlib');
 const { pipeline } = require('stream/promises');
 
@@ -90,61 +91,104 @@ function sha256Fichier(chemin) {
     fs.createReadStream(chemin).on('data', (c) => h.update(c)).on('error', reject).on('end', () => resolve(h.digest('hex')));
   });
 }
+function hashFichier(chemin, algo) {
+  return new Promise((resolve, reject) => {
+    const h = crypto.createHash(algo);
+    fs.createReadStream(chemin).on('data', (c) => h.update(c)).on('error', reject).on('end', () => resolve(h.digest('hex')));
+  });
+}
+// python.org ne publie que des sommes MD5 : le fichier vient de python.org en HTTPS, la somme sert à détecter un fichier abîmé ou remplacé
+async function verifierMd5(chemin, attendu) {
+  if ((await hashFichier(chemin, 'md5')) !== String(attendu).toLowerCase()) throw new Error('le fichier téléchargé est corrompu');
+}
 async function verifierFichier(chemin, sommes, nom) {
   const attendu = sommes.get(nom);
   if (!attendu) throw new Error('somme de contrôle introuvable pour ' + nom);
   if ((await sha256Fichier(chemin)) !== attendu) throw new Error('le fichier téléchargé est corrompu (' + nom + ')');
 }
 
-// ---------- Extraction d'un seul fichier d'une archive .zip (sans dépendance) ----------
-// Suffisant pour les archives ffmpeg : on lit l'index (répertoire central) puis on décompresse uniquement le fichier voulu.
+// ---------- Extraction depuis une archive .zip (sans dépendance) ----------
+// Suffisant pour les archives de ffmpeg et de Python : on lit l'index (répertoire central), puis on décompresse les fichiers voulus.
+async function lireIndexZip(fh) {
+  const taille = (await fh.stat()).size;
+  const lireOctets = async (pos, n) => { const b = Buffer.alloc(n); const { bytesRead } = await fh.read(b, 0, n, pos); return b.subarray(0, bytesRead); };
+  const queue = await lireOctets(Math.max(0, taille - 65557), Math.min(taille, 65557));
+  const e = queue.lastIndexOf(Buffer.from([0x50, 0x4b, 0x05, 0x06]));
+  if (e < 0) throw new Error('archive illisible');
+  const nb = queue.readUInt16LE(e + 10), tailleIndex = queue.readUInt32LE(e + 12), posIndex = queue.readUInt32LE(e + 16);
+  if (nb === 0xffff || tailleIndex === 0xffffffff || posIndex === 0xffffffff) throw new Error('archive trop grande');
+  const index = await lireOctets(posIndex, tailleIndex);
+  const entrees = []; let p = 0;
+  for (let i = 0; i < nb && p + 46 <= index.length; i++) {
+    if (index.readUInt32LE(p) !== 0x02014b50) throw new Error('archive illisible');
+    const ln = index.readUInt16LE(p + 28), le = index.readUInt16LE(p + 30), lc = index.readUInt16LE(p + 32);
+    entrees.push({
+      methode: index.readUInt16LE(p + 10), comprime: index.readUInt32LE(p + 20), decomprime: index.readUInt32LE(p + 24),
+      debut: index.readUInt32LE(p + 42), nom: index.toString('utf8', p + 46, p + 46 + ln)
+    });
+    p += 46 + ln + le + lc;
+  }
+  return { entrees, lireOctets };
+}
+async function extraireEntree(zip, z, t, destination) {
+  if (t.methode !== 0 && t.methode !== 8) throw new Error('compression non gérée');
+  const local = await z.lireOctets(t.debut, 30);
+  if (local.length < 30 || local.readUInt32LE(0) !== 0x04034b50) throw new Error('archive illisible');
+  const donnees = t.debut + 30 + local.readUInt16LE(26) + local.readUInt16LE(28);
+  const sortie = fs.createWriteStream(destination);
+  if (t.comprime === 0) { sortie.end(); await new Promise((r) => sortie.on('close', r)); }
+  else {
+    const source = fs.createReadStream(zip, { start: donnees, end: donnees + t.comprime - 1 });
+    await pipeline(...(t.methode === 8 ? [source, zlib.createInflateRaw(), sortie] : [source, sortie]));
+  }
+  if ((await fs.promises.stat(destination)).size !== t.decomprime) throw new Error('extraction incomplète');
+}
 async function extraireDuZip(zip, motif, destination) {
   const fh = await fs.promises.open(zip, 'r');
   try {
-    const taille = (await fh.stat()).size;
-    const lireOctets = async (pos, n) => { const b = Buffer.alloc(n); const { bytesRead } = await fh.read(b, 0, n, pos); return b.subarray(0, bytesRead); };
-
-    const queue = await lireOctets(Math.max(0, taille - 65557), Math.min(taille, 65557));
-    let e = queue.lastIndexOf(Buffer.from([0x50, 0x4b, 0x05, 0x06]));
-    if (e < 0) throw new Error('archive illisible');
-    const nb = queue.readUInt16LE(e + 10), tailleIndex = queue.readUInt32LE(e + 12), posIndex = queue.readUInt32LE(e + 16);
-    if (nb === 0xffff || tailleIndex === 0xffffffff || posIndex === 0xffffffff) throw new Error('archive trop grande');
-
-    const index = await lireOctets(posIndex, tailleIndex);
-    let p = 0, trouve = null;
-    for (let i = 0; i < nb && p + 46 <= index.length; i++) {
-      if (index.readUInt32LE(p) !== 0x02014b50) throw new Error('archive illisible');
-      const methode = index.readUInt16LE(p + 10), comprime = index.readUInt32LE(p + 20), decomprime = index.readUInt32LE(p + 24);
-      const ln = index.readUInt16LE(p + 28), le = index.readUInt16LE(p + 30), lc = index.readUInt16LE(p + 32), debut = index.readUInt32LE(p + 42);
-      const nom = index.toString('utf8', p + 46, p + 46 + ln);
-      if (!nom.endsWith('/') && motif.test(nom)) { trouve = { methode, comprime, decomprime, debut, nom }; break; }
-      p += 46 + ln + le + lc;
+    const z = await lireIndexZip(fh);
+    const t = z.entrees.find((x) => !x.nom.endsWith('/') && motif.test(x.nom));
+    if (!t) throw new Error('fichier absent de l’archive');
+    await extraireEntree(zip, z, t, destination);
+    return t.nom;
+  } finally { await fh.close(); }
+}
+// Tout le contenu d'une archive « à plat » (ou avec sous-dossiers) dans un dossier ; refuse les chemins qui sortiraient du dossier
+async function extraireToutDuZip(zip, dossier) {
+  const fh = await fs.promises.open(zip, 'r');
+  try {
+    const z = await lireIndexZip(fh), racine = path.resolve(dossier); let n = 0;
+    for (const t of z.entrees) {
+      const dest = path.resolve(racine, t.nom);
+      if (dest !== racine && !dest.startsWith(racine + path.sep)) throw new Error('archive dangereuse');
+      if (t.nom.endsWith('/')) { await fs.promises.mkdir(dest, { recursive: true }); continue; }
+      await fs.promises.mkdir(path.dirname(dest), { recursive: true });
+      await extraireEntree(zip, z, t, dest); n++;
     }
-    if (!trouve) throw new Error('fichier absent de l’archive');
-    if (trouve.methode !== 0 && trouve.methode !== 8) throw new Error('compression non gérée');
-
-    const local = await lireOctets(trouve.debut, 30);
-    if (local.length < 30 || local.readUInt32LE(0) !== 0x04034b50) throw new Error('archive illisible');
-    const donnees = trouve.debut + 30 + local.readUInt16LE(26) + local.readUInt16LE(28);
-
-    const source = fs.createReadStream(zip, { start: donnees, end: donnees + trouve.comprime - 1 });
-    const sortie = fs.createWriteStream(destination);
-    await pipeline(...(trouve.methode === 8 ? [source, zlib.createInflateRaw(), sortie] : [source, sortie]));
-    if ((await fs.promises.stat(destination)).size !== trouve.decomprime) throw new Error('extraction incomplète');
-    return trouve.nom;
+    return n;
   } finally { await fh.close(); }
 }
 
 // ---------- Quelle version des outils pour quel Windows ----------
-// Windows 7 (noyau 6.1) et les processeurs 32 bits : versions 32 bits de yt-dlp et de ffmpeg.
+// Windows 10 et 11 : yt-dlp.exe officiel (32 ou 64 bits).
+// Windows 8.1 : yt-dlp.exe ne démarre pas (il demande Windows 10) ; on le fait tourner avec un petit Python 3.12 intégré
+//   (Python 3.12 est la dernière version qui accepte Windows 8.1) : même yt-dlp, toujours à jour.
+// Windows 7 et 8 : aucune version récente de Python ni de yt-dlp ne fonctionne ; le téléchargement est indisponible.
+const PYTHON_8_1 = {
+  x64: { zip: 'python-3.12.10-embed-amd64.zip', md5: 'fe8ef205f2e9c3ba44d0cf9954e1abd3' },
+  ia32: { zip: 'python-3.12.10-embed-win32.zip', md5: '93beb9042be23d7b5cd528fa15e8fea7' }
+};
 function choixOutils(arch, releaseOs) {
-  const trenteDeux = arch === 'ia32' || /^6\.1\./.test(String(releaseOs || ''));
-  return trenteDeux
-    ? { ytdlp: 'yt-dlp_x86.exe', ffmpegZip: 'ffmpeg-master-latest-win32-gpl.zip' }
-    : { ytdlp: 'yt-dlp.exe', ffmpegZip: 'ffmpeg-master-latest-win64-gpl.zip' };
+  const m = /^(\d+)\.(\d+)/.exec(String(releaseOs || ''));
+  const version = m ? parseInt(m[1], 10) * 100 + parseInt(m[2], 10) : 1000; // 6.3 → 603 (Windows 8.1), 10.0 → 1000
+  const trenteDeux = arch === 'ia32';
+  const ffmpegZip = trenteDeux ? 'ffmpeg-master-latest-win32-gpl.zip' : 'ffmpeg-master-latest-win64-gpl.zip';
+  if (version >= 1000) return { mode: 'exe', ytdlp: trenteDeux ? 'yt-dlp_x86.exe' : 'yt-dlp.exe', ffmpegZip };
+  if (version >= 603) return { mode: 'python', ytdlp: 'yt-dlp', python: PYTHON_8_1[trenteDeux ? 'ia32' : 'x64'], ffmpegZip };
+  return { mode: 'indisponible', message: 'Le téléchargement demande Windows 8.1, 10 ou 11. Sur cette version de Windows, aucune version récente de l’outil de téléchargement ne fonctionne.' };
 }
 
 module.exports = {
   idVideo, urlVideo, FORMATS, argsYtdlp, lireLigne, messageErreur, peutVenirDuVieuxOutil,
-  lireSommes, sha256Fichier, verifierFichier, extraireDuZip, choixOutils
+  lireSommes, sha256Fichier, verifierFichier, verifierMd5, extraireDuZip, extraireToutDuZip, choixOutils
 };

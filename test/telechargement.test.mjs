@@ -71,9 +71,22 @@ await T.extraireDuZip(path.join(dir, "t.zip"), /LICENSE\.txt$/, path.join(dir, "
 await assert.rejects(T.extraireDuZip(path.join(dir, "t.zip"), /absent/, path.join(dir, "z")), /absent/);
 fs.writeFileSync(path.join(dir, "faux.zip"), "pas une archive"); await assert.rejects(T.extraireDuZip(path.join(dir, "faux.zip"), /x/, path.join(dir, "z")), /illisible/);
 
-// Version des outils
-assert.equal(T.choixOutils("x64", "10.0.19045").ytdlp, "yt-dlp.exe");
+// Tout extraire (Python intégré) + somme MD5 + protection contre les chemins dangereux
+fs.writeFileSync(path.join(dir, "py.zip"), zip([["python.exe", Buffer.from("exe"), 8], ["python312._pth", Buffer.from("python312.zip\r\n.\r\n"), 0], ["sous/lib.pyd", Buffer.from("pyd"), 8]]));
+assert.equal(await T.extraireToutDuZip(path.join(dir, "py.zip"), path.join(dir, "py")), 3);
+assert.equal(fs.readFileSync(path.join(dir, "py", "sous", "lib.pyd"), "utf8"), "pyd"); assert.equal(fs.readFileSync(path.join(dir, "py", "python312._pth"), "utf8"), "python312.zip\r\n.\r\n");
+fs.writeFileSync(path.join(dir, "mal.zip"), zip([["../evade.txt", Buffer.from("x"), 0]]));
+await assert.rejects(T.extraireToutDuZip(path.join(dir, "mal.zip"), path.join(dir, "py2")), /dangereuse/); assert.ok(!fs.existsSync(path.join(dir, "evade.txt")));
+const md5 = (await import("node:crypto")).createHash("md5").update("bonjour").digest("hex");
+await T.verifierMd5(f, md5); await assert.rejects(T.verifierMd5(f, "0".repeat(32)), /corrompu/);
+
+// Version des outils selon Windows : 11/10 → exe officiel ; 8.1 → Python intégré ; 7 et 8 → indisponible
+assert.deepEqual([T.choixOutils("x64", "10.0.22631").mode, T.choixOutils("x64", "10.0.22631").ytdlp], ["exe", "yt-dlp.exe"]);
 assert.equal(T.choixOutils("ia32", "10.0.19045").ytdlp, "yt-dlp_x86.exe");
-assert.equal(T.choixOutils("x64", "6.1.7601").ffmpegZip, "ffmpeg-master-latest-win32-gpl.zip");
+const w81 = T.choixOutils("x64", "6.3.9600");
+assert.equal(w81.mode, "python"); assert.equal(w81.ytdlp, "yt-dlp"); assert.equal(w81.python.zip, "python-3.12.10-embed-amd64.zip"); assert.equal(w81.ffmpegZip, "ffmpeg-master-latest-win64-gpl.zip");
+assert.equal(T.choixOutils("ia32", "6.3.9600").python.zip, "python-3.12.10-embed-win32.zip");
+assert.equal(T.choixOutils("x64", "6.2.9200").mode, "indisponible"); assert.equal(T.choixOutils("x64", "6.1.7601").mode, "indisponible");
+assert.ok(T.choixOutils("x64", "6.1.7601").message.includes("8.1"));
 fs.rmSync(dir, { recursive: true });
 console.log("telechargement : OK");
