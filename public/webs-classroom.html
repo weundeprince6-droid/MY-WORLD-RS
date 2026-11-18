@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>WEBS- Class room</title>
+<title>WEBSERVICES ACADEMY · Espace pédagogique</title>
 <style>
 :root{--bg:#0b1220;--carte:#131c2e;--carte2:#1a2540;--bord:#27344f;--txt:#e8ecf4;--doux:#9aa7c0;--or:#f5b942;--ok:#3ecf8e;--mal:#ff6b6b;--bleu:#5aa2ff}
 *{box-sizing:border-box}
@@ -84,6 +84,46 @@ dialog::backdrop{background:#000a}
 .pied-brevet{font:8px Arial,sans-serif;letter-spacing:1.5px;color:#9aa4b1;margin-top:20px}
 @media print{@page{size:A4 landscape;margin:0}html,body{background:#fff!important;margin:0!important;padding:0!important}body>*:not(#zone-brevet){display:none!important}#zone-brevet{position:static!important;background:#fff!important;padding:0!important;overflow:visible!important}.ecran-brevet .barre{display:none!important}.brevet{width:297mm;height:210mm;min-height:210mm;margin:0;border-radius:0;box-shadow:none;break-inside:avoid;print-color-adjust:exact;-webkit-print-color-adjust:exact}.brevet-aside{padding:8mm 15mm 5mm}.brevet-main{padding:7mm 18mm 7mm}.photo-candidat,.photo-vide{width:30mm;height:35mm}.details-formation>div{min-height:13mm}}
 @media(max-width:760px){.pose{grid-template-columns:1fr}nav{flex-direction:row;overflow:auto;border-right:0;border-bottom:1px solid var(--bord)}nav button{white-space:nowrap}main{padding:14px}}
+
+/* --- Finition professionnelle WEBSERVICES ACADEMY --- */
+:root{--bg:#0a1020;--carte:#111b2d;--carte2:#192741;--bord:#2b3b58;--txt:#edf2fb;--doux:#a8b5ca;--or:#e8b85b;--ok:#48c995;--mal:#ff7777;--bleu:#65aaff}
+body{background:radial-gradient(ellipse at 12% -10%,#1a3152 0,transparent 38%),var(--bg);letter-spacing:.01em}
+.haut{min-height:72px;padding:12px clamp(14px,2.5vw,32px);background:rgba(7,14,27,.96);box-shadow:0 8px 28px #0002;backdrop-filter:blur(12px)}
+.logo{width:44px;height:44px;border-radius:13px;background:linear-gradient(145deg,#f3d18a,#d99a34);box-shadow:0 5px 16px #e8b85b30;font-size:15px}
+.haut h1{font-size:16px;letter-spacing:.075em;font-weight:800}.haut small{display:block;margin-top:4px;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.moi{font-size:12px;line-height:1.55}.moi b{font-size:13px;color:#fff}
+.pose{grid-template-columns:248px minmax(0,1fr);min-height:calc(100vh - 72px)}
+nav{padding:22px 13px;background:rgba(8,16,30,.58);border-right:1px solid #263651;gap:6px}
+nav:before{content:"ESPACE DE TRAVAIL";display:block;padding:0 12px 10px;color:#7486a3;font-size:10px;font-weight:800;letter-spacing:.16em}
+nav button{position:relative;min-height:43px;padding:10px 13px;border:1px solid transparent;border-radius:11px;font-size:13px;transition:background .18s,border-color .18s,transform .18s}
+nav button span{width:22px;text-align:center;font-size:16px}
+nav button:hover{background:#17243a;border-color:#2a3b58;transform:translateX(2px)}
+nav button.actif{background:linear-gradient(100deg,#213654,#17263d);border-color:#3b5578;color:#f4c96f;box-shadow:inset 3px 0 #e8b85b}
+main{max-width:1440px;padding:clamp(18px,3vw,38px);margin:0 auto}
+h2{font-size:clamp(22px,2.1vw,29px);letter-spacing:-.025em;font-weight:750}
+.sous{max-width:760px;color:#aab8cd;font-size:13px;margin:4px 0 22px}
+.carte{position:relative;background:linear-gradient(145deg,rgba(21,33,54,.98),rgba(16,26,44,.98));border:1px solid #2b3d5b;border-radius:16px;padding:19px;margin-bottom:16px;box-shadow:0 10px 28px #00000018}
+.carte h3{font-size:15px;letter-spacing:.01em}.meta{color:#a5b3c9}
+.btn{min-height:38px;border-color:#344866;background:#1a2942;font-size:13px;font-weight:650;transition:transform .16s,border-color .16s,filter .16s}
+.btn:hover{border-color:var(--or);filter:brightness(1.08);transform:translateY(-1px)}
+.btn.pri{background:linear-gradient(135deg,#f1cd83,#dca13d);color:#211805;border-color:#e8b85b;box-shadow:0 5px 15px #e8b85b22}
+.btn:disabled{opacity:.55;cursor:wait;transform:none}
+input,select,textarea{min-height:42px;background:#0c1628;border-color:#30415e}
+input::placeholder,textarea::placeholder{color:#71819b}
+input:focus,select:focus,textarea:focus{outline:2px solid #e8b85b;outline-offset:1px;border-color:#e8b85b}
+table{font-size:13px}th{font-size:10px;letter-spacing:.09em;color:#aab8cd}td{padding:11px 10px}
+.vide{border:1px dashed #354763;border-radius:12px;background:#111c2e80}
+.puce{font-weight:650;letter-spacing:.015em}
+.brevet-wizard{border-radius:18px;background:linear-gradient(145deg,#131f34,#101a2c);border-color:#344763;box-shadow:0 16px 40px #0003}
+.brevet-tab{background:#0d1728;font-size:12px}.brevet-tab.active{box-shadow:inset 0 -2px var(--bleu)}
+.brevet-champs label{font-size:12px;letter-spacing:.015em}
+.brevet-navigation{position:sticky;bottom:0;background:#111b2df2;padding:13px 0 2px;z-index:2}
+:focus-visible{outline:2px solid #f0c66f;outline-offset:3px}
+@media(max-width:900px){.pose{grid-template-columns:1fr}nav{position:sticky;top:72px;z-index:4;flex-direction:row;overflow-x:auto;overflow-y:hidden;border-right:0;border-bottom:1px solid var(--bord);padding:9px 12px;scrollbar-width:thin}nav:before{display:none}nav button{flex:0 0 auto;min-height:39px;padding:8px 11px}nav button:hover{transform:none}main{padding:20px 16px}}
+@media(max-width:600px){.haut{gap:9px;padding:10px 12px}.logo{width:38px;height:38px}.haut h1{font-size:12px;letter-spacing:.04em}.haut small{font-size:9px}.moi{max-width:105px;font-size:10px}.moi b{font-size:11px}.haut>.btn{padding:6px 8px;font-size:11px}.pose{min-height:calc(100vh - 62px)}nav{top:62px}nav button{font-size:11px;padding:7px 9px}main{padding:17px 12px}.carte{padding:15px;border-radius:13px}.brevet-tabs{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.brevet-tab{min-height:48px;padding:8px;font-size:11px}.brevet-champs{grid-template-columns:1fr}.brevet-champs .champ-photo{grid-column:auto}.ecran-brevet{padding:8px}.ecran-brevet .barre{flex-wrap:wrap;justify-content:flex-start}.barre-titre{flex:1 0 100%;margin-bottom:4px}.brevet{min-height:0}.brevet-aside{grid-template-columns:55px 1fr 82px;padding:22px 14px 14px;gap:6px 9px}.monogramme{width:48px;height:48px;font-size:17px}.aside-label{font-size:9px;letter-spacing:1px}.aside-label b{font-size:15px;letter-spacing:2px}.photo-candidat,.photo-vide{width:70px;height:86px}.aside-num{font-size:8px;letter-spacing:1px}.aside-num b{font-size:10px;margin-left:3px}.brevet-main{padding:22px 17px}.brevet-main h1{font-size:21px}.nom-candidat{font-size:20px;padding:0 8px 6px}.details-formation{grid-template-columns:1fr}.details-formation>div:first-child{grid-column:auto}.signatures{gap:18px}.signature-bloc span{font-size:8px}.signature-bloc b{font-size:11px}}
+@media(max-width:380px){.moi{display:none}.brevet-navigation{gap:6px}.brevet-navigation .btn{padding:7px 9px;font-size:11px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+
 </style>
 </head>
 <body>
@@ -119,7 +159,7 @@ function h(tag, props, ...kids) {
   for (const c of kids.flat()) if (c != null && c !== false) e.append(c.nodeType ? c : document.createTextNode(String(c)));
   return e;
 }
-const aujourdhui = () => new Date().toISOString().slice(0, 10);
+const aujourdhui = () => { const d = new Date(); const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000); return local.toISOString().slice(0, 10); };
 const fmtDate = (d) => { if (!d) return ""; const x = new Date(String(d).length <= 10 ? d + "T12:00:00" : d); return isNaN(x) ? String(d) : x.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" }); };
 const nombre = (v) => Number(String(v).replace(",", "."));
 const norm = (s) => String(s || "").trim().toLowerCase();
@@ -240,7 +280,7 @@ function vueApp() {
   const nav = h("nav", {}, sectionsPour().map((s) => h("button", { class: s.id === vueCourante ? "actif" : "", onclick: () => { vueCourante = s.id; vueApp(); } }, h("span", {}, s.ico), s.nom)));
   const main = h("main", {}, h("p", { class: "vide" }, "Chargement…"));
   $app.replaceChildren(
-    h("header", { class: "haut" }, h("span", { class: "logo" }, "WS"), h("div", {}, h("h1", {}, "WEBS- Class room"), h("small", { class: "meta" }, "Centre de formation WEBSERVICES")), h("span", { class: "espace" }),
+    h("header", { class: "haut" }, h("span", { class: "logo" }, "WS"), h("div", {}, h("h1", {}, "WEBSERVICES ACADEMY"), h("small", { class: "meta" }, "Espace pédagogique · Formation & suivi")), h("span", { class: "espace" }),
       h("div", { class: "moi" }, h("b", {}, moi.nom), h("span", { class: "meta" }, ROLES[moi.role] + (moi.classe ? " · " + moi.classe : ""))),
       h("button", { class: "btn petit", onclick: () => signOut(auth) }, "Déconnexion")),
     h("div", { class: "pose" }, nav, main));
