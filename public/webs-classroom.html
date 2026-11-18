@@ -259,9 +259,96 @@ function vueConnexion(erreur) {
     aide("Votre compte est créé par le secrétariat ou la direction. Pas encore de compte ? Demandez-le à l'école.")));
 }
 
+// --- Dossier global de suivi des élèves (direction)
+async function sSuiviEleves(m) {
+  const el = await eleves(true);
+  const choix = h("select", { style: "min-width:260px" },
+    h("option", { value: "" }, "— Sélectionner un élève —"),
+    ...el.map((u) => h("option", { value: u.id }, (u.nom || "Élève") + (u.classe ? " · " + u.classe : ""))));
+  const zone = h("div", {});
+  async function charger() {
+    zone.replaceChildren();
+    if (!choix.value) return;
+    const u = el.find((x) => x.id === choix.value);
+    const [pres, notes, rendus, quiz, compta, parcours] = await Promise.all([
+      lister("ecole_presences", where("uid", "==", u.id)),
+      lister("ecole_notes", where("uid", "==", u.id)),
+      lister("ecole_rendus", where("uid", "==", u.id)),
+      lister("ecole_resultats", where("uid", "==", u.id)),
+      lister("ecole_compta", where("uid", "==", u.id)),
+      lister("ecole_parcours", where("uid", "==", u.id))
+    ]);
+    const totalPres = pres.length;
+    const presents = pres.filter((x) => x.statut === "Présent").length;
+    const absents = pres.filter((x) => x.statut === "Absent").length;
+    const retards = pres.filter((x) => x.statut === "Retard").length;
+    const assiduite = totalPres ? Math.round((presents / totalPres) * 100) : null;
+    const valeurs = [
+      ...notes.map((x) => [nombre(x.note), nombre(x.sur) || 20]),
+      ...rendus.filter((x) => x.note !== undefined && x.note !== "").map((x) => [nombre(x.note), nombre(x.sur) || 20]),
+      ...quiz.map((x) => [nombre(x.score), nombre(x.sur) || 20])
+    ].filter(([n, sur]) => Number.isFinite(n) && sur > 0);
+    const moyenne = valeurs.length ? valeurs.reduce((a, [n, sur]) => a + n / sur * 20, 0) / valeurs.length : null;
+    const soldes = {};
+    compta.forEach((x) => { const dv = (x.devise || "USD").toUpperCase(); soldes[dv] = (soldes[dv] || 0) + (x.type === "paiement" ? -1 : 1) * nombre(x.montant); });
+    const carteStat = (label, valeur, detail) => h("div", { class: "carte", style: "flex:1 1 155px;min-width:145px;margin:0" },
+      h("div", { class: "meta" }, label), h("div", { style: "font-size:25px;font-weight:800;margin:5px 0" }, valeur), h("div", { class: "meta" }, detail || ""));
+    const profil = u.profil || {};
+    const identite = h("div", { class: "carte" },
+      h("div", { class: "ligne" }, h("h3", {}, "Identité et parcours"), h("span", { class: "espace" }), h("span", { class: "puce ok" }, u.actif === false ? "Compte désactivé" : "Compte actif")),
+      h("p", {}, h("b", {}, [profil.prenom, profil.postnom, profil.nom].filter(Boolean).join(" ") || u.nom)),
+      h("p", { class: "meta" }, [u.classe || profil.filiere, profil.niveau, profil.telephone, profil.email || u.email].filter(Boolean).join(" · ")),
+      h("p", { class: "meta" }, [profil.naissance && "Né(e) le " + fmtDate(profil.naissance), profil.lieuNaissance, profil.adresse].filter(Boolean).join(" · ")));
+    const formulaireParcours = formulaire([
+      { n: "intitule", label: "Étape / activité", req: true },
+      { n: "periode", label: "Période (ex. novembre 2026)" },
+      { n: "statut", label: "État", type: "select", options: [["En cours","En cours"],["Validé","Validé"],["À renforcer","À renforcer"]], req: true },
+      { n: "observation", label: "Observation / objectif", type: "textarea", large: true }
+    ], async (d) => {
+      await addDoc(collection(db, "ecole_parcours"), { uid: u.id, nom: u.nom, classe: u.classe || "", ...d, date: aujourdhui(), par: moi.nom });
+      await charger();
+    }, "Ajouter au parcours");
+    const parcoursTable = parcours.length ? h("table", {},
+      h("tr", {}, h("th", {}, "Étape"), h("th", {}, "Période"), h("th", {}, "État"), h("th", {}, "Observation"), h("th", {}, "Date"), h("th", {})),
+      ...tri(parcours, (x) => x.date || "", true).map((x) => h("tr", {},
+        h("td", {}, x.intitule), h("td", {}, x.periode), h("td", {}, h("span", { class: "puce " + (x.statut === "Validé" ? "ok" : x.statut === "À renforcer" ? "mal" : "or") }, x.statut)),
+        h("td", {}, x.observation), h("td", {}, fmtDate(x.date)), h("td", {}, suppr("ecole_parcours", x, charger))))) : h("p", { class: "vide" }, "Aucune étape de parcours enregistrée.");
+    const historiqueFin = compta.length ? h("table", {},
+      h("tr", {}, h("th", {}, "Date"), h("th", {}, "Libellé"), h("th", {}, "Opération"), h("th", {}, "Montant")),
+      ...tri(compta, (x) => x.date || "", true).map((x) => h("tr", {},
+        h("td", {}, fmtDate(x.date)), h("td", {}, x.libelle), h("td", {}, x.type === "paiement" ? "Paiement reçu" : "Frais dus"),
+        h("td", {}, nombre(x.montant).toFixed(2) + " " + (x.devise || "USD"))))) : h("p", { class: "vide" }, "Aucune opération financière.");
+    const historiqueNotes = valeurs.length ? h("table", {},
+      h("tr", {}, h("th", {}, "Évaluation"), h("th", {}, "Note"), h("th", {}, "Date")),
+      ...[
+        ...notes.map((x) => ({ nom: x.matiere || "Note", note: x.note, sur: x.sur || 20, date: x.date })),
+        ...rendus.filter((x) => x.note !== undefined && x.note !== "").map((x) => ({ nom: "Devoir", note: x.note, sur: x.sur || 20, date: x.date })),
+        ...quiz.map((x) => ({ nom: x.titre || "Quiz", note: x.score, sur: x.sur || 20, date: x.date }))
+      ].map((x) => h("tr", {}, h("td", {}, x.nom), h("td", {}, nombre(x.note) + "/" + nombre(x.sur)), h("td", {}, fmtDate(x.date))))) : h("p", { class: "vide" }, "Aucun résultat scolaire enregistré.");
+    zone.replaceChildren(
+      identite,
+      h("div", { class: "ligne", style: "align-items:stretch;flex-wrap:wrap" },
+        carteStat("ASSIDUITÉ", assiduite === null ? "—" : assiduite + "%", presents + " présents · " + absents + " absences · " + retards + " retards"),
+        carteStat("MOYENNE GÉNÉRALE", moyenne === null ? "—" : moyenne.toFixed(2) + "/20", valeurs.length + " résultat(s) pris en compte"),
+        ...Object.entries(soldes).map(([dv, v]) => carteStat("SOLDE " + dv, Math.abs(v).toFixed(2) + " " + dv, v > 0 ? "Reste à payer" : v < 0 ? "Crédit élève" : "Soldé"))
+      ),
+      h("div", { class: "carte" }, h("h3", {}, "Parcours de formation"), aide("Consignez les étapes, objectifs, validations et observations propres à cet élève."), formulaireParcours, parcoursTable),
+      h("div", { class: "carte" }, h("h3", {}, "Résultats scolaires"), historiqueNotes),
+      h("div", { class: "carte" }, h("h3", {}, "Présences et assiduité"),
+        h("p", { class: "meta" }, presents + " présent(s) · " + absents + " absent(s) · " + retards + " retard(s) · " + totalPres + " séance(s) enregistrée(s)"),
+        pres.length ? h("table", {}, h("tr", {}, h("th", {}, "Date"), h("th", {}, "Statut")), ...tri(pres, (x) => x.date || "", true).map((x) => h("tr", {}, h("td", {}, fmtDate(x.date)), h("td", {}, x.statut)))) : h("p", { class: "vide" }, "Aucun appel enregistré.")),
+      h("div", { class: "carte" }, h("h3", {}, "Situation financière"), historiqueFin)
+    );
+  }
+  choix.addEventListener("change", charger);
+  monter(m, ...titre("Suivi complet des élèves", "Une vue individuelle du parcours, de l’assiduité, des résultats et de la situation financière."),
+    h("div", { class: "carte ligne" }, h("label", {}, "Choisir un élève", choix)), zone);
+}
+
 // ---------- sections ----------
 const SECTIONS = [
   { id: "accueil", nom: "Accueil", ico: "⌂", roles: null, rendu: sAccueil },
+  { id: "suivi", nom: "Suivi des élèves", ico: "📊", roles: ["direction"], rendu: sSuiviEleves },
   { id: "annonces", nom: "Annonces", ico: "📣", roles: null, rendu: sAnnonces },
   { id: "planning", nom: "Planning", ico: "🗓", roles: null, rendu: sPlanning },
   { id: "cours", nom: "Cours & documents", ico: "📚", roles: null, rendu: sCours },
