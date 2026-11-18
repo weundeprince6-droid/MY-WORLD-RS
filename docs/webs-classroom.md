@@ -33,3 +33,11 @@ avec cet email ; « Mot de passe oublié » lui envoie un lien de réinitialisat
   (notes, rendus, frais, présences) mais pas le cloisonnement entre classes pour les cours et annonces.
 - Les fichiers ne sont pas hébergés : on colle des liens (Drive, YouTube, GitHub…).
 - Désactiver un compte bloque l'accès ; la suppression définitive se fait dans Authentication.
+
+## Formulaire d'inscription en ligne
+Lien à envoyer : `https://weundeprince6-droid.github.io/MY-WORLD-RS/public/webs-inscription.html`
+(bouton « Copier le lien » dans la section « Inscriptions »). Les demandes arrivent dans
+« Inscriptions » (direction et secrétariat) : ouvrir une fiche, puis « Accepter et créer le compte » ou « Refuser ».
+Les filières proposées se modifient dans la liste `FILIERES` en haut du script de `webs-inscription.html`.
+Les règles Firestore (bloc `ecole_inscriptions`) doivent être republiées : elles autorisent n'importe qui à envoyer
+une demande (champs limités en taille), mais seuls la direction et le secrétariat peuvent la lire.

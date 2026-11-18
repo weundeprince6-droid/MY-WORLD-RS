@@ -176,6 +176,7 @@ const SECTIONS = [
   { id: "notes", nom: "Notes", ico: "🎓", roles: ["eleve", "enseignant", "direction"], rendu: sNotes },
   { id: "presences", nom: "Présences", ico: "✅", roles: ["eleve", "enseignant", "secretaire", "direction"], rendu: sPresences },
   { id: "compta", nom: "Frais & comptabilité", ico: "💰", roles: ["eleve", "comptable", "direction"], rendu: sCompta },
+  { id: "inscriptions", nom: "Inscriptions", ico: "📋", roles: ["secretaire", "direction"], rendu: sInscriptions },
   { id: "utilisateurs", nom: "Élèves & personnel", ico: "👥", roles: ["secretaire", "direction"], rendu: sUtilisateurs },
 ];
 const sectionsPour = () => SECTIONS.filter((s) => !s.roles || s.roles.includes(moi.role));
@@ -408,6 +409,52 @@ async function sCompta(m) {
     l.length ? h("div", { class: "carte" }, h("h3", {}, "Historique"), h("table", {}, h("tr", {}, h("th", {}, "Date"), !eleve && h("th", {}, "Élève"), h("th", {}, "Libellé"), h("th", {}, "Montant"), peutEcrire && h("th", {})), tri(l, (x) => x.date || "", true).map((x) => h("tr", {}, h("td", {}, fmtDate(x.date)), !eleve && h("td", {}, x.nom), h("td", {}, x.libelle), h("td", {}, h("span", { class: "puce " + (x.type === "paiement" ? "ok" : "or") }, (x.type === "paiement" ? "− " : "+ ") + nombre(x.montant).toFixed(2) + " " + (x.devise || "USD"))), peutEcrire && h("td", {}, suppr("ecole_compta", x, rafraichir)))))) : h("p", { class: "vide" }, "Aucune écriture."));
 }
 
+
+// Création d'un compte : seconde instance d'authentification, pour ne pas déconnecter la personne qui crée.
+async function creerCompte(d) {
+  const app2 = initializeApp(firebaseConfig, "creation-" + Date.now()), a2 = getAuth(app2);
+  const cred = await createUserWithEmailAndPassword(a2, d.email, d.mdp); await signOut(a2);
+  await setDoc(doc(db, "ecole_users", cred.user.uid), { nom: d.nom, email: d.email.toLowerCase(), role: d.role, classe: d.role === "eleve" ? d.classe : "", actif: true, cree: new Date().toISOString(), creePar: moi.nom });
+  cacheEleves = null;
+}
+
+
+// --- Inscriptions reçues par le formulaire en ligne
+const LIEN_INSCRIPTION = () => new URL("webs-inscription.html", location.href).href;
+async function sInscriptions(m) {
+  const liste = tri(await lister("ecole_inscriptions"), (x) => x.date || "", true);
+  const lien = LIEN_INSCRIPTION();
+  const copier = h("button", { class: "btn petit", type: "button", onclick: async () => { try { await navigator.clipboard.writeText(lien); copier.textContent = "Lien copié ✓"; } catch { prompt("Copiez ce lien :", lien); } } }, "Copier le lien");
+  const couleur = { nouvelle: "or", acceptée: "ok", refusée: "mal" };
+  monter(m, ...titre("Inscriptions", "Demandes reçues par le formulaire en ligne."),
+    h("div", { class: "carte" }, h("h3", {}, "Lien du formulaire à envoyer"), h("p", { class: "meta", style: "word-break:break-all" }, lien), h("div", { class: "ligne" }, copier, h("a", { class: "btn petit", href: lien, target: "_blank", rel: "noopener noreferrer", style: "text-decoration:none" }, "Ouvrir le formulaire ↗"))),
+    liste.length ? h("div", { class: "carte" }, h("table", {}, h("tr", {}, h("th", {}, "Candidat"), h("th", {}, "Filière"), h("th", {}, "Contact"), h("th", {}, "Reçue"), h("th", {}, "Statut"), h("th", {})),
+      liste.map((x) => h("tr", {}, h("td", {}, [x.nom, x.postnom, x.prenom].filter(Boolean).join(" ")), h("td", {}, x.filiere), h("td", {}, x.telephone, x.email && h("div", { class: "meta" }, x.email)), h("td", {}, fmtDate(x.date)), h("td", {}, h("span", { class: "puce " + (couleur[x.statut] || "") }, x.statut)), h("td", {}, h("button", { class: "btn petit", onclick: () => ficheInscription(x) }, "Ouvrir")))))) : h("p", { class: "vide" }, "Aucune inscription reçue pour le moment."));
+}
+function ficheInscription(x) {
+  const ligne = (l, v) => v ? h("tr", {}, h("th", { style: "width:42%" }, l), h("td", {}, v)) : null;
+  const maj = async (statut) => { await setDoc(doc(db, "ecole_inscriptions", x.id), { ...sans(x), statut }); fermer(); rafraichir(); };
+  const nomComplet = [x.prenom, x.postnom, x.nom].filter(Boolean).join(" ");
+  const msg = h("div", { class: "erreur", role: "alert" });
+  modal("Inscription : " + nomComplet,
+    h("table", {}, ligne("Sexe", x.sexe), ligne("Naissance", x.naissance && fmtDate(x.naissance) + (x.lieuNaissance ? " à " + x.lieuNaissance : "")), ligne("Nationalité", x.nationalite), ligne("Téléphone", x.telephone), ligne("Email", x.email), ligne("Adresse", x.adresse), ligne("Filière", x.filiere), ligne("Niveau", x.niveau), ligne("École précédente", x.ecolePrecedente), ligne("Parent / tuteur", [x.tuteur, x.telTuteur].filter(Boolean).join(" · ")), ligne("Message", x.message), ligne("Reçue le", fmtDate(x.date)), ligne("Statut", x.statut)),
+    msg,
+    h("div", { class: "ligne", style: "margin-top:14px" },
+      x.statut !== "acceptée" && h("button", { class: "btn pri", onclick: () => accepter(x, nomComplet) }, "Accepter et créer le compte"),
+      x.statut === "nouvelle" && h("button", { class: "btn mal", onclick: () => maj("refusée").catch((e) => { msg.textContent = erreurTexte(e); }) }, "Refuser"),
+      x.statut === "acceptée" && h("span", { class: "meta" }, "Compte déjà créé."),
+      h("span", { class: "espace" }),
+      suppr("ecole_inscriptions", x, () => { fermer(); rafraichir(); })));
+}
+function accepter(x, nomComplet) {
+  modal("Créer le compte de " + nomComplet,
+    aide("Un compte élève est créé avec l'email ci-dessous. Donnez-lui ensuite le mot de passe provisoire."),
+    formulaire([
+      { n: "nom", label: "Nom complet", req: true, val: nomComplet }, { n: "email", label: "Email du compte", type: "email", req: true, val: x.email || "" },
+      { n: "classe", label: "Classe / filière", req: true, val: x.filiere || "" }, { n: "mdp", label: "Mot de passe provisoire (6+ car.)", req: true }],
+      async (d) => { await creerCompte({ ...d, role: "eleve" }); await setDoc(doc(db, "ecole_inscriptions", x.id), { ...sans(x), statut: "acceptée" }); fermer(); rafraichir(); }, "Créer le compte et accepter"));
+}
+
 // --- Élèves & personnel
 async function sUtilisateurs(m) {
   const tous = tri(await lister("ecole_users"), (u) => norm(u.nom));
@@ -417,13 +464,7 @@ async function sUtilisateurs(m) {
     h("div", { class: "carte" }, h("h3", {}, "Créer un compte"), listeClasses("dl-cl6", cl), formulaire([
       { n: "nom", label: "Nom complet", req: true }, { n: "email", label: "Email", type: "email", req: true }, { n: "role", label: "Rôle", type: "select", options: rolesCreables, req: true },
       { n: "classe", label: "Classe / filière (élèves)", liste: "dl-cl6", ph: "ex. Informatique 1" }, { n: "mdp", label: "Mot de passe provisoire (6+ car.)", type: "text", req: true }],
-      async (d, f) => {
-        // Seconde instance d'authentification : créer le compte sans déconnecter la personne qui crée.
-        const app2 = initializeApp(firebaseConfig, "creation-" + Date.now()), a2 = getAuth(app2);
-        const cred = await createUserWithEmailAndPassword(a2, d.email, d.mdp); await signOut(a2);
-        await setDoc(doc(db, "ecole_users", cred.user.uid), { nom: d.nom, email: d.email.toLowerCase(), role: d.role, classe: d.role === "eleve" ? d.classe : "", actif: true, cree: new Date().toISOString(), creePar: moi.nom });
-        cacheEleves = null; f.reset(); rafraichir();
-      }, "Créer le compte")),
+      async (d, f) => { await creerCompte(d); f.reset(); rafraichir();       }, "Créer le compte")),
     h("div", { class: "carte" }, h("table", {}, h("tr", {}, h("th", {}, "Nom"), h("th", {}, "Email"), h("th", {}, "Rôle"), h("th", {}, "Classe"), h("th", {}, "")), tous.map((u) => h("tr", {}, h("td", {}, u.nom), h("td", {}, u.email), h("td", {}, h("span", { class: "puce" }, ROLES[u.role] || u.role)), h("td", {}, u.classe || ""), h("td", {}, (peut("direction") || u.role === "eleve") && h("button", { class: "btn petit" + (u.actif === false ? "" : " mal"), onclick: async () => { await setDoc(doc(db, "ecole_users", u.id), { ...sans(u), actif: u.actif === false }); cacheEleves = null; rafraichir(); } }, u.actif === false ? "Réactiver" : "Désactiver")))))),
     aide("Désactiver un compte bloque l'accès à la classe. Pour supprimer définitivement un compte de connexion, utilisez la console Firebase (Authentication)."));
 }

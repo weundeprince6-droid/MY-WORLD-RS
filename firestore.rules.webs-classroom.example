@@ -99,3 +99,22 @@
                   || (ecoleEst(["eleve"]) && resource.data.uid == request.auth.uid);
       allow write: if ecoleEst(["direction", "comptable"]);
     }
+
+    // Inscriptions : n'importe qui peut ENVOYER une demande (formulaire public), seul le secrétariat la LIT.
+    function inscrTxt(d, k, max) { return !(k in d) || (d[k] is string && d[k].size() <= max); }
+    match /ecole_inscriptions/{id} {
+      allow create: if request.resource.data.keys().hasOnly(["nom", "postnom", "prenom", "sexe", "naissance", "lieuNaissance", "nationalite", "adresse", "telephone", "email", "filiere", "niveau", "ecolePrecedente", "tuteur", "telTuteur", "message", "consentement", "statut", "date"])
+                    && request.resource.data.keys().hasAll(["nom", "prenom", "sexe", "naissance", "telephone", "filiere", "consentement", "statut", "date"])
+                    && request.resource.data.statut == "nouvelle"
+                    && request.resource.data.consentement == true
+                    && request.resource.data.nom is string && request.resource.data.nom.size() > 0
+                    && request.resource.data.prenom is string && request.resource.data.prenom.size() > 0
+                    && request.resource.data.telephone is string && request.resource.data.telephone.size() > 0
+                    && inscrTxt(request.resource.data, "nom", 80) && inscrTxt(request.resource.data, "postnom", 80) && inscrTxt(request.resource.data, "prenom", 80)
+                    && inscrTxt(request.resource.data, "sexe", 20) && inscrTxt(request.resource.data, "naissance", 12) && inscrTxt(request.resource.data, "lieuNaissance", 80)
+                    && inscrTxt(request.resource.data, "nationalite", 60) && inscrTxt(request.resource.data, "adresse", 160) && inscrTxt(request.resource.data, "telephone", 30)
+                    && inscrTxt(request.resource.data, "email", 100) && inscrTxt(request.resource.data, "filiere", 80) && inscrTxt(request.resource.data, "niveau", 80)
+                    && inscrTxt(request.resource.data, "ecolePrecedente", 120) && inscrTxt(request.resource.data, "tuteur", 100) && inscrTxt(request.resource.data, "telTuteur", 30)
+                    && inscrTxt(request.resource.data, "message", 800) && inscrTxt(request.resource.data, "date", 40);
+      allow read, update, delete: if ecoleEst(["direction", "secretaire"]);
+    }
