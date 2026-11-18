@@ -38,8 +38,8 @@ avec cet email ; « Mot de passe oublié » lui envoie un lien de réinitialisat
 Lien à envoyer : `https://weundeprince6-droid.github.io/MY-WORLD-RS/public/webs-inscription.html`
 (bouton « Copier le lien » dans la section « Inscriptions »). Les demandes arrivent dans
 « Inscriptions » (direction et secrétariat) : ouvrir une fiche, puis « Accepter et créer le compte » ou « Refuser ».
-Les filières proposées se modifient dans la liste `FILIERES` en haut du script de `webs-inscription.html`.
-Les règles Firestore (bloc `ecole_inscriptions`) doivent être republiées : elles autorisent n'importe qui à envoyer
+Le formulaire recueille aussi la profession/activité et une personne à prévenir en cas d’urgence. À l’acceptation, ces renseignements sont conservés dans le profil indépendant de WEBSERVICES ACADEMY (`ecole_users/{uid}.profil`) et consultables dans « Élèves & personnel » → « Consulter ». Les filières proposées se modifient dans la liste `FILIERES` en haut du script de `webs-inscription.html`.
+Les règles Firestore (bloc `ecole_inscriptions`) doivent être republiées après l’ajout de ces champs : elles autorisent n'importe qui à envoyer
 une demande (champs limités en taille), mais seuls la direction et le secrétariat peuvent la lire.
 
 ## Brevets du Centre
