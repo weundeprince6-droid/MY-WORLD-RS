@@ -118,3 +118,10 @@
                     && inscrTxt(request.resource.data, "message", 800) && inscrTxt(request.resource.data, "date", 40);
       allow read, update, delete: if ecoleEst(["direction", "secretaire"]);
     }
+
+    // Brevets du Centre : délivrés par la direction ; l'élève ne voit que les siens.
+    match /ecole_brevets/{id} {
+      allow read: if ecoleEst(["direction", "secretaire"])
+                  || (ecoleEst(["eleve"]) && resource.data.uid == request.auth.uid);
+      allow write: if ecoleEst(["direction"]);
+    }
