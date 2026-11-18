@@ -153,6 +153,61 @@ input:focus,select:focus,textarea:focus{outline-color:#35c987;border-color:#35c9
 .brevet-navigation{background:#101a19f2}
 @media(max-width:900px){nav{border-bottom-color:#29453c}}
 
+
+
+/* Thèmes dynamiques : système / clair / sombre */
+:root{
+  color-scheme:dark;
+  --bg:#080d12;--carte:#101a19;--carte2:#172925;--bord:#29453c;
+  --txt:#edf7f1;--doux:#a5b9ae;--or:#35c987;--ok:#35c987;
+  --mal:#ff7777;--bleu:#4d9fff;--fond:#0b1712;
+  --entete:#07130e;--nav:#08150f;--surface-alt:#14251e;
+  --carte-debut:#12221b;--carte-fin:#0d1915;--champ:#0b1712;
+}
+:root[data-theme="light"]{
+  color-scheme:light;
+  --bg:#f2f7f4;--carte:#ffffff;--carte2:#e5f3eb;--bord:#c9ded1;
+  --txt:#172820;--doux:#5e7468;--or:#138653;--ok:#138653;
+  --mal:#c83d4d;--bleu:#176fc1;--fond:#f7fbf8;
+  --entete:#ffffff;--nav:#edf5f0;--surface-alt:#e4f1e9;
+  --carte-debut:#ffffff;--carte-fin:#f5faf7;--champ:#ffffff;
+}
+@media(prefers-color-scheme:light){
+  :root:not([data-theme="dark"]):not([data-theme="light"]){
+    color-scheme:light;
+    --bg:#f2f7f4;--carte:#ffffff;--carte2:#e5f3eb;--bord:#c9ded1;
+    --txt:#172820;--doux:#5e7468;--or:#138653;--ok:#138653;
+    --mal:#c83d4d;--bleu:#176fc1;--fond:#f7fbf8;
+    --entete:#ffffff;--nav:#edf5f0;--surface-alt:#e4f1e9;
+    --carte-debut:#ffffff;--carte-fin:#f5faf7;--champ:#ffffff;
+  }
+}
+body{background:radial-gradient(ellipse at 12% -10%,color-mix(in srgb,var(--ok) 13%,transparent) 0,transparent 40%),var(--bg);color:var(--txt)}
+.haut{background:var(--entete);border-bottom-color:var(--bord)}
+.haut .meta,.moi .meta{color:var(--doux)}
+.moi b{color:var(--txt)}
+nav{background:var(--nav);border-color:var(--bord)}
+nav button{color:var(--doux)}
+nav button:hover{background:var(--surface-alt);border-color:var(--bord)}
+nav button.actif{background:var(--carte2);border-color:var(--ok);color:var(--ok);box-shadow:inset 3px 0 var(--ok)}
+.carte,.brevet-wizard{background:linear-gradient(145deg,var(--carte-debut),var(--carte-fin));border-color:var(--bord);color:var(--txt)}
+.meta,.sous,.vide,th{color:var(--doux)}
+.btn{background:var(--carte2);border-color:var(--bord);color:var(--txt)}
+.btn:hover{border-color:var(--ok)}
+.btn.pri{background:linear-gradient(135deg,color-mix(in srgb,var(--ok) 75%,white),var(--ok));color:#062016;border-color:var(--ok)}
+input,select,textarea,.brevet-champs input,.brevet-champs select{background:var(--champ);border-color:var(--bord);color:var(--txt)}
+input::placeholder,textarea::placeholder{color:var(--doux)}
+input:focus,select:focus,textarea:focus,:focus-visible{outline-color:var(--ok);border-color:var(--ok)}
+th,td{border-bottom-color:var(--bord)}
+.puce{border-color:var(--bord);color:var(--doux)}
+.brevet-tab{background:var(--champ);border-color:var(--bord);color:var(--txt)}
+.brevet-tab.active{border-color:var(--bleu);background:color-mix(in srgb,var(--bleu) 10%,var(--carte))}
+.brevet-navigation{background:color-mix(in srgb,var(--carte) 94%,transparent)}
+.theme-toggle{white-space:nowrap;font-weight:750;border-color:var(--ok);color:var(--ok);min-width:94px}
+.ecran-brevet{background:color-mix(in srgb,var(--bg) 94%,transparent)}
+/* Le diplôme imprimé conserve volontairement son papier blanc et ses couleurs officielles. */
+@media(max-width:600px){.theme-toggle{min-width:0;padding:6px 8px;font-size:10px}}
+
 </style>
 </head>
 <body>
@@ -176,6 +231,21 @@ const db = getFirestore(app);
 // ---------- petits outils ----------
 const $app = document.getElementById("app");
 const dlg = document.getElementById("dlg");
+
+// Thèmes indépendants de MY WORLD RS : système, clair et sombre.
+const THEME_KEY = "webservices-academy-theme";
+const THEMES = ["system", "light", "dark"];
+let academyTheme = (() => { try { const v = localStorage.getItem(THEME_KEY); return THEMES.includes(v) ? v : "system"; } catch { return "system"; } })();
+function applyTheme() { document.documentElement.dataset.theme = academyTheme; }
+function themeLabel() { return academyTheme === "system" ? "◐ Système" : academyTheme === "light" ? "☀ Clair" : "☾ Sombre"; }
+function cycleTheme() {
+  academyTheme = THEMES[(THEMES.indexOf(academyTheme) + 1) % THEMES.length];
+  try { localStorage.setItem(THEME_KEY, academyTheme); } catch {}
+  applyTheme();
+  const b = document.querySelector(".theme-toggle");
+  if (b) { b.textContent = themeLabel(); b.title = "Changer de thème"; }
+}
+applyTheme();
 function h(tag, props, ...kids) {
   const e = document.createElement(tag);
   for (const [k, v] of Object.entries(props || {})) {
@@ -395,8 +465,10 @@ const sectionsPour = () => SECTIONS.filter((s) => !s.roles || s.roles.includes(m
 function vueApp() {
   const nav = h("nav", {}, sectionsPour().map((s) => h("button", { class: s.id === vueCourante ? "actif" : "", onclick: () => { vueCourante = s.id; vueApp(); } }, h("span", {}, s.ico), s.nom)));
   const main = h("main", {}, h("p", { class: "vide" }, "Chargement…"));
+  const themeBtn = h("button", { class: "btn petit theme-toggle", type: "button", title: "Changer de thème", onclick: cycleTheme }, themeLabel());
   $app.replaceChildren(
     h("header", { class: "haut" }, h("span", { class: "logo" }, "WS"), h("div", {}, h("h1", {}, "WEBSERVICES ACADEMY"), h("small", { class: "meta" }, "Espace pédagogique · Formation & suivi")), h("span", { class: "espace" }),
+      themeBtn,
       h("div", { class: "moi" }, h("b", {}, moi.nom), h("span", { class: "meta" }, ROLES[moi.role] + (moi.classe ? " · " + moi.classe : ""))),
       h("button", { class: "btn petit", onclick: () => signOut(auth) }, "Déconnexion")),
     h("div", { class: "pose" }, nav, main));
