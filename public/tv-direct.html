@@ -128,17 +128,41 @@ function stop(){
  if(hls){hls.destroy();hls=null}
  video.pause();video.removeAttribute('src');video.load();current=null;
 }
-function play(c){
- stop();current=c;$('now').textContent=c.name;$('official').href=c.url;$('official').hidden=false;
+let playToken=0,fallback=null;
+function play(c,idx){
+ idx=idx||0;const urls=c.urls||[c.url];const cible=urls[idx]||c.url;
+ stop();current=c;$('now').textContent=c.name;$('official').href=cible;$('official').hidden=false;
  render();$('playstatus').textContent='Connexion au flux…';
- const sayPlaying=()=>video.play().then(()=>$('playstatus').textContent='Lecture en direct.').catch(e=>$('playstatus').textContent=e&&e.name==='NotAllowedError'?'Flux chargé. Appuyez sur Lecture.':'Le flux est chargé, mais le navigateur refuse de démarrer la lecture.');
- const directFile=/\.(mp4|webm|ogg)(?:$|[?#])/i.test(c.url);
- if(directFile){video.src=c.url;video.load();sayPlaying();return}
+ const token=++playToken;
+ const sayPlaying=()=>{
+  if(token!==playToken)return;
+  const st=$('playstatus');
+  const essai=(n)=>video.play().then(()=>{if(token===playToken)st.textContent=video.muted?'Lecture en direct (sans le son : activez le volume).':'Lecture en direct.'}).catch(e=>{
+   if(token!==playToken)return;
+   const nom=e&&e.name;
+   if(nom==='NotAllowedError'&&!video.muted){video.muted=true;essai(n);return}
+   if(nom==='NotAllowedError'){st.textContent='Flux chargé. Appuyez sur Lecture.';return}
+   if(nom==='AbortError'&&n<4){setTimeout(()=>{if(token===playToken)essai(n+1)},400*(n+1));return}
+   if(nom==='NotSupportedError'){st.textContent='Ce navigateur ne sait pas lire le format vidéo de cette chaîne. Essayez-en une autre.';return}
+   st.textContent='Flux chargé. Appuyez sur Lecture si la vidéo ne démarre pas.';
+  });
+  essai(0);
+ };
+ const suivant=()=>{
+  if(token!==playToken||idx+1>=urls.length)return false;
+  $('playstatus').textContent='Source '+(idx+2)+'/'+urls.length+'…';
+  play(c,idx+1);return true;
+ };
+ fallback=suivant;
+ if(urls.length>1)setTimeout(()=>{if(token===playToken&&video.readyState<3)suivant()},20000);
+ const directFile=/\.(mp4|webm|ogg)(?:$|[?#])/i.test(cible);
+ if(directFile){video.src=cible;video.load();sayPlaying();return}
  if(window.Hls&&Hls.isSupported()){
   let recoveredMedia=false,retriedNetwork=false;
   hls=new Hls({enableWorker:false,lowLatencyMode:false,maxBufferLength:30,manifestLoadingTimeOut:20000,manifestLoadingMaxRetry:2,levelLoadingMaxRetry:2,fragLoadingMaxRetry:3});
+  video.addEventListener('canplay',()=>{if(current&&video.paused&&!video.ended&&/Connexion|Lecteur prêt|Appuyez|sans/.test($('playstatus').textContent)&&!video.dataset.manual)sayPlaying()},{once:true});
   hls.on(Hls.Events.MEDIA_ATTACHED,()=>$('playstatus').textContent='Lecteur prêt · chargement du direct…');
-  hls.loadSource(c.url);hls.attachMedia(video);
+  hls.loadSource(cible);hls.attachMedia(video);
   hls.on(Hls.Events.MANIFEST_PARSED,()=>{
    if(hls&&hls.levels&&hls.levels.length>1){const i=niveauMax(hls.levels);hls.autoLevelCapping=i;hls.startLevel=i}
    sayPlaying();
@@ -148,11 +172,12 @@ function play(c){
    const detail=String(data.details||'').replace(/_/g,' ');
    if(data.type===Hls.ErrorTypes.MEDIA_ERROR&&!recoveredMedia){recoveredMedia=true;$('playstatus').textContent='Récupération du flux vidéo…';hls.recoverMediaError();return}
    if(data.type===Hls.ErrorTypes.NETWORK_ERROR&&!retriedNetwork){retriedNetwork=true;$('playstatus').textContent='Nouvelle tentative de connexion…';hls.startLoad();return}
+   if(suivant())return;
    const reason=data.type===Hls.ErrorTypes.NETWORK_ERROR?'Le serveur du diffuseur ne répond pas ou refuse l’accès (réseau/CORS).':data.type===Hls.ErrorTypes.MEDIA_ERROR?'Le codec ou le format vidéo de cette chaîne n’est pas compatible avec ce navigateur.':'La playlist HLS est invalide ou inaccessible.';
    $('playstatus').textContent='Lecture impossible : '+reason+(detail?' Détail : '+detail+'.':'')+' Essayez une autre chaîne.';
    hls.destroy();hls=null;
   });
- }else if(video.canPlayType('application/vnd.apple.mpegurl')){video.src=c.url;video.load();sayPlaying()}
+ }else if(video.canPlayType('application/vnd.apple.mpegurl')){video.src=cible;video.load();sayPlaying()}
  else $('playstatus').textContent='Ce navigateur ne prend pas en charge la lecture HLS. Essayez une chaîne MP4 ou un navigateur compatible.';
 }
 const params=new URLSearchParams(location.search);
@@ -160,9 +185,9 @@ $('search').addEventListener('input',render);
 $('category').addEventListener('change',load);
 $('reload').addEventListener('click',load);
 $('stop').addEventListener('click',()=>{stop();$('now').textContent='Lecture arrêtée';$('playstatus').textContent='Choisissez une autre chaîne.';render()});
-video.addEventListener('error',()=>{$('playstatus').textContent='Erreur de lecture du flux. Il peut être hors ligne ou bloqué dans votre région.'});
+video.addEventListener('error',()=>{if(fallback&&fallback())return;$('playstatus').textContent='Erreur de lecture du flux. Il peut être hors ligne ou bloqué dans votre région.'});
 const solo=params.get('p')==='1'&&/^https:\/\//i.test(params.get('u')||'');
-if(solo){document.body.classList.add('solo');const u=params.get('u');play({id:u,name:clean(params.get('n')||'Chaîne'),url:u,logo:'',country:'',group:'',category:''})}
+if(solo){document.body.classList.add('solo');const u=params.get('u');const us=params.getAll('u').filter(x=>/^https:\/\//i.test(x)).slice(0,6);play({id:u,name:clean(params.get('n')||'Chaîne'),url:u,urls:us,logo:'',country:'',group:'',category:''})}
 else load();
 })();
 </script>
