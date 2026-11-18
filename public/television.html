@@ -1018,7 +1018,7 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
           <div class="tv-side-title"><span>📺</span><strong>Chaînes TV</strong></div>
           <input id="tvSearch" type="search" placeholder="Rechercher une chaîne..." aria-label="Rechercher une chaîne">
           <div class="tv-side-filters">
-            <select id="tvCategoryFilter" aria-label="Filtrer les chaînes"><option value="all">Toutes les chaînes</option><option value="Francophone">Francophones</option><option value="English">English</option><option value="Sport">Sport</option><option value="Congo">🇨🇩 RDC</option><option value="Swahili">🇰🇪 Swahili</option></select>
+            <select id="tvCategoryFilter" aria-label="Filtrer les chaînes"><option value="all">Toutes les chaînes</option><option value="Francophone">Francophones</option><option value="English">English</option><option value="Sport">Sport</option><option value="Congo">🇨🇩 RDC</option><option value="Swahili">🇰🇪 Swahili</option><option value="Actualités">Actualités</option><option value="Films & séries">Films &amp; séries</option><option value="Divertissement">Divertissement</option><option value="Documentaires & culture">Documentaires &amp; culture</option><option value="Enfants">Enfants</option><option value="Musique">Musique</option><option value="Météo">Météo</option><option value="Afrique">Afrique</option></select>
             <button id="tvFavoritesToggle" type="button" aria-pressed="false">☆ Favoris</button>
           </div>
           <div class="tv-catalog" id="tvStations">
@@ -1035,10 +1035,11 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
               <div role="button" tabindex="0" class="tv-card" data-tv-station="abcnews"><span class="tv-card-flag">🇺🇸</span><span class="tv-card-copy"><strong>ABC News Live</strong><small>Informations</small></span><span class="tv-card-tag">EN</span><button class="tv-fav" type="button" data-tv-favorite="1" aria-label="Ajouter aux favoris">☆</button></div>
             </div></section>
           </div>
+          <p id="tvFreeInfo" class="tv-help" role="status"></p>
           <button id="tvRefreshList" class="tv-refresh" type="button">↻ Actualiser la liste</button>
         </aside>
         <main class="tv-main">
-          <div class="tv-main-heading"><span>▣</span><strong>LECTEUR TV</strong><button id="tvFreeToggle" type="button">📡 Chaînes gratuites</button><button id="tvBack" type="button">← Retour</button></div>
+          <div class="tv-main-heading"><span>▣</span><strong>LECTEUR TV</strong><button id="tvBack" type="button">← Retour</button></div>
           <div class="tv-view">
             <div class="tv-video-wrap">
               <span class="tv-live-badge">EN DIRECT</span>
@@ -3089,17 +3090,6 @@ function renderResume() {
   let tvCurrentStationKey = 'france24';
   const tvPane = $('tvPane'), tvStationFrame = $('tvStationFrame');
    let tvFreeEmbedded = false;
-   $('tvFreeToggle')?.addEventListener('click', () => {
-     tvFreeEmbedded = true;
-     tvStationFrame.hidden = false;
-     tvStationFrame.src = 'tv-direct.html';
-     tvStationFrame.title = 'Chaînes gratuites intégrées au lecteur TV';
-     $('tvNowTitle').textContent = 'TV · Chaînes gratuites hors YouTube';
-     $('tvNowMeta').textContent = 'Catalogue IPTV-org · Lecture intégrée';
-     $('tvOpenOfficial').hidden = true;
-     $('tvStatus').textContent = 'Choisissez une chaîne dans le catalogue intégré.';
-     $('nowPlaying').textContent = '📺 TV · Chaînes gratuites hors YouTube';
-   });
   // YouTube : demander la qualité 480p par défaut (le lecteur peut l’ajuster selon le flux).
   // YouTube peut toutefois choisir une autre qualité selon le flux et la connexion.
   function tvYoutube480(url) {
@@ -3246,8 +3236,10 @@ function renderResume() {
     // Les services sans lecteur vidéo YouTube sont chargés dans le cadre du lecteur TV,
     // afin de rester dans MY WORLD RS au lieu d'ouvrir un nouvel onglet.
     let srcStation = station.externalOnly ? station.official : station.url;
+    if (station.hls) srcStation = 'tv-direct.html?p=1&u=' + encodeURIComponent(station.hls) + '&n=' + encodeURIComponent(station.name);
     if (station.resolveLive) { try { const c = localStorage.getItem('mwrs_tv_live_' + key); if (c && /^[\w-]{6,20}$/.test(c)) srcStation = 'https://www.youtube.com/embed/' + c + '?autoplay=1&rel=0&playsinline=1&controls=1'; } catch {} }
     tvStationFrame.src = tvYoutube480(srcStation) || 'about:blank';
+    tvStationFrame.title = station.hls ? 'Chaîne de télévision en direct : ' + station.name : 'Chaîne de télévision en direct sur YouTube';
     tvStationFrame.name = 'tvStationFrame';
     const officialLink = $('tvOpenOfficial');
     if (officialLink) {
@@ -3255,21 +3247,25 @@ function renderResume() {
       officialLink.target = station.externalOnly ? '_blank' : 'tvStationFrame';
       officialLink.textContent = station.externalOnly ? 'Recharger le service dans TV ↻' : 'Ouvrir sur YouTube ↗';
     }
-    if (station.externalOnly) {
+    if (station.hls) {
+      if (officialLink) { officialLink.href = station.hls; officialLink.target = '_blank'; officialLink.textContent = 'Ouvrir la source ↗'; }
+      $('tvStatus').textContent = station.note;
+    } else if (station.externalOnly) {
       $('tvStatus').textContent = station.note + ' Chargement du service officiel dans le lecteur TV. Si le fournisseur interdit l’affichage intégré, son site peut refuser de s’ouvrir dans ce cadre.';
     } else {
       $('tvStatus').textContent = station.note + ' Si YouTube indique que la vidéo n’est pas disponible, utilisez « Ouvrir sur YouTube ».';
     }
-    if (station.resolveLive) tvDriveSend('yt', { kind:'live', ...station.resolveLive, station:key });
+    if (!station.hls && station.resolveLive) tvDriveSend('yt', { kind:'live', ...station.resolveLive, station:key });
     const title = $('tvNowTitle'); if (title) title.textContent = station.name;
-    if (station.resolveLive && !station.url) $('tvStatus').textContent = station.note + ' Recherche du direct en cours…';
-    const meta = $('tvNowMeta'); if (meta) meta.textContent = 'YouTube · ' + station.language;
+    if (!station.hls && station.resolveLive && !station.url) $('tvStatus').textContent = station.note + ' Recherche du direct en cours…';
+    const meta = $('tvNowMeta'); if (meta) meta.textContent = station.hls ? 'Direct · ' + (station.language || 'catalogue gratuit') + ' · 480p max' : 'YouTube · ' + station.language;
     $('tvStations').querySelectorAll('[data-tv-station]').forEach(b => b.classList.toggle('active', b.dataset.tvStation === key));
     $('nowPlaying').textContent = '📺 TV · ' + station.name;
     setMode('tv'); updatePlayBtn();
   }
   function tvNavigateStation(direction) {
-    const keys = Object.keys(tvStations);
+    let keys = [...($('tvStations')?.querySelectorAll('[data-tv-station]') || [])].map(b => b.dataset.tvStation).filter(k => tvStations[k]);
+    if (!keys.length) keys = Object.keys(tvStations);
     if (!keys.length) return;
     let index = keys.indexOf(tvCurrentStationKey);
     if (index < 0) index = 0;
@@ -3294,7 +3290,73 @@ function renderResume() {
     document.body.classList.add('tv-fullscreen'); $('playlist').hidden = true; tvPane.hidden = false;
     $('tabs').querySelectorAll('button').forEach(b => b.classList.toggle('active', b === tvTab));
     tvFilterList();
+    tvLoadFree();
     if (tvQuotaRefresh() > 0 && !tvQuotaBlocked) tvSelectStation('france24');
+  }
+
+  // ---- Chaînes gratuites hors YouTube (catalogue IPTV-org) : mélangées à la liste principale, lecture limitée à 480p ----
+  const TV_FREE_SOURCES = {
+    news:'https://iptv-org.github.io/iptv/categories/news.m3u', sports:'https://iptv-org.github.io/iptv/categories/sports.m3u',
+    movies:'https://iptv-org.github.io/iptv/categories/movies.m3u', series:'https://iptv-org.github.io/iptv/categories/series.m3u',
+    documentary:'https://iptv-org.github.io/iptv/categories/documentary.m3u', entertainment:'https://iptv-org.github.io/iptv/categories/entertainment.m3u',
+    culture:'https://iptv-org.github.io/iptv/categories/culture.m3u', education:'https://iptv-org.github.io/iptv/categories/education.m3u',
+    kids:'https://iptv-org.github.io/iptv/categories/kids.m3u', music:'https://iptv-org.github.io/iptv/categories/music.m3u',
+    weather:'https://iptv-org.github.io/iptv/categories/weather.m3u', africa:'https://iptv-org.github.io/iptv/regions/afr.m3u'
+  };
+  const TV_FREE_THEME = { news:'Actualités', sports:'Sport', movies:'Films & séries', series:'Films & séries', documentary:'Documentaires & culture', culture:'Documentaires & culture', education:'Documentaires & culture', entertainment:'Divertissement', kids:'Enfants', music:'Musique', weather:'Météo', africa:'Afrique' };
+  const TV_FREE_CACHE = 'mwrs_tv_free_v1', TV_FREE_TTL = 24 * 3600 * 1000;
+  const tvFlag = code => /^[A-Za-z]{2}$/.test(code || '') ? String.fromCodePoint(...[...code.toUpperCase()].map(c => 127397 + c.charCodeAt(0))) : '';
+  const tvEscape = t => String(t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const tvHash = t => { let h = 5381; for (let i = 0; i < t.length; i++) h = ((h << 5) + h + t.charCodeAt(i)) >>> 0; return h.toString(36); };
+  // Le pays range la chaîne dans les familles déjà présentes (swahili, RDC, francophone) ; sinon on garde son thème.
+  const TV_FREE_BY_COUNTRY = { KE:'Swahili', TZ:'Swahili', CD:'Congo', CG:'Congo', FR:'Francophone', SN:'Francophone', CI:'Francophone', CM:'Francophone', GA:'Francophone', ML:'Francophone', BF:'Francophone', NE:'Francophone', TG:'Francophone', BJ:'Francophone', MG:'Francophone', HT:'Francophone', MC:'Francophone', LU:'Francophone' };
+  function tvParseFree(text, theme) {
+    const lines = String(text || '').replace(/^﻿/, '').split(/\r?\n/), out = [];
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim(); if (!line.startsWith('#EXTINF')) continue;
+      let k = i + 1; while (k < lines.length && lines[k].trim().startsWith('#')) k++;
+      const url = (lines[k] || '').trim();
+      if (!/^https:\/\//i.test(url) || /youtube\.com|youtu\.be|youtube-nocookie\.com/i.test(url)) continue;
+      // Les playlists indiquent la définition dans le nom « (1080p) » : inutile ici, la lecture est limitée à 480p.
+      const name = (line.split(',').slice(1).join(',') || '').replace(/\s*\[(?:Not 24\/7|Geo-blocked)\]\s*/gi, ' ').replace(/\s*\(\d{3,4}[pi]\)\s*/g, ' ').replace(/\s+/g, ' ').trim();
+      if (!name) continue;
+      // Pays : attribut tvg-country s'il existe, sinon la fin de l'identifiant (« Citizen.ke@SD » → KE)
+      const country = (((line.match(/tvg-country="([^";]*)/i) || [])[1]) || ((line.match(/tvg-id="[^"@]*\.([a-z]{2})(?:@[^"]*)?"/i) || [])[1]) || '').toUpperCase();
+      out.push([name.slice(0, 80), url, theme, country]);
+    }
+    return out;
+  }
+  function tvAddFree(list) {
+    for (const k of Object.keys(tvStations)) if (tvStations[k].free) delete tvStations[k];
+    const vus = new Set();
+    for (const [name, url, theme, country] of list) {
+      if (vus.has(url)) continue; vus.add(url);
+      const cat = TV_FREE_BY_COUNTRY[country] || TV_FREE_THEME[theme] || 'Divertissement';
+      tvStations['f' + tvHash(url)] = { name: tvEscape(name), category: cat, language: country, hls: url, official: url, free: true, url: '', note: 'Flux direct hors YouTube, limité à 480p pour économiser vos données. Si la chaîne ne démarre pas, elle est peut-être hors ligne ou bloquée dans votre région.' };
+    }
+  }
+  let tvFreeLoading = null;
+  function tvLoadFree(force) {
+    if (tvFreeLoading) return tvFreeLoading;
+    const info = $('tvFreeInfo');
+    let cache = null; try { cache = JSON.parse(localStorage.getItem(TV_FREE_CACHE) || 'null'); } catch {}
+    if (cache && Array.isArray(cache.list) && !force && Date.now() - cache.t < TV_FREE_TTL) {
+      tvAddFree(cache.list); if (info) info.textContent = Object.values(tvStations).filter(x => x.free).length + ' chaînes gratuites hors YouTube ajoutées.'; tvFilterList(); return Promise.resolve();
+    }
+    if (info) info.textContent = 'Chargement des chaînes gratuites…';
+    tvFreeLoading = Promise.allSettled(Object.entries(TV_FREE_SOURCES).map(async ([theme, url]) => {
+      const r = await fetch(url, { cache: 'no-store' }); if (!r.ok) throw new Error('HTTP ' + r.status);
+      return tvParseFree(await r.text(), theme);
+    })).then(res => {
+      const list = res.flatMap(r => r.status === 'fulfilled' ? r.value : []);
+      if (list.length) { try { localStorage.setItem(TV_FREE_CACHE, JSON.stringify({ t: Date.now(), list })); } catch {} }
+      else if (cache && Array.isArray(cache.list)) list.push(...cache.list); // hors ligne : on garde l'ancienne liste
+      tvAddFree(list);
+      const n = Object.values(tvStations).filter(x => x.free).length;
+      if (info) info.textContent = n ? n + ' chaînes gratuites hors YouTube ajoutées.' : 'Chaînes gratuites indisponibles (vérifiez la connexion).';
+      tvFilterList();
+    }).finally(() => { tvFreeLoading = null; });
+    return tvFreeLoading;
   }
   const tvFavKey='myWorldTvFavorites';
   let tvFavorites=[]; try{tvFavorites=JSON.parse(localStorage.getItem(tvFavKey)||'[]')}catch(e){tvFavorites=[]}
@@ -3302,8 +3364,8 @@ function renderResume() {
   function tvFilterList(){
     const search=($('tvSearch')?.value||'').trim().toLocaleLowerCase();
     const selected=$('tvCategoryFilter')?.value||'all';
-    const categoryOf=station=>station.category==='Swahili'?'Swahili':station.category==='Francophone'||station.category==='Francophones'?'Francophone':station.category==='Sport'?'Sport':station.category==='Congo'?'Congo':'English';
-    const entries=Object.entries(tvStations).filter(([key,station])=>{
+    const categoryOf=station=>station.hls?station.category:station.category==='Swahili'?'Swahili':station.category==='Francophone'||station.category==='Francophones'?'Francophone':station.category==='Sport'?'Sport':station.category==='Congo'?'Congo':'English';
+    const entries=Object.entries(tvStations).sort((a,b)=>String(a[1].name).localeCompare(String(b[1].name),'fr',{sensitivity:'base'})).filter(([key,station])=>{
       const category=categoryOf(station);
       const matchesText=!search||(String(station.name||'')+' '+String(station.language||'')).toLocaleLowerCase().includes(search);
       const matchesCategory=selected==='all'||selected===category||selected==='Francophones'&&category==='Francophone';
@@ -3314,8 +3376,8 @@ function renderResume() {
     const list=$('tvStations');
     if(!list)return;
     list.innerHTML=entries.map(([key,station])=>{
-      const category=categoryOf(station),lang=category==='English'?'EN':category==='Sport'?'SPORT':category==='Congo'?'RDC':category==='Swahili'?'SW':'FR';
-      return '<div role="button" tabindex="0" class="tv-card'+(key===tvCurrentStationKey?' active':'')+(tvFavorites.includes(key)?' is-favorite':'')+'" data-tv-station="'+key+'"><span class="tv-card-flag">'+(flags[key]||'📺')+'</span><span class="tv-card-copy"><strong>'+station.name+'</strong><small>'+(category==='English'?'News':category==='Sport'?'Sport':category==='Congo'?'RDC':category==='Swahili'?'Kiswahili':'Informations')+'</small></span><span class="tv-card-tag">'+lang+'</span><button class="tv-fav" type="button" data-tv-favorite="1" aria-label="Favori">'+(tvFavorites.includes(key)?'★':'☆')+'</button></div>';
+      const category=categoryOf(station),lang=station.hls?(String(station.language||'TV').slice(0,3).toUpperCase()):category==='English'?'EN':category==='Sport'?'SPORT':category==='Congo'?'RDC':category==='Swahili'?'SW':'FR';
+      return '<div role="button" tabindex="0" class="tv-card'+(key===tvCurrentStationKey?' active':'')+(tvFavorites.includes(key)?' is-favorite':'')+'" data-tv-station="'+key+'"><span class="tv-card-flag">'+(flags[key]||(station.hls&&tvFlag(station.language))||'📺')+'</span><span class="tv-card-copy"><strong>'+station.name+'</strong><small>'+(station.hls?category:category==='English'?'News':category==='Sport'?'Sport':category==='Congo'?'RDC':category==='Swahili'?'Kiswahili':'Informations')+'</small></span><span class="tv-card-tag">'+lang+'</span><button class="tv-fav" type="button" data-tv-favorite="1" aria-label="Favori">'+(tvFavorites.includes(key)?'★':'☆')+'</button></div>';
     }).join('');
     list.style.display='flex';
     list.style.visibility='visible';
@@ -3339,7 +3401,7 @@ function renderResume() {
   $('tvFavoritesToggle')?.addEventListener('click',()=>{tvOnlyFavorites=!tvOnlyFavorites;tvFilterList()});
   $('tvBottomFav')?.addEventListener('click',()=>{tvOnlyFavorites=!tvOnlyFavorites;tvFilterList()});
   $('tvBottomChannels')?.addEventListener('click',()=>{tvOnlyFavorites=false;$('tvSearch').value='';$('tvCategoryFilter').value='all';tvFilterList()});
-  $('tvRefreshList')?.addEventListener('click',()=>{tvFilterList();if(tvCurrentStationKey)tvSelectStation(tvCurrentStationKey)});
+  $('tvRefreshList')?.addEventListener('click',()=>{tvLoadFree(true);tvFilterList();if(tvCurrentStationKey)tvSelectStation(tvCurrentStationKey)});
   $('tvBack')?.addEventListener('click', () => { tvHide(); $('tabs').querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.filter==='all')); filter='all'; renderList(); setMode(current<0?'empty':items[current].type); $('nowPlaying').textContent=current<0?'Aucun média':items[current].name; });
   tvTab?.addEventListener('click', tvShow);
  const matchsTab = $('matchsTab'), matchsPane = $('matchsPane');
