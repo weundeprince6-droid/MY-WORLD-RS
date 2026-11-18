@@ -45,15 +45,15 @@ dialog::backdrop{background:#000a}
 
 .brevet-selection{margin-top:14px}.brevet-wizard{margin-top:14px;background:var(--carte);border:1px solid var(--bord);border-radius:18px;padding:18px;box-shadow:0 12px 34px #0000000c}
 .brevet-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:22px}
-.brevet-tab{display:flex;align-items:center;gap:9px;text-align:left;padding:12px 10px;border:1px solid var(--bord);border-radius:12px;background:transparent;color:var(--txt);font:600 12px inherit;cursor:pointer;min-height:56px}
+.brevet-tab{display:flex;align-items:center;gap:9px;text-align:left;padding:12px 10px;border:1px solid var(--bord);border-radius:12px;background:transparent;color:var(--txt);font:600 12px Arial,sans-serif;cursor:pointer;min-height:56px}
 .brevet-tab span{display:grid;place-items:center;flex:0 0 30px;height:30px;border-radius:9px;background:var(--fond);color:var(--doux);font-size:11px}
-.brevet-tab.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 9%,var(--carte));color:var(--txt)}
-.brevet-tab.active span,.brevet-tab.complete span{background:var(--accent);color:white}
+.brevet-tab.active{border-color:var(--bleu);background:color-mix(in srgb,var(--bleu) 9%,var(--carte));color:var(--txt)}
+.brevet-tab.active span,.brevet-tab.complete span{background:var(--bleu);color:white}
 .brevet-panel{padding:4px 2px 16px}.brevet-panel h3{font-size:19px;margin:0 0 5px}.brevet-panel>.meta{margin:0 0 18px}
 .brevet-champs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
 .brevet-champs label{display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:650;color:var(--txt)}
 .brevet-champs input,.brevet-champs select{width:100%;min-height:44px;border:1px solid var(--bord);border-radius:10px;padding:10px 12px;background:var(--fond);color:var(--txt);font:inherit}
-.brevet-champs .champ-photo{grid-column:1/-1;padding:16px;border:1px dashed var(--accent);border-radius:12px;background:color-mix(in srgb,var(--accent) 5%,var(--carte))}
+.brevet-champs .champ-photo{grid-column:1/-1;padding:16px;border:1px dashed var(--bleu);border-radius:12px;background:color-mix(in srgb,var(--bleu) 5%,var(--carte))}
 .brevet-navigation{display:flex;align-items:center;gap:9px;border-top:1px solid var(--bord);padding-top:15px;margin-top:10px}.etape-compteur{margin-right:auto;color:var(--doux);font-size:12px;font-weight:700}.brevet-erreur{color:var(--mal);font-size:13px;min-height:20px;margin:6px 0}
 .ecran-brevet{position:fixed;inset:0;z-index:50;background:#0b1220f2;overflow:auto;padding:18px}
 .ecran-brevet .barre{display:flex;align-items:center;justify-content:flex-end;gap:10px;max-width:1180px;margin:0 auto 14px}
