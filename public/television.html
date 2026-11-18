@@ -3386,7 +3386,7 @@ function renderResume() {
     const search=($('tvSearch')?.value||'').trim().toLocaleLowerCase();
     const selected=$('tvCategoryFilter')?.value||'all';
     const categoryOf=station=>station.hls?station.category:station.category==='Swahili'?'Swahili':station.category==='Francophone'||station.category==='Francophones'?'Francophone':station.category==='Sport'?'Sport':station.category==='Congo'?'Congo':'English';
-    const entries=Object.entries(tvStations).sort((a,b)=>{const favA=tvFavorites.includes(a[0])?0:1,favB=tvFavorites.includes(b[0])?0:1;return favA-favB||String(a[1].name).localeCompare(String(b[1].name),'fr',{sensitivity:'base'});}).filter(([key,station])=>{
+    const entries=Object.entries(tvStations).sort((a,b)=>{const favA=tvFavorites.includes(a[0])?0:1,favB=tvFavorites.includes(b[0])?0:1;const bloqueA=/connect\.bein\.com/.test(a[1].official||'')?1:0,bloqueB=/connect\.bein\.com/.test(b[1].official||'')?1:0;return favA-favB||bloqueA-bloqueB||String(a[1].name).localeCompare(String(b[1].name),'fr',{sensitivity:'base'});}).filter(([key,station])=>{
       const category=categoryOf(station);
       const matchesText=!search||(String(station.name||'')+' '+String(station.language||'')).toLocaleLowerCase().includes(search);
       const matchesCategory=selected==='all'||selected===category||selected==='Francophones'&&category==='Francophone';
