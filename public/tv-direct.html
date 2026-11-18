@@ -23,6 +23,11 @@ input{width:100%}button{cursor:pointer}button:hover{border-color:var(--green)}bu
 video{width:100%;height:100%;background:#000;object-fit:contain}
 #now{font-size:17px;font-weight:700}.actions{display:flex;gap:8px;flex-wrap:wrap}.actions a{color:#a8d8c4}
 .note{color:var(--muted);font-size:11px;line-height:1.5}
+body.solo header,body.solo aside,body.solo .note,body.solo .actions,body.solo #now{display:none}
+body.solo main{display:block;min-height:0}
+body.solo .player{padding:0;gap:0;height:100vh}
+body.solo .screen{max-height:none;height:calc(100vh - 26px);aspect-ratio:auto;border-radius:0}
+body.solo #playstatus.note{display:block;padding:5px 10px;margin:0;font-size:12px}
 @media(max-width:760px){main{grid-template-columns:1fr;grid-template-rows:minmax(280px,42vh) 1fr}aside{border-right:0;border-bottom:1px solid var(--line)}#list{max-height:34vh}.player{padding:10px}.screen{max-height:none}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.18/dist/hls.min.js"></script>
@@ -63,6 +68,16 @@ const SOURCES = {
  africa:'https://iptv-org.github.io/iptv/regions/afr.m3u'
 };
 const $=id=>document.getElementById(id), video=$('video');
+// Économie de données : on ne dépasse pas 480p. Retourne l'index du meilleur niveau ≤ 480p ;
+// si les hauteurs ne sont pas annoncées (ou toutes plus grandes), le niveau le moins gourmand.
+function niveauMax(levels,maxH=480){
+ let best=-1,bh=-1;
+ levels.forEach((l,i)=>{const h=l.height||0;if(h>0&&h<=maxH&&h>bh){best=i;bh=h}});
+ if(best>=0)return best;
+ let low=0;levels.forEach((l,i)=>{if((l.bitrate||Infinity)<(levels[low].bitrate||Infinity))low=i});
+ return low;
+}
+window.mwrsNiveauMax=niveauMax;
 let channels=[], hls=null, current=null;
 const clean=s=>(s||'').replace(/[<>]/g,'').trim();
 function parseM3U(text,category){
@@ -124,7 +139,10 @@ function play(c){
   hls=new Hls({enableWorker:false,lowLatencyMode:false,maxBufferLength:30,manifestLoadingTimeOut:20000,manifestLoadingMaxRetry:2,levelLoadingMaxRetry:2,fragLoadingMaxRetry:3});
   hls.on(Hls.Events.MEDIA_ATTACHED,()=>$('playstatus').textContent='Lecteur prêt · chargement du direct…');
   hls.loadSource(c.url);hls.attachMedia(video);
-  hls.on(Hls.Events.MANIFEST_PARSED,()=>sayPlaying());
+  hls.on(Hls.Events.MANIFEST_PARSED,()=>{
+   if(hls&&hls.levels&&hls.levels.length>1){const i=niveauMax(hls.levels);hls.autoLevelCapping=i;hls.startLevel=i}
+   sayPlaying();
+  });
   hls.on(Hls.Events.ERROR,(_,data)=>{
    if(!data.fatal)return;
    const detail=String(data.details||'').replace(/_/g,' ');
@@ -137,12 +155,15 @@ function play(c){
  }else if(video.canPlayType('application/vnd.apple.mpegurl')){video.src=c.url;video.load();sayPlaying()}
  else $('playstatus').textContent='Ce navigateur ne prend pas en charge la lecture HLS. Essayez une chaîne MP4 ou un navigateur compatible.';
 }
+const params=new URLSearchParams(location.search);
 $('search').addEventListener('input',render);
 $('category').addEventListener('change',load);
 $('reload').addEventListener('click',load);
 $('stop').addEventListener('click',()=>{stop();$('now').textContent='Lecture arrêtée';$('playstatus').textContent='Choisissez une autre chaîne.';render()});
 video.addEventListener('error',()=>{$('playstatus').textContent='Erreur de lecture du flux. Il peut être hors ligne ou bloqué dans votre région.'});
-load();
+const solo=params.get('p')==='1'&&/^https:\/\//i.test(params.get('u')||'');
+if(solo){document.body.classList.add('solo');const u=params.get('u');play({id:u,name:clean(params.get('n')||'Chaîne'),url:u,logo:'',country:'',group:'',category:''})}
+else load();
 })();
 </script>
 </body></html>
