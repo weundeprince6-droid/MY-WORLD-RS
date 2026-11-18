@@ -39,6 +39,11 @@ button:disabled{opacity:.6}.erreur{color:var(--mal);margin:10px 0}.piege{positio
       <label>Téléphone (WhatsApp si possible) *<input name="telephone" type="tel" required maxlength="30" autocomplete="tel"></label>
       <label>Email<input name="email" type="email" maxlength="100" autocomplete="email"></label>
       <label class="large">Adresse / quartier / ville<input name="adresse" maxlength="160" autocomplete="street-address"></label>
+      <label>Profession / activité<input name="profession" maxlength="80"></label>
+    </div></fieldset>
+    <fieldset><legend>Personne à prévenir en cas d'urgence</legend><div class="grille">
+      <label>Nom complet<input name="personneUrgence" maxlength="100"></label>
+      <label>Téléphone de cette personne<input name="telUrgence" type="tel" maxlength="30"></label>
     </div></fieldset>
     <fieldset><legend>Formation souhaitée</legend><div class="grille">
       <label>Filière *<select name="filiere" required id="filiere"></select></label>
@@ -80,7 +85,7 @@ f.addEventListener("submit", async (ev) => {
     let ref = "WS-" + Math.random().toString(36).slice(2, 8).toUpperCase();
     if (!g("site")) { // champ-piège rempli = robot : on fait semblant d'accepter
       const d = { statut: "nouvelle", date: new Date().toISOString(), consentement: true };
-      for (const n of ["nom", "postnom", "prenom", "sexe", "naissance", "lieuNaissance", "nationalite", "adresse", "telephone", "email", "filiere", "niveau", "ecolePrecedente", "tuteur", "telTuteur", "message"]) d[n] = g(n);
+      for (const n of ["nom", "postnom", "prenom", "sexe", "naissance", "lieuNaissance", "nationalite", "adresse", "telephone", "email", "filiere", "niveau", "ecolePrecedente", "tuteur", "telTuteur", "profession", "personneUrgence", "telUrgence", "message"]) d[n] = g(n);
       const r = await addDoc(collection(db, "ecole_inscriptions"), d);
       ref = "WS-" + r.id.slice(0, 6).toUpperCase();
     }
