@@ -208,6 +208,17 @@ th,td{border-bottom-color:var(--bord)}
 /* Le diplôme imprimé conserve volontairement son papier blanc et ses couleurs officielles. */
 @media(max-width:600px){.theme-toggle{min-width:0;padding:6px 8px;font-size:10px}}
 
+
+/* Graphiques du tableau de bord Academy */
+.graph-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr));gap:12px;margin:12px 0}
+.academy-graph{min-width:0;overflow:hidden}
+.graph-bars{height:190px;display:flex;align-items:flex-end;gap:clamp(5px,2vw,14px);padding:18px 8px 4px;border-bottom:1px solid var(--bord);overflow-x:auto}
+.graph-col{flex:1 0 28px;min-width:28px;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px}
+.graph-value{font-size:11px;color:var(--txt);white-space:nowrap}
+.graph-track{height:125px;width:min(100%,34px);display:flex;align-items:flex-end;background:var(--surface-alt);border-radius:8px 8px 3px 3px;overflow:hidden}
+.graph-fill{width:100%;min-height:0;border-radius:7px 7px 2px 2px;transition:height .25s ease}
+.graph-label{font-size:11px;color:var(--doux);max-width:72px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
 </style>
 </head>
 <body>
@@ -479,6 +490,20 @@ const titre = (t, s) => [h("h2", {}, t), h("p", { class: "sous" }, s || "")];
 const suppr = (coll, x, apres) => h("button", { class: "btn petit mal", onclick: async () => { if (!confirm("Supprimer définitivement ?")) return; await deleteDoc(doc(db, coll, x.id)); apres(); } }, "Supprimer");
 const rafraichir = () => vueApp();
 
+// Graphiques simples et adaptatifs, alimentés par les données réelles de l'Academy.
+function graphiqueBarres(titreGraph, donnees, couleur) {
+  const max = Math.max(1, ...donnees.map(x => Number(x.valeur) || 0));
+  return h("div", { class: "carte academy-graph" },
+    h("h3", {}, titreGraph),
+    donnees.length ? h("div", { class: "graph-bars" }, donnees.map(x => {
+      const n = Math.max(0, Number(x.valeur) || 0);
+      return h("div", { class: "graph-col" },
+        h("b", { class: "graph-value" }, String(x.affichage ?? n)),
+        h("div", { class: "graph-track" }, h("div", { class: "graph-fill", style: "height:" + Math.max(n ? 5 : 0, n / max * 100) + "%;background:" + (couleur || "var(--ok)") })),
+        h("span", { class: "graph-label", title: x.label }, x.label));
+    })) : h("p", { class: "vide" }, "Pas encore assez de données pour afficher ce graphique."));
+}
+
 // --- Accueil
 async function sAccueil(m) {
   const role = moi.role;
@@ -514,10 +539,11 @@ async function sAccueil(m) {
     "Tableau de bord · " + (ROLES[role] || role) + (moi.classe ? " · " + moi.classe : "") + " · " + fmtDate(aujourd));
 
   if (role === "direction") {
-    const [el, inscriptions, pres, notes, compta, cours, planning] = await Promise.all([
-      eleves(true), lister("ecole_inscriptions"), lister("ecole_presences", where("date", "==", aujourd)),
+    const [el, inscriptions, presToutes, notes, compta, cours, planning] = await Promise.all([
+      eleves(true), lister("ecole_inscriptions"), lister("ecole_presences"),
       lister("ecole_notes"), lister("ecole_compta"), lister("ecole_cours"), lister("ecole_planning")
     ]);
+    const pres = presToutes.filter(x => x.date === aujourd);
     const actifs = el.filter((x) => x.actif !== false);
     const cls = [...new Set(actifs.map((x) => x.classe).filter(Boolean))];
     const nouvelles = inscriptions.filter((x) => x.statut === "nouvelle").length;
@@ -527,6 +553,8 @@ async function sAccueil(m) {
     const soldes = {};
     compta.forEach((x) => { const dv = (x.devise || "USD").toUpperCase(); soldes[dv] = (soldes[dv] || 0) + (x.type === "paiement" ? -1 : 1) * nombre(x.montant); });
     const finance = Object.entries(soldes).map(([dv,v]) => Math.abs(v).toLocaleString("fr-FR",{maximumFractionDigits:2})+" "+dv+(v>0?" à recouvrer":v<0?" en crédit":" soldé"));
+    const classesGraph = cls.map(nom => ({ label: nom, valeur: actifs.filter(x => x.classe === nom).length }));
+    const joursGraph = Array.from({length:7}, (_,i) => { const d = new Date(); d.setDate(d.getDate()-(6-i)); const iso = d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); const p = presToutes.filter(x => x.date === iso); return { label: iso.slice(5), valeur: p.filter(x => x.statut === "Présent").length, affichage: p.length ? Math.round(p.filter(x => x.statut === "Présent").length/p.length*100)+"%" : "—" }; });
     const alertes = [];
     if (nouvelles) alertes.push(h("p", {}, h("span", { class: "puce or" }, nouvelles + " nouvelle(s) inscription(s)"), " à examiner."));
     if (abs) alertes.push(h("p", {}, h("span", { class: "puce mal" }, abs + " absence(s)"), " enregistrée(s) aujourd'hui."));
@@ -544,6 +572,10 @@ async function sAccueil(m) {
       ),
       h("div", { class: "carte" }, h("div", { class: "ligne" }, h("h3", {}, "Alertes et points d'attention"), h("span", { class: "espace" }), h("span", { class: "meta" }, "Mise à jour à l'ouverture")), ...alertes),
       blocStats(stat("SITUATION FINANCIÈRE", finance.length ? finance.join(" · ") : "Aucune écriture", "Soldes calculés à partir des frais et paiements", "compta")),
+      h("div", { class: "graph-grid" },
+        graphiqueBarres("Effectif par classe", classesGraph),
+        graphiqueBarres("Taux de présence · 7 derniers jours", joursGraph, "var(--bleu)")
+      ),
       h("div", { class: "carte" }, h("h3", {}, "Accès rapide"),
         h("div", { class: "ligne", style: "flex-wrap:wrap;gap:9px" },
           quick("suivi","Suivi des élèves","📊"), quick("inscriptions","Inscriptions","📋"), quick("utilisateurs","Élèves & personnel","👥"),
@@ -564,10 +596,13 @@ async function sAccueil(m) {
     const assiduite = total ? Math.round(p/total*100)+"%" : "—";
     const val = [...notes.map((x)=>[nombre(x.note),nombre(x.sur)||20]),...rendus.filter((x)=>x.note!==undefined&&x.note!=="").map((x)=>[nombre(x.note),nombre(x.sur)||20]),...resultats.map((x)=>[nombre(x.score),nombre(x.sur)||20])].filter(([n,s])=>Number.isFinite(n)&&s>0);
     const moyenne = val.length ? (val.reduce((a,[n,s])=>a+n/s*20,0)/val.length).toFixed(2)+"/20" : "—";
+    const matieres = [...new Set([...notes,...rendus,...resultats].map(x=>x.matiere).filter(Boolean))];
+    const notesGraph = matieres.map(nom => { const arr=[...notes,...rendus.filter(x=>x.note!==undefined&&x.note!==""),...resultats].filter(x=>x.matiere===nom).map(x=>{const n=nombre(x.note ?? x.score),sur=nombre(x.sur)||20;return n/sur*20;}).filter(Number.isFinite); return {label:nom,valeur:arr.length?arr.reduce((a,b)=>a+b,0)/arr.length:0,affichage:arr.length?(arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(1)+"/20":"—"}; });
     const solde = {};
     compta.forEach((x)=>{const dv=(x.devise||"USD").toUpperCase();solde[dv]=(solde[dv]||0)+(x.type==="paiement"?-1:1)*nombre(x.montant);});
     monter(m, ...entete,
       blocStats(stat("ASSIDUITÉ",assiduite,p+" présence(s) sur "+total,"presences"),stat("MOYENNE",moyenne,val.length+" résultat(s)","notes"),...Object.entries(solde).map(([dv,v])=>stat("SOLDE "+dv,Math.abs(v).toLocaleString("fr-FR")+" "+dv,v>0?"Reste à payer":v<0?"Crédit":"Situation soldée","compta"))),
+      graphiqueBarres("Mes moyennes par matière", notesGraph, "var(--bleu)"),
       h("div", { class: "carte" }, h("h3", {}, "Mon espace de formation"), h("div", { class: "ligne", style: "flex-wrap:wrap;gap:9px" }, quick("cours","Mes cours","📚"),quick("devoirs","Mes devoirs","📝"),quick("notes","Mes résultats","🎓"),quick("presences","Mes présences","✅"),quick("compta","Mes frais","💰"),quick("brevets","Mes brevets","🏅"))),
       h("div", { class: "ligne", style: "align-items:stretch;flex-wrap:wrap;gap:12px" },annonceCard,devoirCard)
     );
