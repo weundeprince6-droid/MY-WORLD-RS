@@ -115,6 +115,17 @@
  #pane-dashboard .dashboard-media-shortcuts{gap:7px}
 }
 </style>
+
+<style id="academy-fullscreen-style">
+#academy-fenetre{position:fixed;inset:0;z-index:10000;display:flex;flex-direction:column;background:#0b1220;color:#f5f7fb}
+#academy-fenetre[hidden]{display:none}
+#academy-fenetre .academy-barre{height:54px;min-height:54px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 16px;background:#111c30;border-bottom:1px solid #c49b4c;box-sizing:border-box}
+#academy-fenetre .academy-barre strong{font-size:15px;letter-spacing:.04em}
+#academy-fenetre .academy-barre button{border:1px solid #c49b4c;border-radius:9px;background:linear-gradient(145deg,#f7e8c5,#dfc17d);color:#352409;font-weight:800;padding:9px 15px;cursor:pointer}
+#academy-fenetre .academy-zone{flex:1;min-height:0;overflow:hidden}
+#academy-fenetre iframe{display:block;width:100%;height:100%;border:0;background:#0b1220}
+@media(max-width:560px){#academy-fenetre .academy-barre{padding:7px 10px}#academy-fenetre .academy-barre strong{font-size:12px}#academy-fenetre .academy-barre button{padding:8px 10px}}
+</style>
 </head>
 <body>
   <header class="entete">
@@ -736,13 +747,30 @@
   </dialog>
   <script>
     (function () {
+      function fermerAcademyPleinEcran() {
+        var fen=document.getElementById("academy-fenetre"), frame=document.getElementById("classroom-frame"), pane=document.getElementById("pane-webs-classroom");
+        if(!fen||!frame||!pane)return;
+        if(frame.parentElement!==pane) pane.appendChild(frame);
+        fen.hidden=true;
+      }
+      function ouvrirAcademyPleinEcran() {
+        var fen=document.getElementById("academy-fenetre"), zone=document.getElementById("academy-zone"), frame=document.getElementById("classroom-frame");
+        if(!fen||!zone||!frame)return;
+        zone.appendChild(frame);
+        frame.style.height="100%"; frame.style.minHeight="0"; frame.style.border="0"; frame.style.borderRadius="0";
+        if(!frame.getAttribute("src"))frame.setAttribute("src","webs-classroom.html");
+        fen.hidden=false;
+      }
+      document.getElementById("academy-retour")?.addEventListener("click",fermerAcademyPleinEcran);
+      document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!document.getElementById("academy-fenetre")?.hidden)fermerAcademyPleinEcran();});
       function ouvrirOnglet(nom) {
+        fermerAcademyPleinEcran();
         var parent = nom === "messages" || nom === "social" ? "communication" : nom === "agenda" || nom === "notes" ? "organisation" : nom;
         document.querySelectorAll("[data-root-pane]").forEach(function (p) { var actif=p.dataset.rootPane===parent; p.hidden=!actif; p.classList.toggle("active",actif); });
         document.querySelectorAll("[data-tab]").forEach(function (b) { var actif=b.dataset.tab===parent; b.classList.toggle("active",actif); b.setAttribute("aria-selected",actif?"true":"false"); });
         if (nom === "messages" || nom === "social") choisirSousVue("communication", nom);
         if (nom === "agenda" || nom === "notes") choisirSousVue("organisation", nom);
-        var titres={dashboard:"Tableau de bord",communication:"Communication",organisation:"Organisation",bases:"Mes bases",drive:"Google Drive","maison-pro":"Ma maison & Projet pro",finances:"Porte-Monnaie & Budget",profile:"Mon profil",assistant:"Assistant IA","webs-classroom":"WEBSERVICES ACADEMY"}; document.title=(titres[parent]||"My World RS")+" — My World RS"; if(parent==="webs-classroom"){var fr=document.getElementById("classroom-frame");if(fr&&!fr.getAttribute("src"))fr.setAttribute("src","webs-classroom.html");}
+        var titres={dashboard:"Tableau de bord",communication:"Communication",organisation:"Organisation",bases:"Mes bases",drive:"Google Drive","maison-pro":"Ma maison & Projet pro",finances:"Porte-Monnaie & Budget",profile:"Mon profil",assistant:"Assistant IA","webs-classroom":"WEBSERVICES ACADEMY"}; document.title=(titres[parent]||"My World RS")+" — My World RS"; if(parent==="webs-classroom"){ouvrirAcademyPleinEcran();}
       }
       function choisirSousVue(groupe, nom) {
         document.querySelectorAll("#pane-"+groupe+" [data-subview-pane]").forEach(function(p){p.hidden=p.dataset.subviewPane!==nom;});
@@ -775,6 +803,11 @@
   <script type="module" src="app.js?v=20261115-tv11"></script>
   <div id="tv-fenetre" class="tv-fenetre" hidden><div class="tv-barre"><strong>📺 Télévision</strong><span class="tv-actions"><button type="button" id="tv-masquer" aria-label="Mettre en arrière-plan" title="Mettre en arrière-plan : la lecture continue">━</button><button type="button" id="tv-fermer" aria-label="Fermer le lecteur" title="Fermer et arrêter la lecture">✖</button></span></div><div id="tv-zone" class="tv-zone"></div></div>
   <div id="tv-mini" class="tv-mini" hidden><span class="tv-mini-pastille">🎵</span><span id="tv-mini-titre" class="tv-mini-titre">Télévision en lecture</span><button type="button" id="tv-mini-afficher" aria-label="Afficher le lecteur" title="Afficher le lecteur">▣</button><button type="button" id="tv-mini-arreter" title="Arrêter la lecture">✕</button></div>
+  <section id="academy-fenetre" hidden aria-label="WEBSERVICES ACADEMY en plein écran">
+    <div class="academy-barre"><strong>🎓 WEBSERVICES ACADEMY</strong><button type="button" id="academy-retour">← Retour à MY WORLD RS</button></div>
+    <div class="academy-zone" id="academy-zone"></div>
+  </section>
+
   <aside id="spot-france24" class="spot-france24" hidden aria-live="polite">
     <div class="spot-france24-top"><span class="spot-france24-live"><i></i> RAPPEL ACTUALITÉ</span><button type="button" id="spot-france24-close" aria-label="Masquer le rappel">×</button></div>
     <div class="spot-france24-main"><span class="spot-france24-flag">🇫🇷</span><div class="spot-france24-copy"><strong>FRANCE 24</strong><span>C'est l'heure de suivre l'info</span></div><button type="button" id="spot-france24-open">Ouvrir dans TV <span>↗</span></button></div>
