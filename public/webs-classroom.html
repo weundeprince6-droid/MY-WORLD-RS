@@ -219,6 +219,186 @@ th,td{border-bottom-color:var(--bord)}
 .graph-fill{width:100%;min-height:0;border-radius:7px 7px 2px 2px;transition:height .25s ease}
 .graph-label{font-size:11px;color:var(--doux);max-width:72px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
+
+/* =========================================================
+   WEBSERVICES ACADEMY — refonte visuelle complète
+   Interface inspirée des consoles SaaS / ERP académiques.
+   Portée limitée à l'espace connecté : écran de connexion
+   et styles d'impression du brevet préservés.
+   ========================================================= */
+#app:has(> .haut){
+  --bg:#f3f7f5;--carte:#fff;--carte2:#edf5f0;--bord:#dce7e0;
+  --txt:#172820;--doux:#62756b;--ok:#118653;--or:#118653;
+  --bleu:#2876c7;--fond:#f7faf8;--entete:#fff;--nav:#f8fbf9;
+  --surface-alt:#edf5f0;--carte-debut:#fff;--carte-fin:#fff;--champ:#fff;
+  --ombre:0 8px 26px rgba(23,52,37,.055);
+  --ombre-forte:0 16px 44px rgba(23,52,37,.10);
+  color:var(--txt);
+}
+:root[data-theme="dark"] #app:has(> .haut){
+  --bg:#0b1512;--carte:#111f19;--carte2:#192c23;--bord:#294538;
+  --txt:#edf7f1;--doux:#a5b9ae;--ok:#42d49a;--or:#42d49a;
+  --bleu:#69aaff;--fond:#0e1a14;--entete:#0d1913;--nav:#0d1913;
+  --surface-alt:#1b3026;--carte-debut:#14251c;--carte-fin:#111f19;--champ:#0d1a14;
+  --ombre:0 8px 26px rgba(0,0,0,.16);--ombre-forte:0 16px 44px rgba(0,0,0,.25);
+}
+@media(prefers-color-scheme:dark){
+  :root:not([data-theme="light"]):not([data-theme="dark"]) #app:has(> .haut){
+    --bg:#0b1512;--carte:#111f19;--carte2:#192c23;--bord:#294538;
+    --txt:#edf7f1;--doux:#a5b9ae;--ok:#42d49a;--or:#42d49a;
+    --bleu:#69aaff;--fond:#0e1a14;--entete:#0d1913;--nav:#0d1913;
+    --surface-alt:#1b3026;--carte-debut:#14251c;--carte-fin:#111f19;--champ:#0d1a14;
+    --ombre:0 8px 26px rgba(0,0,0,.16);--ombre-forte:0 16px 44px rgba(0,0,0,.25);
+  }
+}
+body:has(#app > .haut){background:var(--bg);color:var(--txt)}
+#app:has(> .haut){min-height:100vh;background:var(--bg)}
+#app:has(> .haut) .haut{
+  min-height:76px;padding:12px clamp(16px,2.4vw,34px);
+  gap:14px;background:var(--entete);border:0;border-bottom:1px solid var(--bord);
+  box-shadow:0 3px 16px rgba(20,48,33,.045);backdrop-filter:blur(16px);
+  position:sticky;top:0;z-index:30;
+}
+#app:has(> .haut) .logo{
+  width:46px;height:46px;border-radius:14px;flex:0 0 46px;
+  color:#052217;background:linear-gradient(145deg,#65e2ad,#13a66d);
+  box-shadow:0 5px 14px rgba(17,134,83,.18);font-weight:900;letter-spacing:-.05em;
+}
+#app:has(> .haut) .haut h1{font-size:15px;font-weight:850;letter-spacing:.095em;color:var(--txt)}
+#app:has(> .haut) .haut small{display:block;margin-top:5px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--doux)}
+#app:has(> .haut) .moi{padding:5px 12px;border-left:1px solid var(--bord);text-align:left;line-height:1.35}
+#app:has(> .haut) .moi b{font-size:12px;color:var(--txt)}
+#app:has(> .haut) .moi .meta{font-size:10px;color:var(--doux)}
+#app:has(> .haut) .pose{
+  display:grid;grid-template-columns:264px minmax(0,1fr);
+  min-height:calc(100vh - 76px);align-items:stretch;
+}
+#app:has(> .haut) nav{
+  position:sticky;top:76px;align-self:start;height:calc(100vh - 76px);
+  overflow-y:auto;overflow-x:hidden;padding:24px 14px 28px;
+  display:flex;flex-direction:column;gap:5px;background:var(--nav);
+  border:0;border-right:1px solid var(--bord);
+}
+#app:has(> .haut) nav:before{
+  content:"MENU PRINCIPAL";display:block;padding:0 12px 12px;
+  color:var(--doux);font-size:9px;font-weight:850;letter-spacing:.17em;
+}
+#app:has(> .haut) nav button{
+  min-height:44px;width:100%;padding:10px 12px;gap:12px;
+  border:1px solid transparent;border-radius:10px;background:transparent;
+  color:var(--doux);font-size:12px;font-weight:650;transition:all .18s ease;
+}
+#app:has(> .haut) nav button span{
+  display:grid;place-items:center;width:25px;height:25px;flex:0 0 25px;
+  border-radius:8px;background:var(--surface-alt);font-size:14px;
+}
+#app:has(> .haut) nav button:hover{
+  background:var(--surface-alt);border-color:var(--bord);color:var(--txt);transform:translateX(2px);
+}
+#app:has(> .haut) nav button.actif{
+  background:color-mix(in srgb,var(--ok) 10%,var(--carte));
+  border-color:color-mix(in srgb,var(--ok) 26%,var(--bord));
+  color:var(--ok);box-shadow:inset 3px 0 var(--ok);font-weight:800;
+}
+#app:has(> .haut) nav button.actif span{background:var(--ok);color:#fff}
+#app:has(> .haut) main{
+  width:100%;max-width:1600px;margin:0 auto;padding:clamp(22px,3vw,42px);
+  min-width:0;
+}
+#app:has(> .haut) main>h2{
+  font-size:clamp(24px,2.1vw,31px);line-height:1.2;letter-spacing:-.045em;
+  font-weight:850;color:var(--txt);margin:0 0 7px;
+}
+#app:has(> .haut) main>.sous{
+  max-width:850px;margin:0 0 26px;color:var(--doux);font-size:13px;line-height:1.65;
+}
+#app:has(> .haut) .carte{
+  margin-bottom:17px;padding:20px;border:1px solid var(--bord);border-radius:15px;
+  background:var(--carte);color:var(--txt);box-shadow:var(--ombre);
+}
+#app:has(> .haut) .carte h3{font-size:14px;font-weight:800;letter-spacing:-.01em;color:var(--txt)}
+#app:has(> .haut) .meta{color:var(--doux)}
+#app:has(> .haut) .btn{
+  min-height:38px;padding:8px 13px;border:1px solid var(--bord);
+  border-radius:9px;background:var(--carte2);color:var(--txt);
+  font-size:12px;font-weight:700;box-shadow:none;transition:all .17s ease;
+}
+#app:has(> .haut) .btn:hover{border-color:var(--ok);filter:brightness(1.04);transform:translateY(-1px)}
+#app:has(> .haut) .btn.pri{
+  color:#062318;background:linear-gradient(135deg,#59dda5,#19a66e);
+  border-color:#20b77b;box-shadow:0 5px 13px rgba(17,134,83,.13);
+}
+#app:has(> .haut) .btn.mal{color:var(--mal)}
+#app:has(> .haut) .btn.petit{min-height:30px;padding:5px 10px;font-size:11px}
+#app:has(> .haut) .theme-toggle{min-width:100px;border-color:color-mix(in srgb,var(--ok) 45%,var(--bord));color:var(--ok);background:var(--surface-alt)}
+#app:has(> .haut) form.champs{gap:16px}
+#app:has(> .haut) label{gap:7px;color:var(--doux);font-size:11px;font-weight:750;letter-spacing:.025em}
+#app:has(> .haut) input,#app:has(> .haut) select,#app:has(> .haut) textarea{
+  min-height:42px;padding:10px 12px;border:1px solid var(--bord);border-radius:9px;
+  background:var(--champ);color:var(--txt);font-size:13px;transition:border-color .15s,box-shadow .15s;
+}
+#app:has(> .haut) textarea{min-height:104px}
+#app:has(> .haut) input:focus,#app:has(> .haut) select:focus,#app:has(> .haut) textarea:focus{
+  outline:0;border-color:var(--ok);box-shadow:0 0 0 3px color-mix(in srgb,var(--ok) 13%,transparent);
+}
+#app:has(> .haut) table{font-size:12px;border-collapse:separate;border-spacing:0;overflow:hidden}
+#app:has(> .haut) table th{
+  padding:12px 13px;background:var(--surface-alt);color:var(--doux);
+  font-size:9px;font-weight:850;letter-spacing:.10em;border-bottom:1px solid var(--bord);
+}
+#app:has(> .haut) table td{padding:12px 13px;border-bottom:1px solid var(--bord);color:var(--txt);line-height:1.5}
+#app:has(> .haut) table tr:last-child td{border-bottom:0}
+#app:has(> .haut) table tr:hover td{background:color-mix(in srgb,var(--ok) 4%,var(--carte))}
+#app:has(> .haut) .puce{padding:4px 9px;border-radius:6px;font-size:10px;font-weight:800;background:var(--surface-alt)}
+#app:has(> .haut) .vide{padding:25px 16px;border:1px dashed var(--bord);border-radius:12px;color:var(--doux);background:var(--surface-alt);font-size:12px}
+#app:has(> .haut) .graph-grid{gap:16px;margin:16px 0 20px}
+#app:has(> .haut) .academy-graph{padding:20px}
+#app:has(> .haut) .graph-bars{border-color:var(--bord)}
+#app:has(> .haut) .graph-track{background:var(--surface-alt)}
+#app:has(> .haut) .brevet-wizard{padding:22px;border-radius:16px;background:var(--carte);border-color:var(--bord);box-shadow:var(--ombre)}
+#app:has(> .haut) .brevet-tab{background:var(--surface-alt);border-color:var(--bord);border-radius:10px;font-size:11px}
+#app:has(> .haut) .brevet-tab.active{border-color:var(--bleu);background:color-mix(in srgb,var(--bleu) 9%,var(--carte))}
+#app:has(> .haut) .brevet-navigation{background:var(--carte);border-color:var(--bord)}
+#app:has(> .haut) dialog{background:var(--carte);color:var(--txt);border-color:var(--bord);border-radius:16px;box-shadow:var(--ombre-forte)}
+#app:has(> .haut) :focus-visible{outline:2px solid var(--ok);outline-offset:3px}
+@media(max-width:1050px){
+  #app:has(> .haut) .pose{grid-template-columns:220px minmax(0,1fr)}
+  #app:has(> .haut) nav{padding-inline:10px}
+  #app:has(> .haut) main{padding:24px 20px}
+}
+@media(max-width:760px){
+  #app:has(> .haut) .haut{min-height:66px;padding:9px 12px;gap:8px}
+  #app:has(> .haut) .logo{width:38px;height:38px;flex-basis:38px}
+  #app:has(> .haut) .haut h1{font-size:11px;letter-spacing:.045em}
+  #app:has(> .haut) .haut small{font-size:8px;letter-spacing:.06em}
+  #app:has(> .haut) .moi{padding:3px 7px}
+  #app:has(> .haut) .moi b{font-size:10px}
+  #app:has(> .haut) .moi .meta{font-size:9px}
+  #app:has(> .haut) .pose{display:flex;flex-direction:column;min-height:calc(100vh - 66px)}
+  #app:has(> .haut) nav{
+    position:sticky;top:66px;z-index:20;height:auto;max-height:none;
+    flex-direction:row;overflow-x:auto;overflow-y:hidden;padding:8px 10px;
+    border:0;border-bottom:1px solid var(--bord);gap:5px;
+  }
+  #app:has(> .haut) nav:before{display:none}
+  #app:has(> .haut) nav button{width:auto;flex:0 0 auto;min-height:38px;padding:7px 10px;white-space:nowrap}
+  #app:has(> .haut) nav button span{width:21px;height:21px;flex-basis:21px}
+  #app:has(> .haut) nav button:hover{transform:none}
+  #app:has(> .haut) main{padding:20px 13px}
+  #app:has(> .haut) .carte{padding:15px;margin-bottom:13px}
+  #app:has(> .haut) table{display:block;max-width:100%;overflow-x:auto;white-space:nowrap}
+  #app:has(> .haut) .theme-toggle{min-width:0;padding:6px 8px;font-size:10px}
+}
+@media(max-width:430px){
+  #app:has(> .haut) .moi{display:none}
+  #app:has(> .haut) .haut>.btn{padding:6px 8px;font-size:10px}
+  #app:has(> .haut) main{padding:17px 10px}
+  #app:has(> .haut) .brevet-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(prefers-reduced-motion:reduce){
+  #app:has(> .haut) *,#app:has(> .haut) *:before,#app:has(> .haut) *:after{transition:none!important;animation:none!important}
+}
+
 </style>
 </head>
 <body>
