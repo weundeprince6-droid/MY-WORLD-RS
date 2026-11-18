@@ -1,0 +1,101 @@
+// RÈGLES FIRESTORE — WEBS- Class room (centre de formation WEBSERVICES)
+// À AJOUTER dans Firebase → Firestore Database → Règles, à l'intérieur de
+//   match /databases/{database}/documents { ... }
+// sans supprimer vos blocs existants (googleOAuthTokens, social_inbox, etc.).
+// Les fonctions ci-dessous peuvent aussi être placées une seule fois à cet endroit.
+
+    function ecoleDirection() {
+      return request.auth != null
+        && request.auth.token.email == "weundeprince6@gmail.com"
+        && request.auth.token.email_verified == true;
+    }
+    function ecoleProfil() {
+      return get(/databases/$(database)/documents/ecole_users/$(request.auth.uid)).data;
+    }
+    function ecoleRole() { return ecoleDirection() ? "direction" : ecoleProfil().role; }
+    function ecoleActif() { return ecoleDirection() || ecoleProfil().actif != false; }
+    function ecoleEst(roles) { return request.auth != null && ecoleActif() && ecoleRole() in roles; }
+    function ecoleTous() { return ecoleEst(["direction", "enseignant", "secretaire", "comptable", "eleve"]); }
+
+    // Comptes : chacun lit sa fiche ; le personnel lit toutes les fiches.
+    match /ecole_users/{uid} {
+      allow read: if request.auth != null && (request.auth.uid == uid || ecoleEst(["direction", "enseignant", "secretaire", "comptable"]));
+      allow create: if ecoleEst(["direction"])
+                    || (ecoleEst(["secretaire"]) && request.resource.data.role == "eleve");
+      allow update: if ecoleEst(["direction"])
+                    || (ecoleEst(["secretaire"]) && resource.data.role == "eleve" && request.resource.data.role == "eleve");
+      allow delete: if ecoleEst(["direction"]);
+    }
+
+    // Contenus visibles par toute l'école, écrits par le personnel concerné.
+    match /ecole_annonces/{id} {
+      allow read: if ecoleTous();
+      allow create: if ecoleEst(["direction", "enseignant", "secretaire"]);
+      allow update, delete: if ecoleEst(["direction"]) || (ecoleEst(["enseignant", "secretaire"]) && resource.data.uid == request.auth.uid);
+    }
+    match /ecole_cours/{id} {
+      allow read: if ecoleTous();
+      allow create: if ecoleEst(["direction", "enseignant"]);
+      allow update, delete: if ecoleEst(["direction"]) || (ecoleEst(["enseignant"]) && resource.data.uid == request.auth.uid);
+    }
+    match /ecole_devoirs/{id} {
+      allow read: if ecoleTous();
+      allow create: if ecoleEst(["direction", "enseignant"]);
+      allow update, delete: if ecoleEst(["direction"]) || (ecoleEst(["enseignant"]) && resource.data.uid == request.auth.uid);
+    }
+    match /ecole_quiz/{id} {
+      allow read: if ecoleTous();
+      allow create: if ecoleEst(["direction", "enseignant"]);
+      allow update, delete: if ecoleEst(["direction"]) || (ecoleEst(["enseignant"]) && resource.data.uid == request.auth.uid);
+    }
+    match /ecole_planning/{id} {
+      allow read: if ecoleTous();
+      allow write: if ecoleEst(["direction", "secretaire", "enseignant"]);
+    }
+
+    // Rendus de devoirs : l'élève écrit le sien tant qu'il n'est pas noté ; l'enseignant note.
+    match /ecole_rendus/{id} {
+      allow read: if ecoleEst(["direction", "enseignant"])
+                  || (ecoleEst(["eleve"]) && resource.data.uid == request.auth.uid);
+      allow create: if ecoleEst(["eleve"])
+                    && request.resource.data.uid == request.auth.uid
+                    && id == request.resource.data.devoirId + "_" + request.auth.uid
+                    && request.resource.data.keys().hasOnly(["devoirId", "uid", "nom", "classe", "texte", "lien", "date"]);
+      allow update: if ecoleEst(["direction", "enseignant"])
+                    || (ecoleEst(["eleve"]) && resource.data.uid == request.auth.uid && !("note" in resource.data)
+                        && request.resource.data.uid == request.auth.uid
+                        && request.resource.data.keys().hasOnly(["devoirId", "uid", "nom", "classe", "texte", "lien", "date"]));
+      allow delete: if ecoleEst(["direction"]);
+    }
+
+    // Résultats de quiz : un seul essai par élève (création sans modification).
+    match /ecole_resultats/{id} {
+      allow read: if ecoleEst(["direction", "enseignant"])
+                  || (ecoleEst(["eleve"]) && resource.data.uid == request.auth.uid);
+      allow create: if ecoleEst(["eleve"])
+                    && request.resource.data.uid == request.auth.uid
+                    && id == request.resource.data.quizId + "_" + request.auth.uid
+                    && request.resource.data.keys().hasOnly(["quizId", "titre", "uid", "nom", "classe", "score", "sur", "date"]);
+      allow update, delete: if ecoleEst(["direction"]);
+    }
+
+    // Notes : lecture par l'élève concerné et les enseignants.
+    match /ecole_notes/{id} {
+      allow read: if ecoleEst(["direction", "enseignant"])
+                  || (ecoleEst(["eleve"]) && resource.data.uid == request.auth.uid);
+      allow write: if ecoleEst(["direction", "enseignant"]);
+    }
+
+    // Présences : saisie par enseignants et secrétariat.
+    match /ecole_presences/{id} {
+      allow read: if ecoleEst(["direction", "enseignant", "secretaire"])
+                  || (ecoleEst(["eleve"]) && resource.data.uid == request.auth.uid);
+      allow write: if ecoleEst(["direction", "enseignant", "secretaire"]);
+    }
+
+    // Comptabilité : écritures par le comptable ; l'élève ne voit que les siennes.
+    match /ecole_compta/{id} {
+      allow read: if ecoleEst(["direction", "comptable"])
+                  || (ecoleEst(["eleve"]) && resource.data.uid == request.auth.uid);
+      allow write: if ecoleEst(["direction", "comptable"]);
+    }

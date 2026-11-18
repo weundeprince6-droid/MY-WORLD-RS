@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WEBS- Class room</title>
+<style>
+:root{--bg:#0b1220;--carte:#131c2e;--carte2:#1a2540;--bord:#27344f;--txt:#e8ecf4;--doux:#9aa7c0;--or:#f5b942;--ok:#3ecf8e;--mal:#ff6b6b;--bleu:#5aa2ff}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--bleu)}
+.haut{display:flex;align-items:center;gap:12px;padding:12px 18px;background:#08101d;border-bottom:1px solid var(--bord);position:sticky;top:0;z-index:5}
+.logo{display:grid;place-items:center;width:38px;height:38px;border-radius:10px;background:var(--or);color:#1a1200;font-weight:800}
+.haut h1{margin:0;font-size:17px;line-height:1.1}.haut small{color:var(--doux)}
+.espace{flex:1}
+.moi{text-align:right;font-size:13px}.moi b{display:block}
+.pose{display:grid;grid-template-columns:230px 1fr;min-height:calc(100vh - 63px)}
+nav{padding:14px 10px;border-right:1px solid var(--bord);display:flex;flex-direction:column;gap:4px}
+nav button{display:flex;gap:10px;align-items:center;text-align:left;padding:10px 12px;border:0;border-radius:10px;background:none;cursor:pointer;color:var(--doux)}
+nav button:hover{background:var(--carte)}nav button.actif{background:var(--carte2);color:var(--or);font-weight:600}
+main{padding:20px;max-width:1000px;width:100%}
+h2{margin:0 0 4px;font-size:22px}.sous{color:var(--doux);margin:0 0 18px}
+.carte{background:var(--carte);border:1px solid var(--bord);border-radius:14px;padding:16px;margin-bottom:14px}
+.carte h3{margin:0 0 4px;font-size:16px}.meta{color:var(--doux);font-size:13px}
+.ligne{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.ligne .espace{flex:1}
+.btn{border:1px solid var(--bord);background:var(--carte2);padding:8px 14px;border-radius:10px;cursor:pointer}
+.btn:hover{border-color:var(--or)}.btn.pri{background:var(--or);color:#1a1200;border-color:var(--or);font-weight:700}
+.btn.mal{color:var(--mal)}.btn.petit{padding:4px 10px;font-size:13px}
+.puce{display:inline-block;padding:2px 9px;border-radius:99px;font-size:12px;border:1px solid var(--bord);color:var(--doux)}
+.puce.ok{color:var(--ok);border-color:var(--ok)}.puce.mal{color:var(--mal);border-color:var(--mal)}.puce.or{color:var(--or);border-color:var(--or)}
+form.champs{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--doux)}label.large{grid-column:1/-1}
+input,select,textarea{background:#0d1526;border:1px solid var(--bord);border-radius:9px;padding:9px 10px;color:var(--txt);width:100%}
+textarea{min-height:90px;resize:vertical}input:focus,select:focus,textarea:focus{outline:2px solid var(--or);outline-offset:-1px}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:8px 10px;border-bottom:1px solid var(--bord);text-align:left;vertical-align:top}th{color:var(--doux);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+.vide{color:var(--doux);padding:18px;text-align:center}
+.erreur{color:var(--mal);margin:8px 0}.info{color:var(--ok);margin:8px 0}
+.connexion{max-width:400px;margin:8vh auto;padding:0 18px}
+dialog{background:var(--carte);color:var(--txt);border:1px solid var(--bord);border-radius:16px;padding:20px;width:min(680px,94vw);max-height:90vh;overflow:auto}
+dialog::backdrop{background:#000a}
+.q{margin:14px 0}.q p{margin:0 0 6px;font-weight:600}.q label{flex-direction:row;align-items:center;color:var(--txt);gap:8px;padding:4px 0}.q input{width:auto}
+.jour{margin-top:14px;color:var(--or);font-weight:700}
+.rond{width:10px;height:10px;border-radius:50%;display:inline-block;background:var(--doux)}
+@media(max-width:760px){.pose{grid-template-columns:1fr}nav{flex-direction:row;overflow:auto;border-right:0;border-bottom:1px solid var(--bord)}nav button{white-space:nowrap}main{padding:14px}}
+</style>
+</head>
+<body>
+<div id="app"><p class="vide">Chargement…</p></div>
+<dialog id="dlg"></dialog>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut, createUserWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import { getFirestore, collection, doc, getDoc, getDocs, setDoc, addDoc, deleteDoc, query, where, writeBatch } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { firebaseConfig, reglages } from "./config.js";
+
+const DIRECTION_EMAIL = String(reglages.allowedGoogleEmail || "").toLowerCase();
+const ROLES = { direction: "Direction", enseignant: "Enseignant", eleve: "Élève", comptable: "Comptable", secretaire: "Secrétaire" };
+const STAFF = ["direction", "enseignant", "secretaire", "comptable"];
+
+// Application nommée : la session de la classe reste séparée de celle de MY WORLD RS.
+const app = initializeApp(firebaseConfig, "classroom");
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// ---------- petits outils ----------
+const $app = document.getElementById("app");
+const dlg = document.getElementById("dlg");
+function h(tag, props, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(props || {})) {
+    if (v == null || v === false) continue;
+    if (k === "class") e.className = v;
+    else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
+    else if (k === "value") e.value = v;
+    else e.setAttribute(k, v === true ? "" : v);
+  }
+  for (const c of kids.flat()) if (c != null && c !== false) e.append(c.nodeType ? c : document.createTextNode(String(c)));
+  return e;
+}
+const aujourdhui = () => new Date().toISOString().slice(0, 10);
+const fmtDate = (d) => { if (!d) return ""; const x = new Date(String(d).length <= 10 ? d + "T12:00:00" : d); return isNaN(x) ? String(d) : x.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" }); };
+const nombre = (v) => Number(String(v).replace(",", "."));
+const norm = (s) => String(s || "").trim().toLowerCase();
+const tri = (arr, f, desc) => arr.slice().sort((a, b) => (String(f(a)) < String(f(b)) ? -1 : String(f(a)) > String(f(b)) ? 1 : 0) * (desc ? -1 : 1));
+const sans = (o) => { const c = { ...o }; delete c.id; return c; };
+const aide = (t) => h("p", { class: "meta" }, t);
+
+const monter = (el, ...items) => el.replaceChildren(...items.flat(Infinity).filter((x) => x != null && x !== false));
+function fermer() { if (dlg.open) dlg.close(); }
+function modal(titre, ...contenu) {
+  monter(dlg, h("div", { class: "ligne" }, h("h2", { style: "font-size:19px" }, titre), h("span", { class: "espace" }), h("button", { class: "btn petit", onclick: fermer, type: "button" }, "Fermer")), contenu);
+  if (!dlg.open) dlg.showModal();
+}
+
+async function lister(nom, ...contraintes) {
+  const s = await getDocs(contraintes.length ? query(collection(db, nom), ...contraintes) : collection(db, nom));
+  return s.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+// Formulaire généré : champs = [{n, label, type, options, req, val, large, liste}]
+function formulaire(champs, enregistrer, libelle = "Enregistrer") {
+  const f = h("form", { class: "champs" });
+  const msg = h("div", { class: "erreur", role: "alert", style: "grid-column:1/-1" });
+  for (const c of champs) {
+    let ctl;
+    if (c.type === "textarea") ctl = h("textarea", { name: c.n, required: c.req, placeholder: c.ph || "" });
+    else if (c.type === "select") ctl = h("select", { name: c.n, required: c.req }, c.options.map((o) => { const [v, l] = Array.isArray(o) ? o : [o, o]; return h("option", { value: v }, l); }));
+    else ctl = h("input", { name: c.n, type: c.type || "text", required: c.req, placeholder: c.ph || "", list: c.liste, step: c.type === "number" ? "any" : null, autocomplete: c.type === "password" ? "new-password" : "off" });
+    if (c.val != null) ctl.value = c.val;
+    f.append(h("label", { class: c.large || c.type === "textarea" ? "large" : "" }, c.label + (c.req ? " *" : ""), ctl));
+  }
+  const bouton = h("button", { class: "btn pri", type: "submit" }, libelle);
+  f.append(msg, h("div", { style: "grid-column:1/-1" }, bouton));
+  f.addEventListener("submit", async (ev) => {
+    ev.preventDefault(); msg.textContent = ""; bouton.disabled = true;
+    try { const data = {}; for (const c of champs) data[c.n] = f.elements[c.n].value.trim(); await enregistrer(data, f); }
+    catch (e) { msg.textContent = erreurTexte(e); }
+    finally { bouton.disabled = false; }
+  });
+  return f;
+}
+function erreurTexte(e) {
+  const c = e && e.code || "";
+  if (c === "permission-denied" || /permission/i.test(e && e.message || "")) return "Accès refusé : vos droits ne permettent pas cette action (ou les règles Firestore ne sont pas encore publiées).";
+  const m = { "auth/invalid-credential": "Email ou mot de passe incorrect.", "auth/wrong-password": "Email ou mot de passe incorrect.", "auth/user-not-found": "Email ou mot de passe incorrect.", "auth/invalid-email": "Adresse email invalide.", "auth/too-many-requests": "Trop de tentatives. Réessayez dans quelques minutes.", "auth/email-already-in-use": "Cet email a déjà un compte.", "auth/weak-password": "Mot de passe trop court (6 caractères minimum).", "auth/operation-not-allowed": "La connexion par email n'est pas activée dans Firebase (Authentication → Sign-in method).", "auth/popup-closed-by-user": "Fenêtre de connexion fermée.", "auth/network-request-failed": "Pas de connexion internet." };
+  return m[c] || (e && e.message) || "Erreur inattendue.";
+}
+
+// ---------- état ----------
+let moi = null; // { uid, nom, email, role, classe }
+let vueCourante = "accueil";
+const estStaff = () => STAFF.includes(moi.role);
+const peut = (...roles) => roles.includes(moi.role);
+const visible = (x) => { if (estStaff()) return true; const c = norm(x.classe); return !c || c === "toutes" || c === norm(moi.classe); };
+let cacheEleves = null;
+async function eleves(force) { if (!cacheEleves || force) cacheEleves = tri(await lister("ecole_users", where("role", "==", "eleve")), (u) => norm(u.nom)); return cacheEleves; }
+async function classes() { return [...new Set((await eleves()).map((u) => u.classe).filter(Boolean))].sort(); }
+function listeClasses(id, cl) { return h("datalist", { id }, ["toutes", ...cl].map((c) => h("option", { value: c }))); }
+function choixEleve(liste) { return [["", "— Choisir un élève —"], ...liste.map((u) => [u.id, u.nom + (u.classe ? " (" + u.classe + ")" : "")])]; }
+
+// ---------- connexion ----------
+function vueConnexion(erreur) {
+  const msg = h("div", { class: erreur ? "erreur" : "info", role: "alert" }, erreur || "");
+  const f = h("form", { class: "champs", style: "grid-template-columns:1fr" },
+    h("label", {}, "Email", h("input", { name: "email", type: "email", required: true, autocomplete: "username" })),
+    h("label", {}, "Mot de passe", h("input", { name: "mdp", type: "password", required: true, autocomplete: "current-password" })),
+    h("button", { class: "btn pri", type: "submit" }, "Se connecter"));
+  f.addEventListener("submit", async (ev) => {
+    ev.preventDefault(); msg.className = "erreur"; msg.textContent = "";
+    try { await signInWithEmailAndPassword(auth, f.elements.email.value.trim(), f.elements.mdp.value); }
+    catch (e) { msg.textContent = erreurTexte(e); }
+  });
+  const oublie = h("button", { class: "btn petit", type: "button", onclick: async () => {
+    const email = f.elements.email.value.trim(); if (!email) { msg.className = "erreur"; msg.textContent = "Saisissez d'abord votre email."; return; }
+    try { await sendPasswordResetEmail(auth, email); msg.className = "info"; msg.textContent = "Un email de réinitialisation vient d'être envoyé."; } catch (e) { msg.className = "erreur"; msg.textContent = erreurTexte(e); }
+  } }, "Mot de passe oublié");
+  const google = h("button", { class: "btn", type: "button", onclick: async () => {
+    msg.className = "erreur"; msg.textContent = "";
+    try { await signInWithPopup(auth, new GoogleAuthProvider()); } catch (e) { msg.textContent = erreurTexte(e); }
+  } }, "Connexion Direction (Google)");
+  $app.replaceChildren(h("div", { class: "connexion" },
+    h("div", { class: "ligne", style: "margin-bottom:18px" }, h("span", { class: "logo" }, "WS"), h("div", {}, h("h1", { style: "margin:0;font-size:20px" }, "WEBS- Class room"), h("small", { class: "meta" }, "Centre de formation WEBSERVICES"))),
+    h("div", { class: "carte" }, f, msg, h("div", { class: "ligne", style: "margin-top:8px" }, oublie, h("span", { class: "espace" }), google)),
+    aide("Votre compte est créé par le secrétariat ou la direction. Pas encore de compte ? Demandez-le à l'école.")));
+}
+
+// ---------- sections ----------
+const SECTIONS = [
+  { id: "accueil", nom: "Accueil", ico: "⌂", roles: null, rendu: sAccueil },
+  { id: "annonces", nom: "Annonces", ico: "📣", roles: null, rendu: sAnnonces },
+  { id: "planning", nom: "Planning", ico: "🗓", roles: null, rendu: sPlanning },
+  { id: "cours", nom: "Cours & documents", ico: "📚", roles: null, rendu: sCours },
+  { id: "devoirs", nom: "Devoirs", ico: "📝", roles: null, rendu: sDevoirs },
+  { id: "quiz", nom: "Quiz", ico: "❓", roles: null, rendu: sQuiz },
+  { id: "notes", nom: "Notes", ico: "🎓", roles: ["eleve", "enseignant", "direction"], rendu: sNotes },
+  { id: "presences", nom: "Présences", ico: "✅", roles: ["eleve", "enseignant", "secretaire", "direction"], rendu: sPresences },
+  { id: "compta", nom: "Frais & comptabilité", ico: "💰", roles: ["eleve", "comptable", "direction"], rendu: sCompta },
+  { id: "utilisateurs", nom: "Élèves & personnel", ico: "👥", roles: ["secretaire", "direction"], rendu: sUtilisateurs },
+];
+const sectionsPour = () => SECTIONS.filter((s) => !s.roles || s.roles.includes(moi.role));
+
+function vueApp() {
+  const nav = h("nav", {}, sectionsPour().map((s) => h("button", { class: s.id === vueCourante ? "actif" : "", onclick: () => { vueCourante = s.id; vueApp(); } }, h("span", {}, s.ico), s.nom)));
+  const main = h("main", {}, h("p", { class: "vide" }, "Chargement…"));
+  $app.replaceChildren(
+    h("header", { class: "haut" }, h("span", { class: "logo" }, "WS"), h("div", {}, h("h1", {}, "WEBS- Class room"), h("small", { class: "meta" }, "Centre de formation WEBSERVICES")), h("span", { class: "espace" }),
+      h("div", { class: "moi" }, h("b", {}, moi.nom), h("span", { class: "meta" }, ROLES[moi.role] + (moi.classe ? " · " + moi.classe : ""))),
+      h("button", { class: "btn petit", onclick: () => signOut(auth) }, "Déconnexion")),
+    h("div", { class: "pose" }, nav, main));
+  const s = sectionsPour().find((x) => x.id === vueCourante) || SECTIONS[0];
+  s.rendu(main).catch((e) => main.replaceChildren(h("div", { class: "carte erreur" }, erreurTexte(e))));
+}
+const titre = (t, s) => [h("h2", {}, t), h("p", { class: "sous" }, s || "")];
+const suppr = (coll, x, apres) => h("button", { class: "btn petit mal", onclick: async () => { if (!confirm("Supprimer définitivement ?")) return; await deleteDoc(doc(db, coll, x.id)); apres(); } }, "Supprimer");
+const rafraichir = () => vueApp();
+
+// --- Accueil
+async function sAccueil(m) {
+  const [ann, dev] = await Promise.all([lister("ecole_annonces"), lister("ecole_devoirs")]);
+  const a = tri(ann.filter(visible), (x) => x.date || "", true).slice(0, 3);
+  const d = tri(dev.filter(visible).filter((x) => (x.limite || "9999") >= aujourdhui()), (x) => x.limite || "9999").slice(0, 5);
+  monter(m, ...titre("Bonjour " + moi.nom.split(" ")[0], ROLES[moi.role] + (moi.classe ? " · classe " + moi.classe : "")),
+    h("div", { class: "carte" }, h("h3", {}, "Dernières annonces"), a.length ? a.map((x) => h("p", {}, h("b", {}, x.titre), " — ", x.texte.slice(0, 140), h("span", { class: "meta" }, " · " + fmtDate(x.date)))) : h("p", { class: "vide" }, "Aucune annonce.")),
+    h("div", { class: "carte" }, h("h3", {}, "Devoirs à venir"), d.length ? d.map((x) => h("p", {}, h("b", {}, x.titre), h("span", { class: "meta" }, " · " + (x.matiere || "") + " · à rendre le " + fmtDate(x.limite)))) : h("p", { class: "vide" }, "Aucun devoir à rendre pour le moment.")));
+}
+
+// --- Annonces
+async function sAnnonces(m) {
+  const cl = await (estStaff() ? classes() : Promise.resolve([]));
+  const liste = tri((await lister("ecole_annonces")).filter(visible), (x) => x.date || "", true);
+  const peutEcrire = peut("direction", "enseignant", "secretaire");
+  monter(m, ...titre("Annonces", "Informations de l'école et de votre classe."),
+    peutEcrire && h("div", { class: "carte" }, h("h3", {}, "Nouvelle annonce"), listeClasses("dl-cl", cl), formulaire([
+      { n: "titre", label: "Titre", req: true }, { n: "classe", label: "Classe concernée", val: "toutes", liste: "dl-cl" },
+      { n: "texte", label: "Message", type: "textarea", req: true }], async (d) => { await addDoc(collection(db, "ecole_annonces"), { ...d, auteur: moi.nom, uid: moi.uid, date: new Date().toISOString() }); rafraichir(); }, "Publier")),
+    liste.length ? liste.map((x) => h("div", { class: "carte" }, h("div", { class: "ligne" }, h("h3", {}, x.titre), h("span", { class: "espace" }), h("span", { class: "puce" }, x.classe || "toutes"), (peut("direction") || x.uid === moi.uid) && suppr("ecole_annonces", x, rafraichir)), h("p", { style: "white-space:pre-wrap" }, x.texte), h("p", { class: "meta" }, x.auteur + " · " + fmtDate(x.date)))) : h("p", { class: "vide" }, "Aucune annonce."));
+}
+
+// --- Planning
+async function sPlanning(m) {
+  const cl = await (estStaff() ? classes() : Promise.resolve([]));
+  const liste = (await lister("ecole_planning")).filter(visible);
+  const jours = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
+  const peutEcrire = peut("direction", "secretaire", "enseignant");
+  monter(m, ...titre("Planning", "Emploi du temps des cours."),
+    peutEcrire && h("div", { class: "carte" }, h("h3", {}, "Ajouter un cours"), listeClasses("dl-cl2", cl), formulaire([
+      { n: "jour", label: "Jour", type: "select", options: jours, req: true }, { n: "debut", label: "Début", type: "time", req: true }, { n: "fin", label: "Fin", type: "time", req: true },
+      { n: "matiere", label: "Matière", req: true }, { n: "enseignant", label: "Enseignant" }, { n: "salle", label: "Salle" }, { n: "classe", label: "Classe", val: "toutes", liste: "dl-cl2" }],
+      async (d) => { await addDoc(collection(db, "ecole_planning"), d); rafraichir(); }, "Ajouter au planning")),
+    jours.map((j) => { const l = tri(liste.filter((x) => x.jour === j), (x) => x.debut); return l.length ? h("div", {}, h("div", { class: "jour" }, j), l.map((x) => h("div", { class: "carte" }, h("div", { class: "ligne" }, h("b", {}, x.debut + " – " + x.fin), h("span", {}, x.matiere), h("span", { class: "meta" }, [x.enseignant, x.salle && "salle " + x.salle].filter(Boolean).join(" · ")), h("span", { class: "espace" }), h("span", { class: "puce" }, x.classe || "toutes"), peutEcrire && suppr("ecole_planning", x, rafraichir))))) : null; }),
+    !liste.length && h("p", { class: "vide" }, "Aucun cours planifié."));
+}
+
+// --- Cours
+async function sCours(m) {
+  const cl = await (estStaff() ? classes() : Promise.resolve([]));
+  const liste = tri((await lister("ecole_cours")).filter(visible), (x) => x.date || "", true);
+  const peutEcrire = peut("direction", "enseignant");
+  monter(m, ...titre("Cours & documents", "Supports de cours : liens Google Drive, YouTube, PDF…"),
+    peutEcrire && h("div", { class: "carte" }, h("h3", {}, "Publier un cours"), listeClasses("dl-cl3", cl), formulaire([
+      { n: "titre", label: "Titre", req: true }, { n: "matiere", label: "Matière" }, { n: "classe", label: "Classe", val: "toutes", liste: "dl-cl3" },
+      { n: "lien", label: "Lien du document (https://…)", type: "url", large: true }, { n: "description", label: "Description", type: "textarea" }],
+      async (d) => { await addDoc(collection(db, "ecole_cours"), { ...d, auteur: moi.nom, uid: moi.uid, date: new Date().toISOString() }); rafraichir(); }, "Publier")),
+    liste.length ? liste.map((x) => h("div", { class: "carte" }, h("div", { class: "ligne" }, h("h3", {}, x.titre), h("span", { class: "puce or" }, x.matiere || "Cours"), h("span", { class: "espace" }), h("span", { class: "puce" }, x.classe || "toutes"), (peut("direction") || x.uid === moi.uid) && suppr("ecole_cours", x, rafraichir)), x.description && h("p", { style: "white-space:pre-wrap" }, x.description), x.lien && /^https?:\/\//i.test(x.lien) && h("p", {}, h("a", { href: x.lien, target: "_blank", rel: "noopener noreferrer" }, "Ouvrir le document ↗")), h("p", { class: "meta" }, x.auteur + " · " + fmtDate(x.date)))) : h("p", { class: "vide" }, "Aucun cours publié."));
+}
+
+// --- Devoirs
+async function sDevoirs(m) {
+  const cl = await (estStaff() ? classes() : Promise.resolve([]));
+  const liste = tri((await lister("ecole_devoirs")).filter(visible), (x) => x.limite || "", true);
+  const rendus = peut("eleve") ? await lister("ecole_rendus", where("uid", "==", moi.uid)) : [];
+  const peutEcrire = peut("direction", "enseignant");
+  monter(m, ...titre("Devoirs", peut("eleve") ? "Rendez vos travaux avant la date limite." : "Créez des devoirs et corrigez les rendus."),
+    peutEcrire && h("div", { class: "carte" }, h("h3", {}, "Nouveau devoir"), listeClasses("dl-cl4", cl), formulaire([
+      { n: "titre", label: "Titre", req: true }, { n: "matiere", label: "Matière" }, { n: "classe", label: "Classe", val: "toutes", liste: "dl-cl4" }, { n: "limite", label: "À rendre avant le", type: "date", req: true },
+      { n: "consigne", label: "Consigne", type: "textarea", req: true }], async (d) => { await addDoc(collection(db, "ecole_devoirs"), { ...d, auteur: moi.nom, uid: moi.uid, date: new Date().toISOString() }); rafraichir(); }, "Publier")),
+    liste.length ? liste.map((x) => {
+      const r = rendus.find((y) => y.devoirId === x.id);
+      const retard = (x.limite || "9999") < aujourdhui();
+      return h("div", { class: "carte" }, h("div", { class: "ligne" }, h("h3", {}, x.titre), h("span", { class: "puce or" }, x.matiere || "Devoir"), h("span", { class: "espace" }), h("span", { class: "puce" + (retard ? " mal" : "") }, "Avant le " + fmtDate(x.limite)), peutEcrire && (peut("direction") || x.uid === moi.uid) && suppr("ecole_devoirs", x, rafraichir)),
+        h("p", { style: "white-space:pre-wrap" }, x.consigne),
+        peut("eleve") && h("div", { class: "ligne" }, r ? h("span", { class: "puce ok" }, "Rendu le " + fmtDate(r.date)) : h("span", { class: "puce" + (retard ? " mal" : "") }, retard ? "Non rendu · date dépassée" : "À rendre"), r && r.note !== undefined && r.note !== "" && h("span", { class: "puce or" }, "Note : " + r.note + "/" + (r.sur || 20)), r && r.commentaire && h("span", { class: "meta" }, "« " + r.commentaire + " »"), h("span", { class: "espace" }), (!r || r.note === undefined || r.note === "") && h("button", { class: "btn petit", onclick: () => rendre(x, r) }, r ? "Modifier mon rendu" : "Rendre mon devoir")),
+        peutEcrire && h("div", { class: "ligne" }, h("button", { class: "btn petit", onclick: () => voirRendus(x) }, "Voir les rendus / noter")));
+    }) : h("p", { class: "vide" }, "Aucun devoir."));
+}
+function rendre(devoir, ancien) {
+  modal("Rendre : " + devoir.titre, formulaire([
+    { n: "texte", label: "Votre réponse", type: "textarea", val: ancien && ancien.texte || "" }, { n: "lien", label: "Lien vers votre fichier (Drive, GitHub…)", type: "url", large: true, val: ancien && ancien.lien || "" }],
+    async (d) => {
+      if (!d.texte && !d.lien) throw new Error("Écrivez une réponse ou collez un lien.");
+      await setDoc(doc(db, "ecole_rendus", devoir.id + "_" + moi.uid), { devoirId: devoir.id, uid: moi.uid, nom: moi.nom, classe: moi.classe || "", texte: d.texte, lien: d.lien, date: new Date().toISOString() });
+      fermer(); rafraichir();
+    }, "Envoyer"));
+}
+async function voirRendus(devoir) {
+  const liste = tri(await lister("ecole_rendus", where("devoirId", "==", devoir.id)), (x) => norm(x.nom));
+  modal("Rendus : " + devoir.titre, liste.length ? liste.map((r) => {
+    const note = h("input", { type: "number", step: "any", placeholder: "Note", value: r.note ?? "", style: "width:90px" });
+    const sur = h("input", { type: "number", step: "any", value: r.sur ?? 20, style: "width:70px" });
+    const com = h("input", { placeholder: "Commentaire", value: r.commentaire || "" });
+    const etat = h("span", { class: "meta" });
+    return h("div", { class: "carte" }, h("div", { class: "ligne" }, h("b", {}, r.nom), h("span", { class: "meta" }, fmtDate(r.date))), r.texte && h("p", { style: "white-space:pre-wrap" }, r.texte), r.lien && /^https?:\/\//i.test(r.lien) && h("p", {}, h("a", { href: r.lien, target: "_blank", rel: "noopener noreferrer" }, "Ouvrir le fichier ↗")),
+      h("div", { class: "ligne" }, note, "/", sur, com, h("button", { class: "btn petit pri", onclick: async () => {
+        if (note.value === "") { etat.textContent = "Saisissez une note."; return; }
+        await setDoc(doc(db, "ecole_rendus", r.id), { ...sans(r), note: nombre(note.value), sur: nombre(sur.value) || 20, commentaire: com.value.trim(), corrigePar: moi.nom });
+        etat.textContent = "Enregistré ✓";
+      } }, "Noter"), etat));
+  }) : h("p", { class: "vide" }, "Aucun rendu pour l'instant."));
+}
+
+// --- Quiz
+function lireQuiz(texte) {
+  const blocs = texte.split(/\n\s*\n/).map((b) => b.trim()).filter(Boolean), out = [];
+  for (const [i, b] of blocs.entries()) {
+    const l = b.split("\n").map((x) => x.trim()).filter(Boolean);
+    const q = l[0], opts = [];
+    let rep = -1;
+    for (const x of l.slice(1)) {
+      const o = x.match(/^([A-F])[).:-]\s*(.+)$/i), r = x.match(/^(?:r[ée]ponse|reponse)\s*[:=-]\s*([A-F])/i);
+      if (r) rep = r[1].toUpperCase().charCodeAt(0) - 65; else if (o) opts.push(o[2]);
+    }
+    if (!q || opts.length < 2 || rep < 0 || rep >= opts.length) throw new Error("Question " + (i + 1) + " invalide : il faut l'énoncé, au moins 2 choix (A) B) …) et une ligne « Réponse: B ».");
+    out.push({ q, opts, rep });
+  }
+  if (!out.length) throw new Error("Aucune question.");
+  return out;
+}
+async function sQuiz(m) {
+  const cl = await (estStaff() ? classes() : Promise.resolve([]));
+  const liste = tri((await lister("ecole_quiz")).filter(visible), (x) => x.date || "", true);
+  const mes = peut("eleve") ? await lister("ecole_resultats", where("uid", "==", moi.uid)) : [];
+  const peutEcrire = peut("direction", "enseignant");
+  monter(m, ...titre("Quiz", peut("eleve") ? "Un seul essai par quiz. Le résultat est enregistré." : "Créez des quiz à choix multiples corrigés automatiquement."),
+    peutEcrire && h("div", { class: "carte" }, h("h3", {}, "Nouveau quiz"), listeClasses("dl-cl5", cl), formulaire([
+      { n: "titre", label: "Titre", req: true }, { n: "matiere", label: "Matière" }, { n: "classe", label: "Classe", val: "toutes", liste: "dl-cl5" },
+      { n: "questions", label: "Questions (une par bloc, séparées par une ligne vide)", type: "textarea", req: true, ph: "Quelle balise crée un lien ?\nA) <img>\nB) <a>\nC) <div>\nRéponse: B\n\nHTML signifie ?\nA) HyperText Markup Language\nB) High Tech ML\nRéponse: A" }],
+      async (d) => { const qs = lireQuiz(d.questions); await addDoc(collection(db, "ecole_quiz"), { titre: d.titre, matiere: d.matiere, classe: d.classe, questions: qs, auteur: moi.nom, uid: moi.uid, date: new Date().toISOString() }); rafraichir(); }, "Publier le quiz")),
+    liste.length ? liste.map((x) => {
+      const r = mes.find((y) => y.quizId === x.id);
+      return h("div", { class: "carte" }, h("div", { class: "ligne" }, h("h3", {}, x.titre), h("span", { class: "puce or" }, x.matiere || "Quiz"), h("span", { class: "meta" }, x.questions.length + " questions"), h("span", { class: "espace" }), (peutEcrire && (peut("direction") || x.uid === moi.uid)) && suppr("ecole_quiz", x, rafraichir)),
+        peut("eleve") && h("div", { class: "ligne" }, r ? h("span", { class: "puce ok" }, "Résultat : " + r.score + "/" + r.sur) : h("button", { class: "btn pri petit", onclick: () => passerQuiz(x) }, "Commencer")),
+        peutEcrire && h("button", { class: "btn petit", onclick: () => resultatsQuiz(x) }, "Voir les résultats"));
+    }) : h("p", { class: "vide" }, "Aucun quiz."));
+}
+function passerQuiz(quiz) {
+  const f = h("form", {}, quiz.questions.map((q, i) => h("div", { class: "q" }, h("p", {}, (i + 1) + ". " + q.q), q.opts.map((o, j) => h("label", {}, h("input", { type: "radio", name: "q" + i, value: j }), o)))), h("div", { class: "erreur", role: "alert" }), h("button", { class: "btn pri", type: "submit" }, "Valider mes réponses"));
+  f.addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const n = quiz.questions.length; let score = 0;
+    for (let i = 0; i < n; i++) { const c = f.querySelector('input[name="q' + i + '"]:checked'); if (!c) { f.querySelector(".erreur").textContent = "Répondez à toutes les questions."; return; } if (Number(c.value) === quiz.questions[i].rep) score++; }
+    try { await setDoc(doc(db, "ecole_resultats", quiz.id + "_" + moi.uid), { quizId: quiz.id, titre: quiz.titre, uid: moi.uid, nom: moi.nom, classe: moi.classe || "", score, sur: n, date: new Date().toISOString() }); fermer(); rafraichir(); }
+    catch (e) { f.querySelector(".erreur").textContent = erreurTexte(e); }
+  });
+  modal(quiz.titre, f);
+}
+async function resultatsQuiz(quiz) {
+  const l = tri(await lister("ecole_resultats", where("quizId", "==", quiz.id)), (x) => norm(x.nom));
+  modal("Résultats : " + quiz.titre, l.length ? h("table", {}, h("tr", {}, h("th", {}, "Élève"), h("th", {}, "Score"), h("th", {}, "Date")), l.map((r) => h("tr", {}, h("td", {}, r.nom), h("td", {}, r.score + "/" + r.sur), h("td", {}, fmtDate(r.date))))) : h("p", { class: "vide" }, "Personne n'a encore passé ce quiz."));
+}
+
+// --- Notes
+async function sNotes(m) {
+  const eleve = peut("eleve");
+  const [notes, rendus, quiz, el] = await Promise.all([
+    lister("ecole_notes", ...(eleve ? [where("uid", "==", moi.uid)] : [])),
+    eleve ? lister("ecole_rendus", where("uid", "==", moi.uid)) : Promise.resolve([]),
+    eleve ? lister("ecole_resultats", where("uid", "==", moi.uid)) : Promise.resolve([]),
+    eleve ? Promise.resolve([]) : eleves()]);
+  const peutEcrire = peut("direction", "enseignant");
+  const devoirs = eleve ? await lister("ecole_devoirs") : [];
+  const lignes = [
+    ...notes.map((x) => ({ date: x.date, nom: x.nom, source: "Note", matiere: x.matiere, note: x.note + "/" + (x.sur || 20), com: x.commentaire, ref: x })),
+    ...rendus.filter((r) => r.note !== undefined && r.note !== "").map((r) => ({ date: r.date, nom: r.nom, source: "Devoir", matiere: (devoirs.find((d) => d.id === r.devoirId) || {}).titre || "Devoir", note: r.note + "/" + (r.sur || 20), com: r.commentaire })),
+    ...quiz.map((r) => ({ date: r.date, nom: r.nom, source: "Quiz", matiere: r.titre, note: r.score + "/" + r.sur }))];
+  const tab = tri(lignes, (x) => x.date || "", true);
+  monter(m, ...titre("Notes", eleve ? "Vos notes, corrections de devoirs et résultats de quiz." : "Saisie et suivi des notes."),
+    peutEcrire && h("div", { class: "carte" }, h("h3", {}, "Ajouter une note"), formulaire([
+      { n: "uid", label: "Élève", type: "select", options: choixEleve(el), req: true }, { n: "matiere", label: "Matière / évaluation", req: true }, { n: "note", label: "Note", type: "number", req: true }, { n: "sur", label: "Sur", type: "number", val: 20 }, { n: "commentaire", label: "Commentaire" }],
+      async (d) => { const u = el.find((x) => x.id === d.uid); await addDoc(collection(db, "ecole_notes"), { uid: d.uid, nom: u.nom, classe: u.classe || "", matiere: d.matiere, note: nombre(d.note), sur: nombre(d.sur) || 20, commentaire: d.commentaire, date: new Date().toISOString(), par: moi.nom }); rafraichir(); })),
+    tab.length ? h("div", { class: "carte" }, h("table", {}, h("tr", {}, !eleve && h("th", {}, "Élève"), h("th", {}, "Type"), h("th", {}, "Matière"), h("th", {}, "Note"), h("th", {}, "Date"), peutEcrire && h("th", {})), tab.map((x) => h("tr", {}, !eleve && h("td", {}, x.nom), h("td", {}, h("span", { class: "puce" }, x.source)), h("td", {}, x.matiere, x.com && h("div", { class: "meta" }, x.com)), h("td", {}, h("b", {}, x.note)), h("td", {}, fmtDate(x.date)), peutEcrire && h("td", {}, x.ref && suppr("ecole_notes", x.ref, rafraichir)))))) : h("p", { class: "vide" }, eleve ? "Aucune note pour le moment." : "Aucune note saisie."),
+    !eleve && aide("Les notes de devoirs se saisissent depuis « Devoirs → Voir les rendus / noter »."));
+}
+
+// --- Présences
+async function sPresences(m) {
+  if (peut("eleve")) {
+    const l = tri(await lister("ecole_presences", where("uid", "==", moi.uid)), (x) => x.date, true);
+    monter(m, ...titre("Mes présences", "Suivi de votre assiduité."), l.length ? h("div", { class: "carte" }, h("table", {}, h("tr", {}, h("th", {}, "Date"), h("th", {}, "Statut")), l.map((x) => h("tr", {}, h("td", {}, fmtDate(x.date)), h("td", {}, h("span", { class: "puce " + (x.statut === "Présent" ? "ok" : x.statut === "Absent" ? "mal" : "or") }, x.statut)))))) : h("p", { class: "vide" }, "Aucune présence enregistrée."));
+    return;
+  }
+  if (peut("comptable")) { monter(m, ...titre("Présences", ""), h("p", { class: "vide" }, "Cette section est réservée à l'enseignement et au secrétariat.")); return; }
+  const cl = await classes();
+  const choix = h("select", {}, h("option", { value: "" }, "— Choisir une classe —"), cl.map((c) => h("option", { value: c }, c)));
+  const date = h("input", { type: "date", value: aujourdhui(), style: "width:auto" });
+  const zone = h("div", {});
+  async function charger() {
+    zone.replaceChildren(); if (!choix.value) return;
+    const [el, ex] = await Promise.all([eleves(), lister("ecole_presences", where("date", "==", date.value))]);
+    const lst = el.filter((u) => u.classe === choix.value);
+    const sels = lst.map((u) => { const e = ex.find((p) => p.uid === u.id); return { u, s: h("select", { style: "width:auto" }, ["Présent", "Absent", "Retard"].map((o) => h("option", { value: o, selected: (e && e.statut) === o }, o))) }; });
+    const etat = h("span", { class: "meta" });
+    zone.replaceChildren(h("div", { class: "carte" }, sels.length ? h("table", {}, h("tr", {}, h("th", {}, "Élève"), h("th", {}, "Statut")), sels.map(({ u, s }) => h("tr", {}, h("td", {}, u.nom), h("td", {}, s)))) : h("p", { class: "vide" }, "Aucun élève dans cette classe."), sels.length ? h("div", { class: "ligne", style: "margin-top:12px" }, h("button", { class: "btn pri", onclick: async () => {
+      const b = writeBatch(db); for (const { u, s } of sels) b.set(doc(db, "ecole_presences", date.value + "_" + u.id), { uid: u.id, nom: u.nom, classe: u.classe, date: date.value, statut: s.value, par: moi.nom });
+      try { await b.commit(); etat.textContent = "Présences enregistrées ✓"; } catch (e) { etat.textContent = erreurTexte(e); }
+    } }, "Enregistrer l'appel"), etat) : null));
+  }
+  choix.addEventListener("change", charger); date.addEventListener("change", charger);
+  monter(m, ...titre("Présences", "Faites l'appel par classe et par date."), h("div", { class: "carte ligne" }, choix, date), zone);
+}
+
+// --- Frais & comptabilité
+async function sCompta(m) {
+  const eleve = peut("eleve");
+  const [l, el] = await Promise.all([lister("ecole_compta", ...(eleve ? [where("uid", "==", moi.uid)] : [])), eleve ? Promise.resolve([]) : eleves()]);
+  const solde = {};
+  for (const x of l) { const k = x.uid + "|" + (x.devise || "USD"); solde[k] = (solde[k] || 0) + (x.type === "paiement" ? -1 : 1) * nombre(x.montant); }
+  const total = {};
+  for (const [k, v] of Object.entries(solde)) { const dv = k.split("|")[1]; total[dv] = (total[dv] || 0) + v; }
+  const peutEcrire = peut("comptable", "direction");
+  const bilan = Object.entries(solde).filter(([, v]) => Math.abs(v) > 0.004).map(([k, v]) => { const [u, dv] = k.split("|"); const x = l.find((y) => y.uid === u); return { nom: x.nom, dv, v }; });
+  monter(m, ...titre("Frais & comptabilité", eleve ? "Vos frais de scolarité et paiements." : "Frais dus et paiements reçus par élève."),
+    peutEcrire && h("div", { class: "carte" }, h("h3", {}, "Nouvelle écriture"), formulaire([
+      { n: "uid", label: "Élève", type: "select", options: choixEleve(el), req: true }, { n: "type", label: "Type", type: "select", options: [["du", "Frais dus"], ["paiement", "Paiement reçu"]], req: true }, { n: "libelle", label: "Libellé (ex. Minerval novembre)", req: true },
+      { n: "montant", label: "Montant", type: "number", req: true }, { n: "devise", label: "Devise", val: "USD" }, { n: "date", label: "Date", type: "date", val: aujourdhui() }],
+      async (d) => { const u = el.find((x) => x.id === d.uid); await addDoc(collection(db, "ecole_compta"), { uid: d.uid, nom: u.nom, classe: u.classe || "", type: d.type, libelle: d.libelle, montant: nombre(d.montant), devise: (d.devise || "USD").toUpperCase(), date: d.date || aujourdhui(), par: moi.nom }); rafraichir(); })),
+    bilan.length ? h("div", { class: "carte" }, h("h3", {}, eleve ? "Solde à payer" : "Soldes par élève (positif = reste à payer)"), h("table", {}, bilan.map((b) => h("tr", {}, h("td", {}, b.nom), h("td", {}, h("span", { class: "puce " + (b.v > 0 ? "mal" : "ok") }, (b.v > 0 ? "Reste à payer " : "Crédit ") + Math.abs(b.v).toFixed(2) + " " + b.dv)))))) : null,
+    l.length ? h("div", { class: "carte" }, h("h3", {}, "Historique"), h("table", {}, h("tr", {}, h("th", {}, "Date"), !eleve && h("th", {}, "Élève"), h("th", {}, "Libellé"), h("th", {}, "Montant"), peutEcrire && h("th", {})), tri(l, (x) => x.date || "", true).map((x) => h("tr", {}, h("td", {}, fmtDate(x.date)), !eleve && h("td", {}, x.nom), h("td", {}, x.libelle), h("td", {}, h("span", { class: "puce " + (x.type === "paiement" ? "ok" : "or") }, (x.type === "paiement" ? "− " : "+ ") + nombre(x.montant).toFixed(2) + " " + (x.devise || "USD"))), peutEcrire && h("td", {}, suppr("ecole_compta", x, rafraichir)))))) : h("p", { class: "vide" }, "Aucune écriture."));
+}
+
+// --- Élèves & personnel
+async function sUtilisateurs(m) {
+  const tous = tri(await lister("ecole_users"), (u) => norm(u.nom));
+  const rolesCreables = peut("direction") ? Object.entries(ROLES).filter(([k]) => k !== "direction") : [["eleve", "Élève"]];
+  const cl = [...new Set(tous.map((u) => u.classe).filter(Boolean))];
+  monter(m, ...titre("Élèves & personnel", "Créez les comptes : l'élève se connecte avec son email et le mot de passe provisoire que vous lui donnez."),
+    h("div", { class: "carte" }, h("h3", {}, "Créer un compte"), listeClasses("dl-cl6", cl), formulaire([
+      { n: "nom", label: "Nom complet", req: true }, { n: "email", label: "Email", type: "email", req: true }, { n: "role", label: "Rôle", type: "select", options: rolesCreables, req: true },
+      { n: "classe", label: "Classe / filière (élèves)", liste: "dl-cl6", ph: "ex. Informatique 1" }, { n: "mdp", label: "Mot de passe provisoire (6+ car.)", type: "text", req: true }],
+      async (d, f) => {
+        // Seconde instance d'authentification : créer le compte sans déconnecter la personne qui crée.
+        const app2 = initializeApp(firebaseConfig, "creation-" + Date.now()), a2 = getAuth(app2);
+        const cred = await createUserWithEmailAndPassword(a2, d.email, d.mdp); await signOut(a2);
+        await setDoc(doc(db, "ecole_users", cred.user.uid), { nom: d.nom, email: d.email.toLowerCase(), role: d.role, classe: d.role === "eleve" ? d.classe : "", actif: true, cree: new Date().toISOString(), creePar: moi.nom });
+        cacheEleves = null; f.reset(); rafraichir();
+      }, "Créer le compte")),
+    h("div", { class: "carte" }, h("table", {}, h("tr", {}, h("th", {}, "Nom"), h("th", {}, "Email"), h("th", {}, "Rôle"), h("th", {}, "Classe"), h("th", {}, "")), tous.map((u) => h("tr", {}, h("td", {}, u.nom), h("td", {}, u.email), h("td", {}, h("span", { class: "puce" }, ROLES[u.role] || u.role)), h("td", {}, u.classe || ""), h("td", {}, (peut("direction") || u.role === "eleve") && h("button", { class: "btn petit" + (u.actif === false ? "" : " mal"), onclick: async () => { await setDoc(doc(db, "ecole_users", u.id), { ...sans(u), actif: u.actif === false }); cacheEleves = null; rafraichir(); } }, u.actif === false ? "Réactiver" : "Désactiver")))))),
+    aide("Désactiver un compte bloque l'accès à la classe. Pour supprimer définitivement un compte de connexion, utilisez la console Firebase (Authentication)."));
+}
+
+// ---------- démarrage ----------
+onAuthStateChanged(auth, async (user) => {
+  cacheEleves = null; moi = null;
+  if (!user) { vueConnexion(); return; }
+  $app.replaceChildren(h("p", { class: "vide" }, "Connexion…"));
+  try {
+    const email = String(user.email || "").toLowerCase();
+    const ref = doc(db, "ecole_users", user.uid);
+    if (DIRECTION_EMAIL && email === DIRECTION_EMAIL && user.emailVerified !== false) {
+      const s = await getDoc(ref);
+      moi = { uid: user.uid, nom: (s.exists() && s.data().nom) || user.displayName || "Direction", email, role: "direction", classe: "" };
+      if (!s.exists()) await setDoc(ref, { nom: moi.nom, email, role: "direction", classe: "", actif: true, cree: new Date().toISOString() });
+    } else {
+      const s = await getDoc(ref);
+      if (!s.exists() || s.data().actif === false) { await signOut(auth); vueConnexion("Ce compte n'est pas (ou plus) activé pour la classe. Contactez le secrétariat."); return; }
+      const d = s.data(); moi = { uid: user.uid, nom: d.nom || email, email, role: d.role, classe: d.classe || "" };
+    }
+    if (!ROLES[moi.role]) { await signOut(auth); vueConnexion("Rôle inconnu pour ce compte."); return; }
+    vueCourante = "accueil"; vueApp();
+  } catch (e) { await signOut(auth).catch(() => {}); vueConnexion(erreurTexte(e)); }
+});
+</script>
+</body>
+</html>
