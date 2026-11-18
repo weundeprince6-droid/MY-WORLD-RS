@@ -3098,6 +3098,8 @@ function renderResume() {
     catch { return url + (url.includes('?') ? '&' : '?') + 'vq=large'; }
   }
   const tvStations = {
+    beinsports: {name:'beIN SPORTS (gratuit)', category:'Sport', language:'Sport', url:'https://connect.bein.com/en/live/html/', official:'https://connect.bein.com/en/live/html/', externalOnly:true, note:'Chaîne gratuite officielle annoncée par beIN. La disponibilité du direct en ligne peut dépendre du pays et des règles du service.'},
+    beinsportsnews: {name:'beIN SPORTS NEWS (gratuit)', category:'Sport', language:'Sport', url:'https://connect.bein.com/en/live/html/', official:'https://connect.bein.com/en/live/html/', externalOnly:true, note:'Chaîne d’information sportive gratuite annoncée par beIN. La disponibilité du direct en ligne peut dépendre du pays et des règles du service.'},
     france24: {name:'FRANCE 24', category:'Francophone', language:'Français', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCCCPCZNChQdGa9EkATeye4g&autoplay=1&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@FRANCE24/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
     euronews: {name:'Euronews FR', category:'Francophone', language:'Français', url:'https://www.youtube-nocookie.com/embed/live_stream?channel=UCW2QcKZiU8aUGg4yxCIditg&autoplay=1&mute=0&rel=0&playsinline=1&controls=1', official:'https://www.youtube.com/@euronewsfr/live', note:'Direct officiel. Diffusion vérifiée sans restriction géographique annoncée.'},
     franceinfo: {name:'franceinfo', category:'Francophone', language:'Français', url:'https://www.youtube.com/embed/live_stream?channel=UCO6K_kkdP-lnSCiO3tPx7WA&autoplay=1&mute=0&rel=0&playsinline=1&controls=1', resolveLive:{q:'franceinfo direct',channelRe:'^franceinfo'}, official:'https://www.youtube.com/@franceinfo/live', note:'Direct de la chaîne officielle franceinfo sur YouTube. Le lecteur suit le flux en direct lorsque la chaîne le diffuse.'},
@@ -3245,7 +3247,7 @@ function renderResume() {
     if (officialLink) {
       officialLink.href = station.official;
       officialLink.target = station.externalOnly ? '_blank' : 'tvStationFrame';
-      officialLink.textContent = station.externalOnly ? 'Recharger le service dans TV ↻' : 'Ouvrir sur YouTube ↗';
+      officialLink.textContent = station.externalOnly ? 'Ouvrir le site officiel ↗' : 'Ouvrir sur YouTube ↗';
     }
     if (station.hls) {
       if (officialLink) { officialLink.href = station.hls; officialLink.target = '_blank'; officialLink.textContent = 'Ouvrir la source ↗'; }
@@ -3372,7 +3374,7 @@ function renderResume() {
       const matchesFavorite=!tvOnlyFavorites||tvFavorites.includes(key);
       return matchesText&&matchesCategory&&matchesFavorite;
     });
-    const flags={france24:'🇫🇷',euronews:'🌐',franceinfo:'🇫🇷',rdcdirect:'🇨🇩',rtnc:'🇨🇩',bonetv:'🇨🇩',digitalcongotv:'🇨🇩',tele50:'🇨🇩',antennea:'🇨🇩',topcongotv:'🇨🇩',okapitv:'🇨🇩',actualitecd:'🇨🇩',tv5monde:'🌍',tv5info:'🌍',africanewsfr:'🌍',rfi:'🌍',africanews_en:'🌍',citizentv:'🇰🇪',ntvkenya:'🇰🇪',ktnnews:'🇰🇪',tv47:'🇰🇪',channelten:'🇹🇿',azamtv:'🇹🇿',cloudstv:'🇹🇿',cnbcafrica:'🇿🇦',abcnews:'🇺🇸',redbull:'🏔️',sportfoot:'⚽',sportfr:'🇫🇷',sportbasket:'🏀',sportcombat:'🥊',sportauto:'🏎️',sportafrique:'🌍',olympics:'🏅',daznfoot:'⚽',skysportsnews:'🏆',nba:'🏀'};
+    const flags={beinsports:'⚽',beinsportsnews:'📰',france24:'🇫🇷',euronews:'🌐',franceinfo:'🇫🇷',rdcdirect:'🇨🇩',rtnc:'🇨🇩',bonetv:'🇨🇩',digitalcongotv:'🇨🇩',tele50:'🇨🇩',antennea:'🇨🇩',topcongotv:'🇨🇩',okapitv:'🇨🇩',actualitecd:'🇨🇩',tv5monde:'🌍',tv5info:'🌍',africanewsfr:'🌍',rfi:'🌍',africanews_en:'🌍',citizentv:'🇰🇪',ntvkenya:'🇰🇪',ktnnews:'🇰🇪',tv47:'🇰🇪',channelten:'🇹🇿',azamtv:'🇹🇿',cloudstv:'🇹🇿',cnbcafrica:'🇿🇦',abcnews:'🇺🇸',redbull:'🏔️',sportfoot:'⚽',sportfr:'🇫🇷',sportbasket:'🏀',sportcombat:'🥊',sportauto:'🏎️',sportafrique:'🌍',olympics:'🏅',daznfoot:'⚽',skysportsnews:'🏆',nba:'🏀'};
     const list=$('tvStations');
     if(!list)return;
     list.innerHTML=entries.map(([key,station])=>{
