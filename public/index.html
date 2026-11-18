@@ -182,6 +182,7 @@
             <button class="nav-item" role="tab" aria-selected="false" data-tab="maison-pro"><span class="nav-icon">🏠</span><span>Ma maison &amp; Projet pro</span><span class="nav-arrow">›</span></button>
             
             <button class="nav-item" role="tab" aria-selected="false" data-tab="finances"><span class="nav-icon">💰</span><span>Porte-Monnaie &amp; Budget</span><span class="nav-arrow">›</span></button>
+            <button class="nav-item" role="tab" aria-selected="false" data-tab="webs-classroom"><span class="nav-icon">🎓</span><span>WEBS- Class room</span><span class="nav-arrow">›</span></button>
             <button class="nav-item" role="tab" aria-selected="false" data-tab="profile"><span class="nav-icon">♙</span><span>Profil</span><span class="nav-arrow">›</span></button>
             <button class="nav-item" role="tab" aria-selected="false" data-tab="assistant"><span class="nav-icon">✦</span><span>Assistant IA</span><span class="nav-arrow">›</span></button>
           </nav>
@@ -680,6 +681,10 @@
           </section>
           </section>
           
+          <section class="tab-pane" id="pane-webs-classroom" role="tabpanel" data-root-pane="webs-classroom" hidden>
+            <div class="section-heading"><div><p class="eyebrow">CENTRE DE FORMATION WEBSERVICES</p><h2>WEBS- Class room</h2><p>Cours, devoirs, quiz, notes, planning, présences et frais de l'école. Les élèves et le personnel s'y connectent avec leur propre compte.</p></div><span class="actions"><a class="btn btn-quiet" id="classroom-ouvrir" href="webs-classroom.html" target="_blank" rel="noopener">Ouvrir dans une fenêtre ↗</a> <button class="btn btn-quiet" id="classroom-lien" type="button">Copier le lien pour les élèves</button></span></div>
+            <iframe id="classroom-frame" title="WEBS- Class room" style="width:100%;height:calc(100vh - 190px);min-height:520px;border:1px solid var(--line,#27344f);border-radius:14px;background:#0b1220" referrerpolicy="no-referrer-when-downgrade"></iframe>
+          </section>
           <section class="tab-pane" id="pane-profile" role="tabpanel" data-root-pane="profile" hidden>
             <div class="section-heading"><div><p class="eyebrow">VOS INFORMATIONS</p><h2>Mon profil</h2><p>Complétez vos informations une seule fois. Elles seront synchronisées dans Firebase avec votre compte Google.</p></div><span class="section-icon blue">♙</span></div>
             <section class="carte profile-card"><div class="card-heading"><div><p class="eyebrow">DOCUMENTATION</p><h2>Rapport de l'application</h2><p class="meta">Vos données (messages, agenda, tâches, bases, ristournes, porte-monnaie, notes, réseaux), puis le fonctionnement de l'application.</p></div><button id="rapport-appli-pdf" class="btn btn-primary" type="button">↓ Télécharger le rapport de l'application</button></div><p id="rapport-appli-status" class="meta" role="status"></p></section>
@@ -737,7 +742,7 @@
         document.querySelectorAll("[data-tab]").forEach(function (b) { var actif=b.dataset.tab===parent; b.classList.toggle("active",actif); b.setAttribute("aria-selected",actif?"true":"false"); });
         if (nom === "messages" || nom === "social") choisirSousVue("communication", nom);
         if (nom === "agenda" || nom === "notes") choisirSousVue("organisation", nom);
-        var titres={dashboard:"Tableau de bord",communication:"Communication",organisation:"Organisation",bases:"Mes bases",drive:"Google Drive","maison-pro":"Ma maison & Projet pro",finances:"Porte-Monnaie & Budget",profile:"Mon profil",assistant:"Assistant IA"}; document.title=(titres[parent]||"My World RS")+" — My World RS";
+        var titres={dashboard:"Tableau de bord",communication:"Communication",organisation:"Organisation",bases:"Mes bases",drive:"Google Drive","maison-pro":"Ma maison & Projet pro",finances:"Porte-Monnaie & Budget",profile:"Mon profil",assistant:"Assistant IA","webs-classroom":"WEBS- Class room"}; document.title=(titres[parent]||"My World RS")+" — My World RS"; if(parent==="webs-classroom"){var fr=document.getElementById("classroom-frame");if(fr&&!fr.getAttribute("src"))fr.setAttribute("src","webs-classroom.html");}
       }
       function choisirSousVue(groupe, nom) {
         document.querySelectorAll("#pane-"+groupe+" [data-subview-pane]").forEach(function(p){p.hidden=p.dataset.subviewPane!==nom;});
@@ -745,6 +750,7 @@
       }
       document.querySelectorAll("[data-subview]").forEach(function(b){b.addEventListener("click",function(){choisirSousVue(b.closest("[data-root-pane]").dataset.rootPane,b.dataset.subview);});});
       document.querySelectorAll("[data-tab]").forEach(function(b){b.addEventListener("click",function(){ouvrirOnglet(b.dataset.tab);});});
+      var lienClasse=document.getElementById("classroom-lien");if(lienClasse)lienClasse.addEventListener("click",function(){var u=new URL("webs-classroom.html",location.href).href;(navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(function(){lienClasse.textContent="Lien copié ✓";},function(){prompt("Copiez ce lien :",u);});});
       document.querySelectorAll("[data-go]").forEach(function(b){b.addEventListener("click",function(){ouvrirOnglet(b.dataset.go);});});
       document.querySelectorAll("[data-finance-view]").forEach(function(b){b.addEventListener("click",function(){
         var nom=b.dataset.financeView;
