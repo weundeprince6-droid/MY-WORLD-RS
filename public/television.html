@@ -3266,7 +3266,7 @@ function renderResume() {
       if (officialLink) { officialLink.href = station.hls; officialLink.target = '_blank'; officialLink.textContent = 'Ouvrir la source ↗'; }
       $('tvStatus').textContent = station.note;
     } else if (station.externalOnly) {
-      $('tvStatus').textContent = station.note + ' Chargement du service officiel dans le lecteur TV. Si le fournisseur interdit l’affichage intégré, son site peut refuser de s’ouvrir dans ce cadre.';
+      $('tvStatus').textContent = station.note + ' Chargement du service officiel dans le lecteur TV. Si le fournisseur interdit l’affichage intégré, son site peut refuser de s’ouvrir dans ce cadre.' + (/connect\.bein\.com/.test(station.official || '') ? ' Si beIN affiche un message « VPN / hors région » : désactivez tout VPN ou proxy sur le PC (beIN les détecte), puis essayez « Ouvrir le site officiel ↗ » dans votre navigateur. Un abonnement beIN peut être requis.' : '');
     } else {
       $('tvStatus').textContent = station.note + ' Si YouTube indique que la vidéo n’est pas disponible, utilisez « Ouvrir sur YouTube ».';
     }
