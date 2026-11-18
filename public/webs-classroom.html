@@ -227,27 +227,27 @@ th,td{border-bottom-color:var(--bord)}
    et styles d'impression du brevet préservés.
    ========================================================= */
 #app:has(> .haut){
-  --bg:#f3f7f5;--carte:#fff;--carte2:#edf5f0;--bord:#dce7e0;
-  --txt:#172820;--doux:#62756b;--ok:#118653;--or:#118653;
-  --bleu:#2876c7;--fond:#f7faf8;--entete:#fff;--nav:#f8fbf9;
-  --surface-alt:#edf5f0;--carte-debut:#fff;--carte-fin:#fff;--champ:#fff;
-  --ombre:0 8px 26px rgba(23,52,37,.055);
-  --ombre-forte:0 16px 44px rgba(23,52,37,.10);
+  --bg:#f4f5f8;--carte:#fff;--carte2:#f7f4eb;--bord:#e5dfcf;
+  --txt:#17213d;--doux:#697187;--ok:#c6a04b;--or:#c6a04b;
+  --bleu:#142044;--fond:#f4f5f8;--entete:#142044;--nav:#fff;
+  --surface-alt:#f5f1e6;--carte-debut:#fff;--carte-fin:#fff;--champ:#fff;
+  --ombre:0 8px 26px rgba(20,32,68,.07);
+  --ombre-forte:0 16px 44px rgba(20,32,68,.13);
   color:var(--txt);
 }
 :root[data-theme="dark"] #app:has(> .haut){
-  --bg:#0b1512;--carte:#111f19;--carte2:#192c23;--bord:#294538;
-  --txt:#edf7f1;--doux:#a5b9ae;--ok:#42d49a;--or:#42d49a;
-  --bleu:#69aaff;--fond:#0e1a14;--entete:#0d1913;--nav:#0d1913;
-  --surface-alt:#1b3026;--carte-debut:#14251c;--carte-fin:#111f19;--champ:#0d1a14;
-  --ombre:0 8px 26px rgba(0,0,0,.16);--ombre-forte:0 16px 44px rgba(0,0,0,.25);
+  --bg:#0b1226;--carte:#121d38;--carte2:#1a2949;--bord:#2d3a5a;
+  --txt:#f7f8fc;--doux:#b5bdd0;--ok:#d6b45e;--or:#d6b45e;
+  --bleu:#8b9ac2;--fond:#0b1226;--entete:#101a35;--nav:#101a35;
+  --surface-alt:#1a2949;--carte-debut:#172341;--carte-fin:#121d38;--champ:#101a35;
+  --ombre:0 8px 26px rgba(0,0,0,.22);--ombre-forte:0 16px 44px rgba(0,0,0,.34);
 }
 @media(prefers-color-scheme:dark){
   :root:not([data-theme="light"]):not([data-theme="dark"]) #app:has(> .haut){
-    --bg:#0b1512;--carte:#111f19;--carte2:#192c23;--bord:#294538;
-    --txt:#edf7f1;--doux:#a5b9ae;--ok:#42d49a;--or:#42d49a;
-    --bleu:#69aaff;--fond:#0e1a14;--entete:#0d1913;--nav:#0d1913;
-    --surface-alt:#1b3026;--carte-debut:#14251c;--carte-fin:#111f19;--champ:#0d1a14;
+    --bg:#0b1226;--carte:#121d38;--carte2:#1a2949;--bord:#2d3a5a;
+    --txt:#f7f8fc;--doux:#b5bdd0;--ok:#d6b45e;--or:#d6b45e;
+    --bleu:#8b9ac2;--fond:#0b1226;--entete:#101a35;--nav:#101a35;
+    --surface-alt:#1a2949;--carte-debut:#172341;--carte-fin:#121d38;--champ:#0d1a14;
     --ombre:0 8px 26px rgba(0,0,0,.16);--ombre-forte:0 16px 44px rgba(0,0,0,.25);
   }
 }
@@ -256,13 +256,13 @@ body:has(#app > .haut){background:var(--bg);color:var(--txt)}
 #app:has(> .haut) .haut{
   min-height:76px;padding:12px clamp(16px,2.4vw,34px);
   gap:14px;background:var(--entete);border:0;border-bottom:1px solid var(--bord);
-  box-shadow:0 3px 16px rgba(20,48,33,.045);backdrop-filter:blur(16px);
+  box-shadow:0 3px 16px rgba(20,32,68,.10);backdrop-filter:blur(16px);
   position:sticky;top:0;z-index:30;
 }
 #app:has(> .haut) .logo{
   width:46px;height:46px;border-radius:14px;flex:0 0 46px;
-  color:#052217;background:linear-gradient(145deg,#65e2ad,#13a66d);
-  box-shadow:0 5px 14px rgba(17,134,83,.18);font-weight:900;letter-spacing:-.05em;
+  color:#142044;background:linear-gradient(145deg,#f0d58d,#b68b35);
+  box-shadow:0 5px 14px rgba(198,160,75,.24);font-weight:900;letter-spacing:-.05em;
 }
 #app:has(> .haut) .haut h1{font-size:15px;font-weight:850;letter-spacing:.095em;color:var(--txt)}
 #app:has(> .haut) .haut small{display:block;margin-top:5px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--doux)}
@@ -298,9 +298,9 @@ body:has(#app > .haut){background:var(--bg);color:var(--txt)}
 #app:has(> .haut) nav button.actif{
   background:color-mix(in srgb,var(--ok) 10%,var(--carte));
   border-color:color-mix(in srgb,var(--ok) 26%,var(--bord));
-  color:var(--ok);box-shadow:inset 3px 0 var(--ok);font-weight:800;
+  color:var(--bleu);box-shadow:inset 3px 0 var(--ok);font-weight:800;
 }
-#app:has(> .haut) nav button.actif span{background:var(--ok);color:#fff}
+#app:has(> .haut) nav button.actif span{background:var(--ok);color:#17213d}
 #app:has(> .haut) main{
   width:100%;max-width:1600px;margin:0 auto;padding:clamp(22px,3vw,42px);
   min-width:0;
@@ -325,12 +325,12 @@ body:has(#app > .haut){background:var(--bg);color:var(--txt)}
 }
 #app:has(> .haut) .btn:hover{border-color:var(--ok);filter:brightness(1.04);transform:translateY(-1px)}
 #app:has(> .haut) .btn.pri{
-  color:#062318;background:linear-gradient(135deg,#59dda5,#19a66e);
-  border-color:#20b77b;box-shadow:0 5px 13px rgba(17,134,83,.13);
+  color:#17213d;background:linear-gradient(135deg,#f0d58d,#c6a04b);
+  border-color:#c6a04b;box-shadow:0 5px 13px rgba(198,160,75,.22);
 }
 #app:has(> .haut) .btn.mal{color:var(--mal)}
 #app:has(> .haut) .btn.petit{min-height:30px;padding:5px 10px;font-size:11px}
-#app:has(> .haut) .theme-toggle{min-width:100px;border-color:color-mix(in srgb,var(--ok) 45%,var(--bord));color:var(--ok);background:var(--surface-alt)}
+#app:has(> .haut) .theme-toggle{min-width:100px;border-color:color-mix(in srgb,var(--ok) 65%,var(--bord));color:var(--ok);background:var(--surface-alt)}
 #app:has(> .haut) form.champs{gap:16px}
 #app:has(> .haut) label{gap:7px;color:var(--doux);font-size:11px;font-weight:750;letter-spacing:.025em}
 #app:has(> .haut) input,#app:has(> .haut) select,#app:has(> .haut) textarea{
