@@ -380,12 +380,120 @@ const rafraichir = () => vueApp();
 
 // --- Accueil
 async function sAccueil(m) {
-  const [ann, dev] = await Promise.all([lister("ecole_annonces"), lister("ecole_devoirs")]);
-  const a = tri(ann.filter(visible), (x) => x.date || "", true).slice(0, 3);
-  const d = tri(dev.filter(visible).filter((x) => (x.limite || "9999") >= aujourdhui()), (x) => x.limite || "9999").slice(0, 5);
-  monter(m, ...titre("Bonjour " + moi.nom.split(" ")[0], ROLES[moi.role] + (moi.classe ? " · classe " + moi.classe : "")),
-    h("div", { class: "carte" }, h("h3", {}, "Dernières annonces"), a.length ? a.map((x) => h("p", {}, h("b", {}, x.titre), " — ", x.texte.slice(0, 140), h("span", { class: "meta" }, " · " + fmtDate(x.date)))) : h("p", { class: "vide" }, "Aucune annonce.")),
-    h("div", { class: "carte" }, h("h3", {}, "Devoirs à venir"), d.length ? d.map((x) => h("p", {}, h("b", {}, x.titre), h("span", { class: "meta" }, " · " + (x.matiere || "") + " · à rendre le " + fmtDate(x.limite)))) : h("p", { class: "vide" }, "Aucun devoir à rendre pour le moment.")));
+  const role = moi.role;
+  const staff = estStaff();
+  const aujourd = aujourdhui();
+  const [annonces, devoirs] = await Promise.all([
+    lister("ecole_annonces"),
+    lister("ecole_devoirs")
+  ]);
+  const annoncesVisibles = tri(annonces.filter(visible), (x) => x.date || "", true);
+  const devoirsVisibles = tri(devoirs.filter(visible), (x) => x.limite || "9999");
+  const aVenir = devoirsVisibles.filter((x) => (x.limite || "9999") >= aujourd);
+  const annonceCard = h("div", { class: "carte" },
+    h("div", { class: "ligne" }, h("h3", {}, "Actualités de l'Academy"), h("span", { class: "espace" }),
+      h("button", { class: "btn petit", onclick: () => { vueCourante = "annonces"; vueApp(); } }, "Toutes les annonces")),
+    annoncesVisibles.length ? annoncesVisibles.slice(0,3).map((x) => h("div", { style: "padding:9px 0;border-bottom:1px solid var(--bordure,#ddd)" },
+      h("b", {}, x.titre), h("p", { style: "margin:4px 0;white-space:pre-wrap" }, String(x.texte || "").slice(0,180)),
+      h("span", { class: "meta" }, (x.classe || "Toutes les classes") + " · " + fmtDate(x.date)))) : h("p", { class: "vide" }, "Aucune annonce publiée."));
+  const devoirCard = h("div", { class: "carte" },
+    h("div", { class: "ligne" }, h("h3", {}, role === "eleve" ? "Mes prochains devoirs" : "Échéances pédagogiques"),
+      h("span", { class: "espace" }), h("button", { class: "btn petit", onclick: () => { vueCourante = "devoirs"; vueApp(); } }, "Ouvrir les devoirs")),
+    aVenir.length ? aVenir.slice(0,5).map((x) => h("div", { class: "ligne", style: "padding:8px 0;border-bottom:1px solid var(--bordure,#ddd)" },
+      h("div", {}, h("b", {}, x.titre), h("div", { class: "meta" }, (x.matiere || "Formation") + " · " + (x.classe || "Toutes classes"))),
+      h("span", { class: "espace" }), h("span", { class: "puce or" }, fmtDate(x.limite)))) : h("p", { class: "vide" }, "Aucun devoir à venir."));
+  const stat = (label, value, detail, cible, tone) => h("div", { class: "carte", style: "flex:1 1 175px;min-width:150px;margin:0" },
+    h("div", { class: "meta", style: "font-weight:700;letter-spacing:.04em" }, label),
+    h("div", { style: "font-size:28px;font-weight:800;margin:7px 0;color:var(--texte,inherit)" }, value),
+    h("div", { class: "meta" }, detail || ""),
+    cible && h("button", { class: "btn petit", style: "margin-top:10px", onclick: () => { vueCourante = cible; vueApp(); } }, "Consulter"));
+  const quick = (id, label, icone) => h("button", { class: "btn", style: "flex:1 1 155px;text-align:left;padding:13px", onclick: () => { vueCourante = id; vueApp(); } }, icone + "  " + label);
+  const blocStats = (...items) => h("div", { class: "ligne", style: "align-items:stretch;flex-wrap:wrap;gap:12px;margin:12px 0 18px" }, items);
+  const entete = titre("Bonjour " + (moi.nom || "Bienvenue").split(" ")[0],
+    "Tableau de bord · " + (ROLES[role] || role) + (moi.classe ? " · " + moi.classe : "") + " · " + fmtDate(aujourd));
+
+  if (role === "direction") {
+    const [el, inscriptions, pres, notes, compta, cours, planning] = await Promise.all([
+      eleves(true), lister("ecole_inscriptions"), lister("ecole_presences", where("date", "==", aujourd)),
+      lister("ecole_notes"), lister("ecole_compta"), lister("ecole_cours"), lister("ecole_planning")
+    ]);
+    const actifs = el.filter((x) => x.actif !== false);
+    const cls = [...new Set(actifs.map((x) => x.classe).filter(Boolean))];
+    const nouvelles = inscriptions.filter((x) => x.statut === "nouvelle").length;
+    const abs = pres.filter((x) => x.statut === "Absent").length;
+    const presents = pres.filter((x) => x.statut === "Présent").length;
+    const retards = pres.filter((x) => x.statut === "Retard").length;
+    const soldes = {};
+    compta.forEach((x) => { const dv = (x.devise || "USD").toUpperCase(); soldes[dv] = (soldes[dv] || 0) + (x.type === "paiement" ? -1 : 1) * nombre(x.montant); });
+    const finance = Object.entries(soldes).map(([dv,v]) => Math.abs(v).toLocaleString("fr-FR",{maximumFractionDigits:2})+" "+dv+(v>0?" à recouvrer":v<0?" en crédit":" soldé"));
+    const alertes = [];
+    if (nouvelles) alertes.push(h("p", {}, h("span", { class: "puce or" }, nouvelles + " nouvelle(s) inscription(s)"), " à examiner."));
+    if (abs) alertes.push(h("p", {}, h("span", { class: "puce mal" }, abs + " absence(s)"), " enregistrée(s) aujourd'hui."));
+    if (aVenir.some((x) => x.limite === aujourd)) alertes.push(h("p", {}, h("span", { class: "puce or" }, "Échéance aujourd'hui"), " : devoir(s) à remettre."));
+    if (!alertes.length) alertes.push(h("p", { class: "vide" }, "Aucun signalement prioritaire pour le moment."));
+    monter(m, ...entete,
+      h("div", { class: "carte", style: "background:linear-gradient(120deg,var(--carte,#fff),var(--fond,#f4f7fb));padding:20px" },
+        h("div", { class: "ligne", style: "flex-wrap:wrap" }, h("div", {}, h("h3", { style: "font-size:20px;margin:0 0 5px" }, "Pilotage du Centre"), h("p", { class: "meta" }, "Vue d'ensemble de l'activité pédagogique et administrative.")), h("span", { class: "espace" }), h("span", { class: "puce ok" }, "Espace Direction"))),
+      blocStats(
+        stat("ÉLÈVES ACTIFS", String(actifs.length), el.length + " comptes élèves · " + cls.length + " classe(s)", "utilisateurs"),
+        stat("INSCRIPTIONS À TRAITER", String(nouvelles), inscriptions.length + " demande(s) au total", "inscriptions", "or"),
+        stat("PRÉSENCES DU JOUR", String(presents), abs + " absent(s) · " + retards + " retard(s)", "presences"),
+        stat("ÉVALUATIONS", String(notes.length), "notes enregistrées", "notes"),
+        stat("SUPPORTS DE COURS", String(cours.length), planning.length + " cours planifié(s)", "cours")
+      ),
+      h("div", { class: "carte" }, h("div", { class: "ligne" }, h("h3", {}, "Alertes et points d'attention"), h("span", { class: "espace" }), h("span", { class: "meta" }, "Mise à jour à l'ouverture")), ...alertes),
+      blocStats(stat("SITUATION FINANCIÈRE", finance.length ? finance.join(" · ") : "Aucune écriture", "Soldes calculés à partir des frais et paiements", "compta")),
+      h("div", { class: "carte" }, h("h3", {}, "Accès rapide"),
+        h("div", { class: "ligne", style: "flex-wrap:wrap;gap:9px" },
+          quick("suivi","Suivi des élèves","📊"), quick("inscriptions","Inscriptions","📋"), quick("utilisateurs","Élèves & personnel","👥"),
+          quick("presences","Faire l'appel","✅"), quick("notes","Notes & résultats","🎓"), quick("compta","Frais & comptabilité","💰"),
+          quick("brevets","Brevets","🏅"), quick("planning","Planning","🗓"))),
+      h("div", { class: "ligne", style: "align-items:stretch;flex-wrap:wrap;gap:12px" }, annonceCard, devoirCard)
+    );
+    return;
+  }
+
+  if (role === "eleve") {
+    const [pres, notes, rendus, resultats, compta] = await Promise.all([
+      lister("ecole_presences", where("uid","==",moi.uid)), lister("ecole_notes", where("uid","==",moi.uid)),
+      lister("ecole_rendus", where("uid","==",moi.uid)), lister("ecole_resultats", where("uid","==",moi.uid)),
+      lister("ecole_compta", where("uid","==",moi.uid))
+    ]);
+    const total = pres.length, p = pres.filter((x) => x.statut === "Présent").length;
+    const assiduite = total ? Math.round(p/total*100)+"%" : "—";
+    const val = [...notes.map((x)=>[nombre(x.note),nombre(x.sur)||20]),...rendus.filter((x)=>x.note!==undefined&&x.note!=="").map((x)=>[nombre(x.note),nombre(x.sur)||20]),...resultats.map((x)=>[nombre(x.score),nombre(x.sur)||20])].filter(([n,s])=>Number.isFinite(n)&&s>0);
+    const moyenne = val.length ? (val.reduce((a,[n,s])=>a+n/s*20,0)/val.length).toFixed(2)+"/20" : "—";
+    const solde = {};
+    compta.forEach((x)=>{const dv=(x.devise||"USD").toUpperCase();solde[dv]=(solde[dv]||0)+(x.type==="paiement"?-1:1)*nombre(x.montant);});
+    monter(m, ...entete,
+      blocStats(stat("ASSIDUITÉ",assiduite,p+" présence(s) sur "+total,"presences"),stat("MOYENNE",moyenne,val.length+" résultat(s)","notes"),...Object.entries(solde).map(([dv,v])=>stat("SOLDE "+dv,Math.abs(v).toLocaleString("fr-FR")+" "+dv,v>0?"Reste à payer":v<0?"Crédit":"Situation soldée","compta"))),
+      h("div", { class: "carte" }, h("h3", {}, "Mon espace de formation"), h("div", { class: "ligne", style: "flex-wrap:wrap;gap:9px" }, quick("cours","Mes cours","📚"),quick("devoirs","Mes devoirs","📝"),quick("notes","Mes résultats","🎓"),quick("presences","Mes présences","✅"),quick("compta","Mes frais","💰"),quick("brevets","Mes brevets","🏅"))),
+      h("div", { class: "ligne", style: "align-items:stretch;flex-wrap:wrap;gap:12px" },annonceCard,devoirCard)
+    );
+    return;
+  }
+
+  const [el, pres, compta, inscriptions] = await Promise.all([
+    (role === "enseignant" || role === "secretaire") ? eleves(true) : Promise.resolve([]),
+    (role === "enseignant" || role === "secretaire") ? lister("ecole_presences", where("date","==",aujourd)) : Promise.resolve([]),
+    (role === "comptable") ? lister("ecole_compta") : Promise.resolve([]),
+    (role === "secretaire") ? lister("ecole_inscriptions") : Promise.resolve([])
+  ]);
+  const quickItems = role === "enseignant"
+    ? [quick("planning","Mon planning","🗓"),quick("cours","Cours & documents","📚"),quick("devoirs","Devoirs","📝"),quick("notes","Saisir les notes","🎓"),quick("presences","Faire l'appel","✅")]
+    : role === "secretaire"
+    ? [quick("inscriptions","Inscriptions","📋"),quick("utilisateurs","Élèves & personnel","👥"),quick("presences","Présences","✅"),quick("annonces","Annonces","📣"),quick("planning","Planning","🗓")]
+    : [quick("compta","Frais & comptabilité","💰"),quick("utilisateurs","Élèves","👥"),quick("annonces","Annonces","📣")];
+  monter(m, ...entete,
+    blocStats(
+      (role === "enseignant" || role === "secretaire") && stat("ÉLÈVES",String(el.filter((x)=>x.actif!==false).length),"Comptes actifs","utilisateurs"),
+      (role === "enseignant" || role === "secretaire") && stat("APPEL DU JOUR",String(pres.length),pres.filter((x)=>x.statut==="Absent").length+" absence(s) · "+pres.filter((x)=>x.statut==="Retard").length+" retard(s)","presences"),
+      role === "secretaire" && stat("INSCRIPTIONS EN ATTENTE",String(inscriptions.filter((x)=>x.statut==="nouvelle").length),"Demandes à traiter","inscriptions"),
+      role === "comptable" && stat("ÉCRITURES COMPTABLES",String(compta.length),"Frais et paiements enregistrés","compta")
+    ),
+    h("div", { class: "carte" }, h("h3", {}, "Mes outils de travail"), h("div", { class: "ligne", style: "flex-wrap:wrap;gap:9px" }, ...quickItems)),
+    h("div", { class: "ligne", style: "align-items:stretch;flex-wrap:wrap;gap:12px" },annonceCard,devoirCard)
+  );
 }
 
 // --- Annonces
