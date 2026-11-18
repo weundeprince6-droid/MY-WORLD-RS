@@ -48,3 +48,17 @@ reprise de son dossier d'inscription, moyenne calculée sur ses notes et devoirs
 avant de générer. « Imprimer / Enregistrer en PDF » produit une page A4 paysage. Chaque brevet reçoit un numéro
 (WS-année-XXXXXX) et reste consultable par l'élève dans sa section « Brevets ». Barème des mentions : 16 Très bien,
 14 Bien, 12 Assez bien, 10 Passable. Règles Firestore : bloc `ecole_brevets` (à republier).
+
+
+## Dossier global de suivi des élèves
+La direction dispose de l'onglet **Suivi des élèves** : sélectionnez un élève pour consulter son identité,
+son parcours de formation, ses présences, ses résultats et sa situation financière. La synthèse calcule
+l'assiduité à partir des appels enregistrés, la moyenne à partir des notes/devoirs/quiz et les soldes
+séparément par devise. La direction peut aussi ajouter des étapes de parcours (période, état, observation)
+dans `ecole_parcours`. Les opérations de frais et paiements restent gérées dans **Frais & comptabilité** ;
+les présences et les notes gardent leurs sections habituelles.
+
+Après cette évolution, ajoutez le nouveau bloc `match /ecole_parcours/{id}` de
+`firestore.rules.webs-classroom.example` à vos règles Firestore existantes, puis publiez-les.
+Ne remplacez pas toutes vos règles par le seul exemple. Les données restent dans le projet Firebase
+indépendant `my-world-rs`.
