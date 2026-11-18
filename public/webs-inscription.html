@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Inscription — WEBSERVICES</title>
+<style>
+:root{--bg:#0b1220;--carte:#131c2e;--bord:#27344f;--txt:#e8ecf4;--doux:#9aa7c0;--or:#f5b942;--ok:#3ecf8e;--mal:#ff6b6b}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.page{max-width:720px;margin:0 auto;padding:22px 16px 60px}
+.tete{display:flex;gap:12px;align-items:center;margin-bottom:18px}.logo{display:grid;place-items:center;width:46px;height:46px;border-radius:12px;background:var(--or);color:#1a1200;font-weight:800}
+h1{margin:0;font-size:22px;line-height:1.15}.doux{color:var(--doux);font-size:14px;margin:2px 0 0}
+fieldset{border:1px solid var(--bord);background:var(--carte);border-radius:14px;padding:16px;margin:0 0 14px}
+legend{padding:0 8px;color:var(--or);font-weight:700}
+.grille{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+label{display:flex;flex-direction:column;gap:4px;font-size:14px;color:var(--doux)}label.large{grid-column:1/-1}
+input,select,textarea{background:#0d1526;border:1px solid var(--bord);border-radius:9px;padding:11px 10px;color:var(--txt);width:100%;font:inherit}
+textarea{min-height:90px;resize:vertical}input:focus,select:focus,textarea:focus{outline:2px solid var(--or);outline-offset:-1px}
+.cgu{flex-direction:row;align-items:flex-start;gap:10px;color:var(--txt)}.cgu input{width:auto;margin-top:5px}
+button{background:var(--or);color:#1a1200;border:0;border-radius:11px;padding:13px 22px;font:inherit;font-weight:700;cursor:pointer;width:100%}
+button:disabled{opacity:.6}.erreur{color:var(--mal);margin:10px 0}.piege{position:absolute;left:-9999px;height:0;overflow:hidden}
+.ok{background:var(--carte);border:1px solid var(--ok);border-radius:14px;padding:22px;text-align:center}.ok h2{color:var(--ok);margin:0 0 8px}.ref{font-size:20px;font-weight:800;letter-spacing:.06em;color:var(--or)}
+</style>
+</head>
+<body>
+<div class="page" id="page">
+  <div class="tete"><span class="logo">WS</span><div><h1>Inscription au centre de formation WEBSERVICES</h1><p class="doux">Remplissez ce formulaire. Le secrétariat vous contactera pour confirmer votre inscription.</p></div></div>
+  <form id="f" novalidate>
+    <fieldset><legend>Identité</legend><div class="grille">
+      <label>Nom *<input name="nom" required maxlength="80" autocomplete="family-name"></label>
+      <label>Postnom<input name="postnom" maxlength="80"></label>
+      <label>Prénom *<input name="prenom" required maxlength="80" autocomplete="given-name"></label>
+      <label>Sexe *<select name="sexe" required><option value="">Choisir…</option><option>Féminin</option><option>Masculin</option></select></label>
+      <label>Date de naissance *<input name="naissance" type="date" required></label>
+      <label>Lieu de naissance<input name="lieuNaissance" maxlength="80"></label>
+      <label>Nationalité<input name="nationalite" maxlength="60" value="Congolaise"></label>
+    </div></fieldset>
+    <fieldset><legend>Contact</legend><div class="grille">
+      <label>Téléphone (WhatsApp si possible) *<input name="telephone" type="tel" required maxlength="30" autocomplete="tel"></label>
+      <label>Email<input name="email" type="email" maxlength="100" autocomplete="email"></label>
+      <label class="large">Adresse / quartier / ville<input name="adresse" maxlength="160" autocomplete="street-address"></label>
+    </div></fieldset>
+    <fieldset><legend>Formation souhaitée</legend><div class="grille">
+      <label>Filière *<select name="filiere" required id="filiere"></select></label>
+      <label>Niveau d'études actuel<input name="niveau" maxlength="80" placeholder="ex. 6e secondaire, Licence…"></label>
+      <label class="large">École ou établissement précédent<input name="ecolePrecedente" maxlength="120"></label>
+    </div></fieldset>
+    <fieldset><legend>Parent ou tuteur (si vous êtes mineur)</legend><div class="grille">
+      <label>Nom du parent / tuteur<input name="tuteur" maxlength="100"></label>
+      <label>Téléphone du parent / tuteur<input name="telTuteur" type="tel" maxlength="30"></label>
+    </div></fieldset>
+    <fieldset><legend>Message</legend><label class="large">Quelque chose à ajouter ?<textarea name="message" maxlength="800"></textarea></label></fieldset>
+    <div class="piege" aria-hidden="true"><label>Ne pas remplir<input name="site" tabindex="-1" autocomplete="off"></label></div>
+    <label class="cgu"><input type="checkbox" name="consentement" required><span>J'atteste que ces informations sont exactes et j'accepte qu'elles soient utilisées par WEBSERVICES pour traiter mon inscription. *</span></label>
+    <div class="erreur" id="err" role="alert"></div>
+    <button type="submit" id="envoi">Envoyer mon inscription</button>
+  </form>
+</div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { firebaseConfig } from "./config.js";
+
+// Filières proposées : modifiez cette liste pour adapter le formulaire.
+const FILIERES = ["Informatique", "Comptabilité", "Secrétariat", "Autre / je ne sais pas encore"];
+
+const db = getFirestore(initializeApp(firebaseConfig, "inscription"));
+const f = document.getElementById("f"), err = document.getElementById("err"), btn = document.getElementById("envoi");
+document.getElementById("filiere").append(new Option("Choisir…", ""), ...FILIERES.map((x) => new Option(x, x)));
+
+f.addEventListener("submit", async (ev) => {
+  ev.preventDefault(); err.textContent = "";
+  const g = (n) => f.elements[n].value.trim();
+  const manque = ["nom", "prenom", "sexe", "naissance", "telephone", "filiere"].filter((n) => !g(n));
+  if (manque.length) { err.textContent = "Veuillez remplir tous les champs marqués d'une étoile."; return; }
+  if (!f.elements.consentement.checked) { err.textContent = "Cochez la case de confirmation pour envoyer."; return; }
+  if (g("email") && !f.elements.email.checkValidity()) { err.textContent = "L'adresse email semble invalide."; return; }
+  btn.disabled = true;
+  try {
+    let ref = "WS-" + Math.random().toString(36).slice(2, 8).toUpperCase();
+    if (!g("site")) { // champ-piège rempli = robot : on fait semblant d'accepter
+      const d = { statut: "nouvelle", date: new Date().toISOString(), consentement: true };
+      for (const n of ["nom", "postnom", "prenom", "sexe", "naissance", "lieuNaissance", "nationalite", "adresse", "telephone", "email", "filiere", "niveau", "ecolePrecedente", "tuteur", "telTuteur", "message"]) d[n] = g(n);
+      const r = await addDoc(collection(db, "ecole_inscriptions"), d);
+      ref = "WS-" + r.id.slice(0, 6).toUpperCase();
+    }
+    document.getElementById("page").replaceChildren(Object.assign(document.createElement("div"), { className: "ok", innerHTML: "<h2>Inscription envoyée ✓</h2><p>Merci ! Le secrétariat de WEBSERVICES vous contactera très bientôt.</p><p>Votre référence :</p><p class='ref'></p><p class='doux'>Notez-la ou faites une capture d'écran.</p>" }));
+    document.querySelector(".ref").textContent = ref;
+  } catch (e) {
+    err.textContent = "L'envoi a échoué. Vérifiez votre connexion internet et réessayez, ou contactez directement le centre.";
+    btn.disabled = false;
+  }
+});
+</script>
+</body>
+</html>
