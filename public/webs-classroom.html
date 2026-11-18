@@ -554,7 +554,7 @@ async function sAccueil(m) {
     compta.forEach((x) => { const dv = (x.devise || "USD").toUpperCase(); soldes[dv] = (soldes[dv] || 0) + (x.type === "paiement" ? -1 : 1) * nombre(x.montant); });
     const finance = Object.entries(soldes).map(([dv,v]) => Math.abs(v).toLocaleString("fr-FR",{maximumFractionDigits:2})+" "+dv+(v>0?" à recouvrer":v<0?" en crédit":" soldé"));
     const classesGraph = cls.map(nom => ({ label: nom, valeur: actifs.filter(x => x.classe === nom).length }));
-    const joursGraph = Array.from({length:7}, (_,i) => { const d = new Date(); d.setDate(d.getDate()-(6-i)); const iso = d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); const p = presToutes.filter(x => x.date === iso); return { label: iso.slice(5), valeur: p.filter(x => x.statut === "Présent").length, affichage: p.length ? Math.round(p.filter(x => x.statut === "Présent").length/p.length*100)+"%" : "—" }; });
+    const joursGraph = Array.from({length:7}, (_,i) => { const d = new Date(); d.setDate(d.getDate()-(6-i)); const iso = d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); const p = presToutes.filter(x => x.date === iso); const taux = p.length ? Math.round(p.filter(x => x.statut === "Présent").length/p.length*100) : 0; return { label: iso.slice(5), valeur: p.length ? taux : 0, affichage: p.length ? taux+"%" : "—" }; });
     const alertes = [];
     if (nouvelles) alertes.push(h("p", {}, h("span", { class: "puce or" }, nouvelles + " nouvelle(s) inscription(s)"), " à examiner."));
     if (abs) alertes.push(h("p", {}, h("span", { class: "puce mal" }, abs + " absence(s)"), " enregistrée(s) aujourd'hui."));
