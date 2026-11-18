@@ -615,6 +615,12 @@ async function sAccueil(m) {
     (role === "comptable") ? lister("ecole_compta") : Promise.resolve([]),
     (role === "secretaire") ? lister("ecole_inscriptions") : Promise.resolve([])
   ]);
+  const graphiquesRole = role === "enseignant" || role === "secretaire"
+    ? [graphiqueBarres("Répartition des présences aujourd'hui", ["Présent","Absent","Retard"].map(st => ({label:st,valeur:pres.filter(x=>x.statut===st).length}))),
+       graphiqueBarres("Effectif par classe", [...new Set(el.filter(x=>x.actif!==false).map(x=>x.classe).filter(Boolean))].map(cl => ({label:cl,valeur:el.filter(x=>x.actif!==false&&x.classe===cl).length})), "var(--bleu)")]
+    : role === "comptable"
+    ? [graphiqueBarres("Écritures par catégorie", ["frais","paiement"].map(st => ({label:st==="frais"?"Frais":"Paiements",valeur:compta.filter(x=>x.type===st).length})), "var(--bleu)")]
+    : [];
   const quickItems = role === "enseignant"
     ? [quick("planning","Mon planning","🗓"),quick("cours","Cours & documents","📚"),quick("devoirs","Devoirs","📝"),quick("notes","Saisir les notes","🎓"),quick("presences","Faire l'appel","✅")]
     : role === "secretaire"
@@ -627,6 +633,7 @@ async function sAccueil(m) {
       role === "secretaire" && stat("INSCRIPTIONS EN ATTENTE",String(inscriptions.filter((x)=>x.statut==="nouvelle").length),"Demandes à traiter","inscriptions"),
       role === "comptable" && stat("ÉCRITURES COMPTABLES",String(compta.length),"Frais et paiements enregistrés","compta")
     ),
+    graphiquesRole.length && h("div", { class: "graph-grid" }, ...graphiquesRole),
     h("div", { class: "carte" }, h("h3", {}, "Mes outils de travail"), h("div", { class: "ligne", style: "flex-wrap:wrap;gap:9px" }, ...quickItems)),
     h("div", { class: "ligne", style: "align-items:stretch;flex-wrap:wrap;gap:12px" },annonceCard,devoirCard)
   );
