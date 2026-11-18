@@ -324,6 +324,7 @@ body.tv-fullscreen #viewer #tvPane{position:absolute;inset:0;width:100%;height:1
 #tvPane .tv-bottom-bar button span{font-size:10px}
 #tvPane .tv-bottom-bar button.on{background:rgba(217,166,62,.18);border-color:#d7a43b;color:#f4bd43}
 #tvPane .tv-bottom-spacer{flex:1}
+#tvPane .tv-quality-control{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);white-space:nowrap}#tvPane #tvResolution{padding:6px 8px;font-size:12px;min-width:104px;background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:8px}
 #tvPane .tv-volume-label{font-size:11px;color:#aab5c6}
 #tvPane .tv-count{color:#f3bd4d;border-color:#594827;font-size:11px}
 @media(max-width:850px){
@@ -1052,6 +1053,7 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
             <button class="on" type="button" id="tvBottomChannels">▣<span>Chaînes</span></button>
             <button type="button" id="tvBottomFav">☆<span>Favoris</span></button>
             <div class="tv-channel-nav tv-bottom-channel-nav"><button id="tvPrevStation" type="button" title="Chaîne précédente">⏮ Précédent</button><button id="tvNextStation" type="button" title="Chaîne suivante">Suivant ⏭</button></div>
+             <label class="tv-quality-control" for="tvResolution">⚙️ Qualité <select id="tvResolution" aria-label="Résolution vidéo"><option value="240p">240p</option><option value="360p">360p</option><option value="480p">480p</option><option value="720p">720p</option><option value="1080p">1080p</option><option value="auto">Auto</option></select></label>
              <button id="tvQuotaToggle" class="tv-quota-toggle" type="button" aria-expanded="false" aria-controls="tvDailyQuota">◷ <span>Temps TV</span></button>
              <div id="tvDailyQuota" class="tv-quota-popover" role="status" aria-live="polite" hidden><div class="tv-quota-head"><strong id="tvQuotaText">📊 Limite TV : chargement…</strong><button id="tvQuotaRenew" type="button">＋ Ajouter 2 h</button></div><div class="tv-quota-track"><div id="tvQuotaProgress"></div></div><small id="tvQuotaDetail">Compteur préventif · qualité 480p estimée</small></div>
             <div class="tv-bottom-spacer"></div>
@@ -3090,13 +3092,17 @@ function renderResume() {
   let tvCurrentStationKey = 'france24';
   const tvPane = $('tvPane'), tvStationFrame = $('tvStationFrame');
    let tvFreeEmbedded = false;
-  // YouTube : demander la qualité 480p par défaut (le lecteur peut l’ajuster selon le flux).
-  // YouTube peut toutefois choisir une autre qualité selon le flux et la connexion.
+  // Résolution préférée : YouTube ne garantit que la qualité demandée, selon le flux.
+  const TV_QUALITY_KEY = 'mwrs_tv_resolution';
+  const tvQualityVq = {'240p':'small','360p':'medium','480p':'large','720p':'hd720','1080p':'hd1080'};
+  function tvQualityGet() { try { const v=localStorage.getItem(TV_QUALITY_KEY); return ['240p','360p','480p','720p','1080p','auto'].includes(v)?v:'480p'; } catch { return '480p'; } }
   function tvYoutube480(url) {
     if (!url || !/youtube(?:-nocookie)?\.com\/embed\//i.test(url)) return url;
-    try { const u = new URL(url); u.searchParams.set('vq', 'large'); return u.toString(); }
-    catch { return url + (url.includes('?') ? '&' : '?') + 'vq=large'; }
+    try { const u = new URL(url); const q=tvQualityGet(); if(q==='auto')u.searchParams.delete('vq');else u.searchParams.set('vq',tvQualityVq[q]||'large'); return u.toString(); }
+    catch { const q=tvQualityGet(); return url + (url.includes('?') ? '&' : '?') + (q==='auto'?'':'vq='+(tvQualityVq[q]||'large')); }
   }
+  const tvResolutionSelect=$('tvResolution');
+  if(tvResolutionSelect){tvResolutionSelect.value=tvQualityGet();tvResolutionSelect.addEventListener('change',()=>{try{localStorage.setItem(TV_QUALITY_KEY,tvResolutionSelect.value)}catch{};if(tvActive)tvSelectStation(tvCurrentStationKey);});}
   const tvStations = {
     beinsports: {name:'beIN SPORTS (gratuit)', category:'Sport', language:'Sport', url:'https://connect.bein.com/en/live/html/', official:'https://connect.bein.com/en/live/html/', externalOnly:true, note:'Chaîne gratuite officielle annoncée par beIN. La disponibilité du direct en ligne peut dépendre du pays et des règles du service.'},
     beinsportsnews: {name:'beIN SPORTS NEWS (gratuit)', category:'Sport', language:'Sport', url:'https://connect.bein.com/en/live/html/', official:'https://connect.bein.com/en/live/html/', externalOnly:true, note:'Chaîne d’information sportive gratuite annoncée par beIN. La disponibilité du direct en ligne peut dépendre du pays et des règles du service.'},
@@ -3259,7 +3265,7 @@ function renderResume() {
     // Les services sans lecteur vidéo YouTube sont chargés dans le cadre du lecteur TV,
     // afin de rester dans MY WORLD RS au lieu d'ouvrir un nouvel onglet.
     let srcStation = station.externalOnly ? station.official : station.url;
-    if (station.hls) srcStation = 'tv-direct.html?p=1&u=' + encodeURIComponent(station.hls) + (station.alts || []).map(a => '&u=' + encodeURIComponent(a)).join('') + '&n=' + encodeURIComponent(station.name);
+    if (station.hls) srcStation = 'tv-direct.html?p=1&u=' + encodeURIComponent(station.hls) + (station.alts || []).map(a => '&u=' + encodeURIComponent(a)).join('') + '&n=' + encodeURIComponent(station.name) + '&q=' + encodeURIComponent(tvQualityGet());
     if (station.resolveLive) { try { const c = localStorage.getItem('mwrs_tv_live_' + key); if (c && /^[\w-]{6,20}$/.test(c)) srcStation = 'https://www.youtube.com/embed/' + c + '?autoplay=1&rel=0&playsinline=1&controls=1'; } catch {} }
     tvStationFrame.src = tvYoutube480(srcStation) || 'about:blank';
     tvStationFrame.title = station.hls ? 'Chaîne de télévision en direct : ' + station.name : 'Chaîne de télévision en direct sur YouTube';
