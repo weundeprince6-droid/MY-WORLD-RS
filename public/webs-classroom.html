@@ -43,19 +43,52 @@ dialog::backdrop{background:#000a}
 .jour{margin-top:14px;color:var(--or);font-weight:700}
 .rond{width:10px;height:10px;border-radius:50%;display:inline-block;background:var(--doux)}
 
-.ecran-brevet{position:fixed;inset:0;z-index:50;background:#0b1220ee;overflow:auto;padding:16px}
-.ecran-brevet .barre{display:flex;gap:10px;justify-content:center;margin-bottom:12px}
-.brevet{container-type:inline-size;width:min(1100px,100%);margin:0 auto;aspect-ratio:297/210;background:#fffdf6;color:#1b1b1b;box-shadow:0 10px 40px #0008}
-.brevet .cadre{position:relative;height:100%;border:1.2cqw double #b8862b;outline:.25cqw solid #b8862b;outline-offset:-2.2cqw;padding:3.2cqw 6cqw;display:flex;flex-direction:column;align-items:center;text-align:center;font-family:Georgia,"Times New Roman",serif}
-.brevet .entete{display:flex;align-items:center;gap:2cqw}.brevet .sceau{display:grid;place-items:center;width:7cqw;height:7cqw;border-radius:50%;background:#b8862b;color:#fff;font:800 2.6cqw system-ui,sans-serif}
-.brevet .entete b{display:block;font:700 2.3cqw system-ui,sans-serif;letter-spacing:.12em}.brevet .entete small{font:1.5cqw system-ui,sans-serif;color:#555}
-.brevet h1{margin:2.2cqw 0 0;font-size:6.2cqw;letter-spacing:.14em;color:#7a5412;font-weight:700}
-.brevet .intitule{margin:.4cqw 0 1.6cqw;font-size:2.3cqw;font-style:italic;color:#444}
-.brevet .statut-prive{font:700 1.35cqw system-ui,sans-serif;letter-spacing:.12em;color:#777;margin:.2cqw 0 .8cqw}.brevet .photo-candidat{position:absolute;top:19cqw;right:6cqw;width:12cqw;height:15cqw;object-fit:cover;border:.35cqw solid #b8862b;border-radius:.6cqw;background:#eee}.brevet .nom{max-width:76cqw;padding:0 13cqw 0 3cqw}
-.brevet p{margin:.5cqw 0;font-size:2.1cqw;line-height:1.5}.brevet .nom{font-size:5.4cqw;font-weight:700;margin:1cqw 0;border-bottom:.2cqw solid #b8862b;padding:0 4cqw}
-.brevet .corps{max-width:80cqw}.brevet .pied{margin-top:auto;width:100%;display:flex;justify-content:space-between;align-items:flex-end;font-size:1.9cqw}
-.brevet .signature{min-width:26cqw;border-top:.2cqw solid #1b1b1b;padding-top:.6cqw}.brevet .num{font:1.6cqw ui-monospace,monospace;color:#555}
-@media print{@page{size:A4 landscape;margin:0}html,body{background:#fff!important}body>*:not(#zone-brevet){display:none!important}.ecran-brevet{position:static;background:#fff;padding:0;overflow:visible}.ecran-brevet .barre{display:none}.brevet{width:297mm;height:210mm;margin:0;box-shadow:none;break-inside:avoid}}
+.brevet-selection{margin-top:14px}.brevet-wizard{margin-top:14px;background:var(--carte);border:1px solid var(--bord);border-radius:18px;padding:18px;box-shadow:0 12px 34px #0000000c}
+.brevet-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:22px}
+.brevet-tab{display:flex;align-items:center;gap:9px;text-align:left;padding:12px 10px;border:1px solid var(--bord);border-radius:12px;background:transparent;color:var(--txt);font:600 12px inherit;cursor:pointer;min-height:56px}
+.brevet-tab span{display:grid;place-items:center;flex:0 0 30px;height:30px;border-radius:9px;background:var(--fond);color:var(--doux);font-size:11px}
+.brevet-tab.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 9%,var(--carte));color:var(--txt)}
+.brevet-tab.active span,.brevet-tab.complete span{background:var(--accent);color:white}
+.brevet-panel{padding:4px 2px 16px}.brevet-panel h3{font-size:19px;margin:0 0 5px}.brevet-panel>.meta{margin:0 0 18px}
+.brevet-champs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+.brevet-champs label{display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:650;color:var(--txt)}
+.brevet-champs input,.brevet-champs select{width:100%;min-height:44px;border:1px solid var(--bord);border-radius:10px;padding:10px 12px;background:var(--fond);color:var(--txt);font:inherit}
+.brevet-champs .champ-photo{grid-column:1/-1;padding:16px;border:1px dashed var(--accent);border-radius:12px;background:color-mix(in srgb,var(--accent) 5%,var(--carte))}
+.brevet-navigation{display:flex;align-items:center;gap:9px;border-top:1px solid var(--bord);padding-top:15px;margin-top:10px}.etape-compteur{margin-right:auto;color:var(--doux);font-size:12px;font-weight:700}.brevet-erreur{color:var(--mal);font-size:13px;min-height:20px;margin:6px 0}
+.ecran-brevet{position:fixed;inset:0;z-index:50;background:#0b1220f2;overflow:auto;padding:18px}
+.ecran-brevet .barre{display:flex;align-items:center;justify-content:flex-end;gap:10px;max-width:1180px;margin:0 auto 14px}
+.barre-titre{margin-right:auto;color:#fff;display:flex;flex-direction:column;gap:3px}.barre-titre b{font-size:15px}.barre-titre span{font-size:11px;color:#b6c2d3}
+.brevet{display:grid;grid-template-columns:245px minmax(0,1fr);width:min(1180px,100%);min-height:790px;margin:0 auto;background:#fff;color:#18263b;box-shadow:0 22px 70px #0007;border-radius:4px;overflow:hidden;font-family:Arial,Helvetica,sans-serif}
+.brevet-aside{background:#10243d;color:#fff;padding:42px 25px;display:flex;flex-direction:column;align-items:center;text-align:center;position:relative}
+.monogramme{width:72px;height:72px;border:1px solid #c8a65a;border-radius:50%;display:grid;place-items:center;color:#e4c77d;font:700 25px Georgia,serif;letter-spacing:2px;margin-bottom:17px}
+.aside-label{font-size:13px;letter-spacing:3px;line-height:1.7;color:#e6edf5}.aside-label b{display:block;color:#e5c77b;font-size:18px;letter-spacing:4px}
+.photo-candidat{width:145px;height:178px;object-fit:cover;background:#e8edf2;border:5px solid #fff;margin:38px 0 28px;box-shadow:0 5px 18px #0004}
+.photo-vide{width:145px;height:178px;display:grid;place-items:center;background:#203c59;border:1px dashed #c8a65a;color:#d9c58f;font-size:11px;letter-spacing:2px;margin:38px 0 28px}
+.aside-num{margin-top:auto;padding-top:20px;border-top:1px solid #496079;width:100%;font-size:10px;letter-spacing:2px;color:#b8c6d6}.aside-num b{display:block;color:#f0d58e;font:700 15px monospace;margin-top:8px;overflow-wrap:anywhere}
+.aside-type{font-size:9px;letter-spacing:1.5px;line-height:1.7;color:#b8c6d6;margin-top:25px}
+.brevet-main{padding:58px 64px 34px;display:flex;flex-direction:column;align-items:center;text-align:center}
+.sur-titre{font-size:11px;font-weight:700;letter-spacing:4px;color:#9b7b37}
+.brevet-main h1{font:700 35px Georgia,serif;letter-spacing:2px;color:#142a45;margin:17px 0 12px}
+.trait-or{height:3px;width:86px;background:#c6a45a;margin-bottom:25px}
+.certifie{font:16px Georgia,serif;color:#596579;margin:0 0 10px}
+.nom-candidat{font:700 31px Georgia,serif;color:#142a45;margin:5px 0 8px;text-transform:uppercase;letter-spacing:1px}
+.naissance{font-size:12px;color:#6f7d8e;margin:0 0 28px}
+.details-formation{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:left;margin:0 0 18px}
+.details-formation>div{padding:13px 15px;background:#f3f5f8;border-left:3px solid #c5a45b;min-height:64px}
+.details-formation>div:first-child{grid-column:1/-1}
+.details-formation span,.resultat span{display:block;font-size:9px;letter-spacing:1.5px;color:#7c8795;font-weight:700;margin-bottom:7px}
+.details-formation b{font-size:13px;color:#1b3049}
+.resultat{display:grid;grid-template-columns:1fr 1fr;width:100%;border:1px solid #e1e5eb;margin:3px 0 15px}
+.resultat>div{padding:12px}.resultat>div+div{border-left:1px solid #e1e5eb}.resultat b{font:700 19px Georgia,serif;color:#9a7832}
+.formule{font:italic 13px Georgia,serif;color:#667386;line-height:1.6;margin:0 0 12px}
+.delivrance{font-size:12px;font-weight:700;color:#293c54;margin:5px 0 22px}
+.signatures{display:grid;grid-template-columns:1fr 1fr;gap:38px;width:100%;margin-top:auto}
+.signature-bloc{display:flex;flex-direction:column;align-items:center;gap:9px;padding-top:12px;border-top:1px solid #253a52}
+.signature-bloc span{font-size:9px;letter-spacing:1px;font-weight:700;color:#5f6e80}
+.signature-bloc b{font:700 14px Georgia,serif;color:#192d46;min-height:18px}
+.signature-bloc i{font-size:10px;color:#8792a0}.signature-bloc.jury{border-color:#c6a45a}
+.pied-brevet{font-size:8px;letter-spacing:1.5px;color:#9aa4b1;margin-top:26px}
+@media print{@page{size:A4 landscape;margin:0}html,body{background:#fff!important;margin:0!important;padding:0!important}body>*:not(#zone-brevet){display:none!important}#zone-brevet{position:static!important;background:#fff!important;padding:0!important;overflow:visible!important}.ecran-brevet .barre{display:none!important}.brevet{width:297mm;height:210mm;min-height:210mm;margin:0;border-radius:0;box-shadow:none;break-inside:avoid;print-color-adjust:exact;-webkit-print-color-adjust:exact}.brevet-aside{padding:25mm 8mm}.brevet-main{padding:15mm 16mm 9mm}.photo-candidat,.photo-vide{width:38mm;height:47mm}.details-formation>div{min-height:15mm}}
 @media(max-width:760px){.pose{grid-template-columns:1fr}nav{flex-direction:row;overflow:auto;border-right:0;border-bottom:1px solid var(--bord)}nav button{white-space:nowrap}main{padding:14px}}
 </style>
 </head>
@@ -454,16 +487,37 @@ const mentionPour = (moy) => (MENTIONS.find(([seuil]) => moy >= seuil) || [0, "A
 const dateLongue = (iso) => new Date(iso + "T12:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
 function afficherBrevet(b) {
   const zone = h("div", { id: "zone-brevet", class: "ecran-brevet" },
-    h("div", { class: "barre" }, h("button", { class: "btn pri", onclick: () => window.print() }, "Imprimer / Enregistrer en PDF"), h("button", { class: "btn", onclick: () => zone.remove() }, "Fermer")),
-    h("div", { class: "brevet" }, h("div", { class: "cadre" },
-      h("div", { class: "entete" }, h("span", { class: "sceau" }, "WS"), h("div", {}, h("b", {}, "CENTRE DE FORMATION WEBSERVICES"), h("small", {}, b.lieu ? b.lieu + " — République démocratique du Congo" : "République démocratique du Congo"))),
-      h("h1", {}, "BREVET"), h("div", { class: "statut-prive" }, "CERTIFICATION PRIVÉE DE FORMATION"), h("div", { class: "intitule" }, b.intitule),
-      b.photoDataUrl && h("img", { class: "photo-candidat", src: b.photoDataUrl, alt: "Photo du candidat" }),
-      h("p", {}, "Le Directeur du Centre certifie que"),
-      h("div", { class: "nom" }, b.nom),
-      (b.naissance || b.lieuNaissance) && h("p", {}, "né(e)" + (b.naissance ? " le " + dateLongue(b.naissance) : "") + (b.lieuNaissance ? " à " + b.lieuNaissance : "")),
-      h("p", { class: "corps" }, "a suivi avec succès la formation en ", h("b", {}, b.filiere), b.periode ? " (" + b.periode + ")" : "", " et a obtenu une moyenne générale de ", h("b", {}, b.moyenne + "/20"), b.mention && b.mention !== "Aucune" ? ", avec la mention " : ".", b.mention && b.mention !== "Aucune" ? h("b", {}, b.mention + ".") : null),
-      h("div", { class: "pied" }, h("div", {}, "Fait à " + (b.lieu || "Goma") + ", le " + dateLongue(b.dateDelivrance)), h("div", { class: "signature" }, "Le Directeur", h("br"), h("b", {}, b.signataire)), h("div", { class: "num" }, "N° " + b.numero)))));
+    h("div", { class: "barre" },
+      h("div", { class: "barre-titre" }, h("b", {}, "Aperçu du brevet"), h("span", {}, "Format officiel interne · A4 paysage")),
+      h("button", { class: "btn pri", onclick: () => window.print() }, "Imprimer / Enregistrer en PDF"),
+      h("button", { class: "btn", onclick: () => zone.remove() }, "Fermer")),
+    h("article", { class: "brevet" },
+      h("aside", { class: "brevet-aside" },
+        h("div", { class: "monogramme" }, "WA"),
+        h("div", { class: "aside-label" }, "WEBSERVICES", h("b", {}, "ACADEMY")),
+        b.photoDataUrl ? h("img", { class: "photo-candidat", src: b.photoDataUrl, alt: "Photo du candidat" }) : h("div", { class: "photo-vide" }, "PHOTO DU CANDIDAT"),
+        h("div", { class: "aside-num" }, "NUMÉRO DU BREVET", h("b", {}, b.numero)),
+        h("div", { class: "aside-type" }, "CERTIFICATION PRIVÉE DE FORMATION")),
+      h("section", { class: "brevet-main" },
+        h("div", { class: "sur-titre" }, "CENTRE DE FORMATION PROFESSIONNELLE"),
+        h("h1", {}, "BREVET DE FORMATION"),
+        h("div", { class: "trait-or" }),
+        h("p", { class: "certifie" }, "Le Centre WEBSERVICES ACADEMY certifie que"),
+        h("h2", { class: "nom-candidat" }, b.nom),
+        h("p", { class: "naissance" }, [b.naissance ? "Né(e) le " + dateLongue(b.naissance) : "", b.lieuNaissance ? "à " + b.lieuNaissance : ""].filter(Boolean).join(" · ")),
+        h("div", { class: "details-formation" },
+          h("div", {}, h("span", {}, "FORMATION SUIVIE"), h("b", {}, b.intitule)),
+          h("div", {}, h("span", {}, "FILIÈRE / SPÉCIALITÉ"), h("b", {}, b.filiere)),
+          h("div", {}, h("span", {}, "PÉRIODE DE FORMATION"), h("b", {}, b.periode || "—"))),
+        h("div", { class: "resultat" },
+          h("div", {}, h("span", {}, "RÉSULTAT FINAL"), h("b", {}, b.moyenne + " / 20")),
+          h("div", {}, h("span", {}, "APPRÉCIATION"), h("b", {}, b.mention && b.mention !== "Aucune" ? b.mention : "Validé"))),
+        h("p", { class: "formule" }, "En foi de quoi, le présent brevet est délivré à l'intéressé(e) pour servir et valoir ce que de droit."),
+        h("div", { class: "delivrance" }, "Fait à " + (b.lieu || "Goma") + ", le " + dateLongue(b.dateDelivrance)),
+        h("div", { class: "signatures" },
+          h("div", { class: "signature-bloc" }, h("span", {}, "LE DIRECTEUR PRINCIPAL DU CENTRE"), h("b", {}, b.directeurPrincipal || b.signataire || "________________"), h("i", {}, "Signature et cachet")),
+          h("div", { class: "signature-bloc jury" }, h("span", {}, "MEMBRE DU JURY"), h("b", {}, b.membreJury || "________________"), h("i", {}, b.fonctionJury || "Signature"))),
+        h("div", { class: "pied-brevet" }, "WEBSERVICES ACADEMY  ·  " + (b.lieu || "RDC") + "  ·  DOCUMENT PRIVÉ DE FORMATION"))));
   document.body.append(zone);
 }
 async function sBrevets(m) {
@@ -483,26 +537,94 @@ async function sBrevets(m) {
     const moy = valeurs.length ? valeurs.reduce((a, [n, sur]) => a + (n / sur) * 20, 0) / valeurs.length : 0;
     const dossier = insc.find((i) => norm(i.email) && norm(i.email) === norm(u.email)) || insc.find((i) => norm([i.prenom, i.postnom, i.nom].join(" ")) === norm(u.nom) || norm([i.nom, i.postnom, i.prenom].filter(Boolean).join(" ")) === norm(u.nom)) || {};
     const an = new Date().getFullYear();
-    zone.replaceChildren(h("div", { class: "carte" }, h("h3", {}, "Brevet de " + u.nom), aide(valeurs.length ? "Moyenne calculée sur " + valeurs.length + " note(s) (notes saisies et devoirs corrigés). Vous pouvez la corriger." : "Aucune note enregistrée : saisissez la moyenne à la main."),
-      formulaire([
-        { n: "nom", label: "Nom complet sur le brevet", req: true, val: u.nom }, { n: "photoDataUrl", label: "Photo d'identité du candidat", type: "file", accept: "image/*", req: true }, { n: "naissance", label: "Date de naissance", type: "date", val: dossier.naissance || "" }, { n: "lieuNaissance", label: "Lieu de naissance", val: dossier.lieuNaissance || "" },
-        { n: "intitule", label: "Intitulé du brevet", req: true, val: "Brevet de formation en " + (u.classe || "…") }, { n: "filiere", label: "Filière", req: true, val: u.classe || "" }, { n: "periode", label: "Période (ex. 2025 – 2026)", val: (an - 1) + " – " + an },
-        { n: "moyenne", label: "Moyenne générale /20", type: "number", req: true, val: moy ? moy.toFixed(2) : "" }, { n: "mention", label: "Mention", type: "select", options: ["Aucune", ...MENTIONS.map((x) => x[1])], val: mentionPour(moy) },
-        { n: "lieu", label: "Lieu de délivrance", val: "Goma" }, { n: "dateDelivrance", label: "Date de délivrance", type: "date", req: true, val: aujourdhui() }, { n: "signataire", label: "Nom du signataire (Directeur)", req: true, val: moi.nom }],
-        async (d, f) => {
-          const moyenne = nombre(d.moyenne); if (isNaN(moyenne) || moyenne < 0 || moyenne > 20) throw new Error("La moyenne doit être comprise entre 0 et 20.");
-          const numero = "WS-" + an + "-" + Math.random().toString(36).slice(2, 8).toUpperCase();
-          const b = { ...d, moyenne: moyenne.toFixed(2), uid: u.id, numero, cree: new Date().toISOString(), creePar: moi.nom };
-          await addDoc(collection(db, "ecole_brevets"), b); afficherBrevet(b);
-          const l = await lister("ecole_brevets"); brevets.length = 0; brevets.push(...l); liste();
-        }, "Générer le brevet")));
+    const specs = [
+      { id: "identite", titre: "Identité du candidat", aide: "Les renseignements personnels qui figureront sur le brevet.", champs: [
+        { n: "nom", label: "Nom complet du candidat", req: true, val: u.nom },
+        { n: "photoDataUrl", label: "Photo d'identité récente", type: "file", accept: "image/*", req: true },
+        { n: "naissance", label: "Date de naissance", type: "date", val: dossier.naissance || "" },
+        { n: "lieuNaissance", label: "Lieu de naissance", val: dossier.lieuNaissance || "" }] },
+      { id: "formation", titre: "Formation et spécialité", aide: "Précisez le parcours de formation certifié.", champs: [
+        { n: "intitule", label: "Intitulé du brevet", req: true, val: "Brevet de formation en " + (u.classe || "…") },
+        { n: "filiere", label: "Filière / spécialité", req: true, val: u.classe || "" },
+        { n: "periode", label: "Période de formation", val: (an - 1) + " – " + an }] },
+      { id: "resultats", titre: "Résultats et appréciation", aide: valeurs.length ? "La moyenne est calculée à partir de " + valeurs.length + " note(s). Vous pouvez l'ajuster avant délivrance." : "Aucune note n'est enregistrée : renseignez le résultat manuellement.", champs: [
+        { n: "moyenne", label: "Moyenne générale sur 20", type: "number", req: true, val: moy ? moy.toFixed(2) : "" },
+        { n: "mention", label: "Appréciation / mention", type: "select", options: ["Aucune", ...MENTIONS.map((x) => x[1])], val: mentionPour(moy) }] },
+      { id: "delivrance", titre: "Délivrance et jury", aide: "Ces deux noms apparaîtront séparément dans les emplacements de signature.", champs: [
+        { n: "lieu", label: "Lieu de délivrance", req: true, val: "Goma" },
+        { n: "dateDelivrance", label: "Date de délivrance", type: "date", req: true, val: aujourdhui() },
+        { n: "directeurPrincipal", label: "Nom du Directeur Principal du Centre", req: true, val: moi.nom },
+        { n: "membreJury", label: "Nom du membre du Jury", req: true, val: "" },
+        { n: "fonctionJury", label: "Fonction / qualité du membre du Jury", val: "Membre du Jury" }] }
+    ];
+    const form = h("form", { class: "brevet-wizard" });
+    const tabs = h("div", { class: "brevet-tabs", role: "tablist" });
+    const panels = [];
+    let active = 0;
+    const message = h("div", { class: "brevet-erreur", role: "alert" });
+    const controls = {};
+    function afficherEtape(index) {
+      active = index;
+      panels.forEach((p, n) => { p.hidden = n !== index; });
+      [...tabs.children].forEach((b, n) => { b.classList.toggle("active", n === index); b.classList.toggle("complete", n < index); });
+      form.querySelector(".etape-compteur").textContent = "Étape " + (index + 1) + " sur " + specs.length;
+      form.querySelector(".etape-precedent").hidden = index === 0;
+      form.querySelector(".etape-suivant").hidden = index === specs.length - 1;
+      form.querySelector(".etape-generer").hidden = index !== specs.length - 1;
+      message.textContent = "";
+    }
+    specs.forEach((section, index) => {
+      const tab = h("button", { type: "button", class: "brevet-tab" }, h("span", {}, String(index + 1).padStart(2, "0")), section.titre);
+      tab.addEventListener("click", () => afficherEtape(index));
+      tabs.append(tab);
+      const panel = h("section", { class: "brevet-panel" });
+      panel.append(h("h3", {}, section.titre), h("p", { class: "meta" }, section.aide));
+      const grid = h("div", { class: "brevet-champs" });
+      section.champs.forEach((c) => {
+        let ctl;
+        if (c.type === "select") ctl = h("select", { name: c.n }, c.options.map((v) => h("option", { value: v }, v)));
+        else if (c.type === "file") ctl = h("input", { name: c.n, type: "file", accept: c.accept || "image/*" });
+        else ctl = h("input", { name: c.n, type: c.type || "text", step: c.type === "number" ? "any" : null });
+        if (c.val != null) ctl.value = c.val;
+        controls[c.n] = { ctl, spec: c };
+        grid.append(h("label", { class: c.type === "file" ? "champ-photo" : "" }, h("span", {}, c.label + (c.req ? " *" : "")), ctl));
+      });
+      panel.append(grid); panels.push(panel); form.append(panel);
+    });
+    const navigation = h("div", { class: "brevet-navigation" },
+      h("span", { class: "etape-compteur" }, "Étape 1 sur " + specs.length),
+      h("button", { type: "button", class: "btn etape-precedent", hidden: true, onclick: () => afficherEtape(Math.max(0, active - 1)) }, "Précédent"),
+      h("button", { type: "button", class: "btn pri etape-suivant", onclick: () => afficherEtape(Math.min(specs.length - 1, active + 1)) }, "Continuer"),
+      h("button", { type: "submit", class: "btn pri etape-generer", hidden: true }, "Générer le brevet"));
+    form.append(tabs, message, navigation);
+    form.addEventListener("submit", async (ev) => {
+      ev.preventDefault(); message.textContent = "";
+      for (let n = 0; n < specs.length; n++) {
+        const missing = specs[n].champs.find((c) => c.req && (c.type === "file" ? !controls[c.n].ctl.files.length : !String(controls[c.n].ctl.value || "").trim()));
+        if (missing) { afficherEtape(n); message.textContent = "Veuillez compléter : " + missing.label + "."; controls[missing.n].ctl.focus(); return; }
+      }
+      const moyenne = nombre(controls.moyenne.ctl.value);
+      if (isNaN(moyenne) || moyenne < 0 || moyenne > 20) { afficherEtape(2); message.textContent = "La moyenne doit être comprise entre 0 et 20."; return; }
+      const bouton = form.querySelector(".etape-generer"); bouton.disabled = true;
+      try {
+        const d = {};
+        for (const [name, entry] of Object.entries(controls)) d[name] = entry.spec.type === "file" ? await photoCompressee(entry.ctl.files[0]) : entry.ctl.value.trim();
+        const numero = "WS-" + an + "-" + Math.random().toString(36).slice(2, 8).toUpperCase();
+        const b = { ...d, moyenne: moyenne.toFixed(2), uid: u.id, numero, cree: new Date().toISOString(), creePar: moi.nom };
+        await addDoc(collection(db, "ecole_brevets"), b); afficherBrevet(b);
+        const l = await lister("ecole_brevets"); brevets.length = 0; brevets.push(...l); liste();
+      } catch (e) { message.textContent = erreurTexte(e); }
+      finally { bouton.disabled = false; }
+    });
+    zone.replaceChildren(h("div", { class: "carte brevet-selection" }, h("div", {}, h("h3", {}, "Préparer le brevet de " + u.nom), aide("Complétez les quatre rubriques. Vous pourrez revenir à chaque étape avant de générer le document."))), form);
+    afficherEtape(0);
   });
   const histo = h("div", {});
   function liste() {
     monter(histo, h("h3", { style: "margin:18px 0 8px" }, "Brevets délivrés"), brevets.length ? tri(brevets, (x) => x.cree || "", true).map((b) => h("div", { class: "carte ligne" }, h("div", {}, h("b", {}, b.nom), h("div", { class: "meta" }, b.intitule + " · " + b.moyenne + "/20 · N° " + b.numero)), h("span", { class: "espace" }), h("button", { class: "btn petit", onclick: () => afficherBrevet(b) }, "Voir / imprimer"), h("button", { class: "btn petit mal", onclick: async () => { if (!confirm("Supprimer ce brevet ?")) return; await deleteDoc(doc(db, "ecole_brevets", b.id)); brevets.splice(brevets.indexOf(b), 1); liste(); } }, "Supprimer"))) : h("p", { class: "vide" }, "Aucun brevet délivré."));
   }
   liste();
-  monter(m, ...titre("Brevets", "Choisissez un élève : le brevet se remplit avec ses données et se génère en un clic."), h("div", { class: "carte" }, choix), zone, histo);
+  monter(m, ...titre("Brevets", "Préparez un brevet complet, contrôlez les renseignements et générez le document final."), h("div", { class: "carte" }, choix), zone, histo);
 }
 
 // --- Inscriptions reçues par le formulaire en ligne
