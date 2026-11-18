@@ -124,6 +124,35 @@ table{font-size:13px}th{font-size:10px;letter-spacing:.09em;color:#aab8cd}td{pad
 @media(max-width:380px){.moi{display:none}.brevet-navigation{gap:6px}.brevet-navigation .btn{padding:7px 9px;font-size:11px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 
+
+/* Palette officielle de la base : noir, vert dominant, bleu en accent */
+:root{
+  --bg:#080d12;--carte:#101a19;--carte2:#172925;--bord:#29453c;
+  --txt:#edf7f1;--doux:#a5b9ae;--or:#35c987;--ok:#35c987;
+  --mal:#ff7777;--bleu:#4d9fff;
+}
+body{background:radial-gradient(ellipse at 12% -10%,#123b2c 0,transparent 40%),var(--bg)}
+.haut{background:rgba(5,14,11,.97);border-bottom-color:#29453c}
+.logo{background:linear-gradient(145deg,#48dda0,#159b68);color:#04170f;box-shadow:0 5px 16px #35c98730}
+nav{background:rgba(5,15,11,.72);border-right-color:#29453c}
+nav button:hover{background:#14251e;border-color:#2c5141}
+nav button.actif{background:linear-gradient(100deg,#174b35,#142a22);border-color:#28764f;color:#7ce8b5;box-shadow:inset 3px 0 #35c987}
+.carte{background:linear-gradient(145deg,rgba(18,34,27,.98),rgba(13,25,21,.98));border-color:#29453c}
+.btn{border-color:#315244;background:#172a23}
+.btn:hover{border-color:#35c987}
+.btn.pri{background:linear-gradient(135deg,#48dda0,#159b68);color:#04170f;border-color:#35c987;box-shadow:0 5px 15px #35c98722}
+input,select,textarea{background:#0b1712;border-color:#315244}
+input:focus,select:focus,textarea:focus{outline-color:#35c987;border-color:#35c987}
+:focus-visible{outline-color:#35c987}
+.vide{border-color:#315244;background:#101e1880}
+.brevet-wizard{background:linear-gradient(145deg,#14291f,#101d17);border-color:#315244}
+.brevet-tab{background:#0d1a14}
+.brevet-tab.active{border-color:var(--bleu);background:color-mix(in srgb,var(--bleu) 10%,var(--carte));box-shadow:inset 0 -2px var(--bleu)}
+.brevet-tab.active span,.brevet-tab.complete span{background:var(--bleu);color:white}
+.brevet-champs .champ-photo{border-color:var(--bleu);background:color-mix(in srgb,var(--bleu) 6%,var(--carte))}
+.brevet-navigation{background:#101a19f2}
+@media(max-width:900px){nav{border-bottom-color:#29453c}}
+
 </style>
 </head>
 <body>
