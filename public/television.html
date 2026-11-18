@@ -3251,7 +3251,7 @@ function renderResume() {
     // Les services sans lecteur vidéo YouTube sont chargés dans le cadre du lecteur TV,
     // afin de rester dans MY WORLD RS au lieu d'ouvrir un nouvel onglet.
     let srcStation = station.externalOnly ? station.official : station.url;
-    if (station.hls) srcStation = 'tv-direct.html?p=1&u=' + encodeURIComponent(station.hls) + '&n=' + encodeURIComponent(station.name);
+    if (station.hls) srcStation = 'tv-direct.html?p=1&u=' + encodeURIComponent(station.hls) + (station.alts || []).map(a => '&u=' + encodeURIComponent(a)).join('') + '&n=' + encodeURIComponent(station.name);
     if (station.resolveLive) { try { const c = localStorage.getItem('mwrs_tv_live_' + key); if (c && /^[\w-]{6,20}$/.test(c)) srcStation = 'https://www.youtube.com/embed/' + c + '?autoplay=1&rel=0&playsinline=1&controls=1'; } catch {} }
     tvStationFrame.src = tvYoutube480(srcStation) || 'about:blank';
     tvStationFrame.title = station.hls ? 'Chaîne de télévision en direct : ' + station.name : 'Chaîne de télévision en direct sur YouTube';
@@ -3343,11 +3343,17 @@ function renderResume() {
   }
   function tvAddFree(list) {
     for (const k of Object.keys(tvStations)) if (tvStations[k].free) delete tvStations[k];
-    const vus = new Set();
+    // Une même chaîne existe souvent sous plusieurs adresses (Xumo, Samsung, Tubi…) : une seule carte, les autres adresses servent de secours.
+    const groupes = new Map();
     for (const [name, url, theme, country] of list) {
-      if (vus.has(url)) continue; vus.add(url);
-      const cat = TV_FREE_BY_COUNTRY[country] || TV_FREE_THEME[theme] || 'Divertissement';
-      tvStations['f' + tvHash(url)] = { name: tvEscape(name), category: cat, language: country, hls: url, official: url, free: true, url: '', note: 'Flux direct hors YouTube, limité à 480p pour économiser vos données. Si la chaîne ne démarre pas, elle est peut-être hors ligne ou bloquée dans votre région.' };
+      const g = (name + '|' + country).toLowerCase();
+      const e = groupes.get(g);
+      if (!e) groupes.set(g, { name, theme, country, urls: [url] });
+      else if (!e.urls.includes(url)) e.urls.push(url);
+    }
+    for (const e of groupes.values()) {
+      const cat = TV_FREE_BY_COUNTRY[e.country] || TV_FREE_THEME[e.theme] || 'Divertissement';
+      tvStations['f' + tvHash(e.urls[0])] = { name: tvEscape(e.name), category: cat, language: e.country, hls: e.urls[0], alts: e.urls.slice(1, 6), official: e.urls[0], free: true, url: '', note: 'Flux direct hors YouTube, limité à 480p pour économiser vos données. Si la chaîne ne démarre pas, elle est peut-être hors ligne ou bloquée dans votre région.' };
     }
   }
   let tvFreeLoading = null;
