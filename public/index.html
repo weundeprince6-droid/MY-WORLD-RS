@@ -751,6 +751,7 @@
         var fen=document.getElementById("academy-fenetre"), frame=document.getElementById("classroom-frame"), pane=document.getElementById("pane-webs-classroom");
         if(!fen||!frame||!pane)return;
         if(frame.parentElement!==pane) pane.appendChild(frame);
+        frame.style.width="100%"; frame.style.height="calc(100vh - 190px)"; frame.style.minHeight="520px"; frame.style.border="1px solid var(--line,#27344f)"; frame.style.borderRadius="14px"; frame.style.background="#0b1220";
         fen.hidden=true;
       }
       function ouvrirAcademyPleinEcran() {
