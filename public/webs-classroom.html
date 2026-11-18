@@ -509,7 +509,7 @@ async function sCompta(m) {
 async function creerCompte(d) {
   const app2 = initializeApp(firebaseConfig, "creation-" + Date.now()), a2 = getAuth(app2);
   const cred = await createUserWithEmailAndPassword(a2, d.email, d.mdp); await signOut(a2);
-  await setDoc(doc(db, "ecole_users", cred.user.uid), { nom: d.nom, email: d.email.toLowerCase(), role: d.role, classe: d.role === "eleve" ? d.classe : "", actif: true, cree: new Date().toISOString(), creePar: moi.nom });
+  await setDoc(doc(db, "ecole_users", cred.user.uid), { nom: d.nom, email: d.email.toLowerCase(), role: d.role, classe: d.role === "eleve" ? d.classe : "", profil: d.profil || {}, actif: true, cree: new Date().toISOString(), creePar: moi.nom });
   cacheEleves = null;
 }
 
@@ -569,7 +569,7 @@ async function sBrevets(m) {
     const [notes, rendus] = await Promise.all([lister("ecole_notes", where("uid", "==", u.id)), lister("ecole_rendus", where("uid", "==", u.id))]);
     const valeurs = [...notes.map((x) => [nombre(x.note), nombre(x.sur) || 20]), ...rendus.filter((r) => r.note !== undefined && r.note !== "").map((r) => [nombre(r.note), nombre(r.sur) || 20])].filter(([n, sur]) => !isNaN(n) && sur > 0);
     const moy = valeurs.length ? valeurs.reduce((a, [n, sur]) => a + (n / sur) * 20, 0) / valeurs.length : 0;
-    const dossier = insc.find((i) => norm(i.email) && norm(i.email) === norm(u.email)) || insc.find((i) => norm([i.prenom, i.postnom, i.nom].join(" ")) === norm(u.nom) || norm([i.nom, i.postnom, i.prenom].filter(Boolean).join(" ")) === norm(u.nom)) || {};
+    const dossier = insc.find((i) => norm(i.email) && norm(i.email) === norm(u.email)) || insc.find((i) => norm([i.prenom, i.postnom, i.nom].join(" ")) === norm(u.nom) || norm([i.nom, i.postnom, i.prenom].filter(Boolean).join(" ")) === norm(u.nom)) || u.profil || {};
     const an = new Date().getFullYear();
     const specs = [
       { id: "identite", titre: "Identité du candidat", aide: "Les renseignements personnels qui figureront sur le brevet.", champs: [
@@ -694,10 +694,26 @@ function accepter(x, nomComplet) {
     formulaire([
       { n: "nom", label: "Nom complet", req: true, val: nomComplet }, { n: "email", label: "Email du compte", type: "email", req: true, val: x.email || "" },
       { n: "classe", label: "Classe / filière", req: true, val: x.filiere || "" }, { n: "mdp", label: "Mot de passe provisoire (6+ car.)", req: true }],
-      async (d) => { await creerCompte({ ...d, role: "eleve" }); await setDoc(doc(db, "ecole_inscriptions", x.id), { ...sans(x), statut: "acceptée" }); fermer(); rafraichir(); }, "Créer le compte et accepter"));
+      async (d) => { const profil = Object.fromEntries(["nom","postnom","prenom","sexe","naissance","lieuNaissance","nationalite","adresse","telephone","email","profession","personneUrgence","telUrgence","tuteur","telTuteur","niveau","ecolePrecedente","filiere"].map((k) => [k, x[k] || ""])); await creerCompte({ ...d, role: "eleve", profil }); await setDoc(doc(db, "ecole_inscriptions", x.id), { ...sans(x), statut: "acceptée" }); fermer(); rafraichir(); }, "Créer le compte et accepter"));
 }
 
 // --- Élèves & personnel
+function ficheDossierEleve(u) {
+  const p = u.profil || {};
+  const ligne = (label, value) => value ? h("tr", {}, h("th", { style: "width:42%" }, label), h("td", {}, value)) : null;
+  modal("Dossier personnel : " + (u.nom || "Élève"),
+    h("table", {},
+      ligne("Nom complet", [p.nom, p.postnom, p.prenom].filter(Boolean).join(" ") || u.nom),
+      ligne("Sexe", p.sexe), ligne("Date de naissance", p.naissance && fmtDate(p.naissance)),
+      ligne("Lieu de naissance", p.lieuNaissance), ligne("Nationalité", p.nationalite),
+      ligne("Téléphone / WhatsApp", p.telephone), ligne("Email", p.email || u.email),
+      ligne("Adresse", p.adresse), ligne("Profession / activité", p.profession),
+      ligne("Personne à prévenir", p.personneUrgence), ligne("Téléphone d'urgence", p.telUrgence),
+      ligne("Parent / tuteur", p.tuteur), ligne("Téléphone du tuteur", p.telTuteur),
+      ligne("Niveau d'études", p.niveau), ligne("Établissement précédent", p.ecolePrecedente),
+      ligne("Filière", p.filiere || u.classe)));
+}
+
 async function sUtilisateurs(m) {
   const tous = tri(await lister("ecole_users"), (u) => norm(u.nom));
   const rolesCreables = peut("direction") ? Object.entries(ROLES).filter(([k]) => k !== "direction") : [["eleve", "Élève"]];
@@ -707,7 +723,7 @@ async function sUtilisateurs(m) {
       { n: "nom", label: "Nom complet", req: true }, { n: "email", label: "Email", type: "email", req: true }, { n: "role", label: "Rôle", type: "select", options: rolesCreables, req: true },
       { n: "classe", label: "Classe / filière (élèves)", liste: "dl-cl6", ph: "ex. Informatique 1" }, { n: "mdp", label: "Mot de passe provisoire (6+ car.)", type: "text", req: true }],
       async (d, f) => { await creerCompte(d); f.reset(); rafraichir();       }, "Créer le compte")),
-    h("div", { class: "carte" }, h("table", {}, h("tr", {}, h("th", {}, "Nom"), h("th", {}, "Email"), h("th", {}, "Rôle"), h("th", {}, "Classe"), h("th", {}, "")), tous.map((u) => h("tr", {}, h("td", {}, u.nom), h("td", {}, u.email), h("td", {}, h("span", { class: "puce" }, ROLES[u.role] || u.role)), h("td", {}, u.classe || ""), h("td", {}, (peut("direction") || u.role === "eleve") && h("button", { class: "btn petit" + (u.actif === false ? "" : " mal"), onclick: async () => { await setDoc(doc(db, "ecole_users", u.id), { ...sans(u), actif: u.actif === false }); cacheEleves = null; rafraichir(); } }, u.actif === false ? "Réactiver" : "Désactiver")))))),
+    h("div", { class: "carte" }, h("table", {}, h("tr", {}, h("th", {}, "Nom"), h("th", {}, "Email"), h("th", {}, "Rôle"), h("th", {}, "Classe"), h("th", {}, "Dossier"), h("th", {}, "")), tous.map((u) => h("tr", {}, h("td", {}, u.nom), h("td", {}, u.email), h("td", {}, h("span", { class: "puce" }, ROLES[u.role] || u.role)), h("td", {}, u.classe || ""), h("td", {}, u.role === "eleve" && h("button", { class: "btn petit", onclick: () => ficheDossierEleve(u) }, "Consulter")), h("td", {}, (peut("direction") || u.role === "eleve") && h("button", { class: "btn petit" + (u.actif === false ? "" : " mal"), onclick: async () => { await setDoc(doc(db, "ecole_users", u.id), { ...sans(u), actif: u.actif === false }); cacheEleves = null; rafraichir(); } }, u.actif === false ? "Réactiver" : "Désactiver")))))),
     aide("Désactiver un compte bloque l'accès à la classe. Pour supprimer définitivement un compte de connexion, utilisez la console Firebase (Authentication)."));
 }
 
