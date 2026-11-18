@@ -68,8 +68,7 @@ const SOURCES = {
  africa:'https://iptv-org.github.io/iptv/regions/afr.m3u'
 };
 const $=id=>document.getElementById(id), video=$('video');
-// Économie de données : on ne dépasse pas 480p. Retourne l'index du meilleur niveau ≤ 480p ;
-// si les hauteurs ne sont pas annoncées (ou toutes plus grandes), le niveau le moins gourmand.
+// Choisit le meilleur niveau disponible dans la limite demandée.
 function niveauMax(levels,maxH=480){
  let best=-1,bh=-1;
  levels.forEach((l,i)=>{const h=l.height||0;if(h>0&&h<=maxH&&h>bh){best=i;bh=h}});
@@ -77,6 +76,8 @@ function niveauMax(levels,maxH=480){
  let low=0;levels.forEach((l,i)=>{if((l.bitrate||Infinity)<(levels[low].bitrate||Infinity))low=i});
  return low;
 }
+const qualityParam=new URLSearchParams(location.search).get('q')||'480p';
+const qualityHeight=qualityParam==='auto'?0:Math.max(240,Math.min(1080,parseInt(qualityParam,10)||480));
 window.mwrsNiveauMax=niveauMax;
 let channels=[], hls=null, current=null;
 const clean=s=>(s||'').replace(/[<>]/g,'').trim();
@@ -164,7 +165,7 @@ function play(c,idx){
   hls.on(Hls.Events.MEDIA_ATTACHED,()=>$('playstatus').textContent='Lecteur prêt · chargement du direct…');
   hls.loadSource(cible);hls.attachMedia(video);
   hls.on(Hls.Events.MANIFEST_PARSED,()=>{
-   if(hls&&hls.levels&&hls.levels.length>1){const i=niveauMax(hls.levels);hls.autoLevelCapping=i;hls.startLevel=i}
+   if(hls&&hls.levels&&hls.levels.length>1){if(qualityHeight===0){hls.autoLevelCapping=-1;hls.startLevel=-1}else{const i=niveauMax(hls.levels,qualityHeight);hls.autoLevelCapping=i;hls.startLevel=i}}
    sayPlaying();
   });
   hls.on(Hls.Events.ERROR,(_,data)=>{
