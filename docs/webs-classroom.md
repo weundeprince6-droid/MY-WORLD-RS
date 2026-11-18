@@ -41,3 +41,10 @@ Lien à envoyer : `https://weundeprince6-droid.github.io/MY-WORLD-RS/public/webs
 Les filières proposées se modifient dans la liste `FILIERES` en haut du script de `webs-inscription.html`.
 Les règles Firestore (bloc `ecole_inscriptions`) doivent être republiées : elles autorisent n'importe qui à envoyer
 une demande (champs limités en taille), mais seuls la direction et le secrétariat peuvent la lire.
+
+## Brevets du Centre
+Section « Brevets » (direction) : choisir un élève, le brevet se remplit avec ses données (nom, filière, naissance
+reprise de son dossier d'inscription, moyenne calculée sur ses notes et devoirs corrigés, mention). Tout est modifiable
+avant de générer. « Imprimer / Enregistrer en PDF » produit une page A4 paysage. Chaque brevet reçoit un numéro
+(WS-année-XXXXXX) et reste consultable par l'élève dans sa section « Brevets ». Barème des mentions : 16 Très bien,
+14 Bien, 12 Assez bien, 10 Passable. Règles Firestore : bloc `ecole_brevets` (à republier).
