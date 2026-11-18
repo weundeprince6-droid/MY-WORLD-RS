@@ -58,37 +58,31 @@ dialog::backdrop{background:#000a}
 .ecran-brevet{position:fixed;inset:0;z-index:50;background:#0b1220f2;overflow:auto;padding:18px}
 .ecran-brevet .barre{display:flex;align-items:center;justify-content:flex-end;gap:10px;max-width:1180px;margin:0 auto 14px}
 .barre-titre{margin-right:auto;color:#fff;display:flex;flex-direction:column;gap:3px}.barre-titre b{font-size:15px}.barre-titre span{font-size:11px;color:#b6c2d3}
-.brevet{display:grid;grid-template-columns:245px minmax(0,1fr);width:min(1180px,100%);min-height:790px;margin:0 auto;background:#fff;color:#18263b;box-shadow:0 22px 70px #0007;border-radius:4px;overflow:hidden;font-family:Arial,Helvetica,sans-serif}
-.brevet-aside{background:#10243d;color:#fff;padding:42px 25px;display:flex;flex-direction:column;align-items:center;text-align:center;position:relative}
-.monogramme{width:72px;height:72px;border:1px solid #c8a65a;border-radius:50%;display:grid;place-items:center;color:#e4c77d;font:700 25px Georgia,serif;letter-spacing:2px;margin-bottom:17px}
-.aside-label{font-size:13px;letter-spacing:3px;line-height:1.7;color:#e6edf5}.aside-label b{display:block;color:#e5c77b;font-size:18px;letter-spacing:4px}
-.photo-candidat{width:145px;height:178px;object-fit:cover;background:#e8edf2;border:5px solid #fff;margin:38px 0 28px;box-shadow:0 5px 18px #0004}
-.photo-vide{width:145px;height:178px;display:grid;place-items:center;background:#203c59;border:1px dashed #c8a65a;color:#d9c58f;font-size:11px;letter-spacing:2px;margin:38px 0 28px}
-.aside-num{margin-top:auto;padding-top:20px;border-top:1px solid #496079;width:100%;font-size:10px;letter-spacing:2px;color:#b8c6d6}.aside-num b{display:block;color:#f0d58e;font:700 15px monospace;margin-top:8px;overflow-wrap:anywhere}
-.aside-type{font-size:9px;letter-spacing:1.5px;line-height:1.7;color:#b8c6d6;margin-top:25px}
-.brevet-main{padding:58px 64px 34px;display:flex;flex-direction:column;align-items:center;text-align:center}
-.sur-titre{font-size:11px;font-weight:700;letter-spacing:4px;color:#9b7b37}
-.brevet-main h1{font:700 35px Georgia,serif;letter-spacing:2px;color:#142a45;margin:17px 0 12px}
-.trait-or{height:3px;width:86px;background:#c6a45a;margin-bottom:25px}
-.certifie{font:16px Georgia,serif;color:#596579;margin:0 0 10px}
-.nom-candidat{font:700 31px Georgia,serif;color:#142a45;margin:5px 0 8px;text-transform:uppercase;letter-spacing:1px}
-.naissance{font-size:12px;color:#6f7d8e;margin:0 0 28px}
-.details-formation{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:left;margin:0 0 18px}
-.details-formation>div{padding:13px 15px;background:#f3f5f8;border-left:3px solid #c5a45b;min-height:64px}
-.details-formation>div:first-child{grid-column:1/-1}
-.details-formation span,.resultat span{display:block;font-size:9px;letter-spacing:1.5px;color:#7c8795;font-weight:700;margin-bottom:7px}
-.details-formation b{font-size:13px;color:#1b3049}
-.resultat{display:grid;grid-template-columns:1fr 1fr;width:100%;border:1px solid #e1e5eb;margin:3px 0 15px}
-.resultat>div{padding:12px}.resultat>div+div{border-left:1px solid #e1e5eb}.resultat b{font:700 19px Georgia,serif;color:#9a7832}
-.formule{font:italic 13px Georgia,serif;color:#667386;line-height:1.6;margin:0 0 12px}
-.delivrance{font-size:12px;font-weight:700;color:#293c54;margin:5px 0 22px}
-.signatures{display:grid;grid-template-columns:1fr 1fr;gap:38px;width:100%;margin-top:auto}
-.signature-bloc{display:flex;flex-direction:column;align-items:center;gap:9px;padding-top:12px;border-top:1px solid #253a52}
-.signature-bloc span{font-size:9px;letter-spacing:1px;font-weight:700;color:#5f6e80}
-.signature-bloc b{font:700 14px Georgia,serif;color:#192d46;min-height:18px}
-.signature-bloc i{font-size:10px;color:#8792a0}.signature-bloc.jury{border-color:#c6a45a}
-.pied-brevet{font-size:8px;letter-spacing:1.5px;color:#9aa4b1;margin-top:26px}
-@media print{@page{size:A4 landscape;margin:0}html,body{background:#fff!important;margin:0!important;padding:0!important}body>*:not(#zone-brevet){display:none!important}#zone-brevet{position:static!important;background:#fff!important;padding:0!important;overflow:visible!important}.ecran-brevet .barre{display:none!important}.brevet{width:297mm;height:210mm;min-height:210mm;margin:0;border-radius:0;box-shadow:none;break-inside:avoid;print-color-adjust:exact;-webkit-print-color-adjust:exact}.brevet-aside{padding:25mm 8mm}.brevet-main{padding:15mm 16mm 9mm}.photo-candidat,.photo-vide{width:38mm;height:47mm}.details-formation>div{min-height:15mm}}
+
+.brevet{display:grid;grid-template-columns:1fr;grid-template-rows:auto 1fr;width:min(1180px,100%);min-height:790px;margin:0 auto;background:#fff;color:#18263b;border:7px double #17365b;outline:1px solid #c7a45b;outline-offset:-14px;box-shadow:0 22px 70px #0007;overflow:hidden;font-family:Georgia,"Times New Roman",serif;position:relative}
+.brevet:before{content:"";position:absolute;top:0;left:0;right:0;height:8px;background:linear-gradient(90deg,#0072bc 0 33.33%,#ce2028 33.33% 66.66%,#f7d417 66.66% 100%)}
+.brevet-aside{background:#f7f8fb;color:#17365b;padding:27px 52px 20px;display:grid;grid-template-columns:105px 1fr 150px;grid-template-rows:auto auto;align-items:center;gap:5px 22px;text-align:center;border-bottom:3px solid #c7a45b}
+.monogramme{grid-column:1;grid-row:1/3;width:78px;height:78px;border:2px solid #c7a45b;border-radius:50%;display:grid;place-items:center;color:#17365b;font:700 25px Georgia,serif;letter-spacing:2px;margin:0 auto}
+.aside-label{grid-column:2;grid-row:1;font-size:13px;letter-spacing:3px;line-height:1.7;color:#17365b}.aside-label b{display:block;color:#17365b;font-size:23px;letter-spacing:4px}
+.photo-candidat{grid-column:3;grid-row:1/3;width:112px;height:132px;object-fit:cover;background:#e8edf2;border:4px solid #fff;outline:1px solid #c7a45b;margin:0 auto;box-shadow:0 3px 12px #0002}
+.photo-vide{grid-column:3;grid-row:1/3;width:112px;height:132px;display:grid;place-items:center;background:#edf1f6;border:1px dashed #9aa8b9;color:#64748b;font:11px Arial,sans-serif;letter-spacing:1px;margin:0 auto}
+.aside-num{grid-column:2;grid-row:2;margin:0;padding:5px 12px;border-top:1px solid #cbd3df;width:auto;font:11px Arial,sans-serif;letter-spacing:2px;color:#64748b}.aside-num b{display:inline-block;color:#17365b;font:700 14px monospace;margin-left:8px;overflow-wrap:anywhere}.aside-type{display:none}
+.brevet-main{padding:28px 70px 30px;display:flex;flex-direction:column;align-items:center;text-align:center;position:relative}
+.sur-titre{font:700 11px Arial,sans-serif;letter-spacing:3px;color:#8d6b27;text-transform:uppercase}
+.brevet-main h1{font:700 31px Georgia,serif;letter-spacing:2px;color:#17365b;margin:12px 0 8px;text-transform:uppercase}
+.trait-or{height:3px;width:115px;background:#c7a45b;margin-bottom:18px}
+.certifie{font:16px Georgia,serif;color:#596579;margin:0 0 8px}
+.nom-candidat{font:700 29px Georgia,serif;color:#17365b;margin:5px 0 7px;text-transform:uppercase;letter-spacing:1.5px;border-bottom:1px dotted #9ba8b8;padding:0 22px 7px}
+.naissance{font:12px Arial,sans-serif;color:#6f7d8e;margin:0 0 20px}
+.details-formation{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:9px;text-align:left;margin:0 0 13px}
+.details-formation>div{padding:11px 14px;background:#f7f8fa;border:1px solid #e0e5ec;border-left:3px solid #c5a45b;min-height:58px}.details-formation>div:first-child{grid-column:1/-1}
+.details-formation span,.resultat span{display:block;font:700 9px Arial,sans-serif;letter-spacing:1.4px;color:#7c8795;margin-bottom:6px}.details-formation b{font:700 13px Arial,sans-serif;color:#1b3049}
+.resultat{display:grid;grid-template-columns:1fr 1fr;width:100%;border:1px solid #cbd3df;margin:2px 0 12px}.resultat>div{padding:10px}.resultat>div+div{border-left:1px solid #cbd3df}.resultat b{font:700 18px Georgia,serif;color:#9a7832}
+.formule{font:italic 12px Georgia,serif;color:#667386;line-height:1.6;margin:0 0 8px}.delivrance{font:700 12px Arial,sans-serif;color:#293c54;margin:5px 0 17px}
+.signatures{display:grid;grid-template-columns:1fr 1fr;gap:65px;width:100%;margin-top:auto}.signature-bloc{display:flex;flex-direction:column;align-items:center;gap:7px;padding-top:10px;border-top:1px solid #253a52}
+.signature-bloc span{font:700 9px Arial,sans-serif;letter-spacing:1px;color:#5f6e80}.signature-bloc b{font:700 14px Georgia,serif;color:#192d46;min-height:18px}.signature-bloc i{font:10px Arial,sans-serif;color:#8792a0}.signature-bloc.jury{border-color:#c6a45b}
+.pied-brevet{font:8px Arial,sans-serif;letter-spacing:1.5px;color:#9aa4b1;margin-top:20px}
+@media print{@page{size:A4 landscape;margin:0}html,body{background:#fff!important;margin:0!important;padding:0!important}body>*:not(#zone-brevet){display:none!important}#zone-brevet{position:static!important;background:#fff!important;padding:0!important;overflow:visible!important}.ecran-brevet .barre{display:none!important}.brevet{width:297mm;height:210mm;min-height:210mm;margin:0;border-radius:0;box-shadow:none;break-inside:avoid;print-color-adjust:exact;-webkit-print-color-adjust:exact}.brevet-aside{padding:8mm 15mm 5mm}.brevet-main{padding:7mm 18mm 7mm}.photo-candidat,.photo-vide{width:30mm;height:35mm}.details-formation>div{min-height:13mm}}
 @media(max-width:760px){.pose{grid-template-columns:1fr}nav{flex-direction:row;overflow:auto;border-right:0;border-bottom:1px solid var(--bord)}nav button{white-space:nowrap}main{padding:14px}}
 </style>
 </head>
@@ -488,7 +482,7 @@ const dateLongue = (iso) => new Date(iso + "T12:00:00").toLocaleDateString("fr-F
 function afficherBrevet(b) {
   const zone = h("div", { id: "zone-brevet", class: "ecran-brevet" },
     h("div", { class: "barre" },
-      h("div", { class: "barre-titre" }, h("b", {}, "Aperçu du brevet"), h("span", {}, "Format officiel interne · A4 paysage")),
+      h("div", { class: "barre-titre" }, h("b", {}, "Aperçu du brevet WEBSERVICES ACADEMY"), h("span", {}, "Modèle privé inspiré de la présentation des diplômes · A4 paysage")),
       h("button", { class: "btn pri", onclick: () => window.print() }, "Imprimer / Enregistrer en PDF"),
       h("button", { class: "btn", onclick: () => zone.remove() }, "Fermer")),
     h("article", { class: "brevet" },
@@ -499,10 +493,10 @@ function afficherBrevet(b) {
         h("div", { class: "aside-num" }, "NUMÉRO DU BREVET", h("b", {}, b.numero)),
         h("div", { class: "aside-type" }, "CERTIFICATION PRIVÉE DE FORMATION")),
       h("section", { class: "brevet-main" },
-        h("div", { class: "sur-titre" }, "CENTRE DE FORMATION PROFESSIONNELLE"),
+        h("div", { class: "sur-titre" }, "CENTRE PRIVÉ DE FORMATION PROFESSIONNELLE · RÉPUBLIQUE DÉMOCRATIQUE DU CONGO"),
         h("h1", {}, "BREVET DE FORMATION"),
         h("div", { class: "trait-or" }),
-        h("p", { class: "certifie" }, "Le Centre WEBSERVICES ACADEMY certifie que"),
+        h("p", { class: "certifie" }, "Le Centre WEBSERVICES ACADEMY atteste que"),
         h("h2", { class: "nom-candidat" }, b.nom),
         h("p", { class: "naissance" }, [b.naissance ? "Né(e) le " + dateLongue(b.naissance) : "", b.lieuNaissance ? "à " + b.lieuNaissance : ""].filter(Boolean).join(" · ")),
         h("div", { class: "details-formation" },
@@ -512,7 +506,7 @@ function afficherBrevet(b) {
         h("div", { class: "resultat" },
           h("div", {}, h("span", {}, "RÉSULTAT FINAL"), h("b", {}, b.moyenne + " / 20")),
           h("div", {}, h("span", {}, "APPRÉCIATION"), h("b", {}, b.mention && b.mention !== "Aucune" ? b.mention : "Validé"))),
-        h("p", { class: "formule" }, "En foi de quoi, le présent brevet est délivré à l'intéressé(e) pour servir et valoir ce que de droit."),
+        h("p", { class: "formule" }, "Après vérification de sa formation et de ses résultats, le présent brevet privé lui est délivré."),
         h("div", { class: "delivrance" }, "Fait à " + (b.lieu || "Goma") + ", le " + dateLongue(b.dateDelivrance)),
         h("div", { class: "signatures" },
           h("div", { class: "signature-bloc" }, h("span", {}, "LE DIRECTEUR PRINCIPAL DU CENTRE"), h("b", {}, b.directeurPrincipal || b.signataire || "________________"), h("i", {}, "Signature et cachet")),
