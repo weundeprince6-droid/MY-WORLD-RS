@@ -120,6 +120,17 @@
       allow read, update, delete: if ecoleEst(["direction", "secretaire"]);
     }
 
+    // Parcours pédagogique complémentaire : la direction gère le dossier ;
+    // l'élève peut consulter uniquement son propre parcours.
+    match /ecole_parcours/{id} {
+      allow read: if ecoleEst(["direction", "enseignant"])
+                  || (ecoleEst(["eleve"]) && resource.data.uid == request.auth.uid);
+      allow create: if ecoleEst(["direction", "enseignant"])
+                    && request.resource.data.uid is string
+                    && request.resource.data.keys().hasOnly(["uid", "nom", "classe", "intitule", "periode", "statut", "observation", "date", "par"]);
+      allow update, delete: if ecoleEst(["direction"]);
+    }
+
     // Brevets du Centre : délivrés par la direction ; l'élève ne voit que les siens.
     match /ecole_brevets/{id} {
       allow read: if ecoleEst(["direction", "secretaire"])
