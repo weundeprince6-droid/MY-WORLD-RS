@@ -1053,7 +1053,7 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
             <button class="on" type="button" id="tvBottomChannels">▣<span>Chaînes</span></button>
             <button type="button" id="tvBottomFav">☆<span>Favoris</span></button>
             <div class="tv-channel-nav tv-bottom-channel-nav"><button id="tvPrevStation" type="button" title="Chaîne précédente">⏮ Précédent</button><button id="tvNextStation" type="button" title="Chaîne suivante">Suivant ⏭</button></div>
-             <label class="tv-quality-control" for="tvResolution">⚙️ Qualité <select id="tvResolution" aria-label="Résolution vidéo"><option value="240p">240p</option><option value="360p">360p</option><option value="480p">480p</option><option value="720p">720p</option><option value="1080p">1080p</option><option value="auto">Auto</option></select></label>
+             <label class="tv-quality-control" for="tvResolution">⚙️ Qualité <select id="tvResolution" aria-label="Résolution vidéo"><option value="144p">144p (économie max)</option><option value="240p">240p</option><option value="360p">360p</option><option value="480p">480p</option><option value="720p">720p</option><option value="1080p">1080p</option><option value="auto">Auto</option></select></label>
              <button id="tvQuotaToggle" class="tv-quota-toggle" type="button" aria-expanded="false" aria-controls="tvDailyQuota">◷ <span>Temps TV</span></button>
              <div id="tvDailyQuota" class="tv-quota-popover" role="status" aria-live="polite" hidden><div class="tv-quota-head"><strong id="tvQuotaText">📊 Limite TV : chargement…</strong><button id="tvQuotaRenew" type="button">＋ Ajouter 2 h</button></div><div class="tv-quota-track"><div id="tvQuotaProgress"></div></div><small id="tvQuotaDetail">Compteur préventif · qualité 480p estimée</small></div>
             <div class="tv-bottom-spacer"></div>
@@ -3094,8 +3094,8 @@ function renderResume() {
    let tvFreeEmbedded = false;
   // Résolution préférée : YouTube ne garantit que la qualité demandée, selon le flux.
   const TV_QUALITY_KEY = 'mwrs_tv_resolution';
-  const tvQualityVq = {'240p':'small','360p':'medium','480p':'large','720p':'hd720','1080p':'hd1080'};
-  function tvQualityGet() { try { const v=localStorage.getItem(TV_QUALITY_KEY); return ['240p','360p','480p','720p','1080p','auto'].includes(v)?v:'480p'; } catch { return '480p'; } }
+  const tvQualityVq = {'144p':'tiny','240p':'small','360p':'medium','480p':'large','720p':'hd720','1080p':'hd1080'};
+  function tvQualityGet() { try { const v=localStorage.getItem(TV_QUALITY_KEY); return ['144p','240p','360p','480p','720p','1080p','auto'].includes(v)?v:'480p'; } catch { return '480p'; } }
   function tvYoutube480(url) {
     if (!url || !/youtube(?:-nocookie)?\.com\/embed\//i.test(url)) return url;
     try { const u = new URL(url); u.searchParams.set('enablejsapi','1'); const q=tvQualityGet(); if(q==='auto')u.searchParams.delete('vq');else u.searchParams.set('vq',tvQualityVq[q]||'large'); return u.toString(); }
@@ -3105,7 +3105,7 @@ function renderResume() {
   // On charge donc le lecteur à la taille de la résolution voulue (ex. 426×240 pour 240p) et on
   // l'agrandit à l'écran avec une transformation CSS : l'image est floue mais ne consomme que
   // la quantité de données de cette résolution. Les commandes de qualité de l'API sont aussi envoyées.
-  const tvQualityPx = {'240p':240,'360p':360,'480p':480,'720p':720};
+  const tvQualityPx = {'144p':144,'240p':240,'360p':360,'480p':480,'720p':720};
   function tvFitFrame() {
     const f = tvStationFrame; if (!f) return;
     const wrap = f.parentElement, src = f.getAttribute('src') || '';
@@ -3158,7 +3158,22 @@ function renderResume() {
     if (window.ResizeObserver && tvStationFrame.parentElement) new ResizeObserver(tvFitFrame).observe(tvStationFrame.parentElement);
     window.addEventListener('resize', tvFitFrame);
   }
+  // Économie : pas de données gaspillées quand la fenêtre est réduite ou masquée (option, désactivée par défaut).
+  const TV_BG_KEY = 'mwrs_tv_pause_bg';
+  const tvBgOn = () => { try { return localStorage.getItem(TV_BG_KEY) === '1'; } catch { return false; } };
+  let tvBgTimer = null, tvBgKey = null;
+  document.addEventListener('visibilitychange', () => {
+    if (!tvBgOn() || !tvStationFrame) return;
+    if (document.hidden) {
+      tvBgTimer = setTimeout(() => { if (document.hidden && tvActive && tvCurrentStationKey) { tvBgKey = tvCurrentStationKey; tvStationFrame.src = 'about:blank'; } }, 20000);
+    } else {
+      clearTimeout(tvBgTimer);
+      if (tvBgKey && tvActive && tvCurrentStationKey === tvBgKey) { const k = tvBgKey; tvBgKey = null; tvSelectStation(k); }
+      tvBgKey = null;
+    }
+  });
   const tvResolutionSelect=$('tvResolution');
+  { const lab = document.querySelector('label.tv-quality-control'); if (lab) { const w = document.createElement('label'); w.className = 'tv-quality-control'; w.title = 'Coupe le flux 20 s après que la fenêtre soit réduite ou masquée, et le relance au retour'; const c = document.createElement('input'); c.type = 'checkbox'; c.checked = tvBgOn(); c.addEventListener('change', () => { try { localStorage.setItem(TV_BG_KEY, c.checked ? '1' : '0'); } catch {} }); w.append(c, ' Pause en arrière-plan'); lab.after(w); } }
   if(tvResolutionSelect){tvResolutionSelect.value=tvQualityGet();tvResolutionSelect.addEventListener('change',()=>{try{localStorage.setItem(TV_QUALITY_KEY,tvResolutionSelect.value)}catch{};if(tvActive)tvSelectStation(tvCurrentStationKey);});}
   const tvStations = {
     beinsports: {name:'beIN SPORTS (gratuit)', category:'Sport', language:'Sport', url:'https://connect.bein.com/en/live/html/', official:'https://connect.bein.com/en/live/html/', externalOnly:true, note:'Chaîne gratuite officielle annoncée par beIN. La disponibilité du direct en ligne peut dépendre du pays et des règles du service.'},
@@ -3273,7 +3288,7 @@ function renderResume() {
       ? (remaining <= 15*60000 ? '⚠️ Plus que '+mins+' min disponibles aujourd’hui' : '📊 Temps écoulé : '+tvQuotaFormat(elapsed)+' · restant : '+tvQuotaFormat(remaining))
       : '⛔ Temps TV épuisé · renouvelez pour continuer';
     if (progress) progress.style.width = Math.min(100, allowance ? elapsed / allowance * 100 : 100) + '%';
-    if (detail) detail.textContent = 'Utilisé : '+tvQuotaFormat(elapsed)+' / '+tvQuotaFormat(allowance)+' · 480p estimé · renouvellements : '+Math.floor(tvQuotaBonus/TV_QUOTA_RENEW_MS);
+    if (detail) detail.textContent = 'Utilisé : '+tvQuotaFormat(elapsed)+' / '+tvQuotaFormat(allowance)+' · '+tvQualityGet()+' ≈ '+({'144p':'120','240p':'270','360p':'450','480p':'600','720p':'1100'}[tvQualityGet()]||'?')+' Mo/h · renouvellements : '+Math.floor(tvQuotaBonus/TV_QUOTA_RENEW_MS);
     const display = $('tvDailyQuota');
     if (display) display.style.borderColor = remaining <= 15*60000 ? '#d99b36' : 'var(--border)';
     const renew = $('tvQuotaRenew');
