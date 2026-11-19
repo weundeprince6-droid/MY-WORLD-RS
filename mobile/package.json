@@ -1,0 +1,26 @@
+{
+  "name": "webservices-academy-mobile",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Application mobile WEBSERVICES ACADEMY pour Android et iOS",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "prepare:web": "node scripts/sync-academy.mjs",
+    "cap:sync": "npm run prepare:web && cap sync",
+    "android:add": "npm run prepare:web && cap add android",
+    "ios:add": "npm run prepare:web && cap add ios",
+    "android:open": "cap open android",
+    "ios:open": "cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/core": "^8.5.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.5.2",
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/ios": "^8.5.2"
+  }
+}
