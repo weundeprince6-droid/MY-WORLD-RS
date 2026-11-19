@@ -405,6 +405,173 @@ body:has(#app > .haut){background:var(--bg);color:var(--txt)}
   #app:has(> .haut) *,#app:has(> .haut) *:before,#app:has(> .haut) *:after{transition:none!important;animation:none!important}
 }
 
+
+/* =========================================================
+   ACADEMY — direction artistique v2 : portail académique
+   Styles limités à l'espace authentifié. Connexion, logique,
+   données et impression du brevet restent inchangées.
+   ========================================================= */
+#app:has(> .haut){
+  --bg:#f3f5f9;--carte:#fff;--carte2:#f7f8fb;--bord:#e2e6ef;
+  --txt:#17213d;--doux:#69758c;--or:#c49a42;--ok:#c49a42;
+  --bleu:#142044;--fond:#f3f5f9;--entete:#101a37;--nav:#111c3b;
+  --surface-alt:#f4f1e8;--champ:#fff;
+  --ombre:0 5px 18px rgba(18,31,65,.055);
+  --ombre-hover:0 14px 30px rgba(18,31,65,.10);
+  background:var(--bg);color:var(--txt);
+}
+:root[data-theme="dark"] #app:has(> .haut){
+  --bg:#0b1224;--carte:#121d35;--carte2:#1a2946;--bord:#2b3957;
+  --txt:#f3f5fb;--doux:#aab6cc;--or:#dfbb69;--ok:#dfbb69;
+  --bleu:#d5dced;--fond:#0b1224;--entete:#080f22;--nav:#0d1730;
+  --surface-alt:#1a2946;--champ:#101a31;
+  --ombre:0 6px 22px rgba(0,0,0,.20);--ombre-hover:0 14px 32px rgba(0,0,0,.30);
+}
+@media(prefers-color-scheme:dark){
+  :root:not([data-theme="light"]):not([data-theme="dark"]) #app:has(> .haut){
+    --bg:#0b1224;--carte:#121d35;--carte2:#1a2946;--bord:#2b3957;
+    --txt:#f3f5fb;--doux:#aab6cc;--or:#dfbb69;--ok:#dfbb69;
+    --bleu:#d5dced;--fond:#0b1224;--entete:#080f22;--nav:#0d1730;
+    --surface-alt:#1a2946;--champ:#101a31;
+    --ombre:0 6px 22px rgba(0,0,0,.20);--ombre-hover:0 14px 32px rgba(0,0,0,.30);
+  }
+}
+body:has(#app > .haut){background:var(--bg);color:var(--txt)}
+#app:has(> .haut){min-height:100vh;background:var(--bg);color:var(--txt)}
+#app:has(> .haut) .haut{
+  min-height:78px;padding:12px clamp(16px,2.6vw,38px);gap:15px;
+  background:linear-gradient(105deg,#0c1631,#17264b 72%,#1d2e55);
+  border:0;border-bottom:1px solid rgba(220,187,105,.42);
+  box-shadow:0 5px 20px rgba(8,16,39,.18);position:sticky;top:0;z-index:40;
+}
+#app:has(> .haut) .logo{
+  width:48px;height:48px;flex:0 0 48px;border-radius:14px;
+  color:#17213d;background:linear-gradient(145deg,#f5dfa6,#c49a42);
+  box-shadow:0 5px 18px rgba(196,154,66,.24);font-size:15px;font-weight:950;
+}
+#app:has(> .haut) .haut h1{font-size:15px;letter-spacing:.12em;font-weight:900;color:#fff}
+#app:has(> .haut) .haut small{display:block;margin-top:5px;color:#d9dfed;font-size:10px;letter-spacing:.13em;text-transform:uppercase}
+#app:has(> .haut) .moi{padding:5px 13px;border-left:1px solid #ffffff30;text-align:left;line-height:1.4}
+#app:has(> .haut) .moi b{color:#fff;font-size:12px}
+#app:has(> .haut) .moi .meta{color:#d4dced;font-size:10px}
+#app:has(> .haut) .haut .btn{background:#ffffff12;border-color:#ffffff35;color:#fff}
+#app:has(> .haut) .haut .btn:hover{background:#ffffff20;border-color:#dfbb69}
+#app:has(> .haut) .theme-toggle{border-color:#dfbb69;color:#f3d99b;background:#ffffff10;min-width:98px}
+#app:has(> .haut) .pose{display:grid;grid-template-columns:258px minmax(0,1fr);min-height:calc(100vh - 78px);align-items:stretch}
+#app:has(> .haut) nav{
+  position:sticky;top:78px;align-self:start;height:calc(100vh - 78px);
+  overflow-y:auto;overflow-x:hidden;padding:25px 14px 30px;gap:6px;
+  display:flex;flex-direction:column;background:var(--nav);
+  border:0;border-right:1px solid #ffffff12;
+}
+#app:has(> .haut) nav:before{
+  content:"NAVIGATION";display:block;padding:0 13px 13px;
+  color:#8492b0;font-size:9px;font-weight:900;letter-spacing:.2em;
+}
+#app:has(> .haut) nav button{
+  position:relative;width:100%;min-height:45px;padding:10px 13px;gap:12px;
+  border:1px solid transparent;border-radius:10px;background:transparent;
+  color:#b8c2d7;font-size:12px;font-weight:650;transition:background .18s,border-color .18s,color .18s;
+}
+#app:has(> .haut) nav button span{
+  display:grid;place-items:center;width:27px;height:27px;flex:0 0 27px;
+  border-radius:8px;background:#ffffff0d;color:#e0c17a;font-size:15px;
+}
+#app:has(> .haut) nav button:hover{background:#ffffff0c;border-color:#ffffff16;color:#fff;transform:translateX(2px)}
+#app:has(> .haut) nav button.actif{
+  background:linear-gradient(100deg,#2b3c60,#1c2b4b);
+  border-color:#dfbb6940;color:#f4d99a;
+  box-shadow:inset 3px 0 #dfbb69,0 5px 14px #0002;font-weight:850;
+}
+#app:has(> .haut) nav button.actif span{background:#dfbb69;color:#15203d}
+#app:has(> .haut) main{
+  width:100%;max-width:1640px;min-width:0;margin:0 auto;
+  padding:clamp(22px,3vw,42px);
+}
+#app:has(> .haut) main>h2{
+  color:var(--txt);font-size:clamp(25px,2.2vw,32px);font-weight:900;
+  line-height:1.16;letter-spacing:-.045em;margin:0 0 7px;
+}
+#app:has(> .haut) main>.sous{max-width:850px;margin:0 0 25px;color:var(--doux);font-size:13px;line-height:1.65}
+#app:has(> .haut) .carte{
+  min-width:0;margin-bottom:16px;padding:20px;
+  border:1px solid var(--bord);border-radius:15px;background:var(--carte);
+  color:var(--txt);box-shadow:var(--ombre);transition:box-shadow .18s,border-color .18s;
+}
+#app:has(> .haut) .carte h3{margin:0 0 6px;color:var(--txt);font-size:14px;font-weight:850;letter-spacing:-.01em}
+#app:has(> .haut) .meta,#app:has(> .haut) .sous{color:var(--doux)}
+#app:has(> .haut) .btn{
+  min-height:38px;padding:8px 13px;border:1px solid var(--bord);
+  border-radius:9px;background:var(--carte2);color:var(--txt);
+  font-size:12px;font-weight:750;box-shadow:none;transition:all .16s ease;
+}
+#app:has(> .haut) .btn:hover{border-color:var(--or);box-shadow:0 4px 12px rgba(196,154,66,.12);transform:translateY(-1px)}
+#app:has(> .haut) .btn.pri{
+  color:#17213d;background:linear-gradient(135deg,#f2dda7,#c49a42);
+  border-color:#c49a42;box-shadow:0 5px 13px rgba(196,154,66,.20);
+}
+#app:has(> .haut) .btn.mal{color:var(--mal)}
+#app:has(> .haut) .btn.petit{min-height:30px;padding:5px 10px;font-size:11px}
+#app:has(> .haut) label{gap:7px;color:var(--doux);font-size:11px;font-weight:800;letter-spacing:.02em}
+#app:has(> .haut) input,#app:has(> .haut) select,#app:has(> .haut) textarea{
+  width:100%;min-height:43px;padding:10px 12px;border:1px solid var(--bord);
+  border-radius:9px;background:var(--champ);color:var(--txt);font-size:13px;
+}
+#app:has(> .haut) textarea{min-height:108px}
+#app:has(> .haut) input:focus,#app:has(> .haut) select:focus,#app:has(> .haut) textarea:focus{
+  outline:0;border-color:var(--or);box-shadow:0 0 0 3px color-mix(in srgb,var(--or) 17%,transparent);
+}
+#app:has(> .haut) form.champs{gap:16px}
+#app:has(> .haut) table{width:100%;font-size:12px;border-collapse:separate;border-spacing:0}
+#app:has(> .haut) table th{padding:12px 13px;background:var(--surface-alt);color:var(--doux);font-size:9px;font-weight:900;letter-spacing:.11em;border-bottom:1px solid var(--bord)}
+#app:has(> .haut) table td{padding:12px 13px;color:var(--txt);line-height:1.5;border-bottom:1px solid var(--bord)}
+#app:has(> .haut) table tr:last-child td{border-bottom:0}
+#app:has(> .haut) table tr:hover td{background:color-mix(in srgb,var(--or) 5%,var(--carte))}
+#app:has(> .haut) .puce{padding:4px 9px;border-radius:6px;background:var(--surface-alt);font-size:10px;font-weight:850}
+#app:has(> .haut) .vide{padding:25px 16px;border:1px dashed var(--bord);border-radius:12px;background:var(--surface-alt);color:var(--doux);font-size:12px}
+#app:has(> .haut) .graph-grid{gap:16px;margin:17px 0 22px}
+#app:has(> .haut) .academy-graph{padding:20px}
+#app:has(> .haut) .graph-bars{border-color:var(--bord)}
+#app:has(> .haut) .graph-track{background:var(--surface-alt)}
+#app:has(> .haut) .graph-fill{background:linear-gradient(180deg,#e5c77f,#b88b32)!important;border-radius:7px 7px 2px 2px}
+#app:has(> .haut) .graph-value{font-weight:850}
+#app:has(> .haut) .brevet-wizard{padding:22px;border-radius:16px;background:var(--carte);border-color:var(--bord);box-shadow:var(--ombre)}
+#app:has(> .haut) .brevet-tab{background:var(--surface-alt);border-color:var(--bord);border-radius:10px}
+#app:has(> .haut) .brevet-tab.active{border-color:var(--or);background:color-mix(in srgb,var(--or) 10%,var(--carte));box-shadow:inset 0 -2px var(--or)}
+#app:has(> .haut) .brevet-tab.active span,#app:has(> .haut) .brevet-tab.complete span{background:var(--or);color:#17213d}
+#app:has(> .haut) .brevet-navigation{background:var(--carte);border-color:var(--bord)}
+#app:has(> .haut) dialog{background:var(--carte);color:var(--txt);border-color:var(--bord);border-radius:16px;box-shadow:0 20px 60px #0004}
+#app:has(> .haut) :focus-visible{outline:2px solid var(--or);outline-offset:3px}
+@media(max-width:1050px){
+  #app:has(> .haut) .pose{grid-template-columns:220px minmax(0,1fr)}
+  #app:has(> .haut) nav{padding-inline:10px}
+  #app:has(> .haut) main{padding:24px 20px}
+}
+@media(max-width:760px){
+  #app:has(> .haut) .haut{min-height:66px;padding:9px 12px;gap:8px}
+  #app:has(> .haut) .logo{width:38px;height:38px;flex-basis:38px}
+  #app:has(> .haut) .haut h1{font-size:11px;letter-spacing:.06em}
+  #app:has(> .haut) .haut small{font-size:8px;letter-spacing:.06em}
+  #app:has(> .haut) .moi{padding:3px 7px}
+  #app:has(> .haut) .moi b{font-size:10px}
+  #app:has(> .haut) .moi .meta{font-size:9px}
+  #app:has(> .haut) .pose{display:flex;flex-direction:column;min-height:calc(100vh - 66px)}
+  #app:has(> .haut) nav{position:sticky;top:66px;z-index:25;height:auto;max-height:none;flex-direction:row;overflow-x:auto;overflow-y:hidden;padding:8px 10px;border:0;border-bottom:1px solid var(--bord);gap:5px}
+  #app:has(> .haut) nav:before{display:none}
+  #app:has(> .haut) nav button{width:auto;flex:0 0 auto;min-height:39px;padding:7px 10px;white-space:nowrap}
+  #app:has(> .haut) nav button:hover{transform:none}
+  #app:has(> .haut) main{padding:20px 13px}
+  #app:has(> .haut) .carte{padding:16px;margin-bottom:13px}
+  #app:has(> .haut) table{display:block;max-width:100%;overflow-x:auto;white-space:nowrap}
+  #app:has(> .haut) .theme-toggle{min-width:0;padding:6px 8px;font-size:10px}
+}
+@media(max-width:430px){
+  #app:has(> .haut) .moi{display:none}
+  #app:has(> .haut) .haut>.btn{padding:6px 8px;font-size:10px}
+  #app:has(> .haut) main{padding:17px 10px}
+  #app:has(> .haut) .brevet-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
 </style>
 </head>
 <body>
