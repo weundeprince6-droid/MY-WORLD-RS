@@ -3098,8 +3098,38 @@ function renderResume() {
   function tvQualityGet() { try { const v=localStorage.getItem(TV_QUALITY_KEY); return ['240p','360p','480p','720p','1080p','auto'].includes(v)?v:'480p'; } catch { return '480p'; } }
   function tvYoutube480(url) {
     if (!url || !/youtube(?:-nocookie)?\.com\/embed\//i.test(url)) return url;
-    try { const u = new URL(url); const q=tvQualityGet(); if(q==='auto')u.searchParams.delete('vq');else u.searchParams.set('vq',tvQualityVq[q]||'large'); return u.toString(); }
+    try { const u = new URL(url); u.searchParams.set('enablejsapi','1'); const q=tvQualityGet(); if(q==='auto')u.searchParams.delete('vq');else u.searchParams.set('vq',tvQualityVq[q]||'large'); return u.toString(); }
     catch { const q=tvQualityGet(); return url + (url.includes('?') ? '&' : '?') + (q==='auto'?'':'vq='+(tvQualityVq[q]||'large')); }
+  }
+  // YouTube a abandonné le paramètre « vq » : il choisit la qualité selon la TAILLE du lecteur.
+  // On charge donc le lecteur à la taille de la résolution voulue (ex. 426×240 pour 240p) et on
+  // l'agrandit à l'écran avec une transformation CSS : l'image est floue mais ne consomme que
+  // la quantité de données de cette résolution. Les commandes de qualité de l'API sont aussi envoyées.
+  const tvQualityPx = {'240p':240,'360p':360,'480p':480,'720p':720};
+  function tvFitFrame() {
+    const f = tvStationFrame; if (!f) return;
+    const wrap = f.parentElement, src = f.getAttribute('src') || '';
+    const q = tvQualityGet(), h = tvQualityPx[q];
+    const yt = /youtube(?:-nocookie)?\.com\/embed\//i.test(src);
+    if (!yt || !h || !wrap) { f.style.cssText = ''; return; }
+    const dpr = window.devicePixelRatio || 1, ph = h / dpr, pw = ph * 16 / 9;
+    const W = wrap.clientWidth, H = wrap.clientHeight; if (!W || !H) return;
+    const sc = Math.min(W / pw, H / ph);
+    f.style.cssText = 'position:absolute;top:50%;left:50%;width:' + pw.toFixed(0) + 'px;height:' + ph.toFixed(0) + 'px;max-width:none;max-height:none;flex:none;transform-origin:0 0;transform:translate(' + (-pw * sc / 2).toFixed(1) + 'px,' + (-ph * sc / 2).toFixed(1) + 'px) scale(' + sc.toFixed(4) + ')';
+  }
+  function tvSendQuality() {
+    const f = tvStationFrame, q = tvQualityGet(); if (!f || !f.contentWindow || !/youtube/i.test(f.getAttribute('src') || '') || q === 'auto') return;
+    const v = tvQualityVq[q]; if (!v) return;
+    const go = () => { try { const w = f.contentWindow;
+      w.postMessage(JSON.stringify({ event:'listening', id:'mwrs-tv' }), '*');
+      w.postMessage(JSON.stringify({ event:'command', func:'setPlaybackQualityRange', args:[v, v] }), '*');
+      w.postMessage(JSON.stringify({ event:'command', func:'setPlaybackQuality', args:[v] }), '*'); } catch (_) {} };
+    [400, 1500, 4000, 9000].forEach(t => setTimeout(go, t));
+  }
+  if (tvStationFrame) {
+    tvStationFrame.addEventListener('load', () => { tvFitFrame(); tvSendQuality(); });
+    if (window.ResizeObserver && tvStationFrame.parentElement) new ResizeObserver(tvFitFrame).observe(tvStationFrame.parentElement);
+    window.addEventListener('resize', tvFitFrame);
   }
   const tvResolutionSelect=$('tvResolution');
   if(tvResolutionSelect){tvResolutionSelect.value=tvQualityGet();tvResolutionSelect.addEventListener('change',()=>{try{localStorage.setItem(TV_QUALITY_KEY,tvResolutionSelect.value)}catch{};if(tvActive)tvSelectStation(tvCurrentStationKey);});}
@@ -3268,6 +3298,7 @@ function renderResume() {
     if (station.hls) srcStation = 'tv-direct.html?p=1&u=' + encodeURIComponent(station.hls) + (station.alts || []).map(a => '&u=' + encodeURIComponent(a)).join('') + '&n=' + encodeURIComponent(station.name) + '&q=' + encodeURIComponent(tvQualityGet());
     if (station.resolveLive) { try { const c = localStorage.getItem('mwrs_tv_live_' + key); if (c && /^[\w-]{6,20}$/.test(c)) srcStation = 'https://www.youtube.com/embed/' + c + '?autoplay=1&rel=0&playsinline=1&controls=1'; } catch {} }
     tvStationFrame.src = tvYoutube480(srcStation) || 'about:blank';
+    tvFitFrame();
     tvStationFrame.title = station.hls ? 'Chaîne de télévision en direct : ' + station.name : 'Chaîne de télévision en direct sur YouTube';
     tvStationFrame.name = 'tvStationFrame';
     const officialLink = $('tvOpenOfficial');
