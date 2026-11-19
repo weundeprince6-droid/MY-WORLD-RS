@@ -764,7 +764,13 @@ function vueConnexion(erreur) {
   } }, "Mot de passe oublié");
   const google = h("button", { class: "btn", type: "button", onclick: async () => {
     msg.className = "erreur"; msg.textContent = "";
-    try { await signInWithPopup(auth, new GoogleAuthProvider()); } catch (e) { msg.textContent = erreurTexte(e); }
+    try {
+      if (typeof window.academyNativeGoogleSignIn === "function") {
+        await window.academyNativeGoogleSignIn(auth);
+      } else {
+        await signInWithPopup(auth, new GoogleAuthProvider());
+      }
+    } catch (e) { msg.textContent = erreurTexte(e); }
   } }, "Connexion Direction (Google)");
   $app.replaceChildren(h("div", { class: "connexion" },
     h("div", { class: "ligne", style: "margin-bottom:18px" }, h("span", { class: "logo" }, "WS"), h("div", {}, h("h1", { style: "margin:0;font-size:20px" }, "WEBS- Class room"), h("small", { class: "meta" }, "Centre de formation WEBSERVICES"))),
