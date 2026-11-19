@@ -42,12 +42,21 @@ jobs:
         run: |
           npm run android:add
           npx cap sync android
+          if [ -f android/variables.gradle ]; then
+            printf '\\next {\\n    rgcfaIncludeGoogle = true\\n    androidxCredentialsVersion = \'1.3.0\'\\n}\\n' >> android/variables.gradle
+          fi
+          npm run build:native-auth
 
       - name: Build debug APK
         working-directory: mobile/android
         run: |
           chmod +x gradlew
           ./gradlew assembleDebug
+
+      - name: Display Android debug signing SHA-1
+        working-directory: mobile/android
+        run: |
+          keytool -list -v -keystore "$HOME/.android/debug.keystore" -alias androiddebugkey -storepass android -keypass android | grep -E 'SHA1:|SHA-1:' || true
 
       - name: Rename APK
         run: |
