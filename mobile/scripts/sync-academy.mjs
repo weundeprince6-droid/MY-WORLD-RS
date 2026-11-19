@@ -16,7 +16,7 @@ const config = await readFile(sourceConfig, 'utf8');
 
 // L'application mobile embarque la page Academy existante et sa configuration.
 // Le code métier, l'authentification et les rôles restent ceux du site actuel.
-await writeFile(path.join(webDir, 'index.html'), html, 'utf8');
+await writeFile(path.join(webDir, 'index.html'), html.replace('</head>', '  <script src="./native-auth.js"></script>\n</head>'), 'utf8');
 await copyFile(sourceConfig, path.join(webDir, 'config.js'));
 
 console.log('WEBSERVICES ACADEMY synchronisée dans mobile/www.');
