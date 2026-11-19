@@ -4,10 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>WEBSERVICES ACADEMY · Espace pédagogique</title>
+<link rel="manifest" href="manifest-academy.webmanifest"><meta name="theme-color" content="#14123a"><link rel="icon" href="academy-192.png"><link rel="apple-touch-icon" href="academy-192.png"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="WS Academy">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap">
 <style>
 :root{--bg:#0b1220;--carte:#131c2e;--carte2:#1a2540;--bord:#27344f;--txt:#e8ecf4;--doux:#9aa7c0;--or:#f5b942;--ok:#3ecf8e;--mal:#ff6b6b;--bleu:#5aa2ff}
-*{box-sizing:border-box}
+*{box-sizing:border-box}[hidden]{display:none!important}
 html,body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 button,input,select,textarea{font:inherit;color:inherit}
 a{color:var(--bleu)}
@@ -734,6 +735,17 @@ function erreurTexte(e) {
   return m[c] || (e && e.message) || "Erreur inattendue.";
 }
 
+// ---------- installation sur téléphone (Android : « Installer l'application ») ----------
+let invitationInstall = null;
+window.addEventListener("beforeinstallprompt", (ev) => { ev.preventDefault(); invitationInstall = ev; document.querySelectorAll(".btn-installer").forEach((b) => (b.hidden = false)); });
+window.addEventListener("appinstalled", () => { invitationInstall = null; document.querySelectorAll(".btn-installer").forEach((b) => (b.hidden = true)); });
+if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw-academy.js", { scope: "./webs-classroom.html" }).catch(() => {}));
+function boutonInstaller() {
+  if (matchMedia("(display-mode: standalone)").matches) return h("span", {});
+  const b = h("button", { class: "btn pri btn-installer", type: "button", style: "width:100%;margin-top:12px", hidden: !invitationInstall, onclick: async () => { if (!invitationInstall) return; invitationInstall.prompt(); await invitationInstall.userChoice.catch(() => {}); invitationInstall = null; b.hidden = true; } }, "📲 Installer l'application sur ce téléphone");
+  return h("div", {}, b, h("p", { class: "meta", style: "text-align:center;margin-top:8px" }, "Sur Android (Chrome) : menu ⋮ → « Installer l'application » ou « Ajouter à l'écran d'accueil »."));
+}
+
 // ---------- état ----------
 let moi = null; // { uid, nom, email, role, classe }
 let vueCourante = "accueil";
@@ -762,13 +774,17 @@ function vueConnexion(erreur) {
     const email = f.elements.email.value.trim(); if (!email) { msg.className = "erreur"; msg.textContent = "Saisissez d'abord votre email."; return; }
     try { await sendPasswordResetEmail(auth, email); msg.className = "info"; msg.textContent = "Un email de réinitialisation vient d'être envoyé."; } catch (e) { msg.className = "erreur"; msg.textContent = erreurTexte(e); }
   } }, "Mot de passe oublié");
-  const google = h("button", { class: "btn", type: "button", onclick: async () => {
+  // Sur Android / en application installée, la fenêtre Google échoue (« missing initial state ») :
+  // la connexion se fait avec email + mot de passe, qui fonctionne partout.
+  const mobile = /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent) || matchMedia("(display-mode: standalone)").matches;
+  const google = h("button", { class: "btn", type: "button", hidden: mobile, onclick: async () => {
     msg.className = "erreur"; msg.textContent = "";
     try { await signInWithPopup(auth, new GoogleAuthProvider()); } catch (e) { msg.textContent = erreurTexte(e); }
   } }, "Connexion Direction (Google)");
   $app.replaceChildren(h("div", { class: "connexion" },
     h("div", { class: "ligne", style: "margin-bottom:18px" }, h("span", { class: "logo" }, "WS"), h("div", {}, h("h1", { style: "margin:0;font-size:20px" }, "WEBS- Class room"), h("small", { class: "meta" }, "Centre de formation WEBSERVICES"))),
     h("div", { class: "carte" }, f, msg, h("div", { class: "ligne", style: "margin-top:8px" }, oublie, h("span", { class: "espace" }), google)),
+    boutonInstaller(),
     aide("Votre compte est créé par le secrétariat ou la direction. Pas encore de compte ? Demandez-le à l'école.")));
 }
 
