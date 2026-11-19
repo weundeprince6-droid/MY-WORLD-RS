@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>WEBSERVICES ACADEMY · Espace pédagogique</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap">
 <style>
 :root{--bg:#0b1220;--carte:#131c2e;--carte2:#1a2540;--bord:#27344f;--txt:#e8ecf4;--doux:#9aa7c0;--or:#f5b942;--ok:#3ecf8e;--mal:#ff6b6b;--bleu:#5aa2ff}
 *{box-sizing:border-box}
@@ -59,30 +60,35 @@ dialog::backdrop{background:#000a}
 .ecran-brevet .barre{display:flex;align-items:center;justify-content:flex-end;gap:10px;max-width:1180px;margin:0 auto 14px}
 .barre-titre{margin-right:auto;color:#fff;display:flex;flex-direction:column;gap:3px}.barre-titre b{font-size:15px}.barre-titre span{font-size:11px;color:#b6c2d3}
 
-.brevet{display:grid;grid-template-columns:1fr;grid-template-rows:auto 1fr;width:min(1180px,100%);min-height:790px;margin:0 auto;background:#fff;color:#18263b;border:7px double #17365b;outline:1px solid #c7a45b;outline-offset:-14px;box-shadow:0 22px 70px #0007;overflow:hidden;font-family:Georgia,"Times New Roman",serif;position:relative}
-.brevet:before{content:"";position:absolute;top:0;left:0;right:0;height:8px;background:linear-gradient(90deg,#0072bc 0 33.33%,#ce2028 33.33% 66.66%,#f7d417 66.66% 100%)}
-.brevet-aside{background:#f7f8fb;color:#17365b;padding:27px 52px 20px;display:grid;grid-template-columns:105px 1fr 150px;grid-template-rows:auto auto;align-items:center;gap:5px 22px;text-align:center;border-bottom:3px solid #c7a45b}
-.monogramme{grid-column:1;grid-row:1/3;width:78px;height:78px;border:2px solid #c7a45b;border-radius:50%;display:grid;place-items:center;color:#17365b;font:700 25px Georgia,serif;letter-spacing:2px;margin:0 auto}
-.aside-label{grid-column:2;grid-row:1;font-size:13px;letter-spacing:3px;line-height:1.7;color:#17365b}.aside-label b{display:block;color:#17365b;font-size:23px;letter-spacing:4px}
-.photo-candidat{grid-column:3;grid-row:1/3;width:112px;height:132px;object-fit:cover;background:#e8edf2;border:4px solid #fff;outline:1px solid #c7a45b;margin:0 auto;box-shadow:0 3px 12px #0002}
-.photo-vide{grid-column:3;grid-row:1/3;width:112px;height:132px;display:grid;place-items:center;background:#edf1f6;border:1px dashed #9aa8b9;color:#64748b;font:11px Arial,sans-serif;letter-spacing:1px;margin:0 auto}
-.aside-num{grid-column:2;grid-row:2;margin:0;padding:5px 12px;border-top:1px solid #cbd3df;width:auto;font:11px Arial,sans-serif;letter-spacing:2px;color:#64748b}.aside-num b{display:inline-block;color:#17365b;font:700 14px monospace;margin-left:8px;overflow-wrap:anywhere}.aside-type{display:none}
-.brevet-main{padding:28px 70px 30px;display:flex;flex-direction:column;align-items:center;text-align:center;position:relative}
-.sur-titre{font:700 11px Arial,sans-serif;letter-spacing:3px;color:#8d6b27;text-transform:uppercase}
-.brevet-main h1{font:700 31px Georgia,serif;letter-spacing:2px;color:#17365b;margin:12px 0 8px;text-transform:uppercase}
-.trait-or{height:3px;width:115px;background:#c7a45b;margin-bottom:18px}
-.certifie{font:16px Georgia,serif;color:#596579;margin:0 0 8px}
-.nom-candidat{font:700 29px Georgia,serif;color:#17365b;margin:5px 0 7px;text-transform:uppercase;letter-spacing:1.5px;border-bottom:1px dotted #9ba8b8;padding:0 22px 7px}
-.naissance{font:12px Arial,sans-serif;color:#6f7d8e;margin:0 0 20px}
-.details-formation{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:9px;text-align:left;margin:0 0 13px}
-.details-formation>div{padding:11px 14px;background:#f7f8fa;border:1px solid #e0e5ec;border-left:3px solid #c5a45b;min-height:58px}.details-formation>div:first-child{grid-column:1/-1}
-.details-formation span,.resultat span{display:block;font:700 9px Arial,sans-serif;letter-spacing:1.4px;color:#7c8795;margin-bottom:6px}.details-formation b{font:700 13px Arial,sans-serif;color:#1b3049}
-.resultat{display:grid;grid-template-columns:1fr 1fr;width:100%;border:1px solid #cbd3df;margin:2px 0 12px}.resultat>div{padding:10px}.resultat>div+div{border-left:1px solid #cbd3df}.resultat b{font:700 18px Georgia,serif;color:#9a7832}
-.formule{font:italic 12px Georgia,serif;color:#667386;line-height:1.6;margin:0 0 8px}.delivrance{font:700 12px Arial,sans-serif;color:#293c54;margin:5px 0 17px}
-.signatures{display:grid;grid-template-columns:1fr 1fr;gap:65px;width:100%;margin-top:auto}.signature-bloc{display:flex;flex-direction:column;align-items:center;gap:7px;padding-top:10px;border-top:1px solid #253a52}
-.signature-bloc span{font:700 9px Arial,sans-serif;letter-spacing:1px;color:#5f6e80}.signature-bloc b{font:700 14px Georgia,serif;color:#192d46;min-height:18px}.signature-bloc i{font:10px Arial,sans-serif;color:#8792a0}.signature-bloc.jury{border-color:#c6a45b}
-.pied-brevet{font:8px Arial,sans-serif;letter-spacing:1.5px;color:#9aa4b1;margin-top:20px}
-@media print{@page{size:A4 landscape;margin:0}html,body{background:#fff!important;margin:0!important;padding:0!important}body>*:not(#zone-brevet){display:none!important}#zone-brevet{position:static!important;background:#fff!important;padding:0!important;overflow:visible!important}.ecran-brevet .barre{display:none!important}.brevet{width:297mm;height:210mm;min-height:210mm;margin:0;border-radius:0;box-shadow:none;break-inside:avoid;print-color-adjust:exact;-webkit-print-color-adjust:exact}.brevet-aside{padding:8mm 15mm 5mm}.brevet-main{padding:7mm 18mm 7mm}.photo-candidat,.photo-vide{width:30mm;height:35mm}.details-formation>div{min-height:13mm}}
+.brevet{position:relative;display:grid;grid-template-columns:1fr;grid-template-rows:auto 1fr;width:min(1180px,100%);min-height:790px;margin:0 auto;background:#fff;color:#14123a;box-shadow:0 22px 70px #0007;overflow:hidden;font-family:Georgia,"Times New Roman",serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.brevet:before{content:"";position:absolute;inset:0;background:repeating-radial-gradient(circle at 50% 118%,#0000 0 26px,#c9962b12 26px 27px);pointer-events:none}
+.orn{position:absolute;width:250px;height:140px;pointer-events:none}.orn:before,.orn:after{content:"";position:absolute;inset:0}
+.orn:before{background:linear-gradient(135deg,#f3d98b,#c9962b 55%,#f3d98b);clip-path:polygon(0 0,100% 0,0 100%)}.orn:after{background:#14123a;clip-path:polygon(0 0,91% 0,0 88%)}
+.orn.hg{top:0;left:0}.orn.bd{bottom:0;right:0;width:190px;height:106px;transform:rotate(180deg)}
+.eq{position:absolute;width:84px;height:52px;border:3px solid #14123a;pointer-events:none}.eq.hd{top:18px;right:22px;border-left:0;border-bottom:0}.eq.bg{bottom:18px;left:22px;border-right:0;border-top:0}
+.brevet-aside{position:relative;background:none;color:#14123a;padding:22px 64px 4px;display:grid;grid-template-columns:200px 1fr 200px;grid-template-rows:auto auto auto;align-items:start;gap:2px 22px;text-align:center}
+.monogramme{grid-column:2;grid-row:1;width:84px;height:84px;margin:0 auto}.monogramme svg{width:100%;height:100%;display:block}
+.aside-label{grid-column:2;grid-row:2;font:700 12px Arial,sans-serif;letter-spacing:5px;color:#14123a}.aside-label b{display:inline;margin-left:8px;color:#14123a;font-size:12px;letter-spacing:5px}
+.photo-candidat{grid-column:3;grid-row:1/4;width:112px;height:132px;object-fit:cover;background:#e8edf2;border:4px solid #c9962b;outline:2px solid #14123a;outline-offset:2px;margin:36px auto 0}
+.photo-vide{grid-column:3;grid-row:1/4;width:112px;height:132px;display:grid;place-items:center;background:#f4f1e8;border:4px solid #c9962b;outline:2px solid #14123a;outline-offset:2px;color:#777;font:11px Arial,sans-serif;letter-spacing:1px;margin:36px auto 0}
+.aside-num{grid-column:2;grid-row:3;margin:2px auto 0;font:10px Arial,sans-serif;letter-spacing:2px;color:#777}.aside-num b{display:inline-block;color:#14123a;font:700 12px monospace;margin-left:8px;overflow-wrap:anywhere}.aside-type{display:none}
+.brevet-main{padding:0 70px 22px;display:flex;flex-direction:column;align-items:center;text-align:center;position:relative}
+.sur-titre{font:700 10px Arial,sans-serif;letter-spacing:3px;color:#a87a1c;text-transform:uppercase}
+.brevet-main h1{font:700 48px Georgia,serif;letter-spacing:9px;color:#14123a;margin:8px 0 4px;text-transform:uppercase;line-height:1.05}
+.trait-or{height:3px;width:130px;background:linear-gradient(90deg,#0000,#c9962b,#0000);margin-bottom:10px}
+.certifie{font:600 13px Arial,sans-serif;letter-spacing:3px;text-transform:uppercase;color:#555;margin:0 0 2px}
+.nom-candidat{font:400 58px "Great Vibes","Brush Script MT","Segoe Script",cursive;color:#14123a;margin:0;text-transform:none;letter-spacing:0;line-height:1.25;border-bottom:2px dotted #14123a;padding:0 40px 2px;min-width:60%}
+.naissance{font:12px Arial,sans-serif;color:#666;margin:8px 0 12px}
+.details-formation{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:8px;text-align:left;margin:0 0 8px}
+.details-formation>div{padding:8px 14px;background:#faf8f1;border:1px solid #eadfc2;border-left:3px solid #c9962b;min-height:46px}.details-formation>div:first-child{grid-column:1/-1}
+.details-formation span,.resultat span{display:block;font:700 9px Arial,sans-serif;letter-spacing:1.4px;color:#8a7a52;margin-bottom:4px}.details-formation b{font:700 13px Arial,sans-serif;color:#14123a}
+.resultat{display:grid;grid-template-columns:1fr 1fr;width:100%;border:1px solid #eadfc2;margin:0 0 8px}.resultat>div{padding:8px}.resultat>div+div{border-left:1px solid #eadfc2}.resultat b{font:700 18px Georgia,serif;color:#a87a1c}
+.formule{font:italic 12px Georgia,serif;color:#555;line-height:1.5;margin:0 0 4px}.delivrance{font:700 12px Arial,sans-serif;color:#14123a;margin:2px 0 6px}
+.signatures{display:grid;grid-template-columns:1fr auto 1fr;gap:34px;width:100%;margin-top:auto;align-items:end}.signature-bloc{display:flex;flex-direction:column;align-items:center;gap:5px;padding-top:8px;border-top:2px dotted #14123a}
+.signature-bloc span{font:700 9px Arial,sans-serif;letter-spacing:1px;color:#555}.signature-bloc b{font:700 14px Georgia,serif;color:#14123a;min-height:18px}.signature-bloc i{font:10px Arial,sans-serif;color:#888}.signature-bloc.jury{border-color:#14123a}
+.rosace{width:84px;height:100px}.rosace svg{width:100%;height:100%;display:block}
+.pied-brevet{font:8px Arial,sans-serif;letter-spacing:1.5px;color:#999;margin-top:10px;padding-right:90px}
+@media print{@page{size:A4 landscape;margin:0}html,body{background:#fff!important;margin:0!important;padding:0!important}body>*:not(#zone-brevet){display:none!important}#zone-brevet{position:static!important;background:#fff!important;padding:0!important;overflow:visible!important}.ecran-brevet .barre{display:none!important}.brevet{width:297mm;height:210mm;min-height:210mm;margin:0;box-shadow:none;break-inside:avoid}.photo-candidat,.photo-vide{width:30mm;height:35mm}}
 @media(max-width:760px){.pose{grid-template-columns:1fr}nav{flex-direction:row;overflow:auto;border-right:0;border-bottom:1px solid var(--bord)}nav button{white-space:nowrap}main{padding:14px}}
 
 /* --- Finition professionnelle WEBSERVICES ACADEMY --- */
@@ -1037,15 +1043,19 @@ async function creerCompte(d) {
 const MENTIONS = [[16, "Très bien"], [14, "Bien"], [12, "Assez bien"], [10, "Passable"]];
 const mentionPour = (moy) => (MENTIONS.find(([seuil]) => moy >= seuil) || [0, "Aucune"])[1];
 const dateLongue = (iso) => new Date(iso + "T12:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+const SVG_MEDAILLE = '<svg viewBox="0 0 100 100" aria-hidden="true"><defs><linearGradient id="or1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f3d98b"/><stop offset=".5" stop-color="#c9962b"/><stop offset="1" stop-color="#f3d98b"/></linearGradient></defs><polygon fill="url(#or1)" points="50,2 58,10 69,6 73,17 85,17 85,29 96,33 92,44 100,52 92,60 96,71 85,75 85,87 73,87 69,98 58,94 50,100 42,94 31,98 27,87 15,87 15,75 4,71 8,60 0,52 8,44 4,33 15,29 15,17 27,17 31,6 42,10"/><circle cx="50" cy="50" r="33" fill="#14123a"/><circle cx="50" cy="50" r="29" fill="none" stroke="#f3d98b" stroke-width="1.5"/><text x="50" y="58" text-anchor="middle" font-family="Georgia,serif" font-weight="700" font-size="24" fill="#f3d98b">WA</text></svg>';
+const SVG_ROSACE = '<svg viewBox="0 0 100 120" aria-hidden="true"><defs><linearGradient id="or2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f3d98b"/><stop offset=".5" stop-color="#c9962b"/><stop offset="1" stop-color="#f3d98b"/></linearGradient></defs><polygon fill="#14123a" points="26,70 12,118 34,106 46,118 50,76"/><polygon fill="#14123a" points="74,70 88,118 66,106 54,118 50,76"/><circle cx="50" cy="46" r="42" fill="url(#or2)"/><circle cx="50" cy="46" r="34" fill="#fff"/><circle cx="50" cy="46" r="31" fill="none" stroke="#14123a" stroke-width="1.6"/><text x="50" y="34" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="700" font-size="9" letter-spacing="1.5" fill="#14123a">BREVET</text><text x="50" y="55" text-anchor="middle" font-family="Georgia,serif" font-weight="700" font-size="21" fill="#14123a">__AN__</text><text x="50" y="68" text-anchor="middle" font-family="system-ui,sans-serif" font-size="7" letter-spacing="1.5" fill="#a87a1c">ACADEMY</text></svg>';
+// SVG statique du Centre (aucune donnée saisie) ; seule l'année, réduite à 4 chiffres, y est insérée.
+function svgStatique(code, an) { const d = document.createElement("div"); d.innerHTML = code.replace("__AN__", String(an || "").replace(/\D/g, "").slice(0, 4)); return d.firstChild; }
 function afficherBrevet(b) {
   const zone = h("div", { id: "zone-brevet", class: "ecran-brevet" },
     h("div", { class: "barre" },
-      h("div", { class: "barre-titre" }, h("b", {}, "Aperçu du brevet WEBSERVICES ACADEMY"), h("span", {}, "Modèle privé inspiré de la présentation des diplômes · A4 paysage")),
+      h("div", { class: "barre-titre" }, h("b", {}, "Aperçu du brevet WEBSERVICES ACADEMY"), h("span", {}, "Modèle privé du Centre · A4 paysage")),
       h("button", { class: "btn pri", onclick: () => window.print() }, "Imprimer / Enregistrer en PDF"),
       h("button", { class: "btn", onclick: () => zone.remove() }, "Fermer")),
-    h("article", { class: "brevet" },
+    h("article", { class: "brevet" }, h("div", { class: "orn hg" }), h("div", { class: "orn bd" }), h("div", { class: "eq hd" }), h("div", { class: "eq bg" }),
       h("aside", { class: "brevet-aside" },
-        h("div", { class: "monogramme" }, "WA"),
+        h("div", { class: "monogramme" }, svgStatique(SVG_MEDAILLE)),
         h("div", { class: "aside-label" }, "WEBSERVICES", h("b", {}, "ACADEMY")),
         b.photoDataUrl ? h("img", { class: "photo-candidat", src: b.photoDataUrl, alt: "Photo du candidat" }) : h("div", { class: "photo-vide" }, "PHOTO DU CANDIDAT"),
         h("div", { class: "aside-num" }, "NUMÉRO DU BREVET", h("b", {}, b.numero)),
@@ -1068,6 +1078,7 @@ function afficherBrevet(b) {
         h("div", { class: "delivrance" }, "Fait à " + (b.lieu || "Goma") + ", le " + dateLongue(b.dateDelivrance)),
         h("div", { class: "signatures" },
           h("div", { class: "signature-bloc" }, h("span", {}, "LE DIRECTEUR PRINCIPAL DU CENTRE"), h("b", {}, b.directeurPrincipal || b.signataire || "________________"), h("i", {}, "Signature et cachet")),
+          h("div", { class: "rosace" }, svgStatique(SVG_ROSACE, b.dateDelivrance)),
           h("div", { class: "signature-bloc jury" }, h("span", {}, "MEMBRE DU JURY"), h("b", {}, b.membreJury || "________________"), h("i", {}, b.fonctionJury || "Signature"))),
         h("div", { class: "pied-brevet" }, "WEBSERVICES ACADEMY  ·  " + (b.lieu || "RDC") + "  ·  DOCUMENT PRIVÉ DE FORMATION"))));
   document.body.append(zone);
