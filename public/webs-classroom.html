@@ -84,7 +84,7 @@ dialog::backdrop{background:#000a}
 .details-formation span,.resultat span{display:block;font:700 9px Arial,sans-serif;letter-spacing:1.4px;color:#8a7a52;margin-bottom:4px}.details-formation b{font:700 13px Arial,sans-serif;color:#14123a}
 .resultat{display:grid;grid-template-columns:1fr 1fr;width:100%;border:1px solid #eadfc2;margin:0 0 8px}.resultat>div{padding:8px}.resultat>div+div{border-left:1px solid #eadfc2}.resultat b{font:700 18px Georgia,serif;color:#a87a1c}
 .formule{font:italic 12px Georgia,serif;color:#555;line-height:1.5;margin:0 0 4px}.delivrance{font:700 12px Arial,sans-serif;color:#14123a;margin:2px 0 6px}
-.signatures{display:grid;grid-template-columns:1fr auto 1fr;gap:34px;width:100%;margin-top:auto;align-items:end}.signature-bloc{display:flex;flex-direction:column;align-items:center;gap:5px;padding-top:8px;border-top:2px dotted #14123a}
+.brevet-main .description{max-width:820px;margin:26px auto 16px;font:400 21px/1.7 Georgia,serif;color:#2a2850;text-align:center}.brevet-main .description b{color:#14123a;font-weight:700}.signatures{display:grid;grid-template-columns:1fr auto 1fr;gap:34px;width:100%;margin-top:auto;align-items:end}.signature-bloc{display:flex;flex-direction:column;align-items:center;gap:5px;padding-top:8px;border-top:2px dotted #14123a}
 .signature-bloc span{font:700 9px Arial,sans-serif;letter-spacing:1px;color:#555}.signature-bloc b{font:700 14px Georgia,serif;color:#14123a;min-height:18px}.signature-bloc i{font:10px Arial,sans-serif;color:#888}.signature-bloc.jury{border-color:#14123a}
 .rosace{width:84px;height:100px}.rosace svg{width:100%;height:100%;display:block}
 .pied-brevet{font:8px Arial,sans-serif;letter-spacing:1.5px;color:#999;margin-top:10px;padding-right:90px}
@@ -1284,13 +1284,7 @@ function afficherBrevet(b) {
         h("p", { class: "certifie" }, "Le Centre WEBSERVICES ACADEMY atteste que"),
         h("h2", { class: "nom-candidat" }, b.nom),
         h("p", { class: "naissance" }, [b.naissance ? "Né(e) le " + dateLongue(b.naissance) : "", b.lieuNaissance ? "à " + b.lieuNaissance : ""].filter(Boolean).join(" · ")),
-        h("div", { class: "details-formation" },
-          h("div", {}, h("span", {}, "FORMATION SUIVIE"), h("b", {}, b.intitule)),
-          h("div", {}, h("span", {}, "FILIÈRE / SPÉCIALITÉ"), h("b", {}, b.filiere)),
-          h("div", {}, h("span", {}, "PÉRIODE DE FORMATION"), h("b", {}, b.periode || "—"))),
-        h("div", { class: "resultat" },
-          h("div", {}, h("span", {}, "RÉSULTAT FINAL"), h("b", {}, b.moyenne + " / 20")),
-          h("div", {}, h("span", {}, "APPRÉCIATION"), h("b", {}, b.mention && b.mention !== "Aucune" ? b.mention : "Validé"))),
+        h("p", { class: "description" }, "a suivi avec succès la formation de ", h("b", {}, b.intitule), ", filière ", h("b", {}, b.filiere), b.periode ? ", période " + b.periode : "", ", et obtient la moyenne de ", h("b", {}, b.moyenne + " / 20"), ", mention ", h("b", {}, b.mention && b.mention !== "Aucune" ? b.mention : "Validé"), "."),
         h("p", { class: "formule" }, "Après vérification de sa formation et de ses résultats, le présent brevet privé lui est délivré."),
         h("div", { class: "delivrance" }, "Fait à " + (b.lieu || "Goma") + ", le " + dateLongue(b.dateDelivrance)),
         h("div", { class: "signatures" },
