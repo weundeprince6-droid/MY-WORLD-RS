@@ -572,6 +572,56 @@ body:has(#app > .haut){background:var(--bg);color:var(--txt)}
   #app:has(> .haut) .brevet-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 
+
+/* ACADEMY v3 — structure inspirée du tableau de bord AVEC LA SAGESSE */
+#app:has(> .haut) .haut{
+  min-height:68px;padding:9px clamp(16px,2.2vw,30px);gap:12px;
+}
+#app:has(> .haut) .logo{width:42px;height:42px;flex-basis:42px;border-radius:12px}
+#app:has(> .haut) .haut h1{font-size:14px;letter-spacing:.105em}
+#app:has(> .haut) .haut small{font-size:9px;margin-top:3px}
+#app:has(> .haut) .pose{grid-template-columns:264px minmax(0,1fr);min-height:calc(100vh - 68px)}
+#app:has(> .haut) nav{top:68px;height:calc(100vh - 68px);padding:22px 14px 28px}
+#app:has(> .haut) main{padding:clamp(22px,2.6vw,38px) clamp(20px,3vw,44px)}
+#app:has(> .haut) main>h2{font-size:clamp(24px,2vw,30px);letter-spacing:-.04em}
+#app:has(> .haut) main>.sous{margin-bottom:22px;font-size:12px}
+#app:has(> .haut) main>.ligne{gap:12px}
+#app:has(> .haut) .carte{border-radius:13px;padding:19px}
+#app:has(> .haut) .carte h3{font-size:13px}
+#app:has(> .haut) .carte[style*="flex:1 1 175px"]{
+  position:relative;overflow:hidden;min-height:124px;padding:18px 18px 16px;
+  border-top:3px solid var(--or);box-shadow:var(--ombre);
+}
+#app:has(> .haut) .carte[style*="flex:1 1 175px"] .meta:first-child{
+  font-size:9px;letter-spacing:.12em;text-transform:uppercase;
+}
+#app:has(> .haut) .carte[style*="flex:1 1 175px"] div[style*="font-size:28px"]{
+  font-size:30px!important;line-height:1.1;letter-spacing:-.04em;
+}
+#app:has(> .haut) .carte[style*="flex:1 1 175px"] .btn{margin-top:12px}
+#app:has(> .haut) .academy-graph{border-radius:13px}
+#app:has(> .haut) .graph-label{font-size:10px;color:var(--doux)}
+#app:has(> .haut) .graph-value{font-size:11px;color:var(--txt)}
+#app:has(> .haut) .carte .ligne{align-items:center}
+#app:has(> .haut) .carte .puce{white-space:nowrap}
+#app:has(> .haut) nav button{min-height:43px}
+#app:has(> .haut) nav button.actif{box-shadow:inset 3px 0 var(--or)}
+@media(max-width:1050px){
+  #app:has(> .haut) .pose{grid-template-columns:224px minmax(0,1fr)}
+  #app:has(> .haut) nav{top:68px;height:calc(100vh - 68px)}
+}
+@media(max-width:760px){
+  #app:has(> .haut) .haut{min-height:64px;padding:8px 12px}
+  #app:has(> .haut) .pose{display:flex;min-height:calc(100vh - 64px)}
+  #app:has(> .haut) nav{position:sticky;top:64px;height:auto;max-height:none;padding:8px 10px}
+  #app:has(> .haut) main{padding:20px 13px}
+  #app:has(> .haut) .carte{padding:15px}
+}
+@media(max-width:430px){
+  #app:has(> .haut) .haut h1{font-size:11px}
+  #app:has(> .haut) .logo{width:36px;height:36px;flex-basis:36px}
+}
+
 </style>
 </head>
 <body>
