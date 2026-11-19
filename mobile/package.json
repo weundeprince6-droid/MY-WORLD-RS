@@ -13,15 +13,19 @@
     "android:add": "npm run prepare:web && cap add android",
     "ios:add": "npm run prepare:web && cap add ios",
     "android:open": "cap open android",
-    "ios:open": "cap open ios"
+    "ios:open": "cap open ios",
+    "build:native-auth": "esbuild scripts/native-auth.js --bundle --format=iife --global-name=AcademyNativeAuth --platform=browser --target=es2020 --outfile=www/native-auth.js"
   },
   "dependencies": {
-    "@capacitor/core": "^8.5.2"
+    "@capacitor/core": "^8.5.2",
+    "@capacitor-firebase/authentication": "^8.6.0",
+    "firebase": "10.14.1"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.5.2",
     "@capacitor/android": "^8.5.2",
     "@capacitor/ios": "^8.5.2",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "esbuild": "^0.25.0"
   }
 }
