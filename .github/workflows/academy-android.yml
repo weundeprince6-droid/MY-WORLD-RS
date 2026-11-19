@@ -40,12 +40,16 @@ jobs:
       - name: Generate Android project and sync Academy
         working-directory: mobile
         run: |
-          npm run android:add
-          npx cap sync android
-          if [ -f android/variables.gradle ]; then
-            printf '\\next {\\n    rgcfaIncludeGoogle = true\\n    androidxCredentialsVersion = \'1.3.0\'\\n}\\n' >> android/variables.gradle
-          fi
+          npm run prepare:web
           npm run build:native-auth
+          npx cap add android
+          cat >> android/variables.gradle <<'GRADLE'
+          ext {
+              rgcfaIncludeGoogle = true
+              androidxCredentialsVersion = '1.3.0'
+          }
+          GRADLE
+          npx cap sync android
 
       - name: Build debug APK
         working-directory: mobile/android
