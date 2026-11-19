@@ -43,12 +43,7 @@ jobs:
           npm run prepare:web
           npm run build:native-auth
           npx cap add android
-          cat >> android/variables.gradle <<'GRADLE'
-          ext {
-              rgcfaIncludeGoogle = true
-              androidxCredentialsVersion = '1.3.0'
-          }
-          GRADLE
+          sed -i '/^}$/i\\    rgcfaIncludeGoogle = true\\n    androidxCredentialsVersion = '\''1.3.0'\'' ' android/variables.gradle
           npx cap sync android
 
       - name: Build debug APK
