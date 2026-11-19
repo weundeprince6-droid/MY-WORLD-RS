@@ -26,6 +26,7 @@ video{width:100%;height:100%;background:#000;object-fit:contain}
 body.solo header,body.solo aside,body.solo .note,body.solo .actions,body.solo #now{display:none}
 body.solo main{display:block;min-height:0}
 body.solo .player{padding:0;gap:0;height:100vh}
+#qchoice{position:absolute;inset:0;background:rgba(0,0,0,.88);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:16px;text-align:center;font-size:13px}#qchoice[hidden]{display:none}#qchoice button{padding:8px 14px;border-radius:8px;border:1px solid #5b7;background:#143;color:#fff;cursor:pointer;font-size:13px}#qchoice .qb{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 body.solo .screen{max-height:none;height:calc(100vh - 26px);aspect-ratio:auto;border-radius:0}
 body.solo #playstatus.note{display:block;padding:5px 10px;margin:0;font-size:12px}
 @media(max-width:760px){main{grid-template-columns:1fr;grid-template-rows:minmax(280px,42vh) 1fr}aside{border-right:0;border-bottom:1px solid var(--line)}#list{max-height:34vh}.player{padding:10px}.screen{max-height:none}}
@@ -44,7 +45,7 @@ body.solo #playstatus.note{display:block;padding:5px 10px;margin:0;font-size:12p
 </aside>
 <section class="player">
 <div id="now">Choisissez une chaîne</div>
-<div class="screen"><video id="video" controls playsinline autoplay></video></div>
+<div class="screen" style="position:relative"><video id="video" controls playsinline autoplay></video><div id="qchoice" hidden></div></div>
 <div class="actions"><button id="stop">■ Arrêter</button><a id="official" href="#" target="_blank" rel="noopener" hidden>Ouvrir la source ↗</a></div>
 <p id="playstatus" class="note">Sélectionnez une chaîne dans la liste. Si un diffuseur bloque la lecture intégrée, le lien source peut rester accessible.</p>
 <p class="note">Le lecteur utilise HLS.js lorsque nécessaire et la lecture HLS native si le navigateur la prend en charge. Une chaîne peut être indisponible dans votre région ou momentanément hors ligne.</p>
@@ -79,6 +80,22 @@ function niveauMax(levels,maxH=480){
 const qualityParam=new URLSearchParams(location.search).get('q')||'480p';
 const qualityHeight=qualityParam==='auto'?0:Math.max(240,Math.min(1080,parseInt(qualityParam,10)||480));
 window.mwrsNiveauMax=niveauMax;
+let overrideH=null,gardeChoix=false;
+const capH=()=>overrideH!==null?overrideH:qualityHeight;
+// La résolution choisie est une condition : si la chaîne ne la propose pas, on ne lance RIEN
+// et on propose à l'utilisateur de la lire dans une autre résolution (qu'il choisit).
+function refuserQualite(c,idx,hs){
+ if(hls){hls.stopLoad()}video.pause();
+ const q=$('qchoice');q.textContent='';
+ const t=document.createElement('div');
+ t.textContent='Cette chaîne ne propose pas '+capH()+'p'+(capH()>0?' ou moins':'')+'. '+(hs.length?'Résolutions disponibles :':'Résolution inconnue.');
+ q.appendChild(t);
+ const b=document.createElement('div');b.className='qb';
+ hs.forEach(h=>{const x=document.createElement('button');x.textContent='Lire en '+h+'p';x.onclick=()=>{overrideH=h;gardeChoix=true;q.hidden=true;play(c,idx)};b.appendChild(x)});
+ const n=document.createElement('button');n.textContent='Ne pas lire';n.onclick=()=>{q.hidden=true;stop();$('now').textContent='Lecture annulée';$('playstatus').textContent='Choisissez une autre chaîne.'};b.appendChild(n);
+ q.appendChild(b);q.hidden=false;
+ $('playstatus').textContent='Lecture en attente : la résolution choisie n’est pas disponible pour cette chaîne.';
+}
 let channels=[], hls=null, current=null;
 const clean=s=>(s||'').replace(/[<>]/g,'').trim();
 function parseM3U(text,category){
@@ -132,6 +149,7 @@ function stop(){
 let playToken=0,fallback=null;
 function play(c,idx){
  idx=idx||0;const urls=c.urls||[c.url];const cible=urls[idx]||c.url;
+ if(!gardeChoix&&idx===0)overrideH=null;gardeChoix=false;$('qchoice').hidden=true;
  stop();current=c;$('now').textContent=c.name;$('official').href=cible;$('official').hidden=false;
  render();$('playstatus').textContent='Connexion au flux…';
  const token=++playToken;
@@ -163,9 +181,18 @@ function play(c,idx){
   hls=new Hls({enableWorker:false,lowLatencyMode:false,maxBufferLength:30,manifestLoadingTimeOut:20000,manifestLoadingMaxRetry:2,levelLoadingMaxRetry:2,fragLoadingMaxRetry:3});
   video.addEventListener('canplay',()=>{if(current&&video.paused&&!video.ended&&/Connexion|Lecteur prêt|Appuyez|sans/.test($('playstatus').textContent)&&!video.dataset.manual)sayPlaying()},{once:true});
   hls.on(Hls.Events.MEDIA_ATTACHED,()=>$('playstatus').textContent='Lecteur prêt · chargement du direct…');
+  video.addEventListener('loadedmetadata',()=>{if(token!==playToken)return;const cap=capH();if(cap>0&&video.videoHeight>cap+8){refuserQualite(c,idx,[video.videoHeight])}},{once:true});
   hls.loadSource(cible);hls.attachMedia(video);
   hls.on(Hls.Events.MANIFEST_PARSED,()=>{
-   if(hls&&hls.levels&&hls.levels.length>1){if(qualityHeight===0){hls.autoLevelCapping=-1;hls.startLevel=-1}else{const i=niveauMax(hls.levels,qualityHeight);hls.autoLevelCapping=i;hls.startLevel=i}}
+   const cap=capH();
+   if(hls&&cap>0){
+    const lv=hls.levels||[];
+    const hs=[...new Set(lv.map(l=>l.height||0).filter(h=>h>0))].sort((a,b)=>a-b);
+    const ok=lv.some(l=>l.height>0&&l.height<=cap);
+    if(hs.length&&!ok){ if(suivant())return; refuserQualite(c,idx,hs);return }
+    if(lv.length>1&&ok){const i=niveauMax(lv,cap);hls.autoLevelCapping=i;hls.startLevel=i}
+    else if(lv.length>1){hls.autoLevelCapping=niveauMax(lv,cap)}
+   }else if(hls&&hls.levels&&hls.levels.length>1){hls.autoLevelCapping=-1;hls.startLevel=-1}
    sayPlaying();
   });
   hls.on(Hls.Events.ERROR,(_,data)=>{

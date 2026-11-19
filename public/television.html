@@ -3126,8 +3126,35 @@ function renderResume() {
       w.postMessage(JSON.stringify({ event:'command', func:'setPlaybackQuality', args:[v] }), '*'); } catch (_) {} };
     [400, 1500, 4000, 9000].forEach(t => setTimeout(go, t));
   }
+  // Condition de résolution : si YouTube sert une qualité SUPÉRIEURE à celle choisie, on met la lecture
+  // en pause et on propose de la lire dans une autre résolution ; rien n'est relancé sans accord.
+  const tvRank = {tiny:144,small:240,medium:360,large:480,hd720:720,hd1080:1080,hd1440:1440,hd2160:2160,highres:4320};
+  let tvQualAccepte = false, tvQualHits = 0, tvQualBox = null;
+  function tvQualHide() { if (tvQualBox) tvQualBox.hidden = true; }
+  function tvQualAsk(reel) {
+    const wrap = tvStationFrame && tvStationFrame.parentElement; if (!wrap) return;
+    try { tvStationFrame.contentWindow.postMessage(JSON.stringify({ event:'command', func:'pauseVideo', args:[] }), '*'); } catch (_) {}
+    if (!tvQualBox) { tvQualBox = document.createElement('div'); tvQualBox.style.cssText = 'position:absolute;inset:0;z-index:5;background:rgba(0,0,0,.88);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:16px;text-align:center;font-size:13px'; wrap.appendChild(tvQualBox); }
+    tvQualBox.textContent = '';
+    const t = document.createElement('div'); t.textContent = 'Cette chaîne ne respecte pas la qualité choisie (' + tvQualityGet() + ') : YouTube propose ' + reel + 'p.'; tvQualBox.appendChild(t);
+    const ok = document.createElement('button'), no = document.createElement('button');
+    ok.textContent = 'Lire en ' + reel + 'p'; no.textContent = 'Ne pas lire';
+    [ok, no].forEach(x => x.style.cssText = 'padding:8px 14px;border-radius:8px;border:1px solid #5b7;background:#143;color:#fff;cursor:pointer;font-size:13px');
+    ok.onclick = () => { tvQualAccepte = true; tvQualHide(); try { tvStationFrame.contentWindow.postMessage(JSON.stringify({ event:'command', func:'playVideo', args:[] }), '*'); } catch (_) {} };
+    no.onclick = () => { tvQualHide(); tvStationFrame.src = 'about:blank'; };
+    const row = document.createElement('div'); row.style.cssText = 'display:flex;gap:8px'; row.append(ok, no); tvQualBox.appendChild(row); tvQualBox.hidden = false;
+  }
+  window.addEventListener('message', ev => {
+    if (!tvStationFrame || ev.source !== tvStationFrame.contentWindow || tvQualAccepte) return;
+    let d = ev.data; if (typeof d === 'string') { try { d = JSON.parse(d); } catch { return; } } if (!d) return;
+    const q = d.event === 'onPlaybackQualityChange' ? d.info : (d.info && d.info.playbackQuality);
+    const want = tvQualityPx[tvQualityGet()], got = tvRank[q];
+    if (!want || !got || got <= want) return;
+    if (++tvQualHits < 3) { tvSendQuality(); return; }
+    tvQualAsk(got);
+  });
   if (tvStationFrame) {
-    tvStationFrame.addEventListener('load', () => { tvFitFrame(); tvSendQuality(); });
+    tvStationFrame.addEventListener('load', () => { tvQualAccepte = false; tvQualHits = 0; tvQualHide(); tvFitFrame(); tvSendQuality(); });
     if (window.ResizeObserver && tvStationFrame.parentElement) new ResizeObserver(tvFitFrame).observe(tvStationFrame.parentElement);
     window.addEventListener('resize', tvFitFrame);
   }
