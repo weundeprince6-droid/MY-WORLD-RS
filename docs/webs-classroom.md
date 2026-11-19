@@ -48,3 +48,9 @@ reprise de son dossier d'inscription, moyenne calculée sur ses notes et devoirs
 avant de générer. « Imprimer / Enregistrer en PDF » produit une page A4 paysage. Chaque brevet reçoit un numéro
 (WS-année-XXXXXX) et reste consultable par l'élève dans sa section « Brevets ». Barème des mentions : 16 Très bien,
 14 Bien, 12 Assez bien, 10 Passable. Règles Firestore : bloc `ecole_brevets` (à republier).
+
+### Aspect du brevet
+Brevet A4 paysage (bleu nuit et or, médaille, rosace « BREVET + année », photo du candidat). La photo se choisit dans le
+formulaire (recadrée en 3:4, enregistrée sur la fiche de l'élève). Le brevet indique qu'il s'agit d'un certificat de
+formation privé du Centre : il n'utilise ni armoiries ni nom de ministère. Pour la police manuscrite du nom, la page
+charge « Great Vibes » (Google Fonts) ; sans internet, une police cursive du système est utilisée.
