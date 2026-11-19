@@ -1,0 +1,65 @@
+name: Build WEBSERVICES ACADEMY Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/webservices-academy-mobile
+    paths:
+      - "mobile/**"
+      - "public/webs-classroom.html"
+      - "public/config.js"
+      - ".github/workflows/academy-android.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Install dependencies
+        working-directory: mobile
+        run: npm install
+
+      - name: Generate Android project and sync Academy
+        working-directory: mobile
+        run: |
+          npm run android:add
+          npx cap sync android
+
+      - name: Build debug APK
+        working-directory: mobile/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Rename APK
+        run: |
+          mkdir -p dist
+          cp mobile/android/app/build/outputs/apk/debug/app-debug.apk dist/WEBSERVICES-ACADEMY-debug.apk
+
+      - name: Upload APK to GitHub Actions
+        uses: actions/upload-artifact@v4
+        with:
+          name: WEBSERVICES-ACADEMY-Android-APK
+          path: dist/WEBSERVICES-ACADEMY-debug.apk
+          if-no-files-found: error
+          retention-days: 30
