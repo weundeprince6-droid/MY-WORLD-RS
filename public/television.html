@@ -24,7 +24,7 @@ input[type=search]{width:100%;padding:8px 10px;border-radius:8px;border:1px soli
 .side-head{padding:14px;border-bottom:1px solid var(--border)}
 .side-head h1{font-size:18px;margin:0 0 12px}.brand-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}.brand-row h1{margin:0!important;min-width:0}.brand-row #btnRestart{flex:none;padding:6px 9px;font-size:12px;border-color:var(--accent);color:var(--accent2)}.brand-row #btnRestart:hover{background:var(--accent);color:#fff}
 .btn-row{display:flex;gap:8px;margin-bottom:10px}.btn-row button{flex:1}
-.tabs{display:flex;gap:4px;margin-bottom:10px}.tabs button{flex:1;padding:6px 0;font-size:12px}
+.menu-toggle{display:flex;width:100%;align-items:center;justify-content:space-between;margin:8px 0 7px;padding:9px 12px;background:var(--panel2);border:1px solid var(--accent);color:var(--text);font-weight:700}.menu-toggle .menu-count{font-size:11px;color:var(--accent2);font-weight:500}.tabs{display:none;gap:5px;margin-bottom:10px;flex-wrap:wrap}.tabs.menu-open{display:flex}.tabs button{flex:1 1 calc(50% - 5px);padding:7px 5px;font-size:12px;min-width:0}
 .tabs button.active{background:var(--accent);color:#fff}
 .row2{display:flex;gap:6px}.row2 select{padding:6px;font-size:12px;max-width:110px}
 #playlist{list-style:none;margin:0;padding:6px;overflow-y:auto;flex:1}
@@ -1096,6 +1096,7 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
         </select>
       </div>
     </div>
+      <button type="button" id="menuToggle" class="menu-toggle" aria-expanded="false" aria-controls="tabs"><span>☰ Menu</span><span class="menu-count">Afficher les rubriques ▾</span></button>
       <div class="tabs" id="tabs">
         <button data-filter="all" class="active">Tout</button>
         <button data-filter="audio">Audio</button>
@@ -2638,6 +2639,22 @@ $('tabs').onclick = (e) => {
   if (filter === 'image') { if (items.some((i) => i.type === 'image')) ouvrirGalerie(); }
   else if (document.body.dataset.mode === 'gallery') { setMode(current === -1 ? 'empty' : items[current].type); if (current === -1) { $('nowPlaying').textContent = 'Aucun média'; renderResume(); } }
 };
+const menuToggle = $('menuToggle'), navTabs = $('tabs');
+if (menuToggle && navTabs) {
+  menuToggle.addEventListener('click', () => {
+    const ouvert = navTabs.classList.toggle('menu-open');
+    menuToggle.setAttribute('aria-expanded', String(ouvert));
+    menuToggle.querySelector('.menu-count').textContent = ouvert ? 'Masquer les rubriques ▴' : 'Afficher les rubriques ▾';
+  });
+  navTabs.addEventListener('click', (e) => {
+    if (e.target.closest('button')) {
+      navTabs.classList.remove('menu-open');
+      menuToggle.setAttribute('aria-expanded', 'false');
+      menuToggle.querySelector('.menu-count').textContent = 'Afficher les rubriques ▾';
+    }
+  });
+}
+
 $('search').oninput = (e) => { query = e.target.value.toLowerCase(); renderList(); if (document.body.dataset.mode === 'gallery') renderGalerie(); };
 
 // ================= Plein écran : masquage automatique =================
