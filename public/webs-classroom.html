@@ -89,7 +89,7 @@ dialog::backdrop{background:#000a}
 .signature-bloc span{font:700 9px Arial,sans-serif;letter-spacing:1px;color:#555}.signature-bloc b{font:700 14px Georgia,serif;color:#14123a;min-height:18px}.signature-bloc i{font:10px Arial,sans-serif;color:#888}.signature-bloc.jury{border-color:#14123a}
 .rosace{width:84px;height:100px}.rosace svg{width:100%;height:100%;display:block}
 .pied-brevet{font:8px Arial,sans-serif;letter-spacing:1.5px;color:#999;margin-top:10px;padding-right:90px}
-@media print{@page{size:A4 landscape;margin:0}html,body{background:#fff!important;margin:0!important;padding:0!important}body>*:not(#zone-brevet){display:none!important}#zone-brevet{position:static!important;background:#fff!important;padding:0!important;overflow:visible!important}.ecran-brevet .barre{display:none!important}.brevet{width:297mm;height:210mm;min-height:210mm;margin:0;box-shadow:none;break-inside:avoid}.photo-candidat,.photo-vide{width:30mm;height:35mm}}
+@media print{@page{size:A4 landscape;margin:0}html,body{background:#fff!important;margin:0!important;padding:0!important}body>*:not(#zone-brevet):not(#zone-doc){display:none!important}#zone-brevet{position:static!important;background:#fff!important;padding:0!important;overflow:visible!important}.ecran-brevet .barre{display:none!important}.brevet{width:297mm;height:210mm;min-height:210mm;margin:0;box-shadow:none;break-inside:avoid}.photo-candidat,.photo-vide{width:30mm;height:35mm}}
 @media(max-width:760px){.pose{grid-template-columns:1fr}nav{flex-direction:row;overflow:auto;border-right:0;border-bottom:1px solid var(--bord)}nav button{white-space:nowrap}main{padding:14px}}
 
 /* --- Finition professionnelle WEBSERVICES ACADEMY --- */
@@ -623,6 +623,41 @@ body:has(#app > .haut){background:var(--bg);color:var(--txt)}
   #app:has(> .haut) .logo{width:36px;height:36px;flex-basis:36px}
 }
 
+
+/* ===== Academy+ : groupes de menu, cours en ligne, emploi du temps, documents, carte, KPI ===== */
+.nav-groupe{padding:12px 13px 4px;color:#7486a3;font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}
+.media-cadre{position:relative;aspect-ratio:16/9;margin:10px 0;border-radius:12px;overflow:hidden;background:#000}.media-cadre iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.media-video{width:100%;max-height:70vh;margin:10px 0;border-radius:12px;background:#000}.media-audio{width:100%;margin:10px 0}
+a.btn{display:inline-block;text-decoration:none}
+.grille-classes{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}.grille-classes .carte{margin:0}
+.grille-kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:14px}.kpi{margin:0!important;border-top:3px solid var(--or)}.kpi b{display:block;font-size:26px;margin:4px 0}
+.edt-wrap{overflow-x:auto;padding:10px}.edt{display:grid;min-width:640px;gap:0 4px}
+.edt-jour{text-align:center;font-weight:700;color:var(--or);padding:6px 0;font-size:13px}
+.edt-heures div{font-size:11px;color:var(--doux);text-align:right;padding-right:6px}
+.edt-col{position:relative;border-left:1px solid var(--bord)}.edt-ligne{position:absolute;left:0;right:0;border-top:1px dashed var(--bord);opacity:.6}
+.edt-bloc{position:absolute;left:3px;right:3px;overflow:hidden;border-radius:9px;padding:4px 7px;font-size:11px;line-height:1.3;background:hsl(var(--t) 55% 30%);border-left:4px solid hsl(var(--t) 80% 62%);color:#fff;display:flex;flex-direction:column}
+.edt-bloc b{font-size:12px}.edt-bloc span{opacity:.85}.edt-bloc.conflit{outline:2px solid var(--mal)}.edt-bloc em{color:#ffb4b4;font-style:normal;font-weight:700}
+#zone-doc .doc{background:#fff;color:#14123a;width:min(794px,100%);min-height:1000px;margin:0 auto 16px;padding:40px 46px;font:14px/1.5 Georgia,"Times New Roman",serif;box-shadow:0 22px 70px #0007;position:relative;page:docportrait}
+#zone-doc .doc:before{content:"";position:absolute;inset:14px;border:2px solid #c9962b;pointer-events:none}
+.doc-tete{display:grid;grid-template-columns:64px 1fr auto;gap:14px;align-items:center;border-bottom:3px double #c9962b;padding-bottom:12px;margin-bottom:18px}
+.doc-tete img{border-radius:12px}.doc-centre{font:800 20px Arial,sans-serif;letter-spacing:.06em;color:#14123a}.doc-sous{font:12px Arial,sans-serif;color:#555}
+.doc-num{text-align:right;font:12px Arial,sans-serif;color:#555;display:flex;flex-direction:column}
+.doc-tete h1{grid-column:1/-1;text-align:center;margin:10px 0 0;font:800 22px Georgia,serif;letter-spacing:.12em;color:#14123a}
+.doc-grille{display:grid;grid-template-columns:repeat(3,1fr);gap:10px 18px;margin:14px 0}.doc-grille span{display:block;font:11px Arial,sans-serif;color:#777;text-transform:uppercase;letter-spacing:.06em}.doc-grille b{font-size:15px}
+.doc-table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px}.doc-table th{background:#14123a;color:#f3d98b;padding:8px 10px;font:700 12px Arial,sans-serif;text-align:left}.doc-table td{padding:8px 10px;border-bottom:1px solid #ddd;color:#14123a}.doc-table tr.total td{background:#fbf3dc;font-weight:700;border-top:2px solid #c9962b}
+.doc-obs{border:1px solid #c9962b;border-radius:8px;padding:10px 14px;margin:14px 0}.doc-obs span{font:11px Arial,sans-serif;color:#777;text-transform:uppercase}.doc-obs p{margin:4px 0 0}
+.doc-montant{display:flex;align-items:baseline;justify-content:space-between;background:#14123a;color:#f3d98b;border-radius:10px;padding:14px 20px;margin:16px 0}.doc-montant b{font-size:30px}.doc-lettres{font-style:italic}
+.doc-sigs{display:flex;justify-content:space-around;margin-top:46px;text-align:center}.doc-sigs div{width:36%}.doc-sigs span{font:12px Arial,sans-serif;color:#444}.doc-sigs i{display:block;border-bottom:1px solid #14123a;height:52px}
+.doc-pied{position:absolute;left:46px;right:46px;bottom:26px;text-align:center;font:11px Arial,sans-serif;color:#777}
+.cid-paire{display:flex;gap:18px;flex-wrap:wrap;justify-content:center}
+.cid{width:85.6mm;height:54mm;zoom:1.5;border-radius:3.2mm;overflow:hidden;position:relative;color:#fff;background:linear-gradient(135deg,#14123a,#242a74);box-shadow:0 6px 20px #0006;border:.4mm solid #c9962b;font-family:Arial,sans-serif}
+.cid-haut{display:flex;align-items:center;gap:2mm;padding:2.6mm 3.4mm;background:#0c0b28;border-bottom:.4mm solid #c9962b}.cid-haut img{width:8mm;height:8mm;border-radius:2mm}.cid-haut b{display:block;font-size:3.2mm;letter-spacing:.2mm;color:#f3d98b}.cid-haut span{font-size:2.3mm;letter-spacing:.5mm;color:#cdd3ff}
+.cid-corps{display:flex;gap:3.4mm;padding:3.4mm}.cid-photo{width:21mm;height:26mm;object-fit:cover;border-radius:1.6mm;border:.4mm solid #f3d98b;background:#fff;color:#999;display:grid;place-items:center;font-size:2.6mm}
+.cid-infos{display:flex;flex-direction:column;gap:1.2mm;font-size:2.7mm}.cid-infos b{font-size:3.7mm;color:#f3d98b;line-height:1.15}
+.cid-verso{padding:4mm;font-size:2.5mm;display:flex;flex-direction:column;gap:1.4mm;height:100%;color:#14123a}.cid:has(.cid-verso){background:#fbf6e6}.cid-verso i{margin-top:auto;border-top:.3mm solid #14123a;font-style:normal;text-align:center;padding-top:1mm}
+@page docportrait{size:A4 portrait;margin:10mm}
+@media(max-width:900px){.nav-groupe{display:none}.doc-grille{grid-template-columns:1fr 1fr}#zone-doc .doc{padding:26px 20px}.cid{zoom:1.05}}
+@media print{#zone-doc{position:static!important;background:#fff!important;padding:0!important;overflow:visible!important}#zone-doc .barre{display:none!important}#zone-doc .doc{box-shadow:none!important;margin:0!important;width:auto!important;min-height:270mm;padding:12mm 14mm}.doc.saut{break-before:page}.cid{zoom:1!important;box-shadow:none}}
 </style>
 </head>
 <body>
@@ -650,7 +685,7 @@ const dlg = document.getElementById("dlg");
 // Thèmes indépendants de MY WORLD RS : système, clair et sombre.
 const THEME_KEY = "webservices-academy-theme";
 const THEMES = ["system", "light", "dark"];
-let academyTheme = (() => { try { const v = localStorage.getItem(THEME_KEY); return THEMES.includes(v) ? v : "system"; } catch { return "system"; } })();
+let academyTheme = (() => { try { const v = localStorage.getItem(THEME_KEY); return THEMES.includes(v) ? v : "dark"; } catch { return "dark"; } })();
 function applyTheme() { document.documentElement.dataset.theme = academyTheme; }
 function themeLabel() { return academyTheme === "system" ? "◐ Système" : academyTheme === "light" ? "☀ Clair" : "☾ Sombre"; }
 function cycleTheme() {
@@ -754,7 +789,7 @@ const peut = (...roles) => roles.includes(moi.role);
 const visible = (x) => { if (estStaff()) return true; const c = norm(x.classe); return !c || c === "toutes" || c === norm(moi.classe); };
 let cacheEleves = null;
 async function eleves(force) { if (!cacheEleves || force) cacheEleves = tri(await lister("ecole_users", where("role", "==", "eleve")), (u) => norm(u.nom)); return cacheEleves; }
-async function classes() { return [...new Set((await eleves()).map((u) => u.classe).filter(Boolean))].sort(); }
+async function classes() { const defs = await classesDefinies(); return [...new Set([...defs.map((c) => c.nom), ...(await eleves()).map((u) => u.classe).filter(Boolean)])].sort(); }
 function listeClasses(id, cl) { return h("datalist", { id }, ["toutes", ...cl].map((c) => h("option", { value: c }))); }
 function choixEleve(liste) { return [["", "— Choisir un élève —"], ...liste.map((u) => [u.id, u.nom + (u.classe ? " (" + u.classe + ")" : "")])]; }
 
@@ -874,26 +909,232 @@ async function sSuiviEleves(m) {
     h("div", { class: "carte ligne" }, h("label", {}, "Choisir un élève", choix)), zone);
 }
 
+
+// ===================== DOCUMENTS IMPRIMABLES (bulletin, reçu, carte, rapport) =====================
+function ouvrirDocument(titreBarre, contenu) {
+  const zone = h("div", { id: "zone-doc", class: "ecran-brevet" });
+  const fermerDoc = () => zone.remove();
+  zone.append(h("div", { class: "barre" }, h("div", { class: "barre-titre" }, h("b", {}, titreBarre), h("span", {}, "Aperçu avant impression")),
+    h("button", { class: "btn pri", onclick: () => window.print() }, "🖨 Imprimer / PDF"), h("button", { class: "btn", onclick: fermerDoc }, "Fermer")), contenu);
+  document.querySelectorAll("#zone-doc").forEach((z) => z.remove()); document.body.append(zone);
+}
+const enteteDoc = (titreDoc, numero) => h("div", { class: "doc-tete" }, h("img", { src: "academy-192.png", alt: "", width: 64, height: 64 }),
+  h("div", {}, h("b", { class: "doc-centre" }, "WEBSERVICES ACADEMY"), h("div", { class: "doc-sous" }, "Centre privé de formation professionnelle · Goma, République Démocratique du Congo")),
+  h("div", { class: "doc-num" }, numero && h("span", {}, "N° " + numero), h("span", {}, dateLongue(aujourdhui()))), h("h1", {}, titreDoc));
+const sigDoc = (...noms) => h("div", { class: "doc-sigs" }, noms.map((n) => h("div", {}, h("span", {}, n), h("i", {}))));
+const UNITES = ["zéro", "un", "deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf", "dix", "onze", "douze", "treize", "quatorze", "quinze", "seize"];
+const DIZAINES = ["", "", "vingt", "trente", "quarante", "cinquante", "soixante"];
+function enLettres(n) {
+  n = Math.floor(Math.abs(n)); if (n < 17) return UNITES[n];
+  if (n < 20) return "dix-" + UNITES[n - 10];
+  if (n < 70) { const d = Math.floor(n / 10), u = n % 10; return DIZAINES[d] + (u === 1 ? " et un" : u ? "-" + UNITES[u] : ""); }
+  if (n < 80) return "soixante" + (n === 71 ? " et " : "-") + enLettres(n - 60);
+  if (n < 100) return n === 80 ? "quatre-vingts" : "quatre-vingt-" + enLettres(n - 80);
+  if (n < 1000) { const c = Math.floor(n / 100), r = n % 100; return (c === 1 ? "cent" : UNITES[c] + " cent" + (r ? "" : "s")) + (r ? " " + enLettres(r) : ""); }
+  if (n < 1e6) { const k = Math.floor(n / 1000), r = n % 1000; return (k === 1 ? "mille" : enLettres(k) + " mille") + (r ? " " + enLettres(r) : ""); }
+  return String(n);
+}
+const devLabel = (d) => ({ USD: "dollars américains", FC: "francs congolais", CDF: "francs congolais", EUR: "euros" }[String(d).toUpperCase()] || String(d));
+const argent = (v, dv) => Number(v).toFixed(2).replace(/\.00$/, "") + " " + (dv || "USD");
+const moyenne = (a) => (a.length ? a.reduce((s, x) => s + x, 0) / a.length : null);
+const sur20 = (x) => (nombre(x.note) / (nombre(x.sur) || 20)) * 20;
+const appreciation = (m) => (m == null ? "—" : m >= 16 ? "Excellent" : m >= 14 ? "Très bon travail" : m >= 12 ? "Bon travail" : m >= 10 ? "Passable, peut mieux faire" : "Insuffisant : efforts nécessaires");
+const anneeAcad = () => { const d = new Date(), a = d.getFullYear(); return d.getMonth() >= 8 ? a + "–" + (a + 1) : (a - 1) + "–" + a; };
+const matricule = (u) => "WS-" + String(u.cree || new Date().toISOString()).slice(0, 4) + "-" + String(u.id).slice(0, 5).toUpperCase();
+
+// ===================== BULLETINS =====================
+async function calculBulletin(u, deb, fin, avecRang) {
+  const dans = (d) => { const j = String(d || "").slice(0, 10); return (!deb || j >= deb) && (!fin || j <= fin); };
+  const [notes, rendus, resultats, pres, devoirs] = await Promise.all([
+    lister("ecole_notes", ...(avecRang ? [] : [where("uid", "==", u.id)])), lister("ecole_rendus", where("uid", "==", u.id)), lister("ecole_resultats", where("uid", "==", u.id)),
+    lister("ecole_presences", where("uid", "==", u.id)), lister("ecole_devoirs")]);
+  const parMatiere = {};
+  for (const x of notes.filter((n) => n.uid === u.id && dans(n.date))) (parMatiere[x.matiere || "Évaluation"] = parMatiere[x.matiere || "Évaluation"] || []).push(sur20(x));
+  const dev = rendus.filter((r) => r.note !== undefined && r.note !== "" && dans(r.date)).map((r) => sur20(r)); if (dev.length) parMatiere["Devoirs"] = dev;
+  const qz = resultats.filter((r) => dans(r.date)).map((r) => (nombre(r.score) / (nombre(r.sur) || 1)) * 20); if (qz.length) parMatiere["Quiz"] = qz;
+  const lignes = Object.entries(parMatiere).map(([matiere, l]) => ({ matiere, n: l.length, moy: moyenne(l) })).sort((a, b) => a.matiere.localeCompare(b.matiere));
+  const moy = moyenne(lignes.map((l) => l.moy));
+  const p = pres.filter((x) => dans(x.date)), absences = p.filter((x) => x.statut === "Absent").length, retards = p.filter((x) => x.statut === "Retard").length;
+  let rang = null;
+  if (avecRang && u.classe) {
+    const mates = (await eleves()).filter((e) => e.classe === u.classe);
+    const moyennes = mates.map((e) => { const l = notes.filter((n) => n.uid === e.id && dans(n.date)).map(sur20); return { id: e.id, m: moyenne(l) }; }).filter((x) => x.m != null).sort((a, b) => b.m - a.m);
+    const i = moyennes.findIndex((x) => x.id === u.id); if (i >= 0) rang = (i + 1) + " / " + moyennes.length;
+  }
+  return { lignes, moy, absences, retards, seances: p.length, rang };
+}
+function documentBulletin(u, b, periode, observation) {
+  return h("div", { class: "doc" }, enteteDoc("BULLETIN DE NOTES", "BUL-" + new Date().getFullYear() + "-" + String(u.id).slice(0, 4).toUpperCase()),
+    h("div", { class: "doc-grille" }, h("div", {}, h("span", {}, "Élève"), h("b", {}, u.nom)), h("div", {}, h("span", {}, "Classe / filière"), h("b", {}, u.classe || "—")), h("div", {}, h("span", {}, "Matricule"), h("b", {}, matricule(u))),
+      h("div", {}, h("span", {}, "Période"), h("b", {}, periode || "Année en cours")), h("div", {}, h("span", {}, "Année académique"), h("b", {}, anneeAcad())), h("div", {}, h("span", {}, "Rang dans la classe"), h("b", {}, b.rang || "—"))),
+    b.lignes.length ? h("table", { class: "doc-table" }, h("tr", {}, h("th", {}, "Matière"), h("th", {}, "Évaluations"), h("th", {}, "Moyenne /20"), h("th", {}, "Appréciation")),
+      b.lignes.map((l) => h("tr", {}, h("td", {}, l.matiere), h("td", {}, String(l.n)), h("td", {}, h("b", {}, l.moy.toFixed(2))), h("td", {}, appreciation(l.moy)))),
+      h("tr", { class: "total" }, h("td", {}, "MOYENNE GÉNÉRALE"), h("td", {}), h("td", {}, h("b", {}, b.moy == null ? "—" : b.moy.toFixed(2))), h("td", {}, b.moy == null ? "" : "Mention : " + mentionPour(b.moy)))) : h("p", { class: "vide" }, "Aucune note enregistrée sur cette période."),
+    h("div", { class: "doc-grille" }, h("div", {}, h("span", {}, "Séances suivies"), h("b", {}, String(b.seances))), h("div", {}, h("span", {}, "Absences"), h("b", {}, String(b.absences))), h("div", {}, h("span", {}, "Retards"), h("b", {}, String(b.retards)))),
+    h("div", { class: "doc-obs" }, h("span", {}, "Observation du conseil de classe"), h("p", {}, observation || appreciation(b.moy))),
+    sigDoc("Le Titulaire de classe", "Le Directeur"), h("p", { class: "doc-pied" }, "Bulletin généré par WEBSERVICES ACADEMY — document interne du Centre, sans valeur de diplôme d'État."));
+}
+async function sBulletins(m) {
+  const eleve = peut("eleve"), zone = h("div", {});
+  if (eleve) {
+    const u = { id: moi.uid, nom: moi.nom, classe: moi.classe, cree: moi.cree };
+    monter(m, ...titre("Mon bulletin", "Vos moyennes par matière, vos absences et votre mention."), zone);
+    const b = await calculBulletin(u, "", "", false);
+    monter(zone, h("div", { class: "carte" }, h("div", { class: "ligne" }, h("h3", {}, "Moyenne générale : " + (b.moy == null ? "—" : b.moy.toFixed(2) + " / 20")), b.moy != null && h("span", { class: "puce or" }, mentionPour(b.moy)), h("span", { class: "espace" }), h("button", { class: "btn pri", onclick: () => ouvrirDocument("Mon bulletin", documentBulletin(u, b, "", "")) }, "Voir / imprimer mon bulletin")),
+      h("p", { class: "meta" }, b.absences + " absence(s) · " + b.retards + " retard(s) sur " + b.seances + " séance(s)")));
+    return;
+  }
+  const el = await eleves(), cl = await classes();
+  const formB = formulaire([{ n: "uid", label: "Élève", type: "select", options: choixEleve(el), req: true }, { n: "periode", label: "Période (ex. Trimestre 1)", ph: "Trimestre 1" }, { n: "deb", label: "Du (facultatif)", type: "date" }, { n: "fin", label: "Au (facultatif)", type: "date" }, { n: "obs", label: "Observation du conseil de classe", type: "textarea" }],
+    async (d) => { const u = el.find((x) => x.id === d.uid); const b = await calculBulletin(u, d.deb, d.fin, true); ouvrirDocument("Bulletin — " + u.nom, documentBulletin(u, b, d.periode || (d.deb || d.fin ? fmtDate(d.deb) + " → " + fmtDate(d.fin) : ""), d.obs)); }, "Générer le bulletin");
+  const choixCl = h("select", {}, h("option", { value: "" }, "— Bulletins de toute une classe —"), cl.map((c) => h("option", { value: c }, c)));
+  const msg = h("p", { class: "meta" });
+  choixCl.addEventListener("change", async () => {
+    if (!choixCl.value) return; msg.textContent = "Calcul en cours…";
+    const membres = el.filter((u) => u.classe === choixCl.value), docs = [];
+    for (const u of membres) docs.push(h("div", { class: "doc saut" }, ...documentBulletin(u, await calculBulletin(u, "", "", true), "Année en cours", "").childNodes));
+    msg.textContent = membres.length + " bulletin(s) prêt(s)."; if (docs.length) ouvrirDocument("Bulletins — " + choixCl.value, h("div", {}, docs));
+  });
+  monter(m, ...titre("Bulletins", "Générez le bulletin d'un élève, ou tous ceux d'une classe, prêts à imprimer."), h("div", { class: "carte" }, h("h3", {}, "Nouveau bulletin"), formB), h("div", { class: "carte ligne" }, choixCl, msg));
+}
+
+// ===================== REÇUS DE PAIEMENT =====================
+function ouvrirRecu(x, resteApres) {
+  const num = "RC-" + String(x.date || "").replace(/-/g, "").slice(2) + "-" + String(x.id).slice(0, 4).toUpperCase();
+  const dv = x.devise || "USD", mnt = nombre(x.montant);
+  ouvrirDocument("Reçu " + num, h("div", { class: "doc doc-recu" }, enteteDoc("REÇU DE PAIEMENT", num),
+    h("div", { class: "doc-grille" }, h("div", {}, h("span", {}, "Reçu de"), h("b", {}, x.nom)), h("div", {}, h("span", {}, "Classe"), h("b", {}, x.classe || "—")), h("div", {}, h("span", {}, "Date du paiement"), h("b", {}, fmtDate(x.date))), h("div", {}, h("span", {}, "Mode de paiement"), h("b", {}, x.mode || "Espèces"))),
+    h("div", { class: "doc-montant" }, h("span", {}, "Montant reçu"), h("b", {}, argent(mnt, dv))),
+    h("p", { class: "doc-lettres" }, "Arrêté le présent reçu à la somme de ", h("b", {}, enLettres(mnt) + " " + devLabel(dv)), "."),
+    h("p", {}, "Motif : ", h("b", {}, x.libelle || "Frais de formation")),
+    resteApres != null && h("p", {}, "Solde restant à ce jour : ", h("b", {}, resteApres > 0.004 ? argent(resteApres, dv) : "Soldé ✓")),
+    sigDoc("Le Payeur", "La Caisse / Comptabilité" + (x.par ? " (" + x.par + ")" : "")), h("p", { class: "doc-pied" }, "Ce reçu fait foi de paiement. Conservez-le précieusement.")));
+}
+
+// ===================== CARTE D'ÉTUDIANT =====================
+function carteEtudiant(u) {
+  const face = (...k) => h("div", { class: "cid" }, ...k);
+  const recto = face(h("div", { class: "cid-haut" }, h("img", { src: "academy-192.png", alt: "", width: 28, height: 28 }), h("div", {}, h("b", {}, "WEBSERVICES ACADEMY"), h("span", {}, "CARTE D'ÉTUDIANT"))),
+    h("div", { class: "cid-corps" }, u.photo ? h("img", { class: "cid-photo", src: u.photo, alt: "" }) : h("div", { class: "cid-photo vide" }, "PHOTO"),
+      h("div", { class: "cid-infos" }, h("b", {}, u.nom), h("span", {}, u.classe || "—"), h("span", {}, "Matricule : " + matricule(u)), h("span", {}, "Année : " + anneeAcad()))));
+  const tel = u.profil && u.profil.telephone;
+  const verso = face(h("div", { class: "cid-verso" }, h("p", {}, "Cette carte est strictement personnelle. Elle doit être présentée à toute demande du Centre. En cas de perte, prévenir le secrétariat."), h("span", {}, tel ? "Tél. : " + tel : ""), h("span", {}, "Valable : " + anneeAcad()), h("span", {}, "Goma · République Démocratique du Congo"), h("i", {}, "Signature du titulaire")));
+  return h("div", { class: "cid-paire" }, recto, verso);
+}
+async function sCartes(m) {
+  const eleve = peut("eleve");
+  if (eleve) { const snap = await getDoc(doc(db, "ecole_users", moi.uid)); const u = snap.exists() ? { id: moi.uid, ...snap.data() } : { id: moi.uid, nom: moi.nom, classe: moi.classe }; monter(m, ...titre("Ma carte d'étudiant", "Votre carte du Centre."), h("div", { class: "carte" }, carteEtudiant(u), h("div", { style: "margin-top:12px" }, h("button", { class: "btn pri", onclick: () => ouvrirDocument("Ma carte", h("div", { class: "doc" }, carteEtudiant(u))) }, "🖨 Imprimer ma carte")))); return; }
+  const el = await eleves(true), msg = h("p", { class: "meta" });
+  const rech = h("input", { placeholder: "Rechercher un élève…", style: "max-width:320px" }), zone = h("div", {});
+  const dessiner = () => zone.replaceChildren(...el.filter((u) => norm(u.nom + u.classe).includes(norm(rech.value))).map((u) => {
+    const f = h("input", { type: "file", accept: "image/*", hidden: true, onchange: async () => { try { const photo = await photoCompressee(f.files[0]); await setDoc(doc(db, "ecole_users", u.id), { ...sans(u), photo }); cacheEleves = null; u.photo = photo; msg.textContent = "Photo enregistrée ✓"; dessiner(); } catch (e) { msg.textContent = erreurTexte(e); } } });
+    return h("div", { class: "carte ligne" }, h("div", {}, h("b", {}, u.nom), h("div", { class: "meta" }, (u.classe || "—") + " · " + matricule(u))), h("span", { class: "espace" }), u.photo ? h("span", { class: "puce ok" }, "photo ✓") : h("span", { class: "puce" }, "sans photo"), f,
+      h("button", { class: "btn petit", onclick: () => f.click() }, u.photo ? "Changer la photo" : "Ajouter la photo"), h("button", { class: "btn petit pri", onclick: () => ouvrirDocument("Carte — " + u.nom, h("div", { class: "doc" }, carteEtudiant(u))) }, "Voir / imprimer la carte"));
+  }));
+  rech.addEventListener("input", dessiner); dessiner();
+  monter(m, ...titre("Cartes d'étudiant", "Ajoutez la photo de chaque élève puis imprimez sa carte (format carte bancaire, recto-verso)."), h("div", { class: "ligne" }, rech, msg), zone);
+}
+
+// ===================== IMPAYÉS & CAISSE =====================
+function soldesEleves(compta) {
+  // Les paiements s'imputent sur les frais les plus anciens (par élève et par devise) ; un frais non soldé dont l'échéance est passée = retard.
+  const groupes = {}; for (const x of compta) { const k = x.uid + "|" + (x.devise || "USD"); (groupes[k] = groupes[k] || []).push(x); }
+  const aujour = aujourdhui(), res = [];
+  for (const [k, l] of Object.entries(groupes)) {
+    const [uid, dv] = k.split("|"); let paye = l.filter((x) => x.type === "paiement").reduce((s, x) => s + nombre(x.montant), 0);
+    const dus = tri(l.filter((x) => x.type !== "paiement"), (x) => x.echeance || x.date || ""), total = dus.reduce((s, x) => s + nombre(x.montant), 0);
+    let retardDepuis = null, prochain = null, restant = 0;
+    for (const d of dus) { const r = Math.max(0, nombre(d.montant) - paye); paye = Math.max(0, paye - nombre(d.montant)); if (r > 0.004) { restant += r; const ech = d.echeance || ""; if (ech && ech < aujour) { if (!retardDepuis || ech < retardDepuis) retardDepuis = ech; } else if (!prochain) prochain = d; } }
+    res.push({ uid, nom: l[0].nom, classe: l[0].classe, dv, total, paye: l.filter((x) => x.type === "paiement").reduce((s, x) => s + nombre(x.montant), 0), solde: total - l.filter((x) => x.type === "paiement").reduce((s, x) => s + nombre(x.montant), 0), restant, retardDepuis });
+  }
+  return res;
+}
+const liensWhatsApp = (tel, texte) => { let n = String(tel || "").replace(/\D/g, ""); if (!n) return null; if (n.startsWith("0")) n = "243" + n.slice(1); return "https://wa.me/" + n + "?text=" + encodeURIComponent(texte); };
+async function sCaisse(m) {
+  const [compta, el, defs] = await Promise.all([lister("ecole_compta"), eleves(), classesDefinies()]);
+  const mois = h("input", { type: "month", value: aujourdhui().slice(0, 7), style: "width:auto" }), zone = h("div", {});
+  const soldes = soldesEleves(compta), msg = h("p", { class: "meta" });
+  function dessiner() {
+    const mm = mois.value, pm = compta.filter((x) => x.type === "paiement" && String(x.date).slice(0, 7) === mm), fm = compta.filter((x) => x.type !== "paiement" && String(x.date).slice(0, 7) === mm);
+    const devises = [...new Set(compta.map((x) => x.devise || "USD"))];
+    const somme = (l, dv) => l.filter((x) => (x.devise || "USD") === dv).reduce((s, x) => s + nombre(x.montant), 0);
+    const impayes = soldes.filter((s) => s.restant > 0.004).sort((a, b) => (b.retardDepuis ? 1 : 0) - (a.retardDepuis ? 1 : 0) || b.restant - a.restant);
+    const kpi = (l, v, d) => h("div", { class: "carte kpi" }, h("div", { class: "meta" }, l), h("b", {}, v), d && h("div", { class: "meta" }, d));
+    const parMode = {}; for (const x of pm) { const k = (x.mode || "Espèces") + "|" + (x.devise || "USD"); parMode[k] = (parMode[k] || 0) + nombre(x.montant); }
+    zone.replaceChildren(
+      h("div", { class: "grille-kpi" }, devises.map((dv) => kpi("Recettes · " + mm + " · " + dv, argent(somme(pm, dv), dv), "facturé ce mois : " + argent(somme(fm, dv), dv))), devises.map((dv) => kpi("Reste à recouvrer · " + dv, argent(impayes.filter((s) => s.dv === dv).reduce((a, s) => a + s.restant, 0), dv), impayes.filter((s) => s.dv === dv && s.retardDepuis).length + " élève(s) en retard"))),
+      h("div", { class: "carte" }, h("div", { class: "ligne" }, h("h3", {}, "Élèves ayant un solde à payer"), h("span", { class: "espace" }), h("span", { class: "meta" }, impayes.length + " élève(s)")),
+        impayes.length ? h("table", {}, h("tr", {}, h("th", {}, "Élève"), h("th", {}, "Classe"), h("th", {}, "Reste à payer"), h("th", {}, "Statut"), h("th", {})), impayes.map((s) => {
+          const u = el.find((x) => x.id === s.uid), lien = liensWhatsApp(u && u.profil && u.profil.telephone, "Bonjour, WEBSERVICES ACADEMY : il reste " + argent(s.restant, s.dv) + " à régler pour " + s.nom + ". Merci de passer à la caisse. 🙏");
+          return h("tr", {}, h("td", {}, s.nom), h("td", {}, s.classe || "—"), h("td", {}, h("b", {}, argent(s.restant, s.dv))), h("td", {}, s.retardDepuis ? h("span", { class: "puce mal" }, "En retard depuis le " + fmtDate(s.retardDepuis)) : h("span", { class: "puce or" }, "À payer")),
+            h("td", {}, lien ? h("a", { class: "btn petit", href: lien, target: "_blank", rel: "noopener noreferrer" }, "📲 Relancer") : h("span", { class: "meta" }, "pas de n° de téléphone")));
+        })) : h("p", { class: "vide" }, "Aucun impayé 🎉")),
+      h("div", { class: "carte" }, h("div", { class: "ligne" }, h("h3", {}, "Rapport de caisse · " + mm), h("span", { class: "espace" }), h("button", { class: "btn petit pri", onclick: () => rapportCaisse(mm, pm, parMode) }, "🖨 Imprimer le rapport")),
+        pm.length ? h("table", {}, h("tr", {}, h("th", {}, "Date"), h("th", {}, "Élève"), h("th", {}, "Motif"), h("th", {}, "Mode"), h("th", {}, "Montant")), tri(pm, (x) => x.date).map((x) => h("tr", {}, h("td", {}, fmtDate(x.date)), h("td", {}, x.nom), h("td", {}, x.libelle), h("td", {}, x.mode || "Espèces"), h("td", {}, h("b", {}, argent(x.montant, x.devise)))))) : h("p", { class: "vide" }, "Aucun paiement ce mois-ci.")));
+  }
+  mois.addEventListener("change", dessiner);
+  // Frais pour toute une classe en une fois
+  const cl = [...new Set([...defs.map((c) => c.nom), ...el.map((u) => u.classe).filter(Boolean)])].sort();
+  const fraisClasse = formulaire([{ n: "classe", label: "Classe", type: "select", options: cl, req: true }, { n: "libelle", label: "Libellé (ex. Minerval décembre)", req: true }, { n: "montant", label: "Montant par élève", type: "number", req: true }, { n: "devise", label: "Devise", val: "USD" }, { n: "echeance", label: "Échéance", type: "date" }],
+    async (d) => { const membres = el.filter((u) => u.classe === d.classe); if (!membres.length) throw new Error("Aucun élève dans cette classe."); if (!confirm("Facturer " + argent(nombre(d.montant), d.devise || "USD") + " à " + membres.length + " élève(s) de " + d.classe + " ?")) return;
+      for (const u of membres) await addDoc(collection(db, "ecole_compta"), { uid: u.id, nom: u.nom, classe: u.classe || "", type: "du", libelle: d.libelle, montant: nombre(d.montant), devise: (d.devise || "USD").toUpperCase(), date: aujourdhui(), echeance: d.echeance || "", par: moi.nom }); rafraichir(); }, "Facturer toute la classe");
+  monter(m, ...titre("Impayés & caisse", "Soldes, retards, relances WhatsApp et rapport de caisse mensuel."), h("div", { class: "carte ligne" }, h("label", { style: "flex-direction:row;align-items:center;gap:8px" }, "Mois", mois), msg), zone, h("div", { class: "carte" }, h("h3", {}, "Facturer les frais à toute une classe"), fraisClasse));
+  dessiner();
+}
+function rapportCaisse(mm, paiements, parMode) {
+  const dvs = [...new Set(paiements.map((x) => x.devise || "USD"))];
+  ouvrirDocument("Rapport de caisse " + mm, h("div", { class: "doc" }, enteteDoc("RAPPORT DE CAISSE — " + mm, "CAI-" + mm.replace("-", "")),
+    paiements.length ? h("table", { class: "doc-table" }, h("tr", {}, h("th", {}, "Date"), h("th", {}, "Élève"), h("th", {}, "Motif"), h("th", {}, "Mode"), h("th", {}, "Montant")),
+      tri(paiements, (x) => x.date).map((x) => h("tr", {}, h("td", {}, fmtDate(x.date)), h("td", {}, x.nom), h("td", {}, x.libelle), h("td", {}, x.mode || "Espèces"), h("td", {}, argent(x.montant, x.devise)))),
+      dvs.map((dv) => h("tr", { class: "total" }, h("td", { colspan: 4 }, "TOTAL " + dv), h("td", {}, argent(paiements.filter((x) => (x.devise || "USD") === dv).reduce((s, x) => s + nombre(x.montant), 0), dv))))) : h("p", { class: "vide" }, "Aucun paiement."),
+    h("p", { class: "meta" }, Object.entries(parMode).map(([k, v]) => k.split("|")[0] + " : " + argent(v, k.split("|")[1])).join(" · ")), sigDoc("Le Comptable", "Le Directeur")));
+}
+
+// ===================== STATISTIQUES (direction) =====================
+async function sStats(m) {
+  const [el, notes, pres, compta, insc] = await Promise.all([eleves(true), lister("ecole_notes"), lister("ecole_presences"), lister("ecole_compta"), lister("ecole_inscriptions").catch(() => [])]);
+  const classesNoms = [...new Set(el.map((u) => u.classe).filter(Boolean))].sort();
+  const effectif = classesNoms.map((c) => ({ label: c, valeur: el.filter((u) => u.classe === c).length }));
+  const idClasse = Object.fromEntries(el.map((u) => [u.id, u.classe]));
+  const taux = classesNoms.map((c) => { const p = pres.filter((x) => idClasse[x.uid] === c); const v = p.length ? Math.round(p.filter((x) => x.statut !== "Absent").length / p.length * 100) : 0; return { label: c, valeur: v, affichage: p.length ? v + "%" : "—" }; });
+  const moyClasse = classesNoms.map((c) => { const l = notes.filter((x) => idClasse[x.uid] === c).map(sur20); const v = moyenne(l); return { label: c, valeur: v == null ? 0 : Math.round(v * 10) / 10, affichage: v == null ? "—" : v.toFixed(1) }; });
+  const mois6 = []; for (let i = 5; i >= 0; i--) { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - i); mois6.push(d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0")); }
+  const recettes = mois6.map((k) => { const v = compta.filter((x) => x.type === "paiement" && (x.devise || "USD") === "USD" && String(x.date).slice(0, 7) === k).reduce((s, x) => s + nombre(x.montant), 0); return { label: k.slice(5) + "/" + k.slice(2, 4), valeur: v, affichage: v ? Math.round(v) + "$" : "0" }; });
+  const tauxGlobal = pres.length ? Math.round(pres.filter((x) => x.statut !== "Absent").length / pres.length * 100) : null, moyGlobale = moyenne(notes.map(sur20));
+  const impayes = soldesEleves(compta).filter((s) => s.restant > 0.004), enRetard = impayes.filter((s) => s.retardDepuis);
+  const kpi = (l, v, d) => h("div", { class: "carte kpi" }, h("div", { class: "meta" }, l), h("b", {}, v), d && h("div", { class: "meta" }, d));
+  monter(m, ...titre("Statistiques du Centre", "Chiffres clés calculés à partir de vos données."),
+    h("div", { class: "grille-kpi" }, kpi("Élèves actifs", String(el.filter((u) => u.actif !== false).length), classesNoms.length + " classe(s)"), kpi("Taux de présence", tauxGlobal == null ? "—" : tauxGlobal + "%", pres.length + " pointage(s)"), kpi("Moyenne générale", moyGlobale == null ? "—" : moyGlobale.toFixed(1) + " / 20", notes.length + " note(s)"),
+      kpi("Candidatures", String(insc.length), insc.filter((x) => x.statut === "nouvelle").length + " à traiter"), kpi("Élèves en retard de paiement", String(enRetard.length), impayes.length + " avec un solde ouvert")),
+    graphiqueBarres("Effectif par classe", effectif, "var(--or)"), graphiqueBarres("Taux de présence par classe (%)", taux, "var(--ok)"), graphiqueBarres("Moyenne par classe (/20)", moyClasse, "var(--bleu)"), graphiqueBarres("Recettes des 6 derniers mois (USD)", recettes, "var(--or)"));
+}
+
 // ---------- sections ----------
 const SECTIONS = [
-  { id: "accueil", nom: "Accueil", ico: "⌂", roles: null, rendu: sAccueil },
-  { id: "suivi", nom: "Suivi des élèves", ico: "📊", roles: ["direction"], rendu: sSuiviEleves },
-  { id: "annonces", nom: "Annonces", ico: "📣", roles: null, rendu: sAnnonces },
-  { id: "planning", nom: "Planning", ico: "🗓", roles: null, rendu: sPlanning },
-  { id: "cours", nom: "Cours & documents", ico: "📚", roles: null, rendu: sCours },
-  { id: "devoirs", nom: "Devoirs", ico: "📝", roles: null, rendu: sDevoirs },
-  { id: "quiz", nom: "Quiz", ico: "❓", roles: null, rendu: sQuiz },
-  { id: "notes", nom: "Notes", ico: "🎓", roles: ["eleve", "enseignant", "direction"], rendu: sNotes },
-  { id: "presences", nom: "Présences", ico: "✅", roles: ["eleve", "enseignant", "secretaire", "direction"], rendu: sPresences },
-  { id: "compta", nom: "Frais & comptabilité", ico: "💰", roles: ["eleve", "comptable", "direction"], rendu: sCompta },
-  { id: "brevets", nom: "Brevets", ico: "🏅", roles: ["direction", "eleve"], rendu: sBrevets },
-  { id: "inscriptions", nom: "Inscriptions", ico: "📋", roles: ["secretaire", "direction"], rendu: sInscriptions },
-  { id: "utilisateurs", nom: "Élèves & personnel", ico: "👥", roles: ["secretaire", "direction"], rendu: sUtilisateurs },
+  { id: "accueil", groupe: "Pilotage", nom: "Accueil", ico: "⌂", roles: null, rendu: sAccueil },
+  { id: "stats", groupe: "Pilotage", nom: "Statistiques", ico: "📈", roles: ["direction"], rendu: sStats },
+  { id: "suivi", groupe: "Pilotage", nom: "Suivi des élèves", ico: "📊", roles: ["direction"], rendu: sSuiviEleves },
+  { id: "annonces", groupe: "Pédagogie", nom: "Annonces", ico: "📣", roles: null, rendu: sAnnonces },
+  { id: "classes", groupe: "Pédagogie", nom: "Classes & salles", ico: "🏫", roles: null, rendu: sClasses },
+  { id: "planning", groupe: "Pédagogie", nom: "Emploi du temps", ico: "🗓", roles: null, rendu: sPlanning },
+  { id: "cours", groupe: "Pédagogie", nom: "Cours en ligne", ico: "🎬", roles: null, rendu: sCours },
+  { id: "devoirs", groupe: "Pédagogie", nom: "Devoirs", ico: "📝", roles: null, rendu: sDevoirs },
+  { id: "quiz", groupe: "Pédagogie", nom: "Quiz", ico: "❓", roles: null, rendu: sQuiz },
+  { id: "notes", groupe: "Évaluation", nom: "Notes", ico: "🎓", roles: ["eleve", "enseignant", "direction"], rendu: sNotes },
+  { id: "bulletins", groupe: "Évaluation", nom: "Bulletins", ico: "📄", roles: ["eleve", "enseignant", "direction"], rendu: sBulletins },
+  { id: "presences", groupe: "Évaluation", nom: "Présences", ico: "✅", roles: ["eleve", "enseignant", "secretaire", "direction"], rendu: sPresences },
+  { id: "brevets", groupe: "Évaluation", nom: "Brevets", ico: "🏅", roles: ["direction", "eleve"], rendu: sBrevets },
+  { id: "compta", groupe: "Finances", nom: "Frais & paiements", ico: "💰", roles: ["eleve", "comptable", "direction"], rendu: sCompta },
+  { id: "caisse", groupe: "Finances", nom: "Impayés & caisse", ico: "🧾", roles: ["comptable", "direction"], rendu: sCaisse },
+  { id: "inscriptions", groupe: "Administration", nom: "Inscriptions", ico: "📋", roles: ["secretaire", "direction"], rendu: sInscriptions },
+  { id: "utilisateurs", groupe: "Administration", nom: "Élèves & personnel", ico: "👥", roles: ["secretaire", "direction"], rendu: sUtilisateurs },
+  { id: "cartes", groupe: "Administration", nom: "Cartes d'étudiant", ico: "🪪", roles: ["secretaire", "direction", "eleve"], rendu: sCartes },
 ];
 const sectionsPour = () => SECTIONS.filter((s) => !s.roles || s.roles.includes(moi.role));
 
 function vueApp() {
-  const nav = h("nav", {}, sectionsPour().map((s) => h("button", { class: s.id === vueCourante ? "actif" : "", onclick: () => { vueCourante = s.id; vueApp(); } }, h("span", {}, s.ico), s.nom)));
+  let groupeVu = null;
+  const nav = h("nav", {}, sectionsPour().map((s) => [s.groupe !== groupeVu && (groupeVu = s.groupe) ? h("div", { class: "nav-groupe" }, s.groupe) : null, h("button", { class: s.id === vueCourante ? "actif" : "", onclick: () => { vueCourante = s.id; vueApp(); } }, h("span", {}, s.ico), s.nom)]).flat());
   const main = h("main", {}, h("p", { class: "vide" }, "Chargement…"));
   const themeBtn = h("button", { class: "btn petit theme-toggle", type: "button", title: "Changer de thème", onclick: cycleTheme }, themeLabel());
   $app.replaceChildren(
@@ -1071,31 +1312,125 @@ async function sAnnonces(m) {
 }
 
 // --- Planning
+// ===================== COURS EN LIGNE (audio / vidéo / direct) =====================
+const HTTPS = /^https:\/\//i;
+const YT = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/))([\w-]{11})/i;
+const DRIVE = /drive\.google\.com\/file\/d\/([\w-]+)/i;
+const EXT_VIDEO = /\.(mp4|webm|ogv|mov|m4v)(?:$|[?#])/i, EXT_AUDIO = /\.(mp3|m4a|wav|ogg|oga|aac|opus)(?:$|[?#])/i;
+const TYPES_COURS = [["document", "📄 Document / lien"], ["video", "🎬 Vidéo"], ["audio", "🎧 Audio / podcast"], ["direct", "🔴 Cours en direct (visio)"]];
+function lecteurMedia(x) {
+  const lien = x.lien || ""; if (!HTTPS.test(lien)) return null;
+  const cadre = (src, titre) => h("div", { class: "media-cadre" }, h("iframe", { src, title: titre, loading: "lazy", allowfullscreen: "", referrerpolicy: "strict-origin-when-cross-origin", allow: "encrypted-media; picture-in-picture; fullscreen" }));
+  let m;
+  if ((m = lien.match(YT))) return cadre("https://www.youtube-nocookie.com/embed/" + m[1] + "?rel=0", x.titre || "Vidéo");
+  if ((m = lien.match(DRIVE))) return cadre("https://drive.google.com/file/d/" + m[1] + "/preview", x.titre || "Fichier");
+  if (EXT_VIDEO.test(lien)) return h("video", { class: "media-video", controls: true, preload: "none", playsinline: true, src: lien });
+  if (EXT_AUDIO.test(lien)) return h("audio", { class: "media-audio", controls: true, preload: "none", src: lien });
+  return null;
+}
+const salleJitsi = (classe) => "https://meet.jit.si/WebServicesAcademy-" + String(classe || "classe").normalize("NFD").replace(/[^a-zA-Z0-9]/g, "") + "-" + Math.random().toString(36).slice(2, 7);
+
+// ===================== CLASSES ET SALLES =====================
+async function classesDefinies() { try { return await lister("ecole_classes"); } catch { return []; } }
+async function sClasses(m) {
+  const [defs, el] = await Promise.all([classesDefinies(), estStaff() ? eleves() : Promise.resolve([])]);
+  const gere = peut("direction", "secretaire");
+  const noms = [...new Set([...defs.map((c) => c.nom), ...el.map((u) => u.classe).filter(Boolean)])].sort();
+  monter(m, ...titre("Classes & salles", "Les classes du Centre, leur salle, leur responsable et leur effectif."),
+    gere && h("div", { class: "carte" }, h("h3", {}, "Créer une classe"), formulaire([
+      { n: "nom", label: "Nom de la classe (ex. Informatique 1)", req: true }, { n: "niveau", label: "Niveau / filière" }, { n: "salle", label: "Salle" }, { n: "responsable", label: "Enseignant responsable" },
+      { n: "capacite", label: "Capacité (places)", type: "number" }, { n: "frais", label: "Frais de scolarité (par mois ou par tranche)", type: "number" }, { n: "devise", label: "Devise", val: "USD" }],
+      async (d) => { await setDoc(doc(db, "ecole_classes", d.nom.replace(/[\/\s]+/g, "_")), { nom: d.nom, niveau: d.niveau, salle: d.salle, responsable: d.responsable, capacite: nombre(d.capacite) || 0, frais: nombre(d.frais) || 0, devise: (d.devise || "USD").toUpperCase() }); cacheEleves = null; rafraichir(); }, "Enregistrer la classe")),
+    noms.length ? h("div", { class: "grille-classes" }, noms.map((n) => {
+      const c = defs.find((x) => x.nom === n) || { nom: n }; const membres = el.filter((u) => u.classe === n);
+      const plein = c.capacite && membres.length >= c.capacite;
+      return h("div", { class: "carte" }, h("div", { class: "ligne" }, h("h3", {}, n), h("span", { class: "espace" }), gere && c.id && suppr("ecole_classes", c, rafraichir)),
+        h("p", { class: "meta" }, [c.niveau, c.salle && "Salle " + c.salle, c.responsable && "Resp. " + c.responsable].filter(Boolean).join(" · ") || "Classe créée automatiquement depuis les élèves"),
+        estStaff() && h("div", { class: "ligne" }, h("span", { class: "puce " + (plein ? "mal" : "ok") }, membres.length + (c.capacite ? " / " + c.capacite : "") + " élève(s)"), c.frais ? h("span", { class: "puce or" }, c.frais + " " + (c.devise || "USD") + " de frais") : null),
+        estStaff() && membres.length ? h("p", { class: "meta" }, membres.map((u) => u.nom).join(", ")) : null);
+    })) : h("p", { class: "vide" }, "Aucune classe pour le moment."));
+}
+
+// ===================== EMPLOI DU TEMPS (liste + semaine, avec détection des conflits) =====================
+const minutes = (t) => { const [a, b] = String(t || "0:0").split(":"); return (Number(a) || 0) * 60 + (Number(b) || 0); };
+const chevauche = (a, b) => a.jour === b.jour && minutes(a.debut) < minutes(b.fin) && minutes(b.debut) < minutes(a.fin);
+function conflit(nouveau, liste) {
+  for (const x of liste) {
+    if (!chevauche(nouveau, x)) continue;
+    if (nouveau.salle && norm(nouveau.salle) === norm(x.salle)) return "La salle « " + x.salle + " » est déjà prise " + x.jour + " de " + x.debut + " à " + x.fin + " (" + x.matiere + ").";
+    if (nouveau.enseignant && norm(nouveau.enseignant) === norm(x.enseignant)) return x.enseignant + " enseigne déjà " + x.jour + " de " + x.debut + " à " + x.fin + " (" + x.matiere + ").";
+    if (norm(nouveau.classe) && norm(nouveau.classe) !== "toutes" && norm(nouveau.classe) === norm(x.classe)) return "La classe « " + x.classe + " » a déjà un cours " + x.jour + " de " + x.debut + " à " + x.fin + " (" + x.matiere + ").";
+  }
+  return "";
+}
+let vuePlanning = "semaine";
+function grilleSemaine(liste, jours) {
+  if (!liste.length) return h("p", { class: "vide" }, "Aucun cours planifié.");
+  const utiles = jours.filter((j) => liste.some((x) => x.jour === j));
+  const h0 = Math.floor(Math.min(...liste.map((x) => minutes(x.debut))) / 60), h1 = Math.ceil(Math.max(...liste.map((x) => minutes(x.fin))) / 60), PX = 46;
+  const heures = []; for (let k = h0; k < h1; k++) heures.push(k);
+  const teinte = (s) => { let n = 0; for (const c of String(s)) n = (n * 31 + c.charCodeAt(0)) % 360; return n; };
+  return h("div", { class: "carte edt-wrap" }, h("div", { class: "edt", style: "grid-template-columns:44px repeat(" + utiles.length + ",minmax(110px,1fr))" },
+    h("div", {}), utiles.map((j) => h("div", { class: "edt-jour" }, j)),
+    h("div", { class: "edt-heures" }, heures.map((k) => h("div", { style: "height:" + PX + "px" }, k + "h"))),
+    utiles.map((j) => h("div", { class: "edt-col", style: "height:" + (heures.length * PX) + "px" },
+      heures.map((k, i) => h("div", { class: "edt-ligne", style: "top:" + (i * PX) + "px" })),
+      liste.filter((x) => x.jour === j).map((x) => {
+        const top = (minutes(x.debut) - h0 * 60) / 60 * PX, ht = Math.max(26, (minutes(x.fin) - minutes(x.debut)) / 60 * PX - 2), t = teinte(x.matiere);
+        const enConflit = liste.some((y) => y !== x && chevauche(x, y) && ((x.salle && norm(x.salle) === norm(y.salle)) || (x.enseignant && norm(x.enseignant) === norm(y.enseignant))));
+        return h("div", { class: "edt-bloc" + (enConflit ? " conflit" : ""), style: "top:" + top + "px;height:" + ht + "px;--t:" + t, title: x.matiere },
+          h("b", {}, x.matiere), h("span", {}, x.debut + "–" + x.fin), h("span", {}, [x.salle && "Salle " + x.salle, x.enseignant, x.classe && norm(x.classe) !== "toutes" ? x.classe : ""].filter(Boolean).join(" · ")), enConflit && h("em", {}, "⚠ conflit"));
+      })))));
+}
 async function sPlanning(m) {
   const cl = await (estStaff() ? classes() : Promise.resolve([]));
-  const liste = (await lister("ecole_planning")).filter(visible);
+  const tout = await lister("ecole_planning"), liste = tout.filter(visible);
   const jours = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
   const peutEcrire = peut("direction", "secretaire", "enseignant");
-  monter(m, ...titre("Planning", "Emploi du temps des cours."),
+  const choixVue = h("div", { class: "ligne" }, [["semaine", "▦ Semaine"], ["liste", "☰ Liste"]].map(([v, l]) => h("button", { class: "btn petit" + (vuePlanning === v ? " pri" : ""), onclick: () => { vuePlanning = v; rafraichir(); } }, l)));
+  monter(m, ...titre("Emploi du temps", "Vos cours de la semaine ; les conflits de salle, d'enseignant ou de classe sont signalés."), choixVue,
     peutEcrire && h("div", { class: "carte" }, h("h3", {}, "Ajouter un cours"), listeClasses("dl-cl2", cl), formulaire([
       { n: "jour", label: "Jour", type: "select", options: jours, req: true }, { n: "debut", label: "Début", type: "time", req: true }, { n: "fin", label: "Fin", type: "time", req: true },
       { n: "matiere", label: "Matière", req: true }, { n: "enseignant", label: "Enseignant" }, { n: "salle", label: "Salle" }, { n: "classe", label: "Classe", val: "toutes", liste: "dl-cl2" }],
-      async (d) => { await addDoc(collection(db, "ecole_planning"), d); rafraichir(); }, "Ajouter au planning")),
-    jours.map((j) => { const l = tri(liste.filter((x) => x.jour === j), (x) => x.debut); return l.length ? h("div", {}, h("div", { class: "jour" }, j), l.map((x) => h("div", { class: "carte" }, h("div", { class: "ligne" }, h("b", {}, x.debut + " – " + x.fin), h("span", {}, x.matiere), h("span", { class: "meta" }, [x.enseignant, x.salle && "salle " + x.salle].filter(Boolean).join(" · ")), h("span", { class: "espace" }), h("span", { class: "puce" }, x.classe || "toutes"), peutEcrire && suppr("ecole_planning", x, rafraichir))))) : null; }),
-    !liste.length && h("p", { class: "vide" }, "Aucun cours planifié."));
+      async (d) => {
+        if (minutes(d.fin) <= minutes(d.debut)) throw new Error("L'heure de fin doit être après l'heure de début.");
+        const c = conflit(d, tout); if (c) throw new Error("Conflit d'horaire : " + c);
+        await addDoc(collection(db, "ecole_planning"), d); rafraichir();
+      }, "Ajouter au planning")),
+    vuePlanning === "semaine" ? grilleSemaine(liste, jours) : [
+      jours.map((j) => { const l = tri(liste.filter((x) => x.jour === j), (x) => x.debut); return l.length ? h("div", {}, h("div", { class: "jour" }, j), l.map((x) => h("div", { class: "carte" }, h("div", { class: "ligne" }, h("b", {}, x.debut + " – " + x.fin), h("span", {}, x.matiere), h("span", { class: "meta" }, [x.enseignant, x.salle && "salle " + x.salle].filter(Boolean).join(" · ")), h("span", { class: "espace" }), h("span", { class: "puce" }, x.classe || "toutes"), peutEcrire && suppr("ecole_planning", x, rafraichir)))) ) : null; }),
+      !liste.length && h("p", { class: "vide" }, "Aucun cours planifié.")]);
 }
 
-// --- Cours
+// --- Cours (documents, vidéos, audios et cours en direct)
 async function sCours(m) {
   const cl = await (estStaff() ? classes() : Promise.resolve([]));
   const liste = tri((await lister("ecole_cours")).filter(visible), (x) => x.date || "", true);
   const peutEcrire = peut("direction", "enseignant");
-  monter(m, ...titre("Cours & documents", "Supports de cours : liens Google Drive, YouTube, PDF…"),
-    peutEcrire && h("div", { class: "carte" }, h("h3", {}, "Publier un cours"), listeClasses("dl-cl3", cl), formulaire([
-      { n: "titre", label: "Titre", req: true }, { n: "matiere", label: "Matière" }, { n: "classe", label: "Classe", val: "toutes", liste: "dl-cl3" },
-      { n: "lien", label: "Lien du document (https://…)", type: "url", large: true }, { n: "description", label: "Description", type: "textarea" }],
-      async (d) => { await addDoc(collection(db, "ecole_cours"), { ...d, auteur: moi.nom, uid: moi.uid, date: new Date().toISOString() }); rafraichir(); }, "Publier")),
-    liste.length ? liste.map((x) => h("div", { class: "carte" }, h("div", { class: "ligne" }, h("h3", {}, x.titre), h("span", { class: "puce or" }, x.matiere || "Cours"), h("span", { class: "espace" }), h("span", { class: "puce" }, x.classe || "toutes"), (peut("direction") || x.uid === moi.uid) && suppr("ecole_cours", x, rafraichir)), x.description && h("p", { style: "white-space:pre-wrap" }, x.description), x.lien && /^https?:\/\//i.test(x.lien) && h("p", {}, h("a", { href: x.lien, target: "_blank", rel: "noopener noreferrer" }, "Ouvrir le document ↗")), h("p", { class: "meta" }, x.auteur + " · " + fmtDate(x.date)))) : h("p", { class: "vide" }, "Aucun cours publié."));
+  let formCours = null, bouton = null;
+  if (peutEcrire) {
+    formCours = formulaire([
+      { n: "type", label: "Type de cours", type: "select", options: TYPES_COURS, req: true }, { n: "titre", label: "Titre", req: true }, { n: "matiere", label: "Matière" }, { n: "classe", label: "Classe", val: "toutes", liste: "dl-cl3" },
+      { n: "lien", label: "Lien (YouTube, Google Drive, fichier .mp4 / .mp3, Meet, Zoom, Jitsi…)", type: "url", large: true }, { n: "quand", label: "Date et heure (cours en direct)", type: "datetime-local" }, { n: "description", label: "Description", type: "textarea" }],
+      async (d) => {
+        if (d.lien && !HTTPS.test(d.lien)) throw new Error("Le lien doit commencer par https://");
+        if (d.type === "direct" && !d.lien) throw new Error("Indiquez le lien de la salle (ou utilisez « Générer une salle Jitsi »).");
+        await addDoc(collection(db, "ecole_cours"), { type: d.type, titre: d.titre, matiere: d.matiere, classe: d.classe, lien: d.lien, quand: d.quand || "", description: d.description, auteur: moi.nom, uid: moi.uid, date: new Date().toISOString() }); rafraichir();
+      }, "Publier");
+    bouton = h("button", { class: "btn petit", type: "button", onclick: () => { formCours.elements.lien.value = salleJitsi(formCours.elements.classe.value); formCours.elements.type.value = "direct"; } }, "⚡ Générer une salle Jitsi (cours en direct gratuit)");
+  }
+  monter(m, ...titre("Cours & documents", "Documents, vidéos, audios et cours en direct. Les vidéos ne se chargent qu'au clic pour économiser vos données."),
+    peutEcrire && h("div", { class: "carte" }, h("h3", {}, "Publier un cours"), listeClasses("dl-cl3", cl), formCours, h("div", { style: "margin-top:8px" }, bouton)),
+    liste.length ? liste.map((x) => {
+      const t = TYPES_COURS.find(([v]) => v === (x.type || "document")); const media = lecteurMedia(x);
+      return h("div", { class: "carte" },
+        h("div", { class: "ligne" }, h("h3", {}, x.titre), h("span", { class: "puce " + (x.type === "direct" ? "mal" : "or") }, t ? t[1] : "Cours"), x.matiere && h("span", { class: "puce" }, x.matiere), h("span", { class: "espace" }), h("span", { class: "puce" }, x.classe || "toutes"), (peut("direction") || x.uid === moi.uid) && suppr("ecole_cours", x, rafraichir)),
+        x.type === "direct" && x.quand && h("p", { class: "meta" }, "🕒 " + new Date(x.quand).toLocaleString("fr-FR", { dateStyle: "full", timeStyle: "short" })),
+        x.description && h("p", { style: "white-space:pre-wrap" }, x.description),
+        media,
+        x.lien && HTTPS.test(x.lien) && h("p", {}, h("a", { class: x.type === "direct" ? "btn pri" : "", href: x.lien, target: "_blank", rel: "noopener noreferrer" }, x.type === "direct" ? "🔴 Rejoindre le cours en direct" : (media ? "Ouvrir dans un nouvel onglet ↗" : "Ouvrir le document ↗"))),
+        h("p", { class: "meta" }, x.auteur + " · " + fmtDate(x.date)));
+    }) : h("p", { class: "vide" }, "Aucun cours publié."));
 }
 
 // --- Devoirs
@@ -1255,10 +1590,10 @@ async function sCompta(m) {
   monter(m, ...titre("Frais & comptabilité", eleve ? "Vos frais de scolarité et paiements." : "Frais dus et paiements reçus par élève."),
     peutEcrire && h("div", { class: "carte" }, h("h3", {}, "Nouvelle écriture"), formulaire([
       { n: "uid", label: "Élève", type: "select", options: choixEleve(el), req: true }, { n: "type", label: "Type", type: "select", options: [["du", "Frais dus"], ["paiement", "Paiement reçu"]], req: true }, { n: "libelle", label: "Libellé (ex. Minerval novembre)", req: true },
-      { n: "montant", label: "Montant", type: "number", req: true }, { n: "devise", label: "Devise", val: "USD" }, { n: "date", label: "Date", type: "date", val: aujourdhui() }],
-      async (d) => { const u = el.find((x) => x.id === d.uid); await addDoc(collection(db, "ecole_compta"), { uid: d.uid, nom: u.nom, classe: u.classe || "", type: d.type, libelle: d.libelle, montant: nombre(d.montant), devise: (d.devise || "USD").toUpperCase(), date: d.date || aujourdhui(), par: moi.nom }); rafraichir(); })),
+      { n: "montant", label: "Montant", type: "number", req: true }, { n: "devise", label: "Devise", val: "USD" }, { n: "date", label: "Date", type: "date", val: aujourdhui() }, { n: "echeance", label: "Échéance (frais dus)", type: "date" }, { n: "mode", label: "Mode de paiement", type: "select", options: ["Espèces", "Mobile Money", "Banque", "Autre"] }],
+      async (d) => { const u = el.find((x) => x.id === d.uid); await addDoc(collection(db, "ecole_compta"), { uid: d.uid, nom: u.nom, classe: u.classe || "", type: d.type, libelle: d.libelle, montant: nombre(d.montant), devise: (d.devise || "USD").toUpperCase(), date: d.date || aujourdhui(), echeance: d.echeance || "", mode: d.type === "paiement" ? d.mode : "", par: moi.nom }); rafraichir(); })),
     bilan.length ? h("div", { class: "carte" }, h("h3", {}, eleve ? "Solde à payer" : "Soldes par élève (positif = reste à payer)"), h("table", {}, bilan.map((b) => h("tr", {}, h("td", {}, b.nom), h("td", {}, h("span", { class: "puce " + (b.v > 0 ? "mal" : "ok") }, (b.v > 0 ? "Reste à payer " : "Crédit ") + Math.abs(b.v).toFixed(2) + " " + b.dv)))))) : null,
-    l.length ? h("div", { class: "carte" }, h("h3", {}, "Historique"), h("table", {}, h("tr", {}, h("th", {}, "Date"), !eleve && h("th", {}, "Élève"), h("th", {}, "Libellé"), h("th", {}, "Montant"), peutEcrire && h("th", {})), tri(l, (x) => x.date || "", true).map((x) => h("tr", {}, h("td", {}, fmtDate(x.date)), !eleve && h("td", {}, x.nom), h("td", {}, x.libelle), h("td", {}, h("span", { class: "puce " + (x.type === "paiement" ? "ok" : "or") }, (x.type === "paiement" ? "− " : "+ ") + nombre(x.montant).toFixed(2) + " " + (x.devise || "USD"))), peutEcrire && h("td", {}, suppr("ecole_compta", x, rafraichir)))))) : h("p", { class: "vide" }, "Aucune écriture."));
+    l.length ? h("div", { class: "carte" }, h("h3", {}, "Historique"), h("table", {}, h("tr", {}, h("th", {}, "Date"), !eleve && h("th", {}, "Élève"), h("th", {}, "Libellé"), h("th", {}, "Montant"), h("th", {})), tri(l, (x) => x.date || "", true).map((x) => h("tr", {}, h("td", {}, fmtDate(x.date)), !eleve && h("td", {}, x.nom), h("td", {}, x.libelle), h("td", {}, h("span", { class: "puce " + (x.type === "paiement" ? "ok" : "or") }, (x.type === "paiement" ? "− " : "+ ") + nombre(x.montant).toFixed(2) + " " + (x.devise || "USD"))), h("td", {}, x.type === "paiement" && h("button", { class: "btn petit", onclick: () => { const dv = x.devise || "USD", mine = l.filter((y) => y.uid === x.uid && (y.devise || "USD") === dv); ouvrirRecu(x, mine.reduce((t, y) => t + (y.type === "paiement" ? -1 : 1) * nombre(y.montant), 0)); } }, "🧾 Reçu"), " ", peutEcrire && suppr("ecole_compta", x, rafraichir)))))) : h("p", { class: "vide" }, "Aucune écriture."));
 }
 
 
