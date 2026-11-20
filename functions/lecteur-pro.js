@@ -112,6 +112,8 @@ exports.lecteurProRevokeLicense = api(async (req, res, admin) => {
     if (!snap.exists) throw Object.assign(new Error("Licence introuvable."), { status: 404 });
     if (snap.get("status") === "revoked") return;
     tx.update(ref, { status: "revoked", revokedAt: FieldValue.serverTimestamp(), revokedBy: admin.uid });
+    const activatedBy = snap.get("activatedBy");
+    if (activatedBy) tx.set(db.collection("lecteurProEntitlements").doc(activatedBy), { active: false, revokedAt: FieldValue.serverTimestamp() }, { merge: true });
   });
   res.json({ ok: true });
 }, true);
