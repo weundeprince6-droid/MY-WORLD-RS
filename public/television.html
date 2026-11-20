@@ -1516,7 +1516,7 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
   </div></aside>
 </div>
 
-<input id="fileInput" type="file" multiple hidden accept="audio/mpeg,.mp3,video/*,.mkv,.avi,.wmv,.flv,.f4v,.mpg,.mpeg,.mpe,.m2v,.3gp,.3g2,.ts,.m2ts,.mts,.vob,.divx,.asf,.rm,.rmvb,.mxf,.qt,image/*,.avif,.srt,.vtt,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.ods,.odp,.rtf,.txt,.csv,.md,.epub" />
+<input id="fileInput" type="file" multiple hidden accept="audio/mpeg,.mp3,video/*,.mkv,.mk3d,.avi,.wmv,.flv,.f4v,.f4p,.mpg,.mpeg,.mpe,.mpv,.m2v,.m2p,.m2t,.3gp,.3g2,.3gpp,.3gp2,.ts,.m2ts,.mts,.vob,.divx,.asf,.rm,.rmvb,.mxf,.qt,.m4p,.ogm,.amv,.nsv,.yuv,.roq,.nuv,.wtv,.dvr-ms,.ivf,.obu,image/*,.avif,.srt,.vtt,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.ods,.odp,.rtf,.txt,.csv,.md,.epub" />
 <div id="choixTypes" hidden><div class="boite"><h2>Que voulez-vous ajouter ?</h2><p id="choixDossier"></p><div id="choixListe"></div><div class="btns"><button id="choixAnnuler">Annuler</button><button id="choixOk" class="primary">Ajouter</button></div></div></div>
 <input id="folderInput" type="file" webkitdirectory multiple hidden />
 <input id="subInput" type="file" hidden accept=".srt,.vtt,text/vtt" />
@@ -1555,7 +1555,7 @@ const audio = new Audio(); audio.preload = 'auto';
 
 const EXT = {
   audio: ['mp3'], // audio : MP3 uniquement
-  video: ['mp4','m4v','webm','ogv','mov','mkv','avi','wmv','flv','f4v','mpg','mpeg','mpe','m2v','3gp','3g2','ts','m2ts','mts','vob','divx','asf','rm','rmvb','mxf','qt'], // vidéo : tous les formats courants
+  video: ['mp4','m4v','m4p','webm','ogv','ogm','mov','qt','mkv','mk3d','avi','wmv','asf','flv','f4v','f4p','mpg','mpeg','mpe','mpv','m2v','m2p','m2t','m2ts','mts','ts','3gp','3g2','3gpp','3gp2','vob','divx','rm','rmvb','mxf','amv','nsv','yuv','roq','nuv','wtv','dvr-ms','ivf','obu'], // vidéo : tous les formats courants
   image: ['jpg','jpeg','png','gif','webp','bmp','svg','avif'],
   doc: ['pdf','doc','docx','xls','xlsx','ppt','pptx','odt','ods','odp','rtf','txt','csv','md','epub']
 };
