@@ -889,7 +889,19 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
 .web-reader-search{display:flex;gap:7px;flex:1;min-width:220px}.web-reader-search input{flex:1;min-width:0;padding:10px 13px;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text)}.web-reader-search button{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700}
 .web-reader-actions{display:flex;gap:7px;align-items:center}.web-reader-actions a{display:inline-flex;align-items:center;padding:8px 11px;border:1px solid var(--border);border-radius:8px;color:var(--text);text-decoration:none;font-size:12px;white-space:nowrap}
 .web-reader-layout{display:flex;flex:1;min-height:0;overflow:hidden}.web-reader-side{width:205px;flex:none;overflow:auto;padding:12px 10px;background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;gap:4px}.web-reader-side strong{font-size:11px;letter-spacing:.7px;color:var(--muted);text-transform:uppercase;padding:9px 8px 5px}.web-reader-side button{width:100%;text-align:left;border:0;background:transparent;padding:8px 10px;border-radius:8px;font-size:12px}.web-reader-side button:hover,.web-reader-side button.active{background:var(--panel2);color:var(--accent2)}.web-reader-divider{height:1px;background:var(--border);margin:7px 4px}
-.web-reader-main{display:flex;flex-direction:column;flex:1;min-width:0;min-height:0;background:var(--bg)}.web-reader-current{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 13px;background:var(--panel2);font-size:12px;flex:none}.web-reader-current>span:first-child{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.web-reader-tip{color:var(--muted);font-size:11px;text-align:right}.web-reader-main iframe{width:100%;height:100%;flex:1;min-height:0;border:0;background:#fff}
+.web-reader-main{display:flex;flex-direction:column;flex:1;min-width:0;min-height:0;background:var(--bg)}.web-reader-current{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 13px;background:var(--panel2);font-size:12px;flex:none}.web-reader-current>span:first-child{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.web-reader-tip{color:var(--muted);font-size:11px;text-align:right}.web-reader-main iframe{width:100%;height:100%;flex:1;min-height:0;border:0;background:#fff}.web-reader-main iframe[hidden]{display:none!important}
+.web-reader-feed-status{padding:10px 14px;color:var(--muted);font-size:12px;border-bottom:1px solid var(--border);background:var(--panel)}
+.web-reader-feed-list{flex:1;min-height:0;overflow:auto;padding:12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,330px),1fr));align-content:start;gap:10px}
+.web-reader-feed-list[hidden],.web-reader-feed-status[hidden]{display:none!important}
+.web-reader-article{min-width:0;padding:13px 14px;border:1px solid var(--border);border-radius:12px;background:var(--panel);box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.web-reader-article h3{font-size:14px;line-height:1.45;margin:0 0 8px;color:var(--text)}
+.web-reader-article p{font-size:12px;line-height:1.55;color:var(--muted);margin:0 0 12px}
+.web-reader-article-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;border-top:1px solid var(--border);padding-top:9px}
+.web-reader-article-foot small{font-size:10px;color:var(--muted)}
+.web-reader-article-foot a,.web-reader-feed-list>a{font-size:11px;color:var(--accent2);font-weight:700;text-decoration:none}
+.web-reader-side button[data-web-feed]{border-left:2px solid transparent}
+.web-reader-side button[data-web-feed].active{border-left-color:var(--accent2);background:var(--panel2);color:var(--accent2)}
+@media(max-width:760px){.web-reader-feed-list{grid-template-columns:1fr;padding:8px;gap:8px}.web-reader-article{padding:11px}}
 @media(max-width:760px){.web-reader-head{gap:8px;padding:9px}.web-reader-brand{min-width:100%;}.web-reader-search{min-width:0;width:100%;}.web-reader-search button{padding:8px;font-size:11px}.web-reader-actions{width:100%;justify-content:flex-end}.web-reader-side{width:142px;padding:8px 6px}.web-reader-side button{font-size:11px;padding:8px 6px}.web-reader-current{align-items:flex-start;flex-direction:column;gap:3px}.web-reader-tip{text-align:left}.web-reader-main iframe{min-height:250px}}
 </style>
 
@@ -1014,15 +1026,16 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
       </header>
       <div class="web-reader-layout">
         <aside class="web-reader-side">
-          <strong>Rubriques</strong>
-          <button type="button" data-web-url="https://news.google.com/home?hl=fr&gl=CD&ceid=CD:fr">📰 À la une</button>
-          <button type="button" data-web-url="https://news.google.com/search?q=RDC%20actualit%C3%A9s&hl=fr&gl=CD&ceid=CD:fr">🇨🇩 RDC</button>
-          <button type="button" data-web-url="https://news.google.com/search?q=Afrique%20monde%20actualit%C3%A9s&hl=fr&gl=CD&ceid=CD:fr">🌍 Afrique & Monde</button>
-          <button type="button" data-web-url="https://news.google.com/search?q=%C3%A9conomie&hl=fr&gl=CD&ceid=CD:fr">📈 Économie</button>
-          <button type="button" data-web-url="https://news.google.com/search?q=technologie%20innovation&hl=fr&gl=CD&ceid=CD:fr">💻 Technologie</button>
-          <button type="button" data-web-url="https://news.google.com/search?q=sciences&hl=fr&gl=CD&ceid=CD:fr">🔬 Sciences</button>
-          <button type="button" data-web-url="https://news.google.com/search?q=sport&hl=fr&gl=CD&ceid=CD:fr">⚽ Sport</button>
-          <button type="button" data-web-url="https://news.google.com/search?q=sant%C3%A9&hl=fr&gl=CD&ceid=CD:fr">🩺 Santé</button>
+          <strong>Actualités · lecture intégrée</strong>
+          <button type="button" data-web-feed="top">📰 À la une · France 24</button>
+          <button type="button" data-web-feed="rdc">🇨🇩 RDC · Actualite.cd</button>
+          <button type="button" data-web-feed="okapi">📻 RDC · Radio Okapi</button>
+          <button type="button" data-web-feed="africa">🌍 Afrique & Monde</button>
+          <button type="button" data-web-feed="economy">📈 Économie</button>
+          <button type="button" data-web-feed="tech">💻 Technologie</button>
+          <button type="button" data-web-feed="science">🔬 Sciences</button>
+          <button type="button" data-web-feed="sport">⚽ Sport</button>
+          <button type="button" data-web-feed="health">🩺 Santé</button>
           <div class="web-reader-divider"></div>
           <strong>Journaux & médias</strong>
           <button type="button" data-web-url="https://actualite.cd/">Actualite.cd</button>
@@ -1039,8 +1052,10 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
           <button type="button" data-web-url="https://www.theverge.com/">The Verge</button>
         </aside>
         <main class="web-reader-main">
-          <div class="web-reader-current"><span id="webReaderCurrent">Bienvenue dans votre espace Actualités & Web</span><span class="web-reader-tip">Certains médias bloquent l’affichage intégré : utilisez « Ouvrir à l’extérieur ».</span></div>
-          <iframe id="webReaderFrame" title="Lecture de sites Internet et actualités" src="about:blank" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="clipboard-read; clipboard-write"></iframe>
+          <div class="web-reader-current"><span id="webReaderCurrent">Actualités lisibles directement dans MY WORLD RS</span><span class="web-reader-tip">Les articles et résumés s’affichent ici, même si le site bloque les fenêtres intégrées.</span></div>
+          <div id="webReaderFeedStatus" class="web-reader-feed-status" role="status">Chargement des dernières actualités…</div>
+          <div id="webReaderFeedList" class="web-reader-feed-list" aria-live="polite"></div>
+          <iframe id="webReaderFrame" title="Site Internet externe" src="about:blank" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="clipboard-read; clipboard-write" hidden></iframe>
         </main>
       </div>
     </section>
@@ -4117,58 +4132,123 @@ async function synchroniserTout(demander) {
   // Tous les dossiers : synchro silencieuse si déjà autorisés, sinon un bouton de confirmation s'affiche
   try { await synchroniserTout(false); } catch (e) {}
 })();
-// ----- Actualités & Web : navigateur intégré au lecteur -----
+// ----- Actualités & Web : lecture RSS native + ouverture des sites -----
 (function initWebReader(){
-  const pane=document.getElementById('webReaderPane');
-  const tab=document.getElementById('webReaderTab');
-  const frame=document.getElementById('webReaderFrame');
-  const form=document.getElementById('webReaderForm');
-  const address=document.getElementById('webReaderAddress');
-  const external=document.getElementById('webReaderExternal');
-  const currentLabel=document.getElementById('webReaderCurrent');
-  if(!pane||!tab||!frame||!form||!address)return;
-  const cleanUrl=(raw)=>{
-    let value=String(raw||'').trim();
-    if(!value)return '';
-    if(/\s/.test(value)&&!/^https?:\/\//i.test(value))return 'https://news.google.com/search?q='+encodeURIComponent(value)+'&hl=fr&gl=CD&ceid=CD:fr';
-    if(!/^[a-z][a-z0-9+.-]*:\/\//i.test(value))value='https://'+value;
-    let u;try{u=new URL(value)}catch(_){throw new Error('Adresse ou recherche non valide.');}
-    if(!['http:','https:'].includes(u.protocol))throw new Error('Seules les adresses http et https sont autorisées.');
+  const pane=document.getElementById('webReaderPane'),tab=document.getElementById('webReaderTab');
+  const frame=document.getElementById('webReaderFrame'),form=document.getElementById('webReaderForm');
+  const address=document.getElementById('webReaderAddress'),external=document.getElementById('webReaderExternal');
+  const currentLabel=document.getElementById('webReaderCurrent'),feedList=document.getElementById('webReaderFeedList');
+  const feedStatus=document.getElementById('webReaderFeedStatus');
+  if(!pane||!tab||!frame||!form||!address||!feedList||!feedStatus)return;
+  const feeds={
+    top:{name:'À la une · France 24',url:'https://www.france24.com/fr/rss'},
+    rdc:{name:'RDC · Actualite.cd',url:'https://actualite.cd/feed'},
+    okapi:{name:'RDC · Radio Okapi',url:'https://www.radiookapi.net/rss.xml'},
+    africa:{name:'Afrique & Monde',url:'https://news.google.com/rss/search?q=Afrique%20OR%20monde&hl=fr&gl=CD&ceid=CD:fr'},
+    economy:{name:'Économie',url:'https://news.google.com/rss/search?q=%C3%A9conomie&hl=fr&gl=CD&ceid=CD:fr'},
+    tech:{name:'Technologie · TechCrunch',url:'https://techcrunch.com/feed/'},
+    science:{name:'Sciences',url:'https://news.google.com/rss/search?q=sciences%20technologie&hl=fr&gl=CD&ceid=CD:fr'},
+    sport:{name:'Sport',url:'https://news.google.com/rss/search?q=sport%20football&hl=fr&gl=CD&ceid=CD:fr'},
+    health:{name:'Santé',url:'https://news.google.com/rss/search?q=sant%C3%A9&hl=fr&gl=CD&ceid=CD:fr'}
+  };
+  const cleanUrl=raw=>{
+    let v=String(raw||'').trim();if(!v)return '';
+    if(/\s/.test(v)&&!/^https?:\/\//i.test(v))return 'https://news.google.com/rss/search?q='+encodeURIComponent(v)+'&hl=fr&gl=CD&ceid=CD:fr';
+    if(!/^[a-z][a-z0-9+.-]*:\/\//i.test(v))v='https://'+v;
+    const u=new URL(v);if(!['http:','https:'].includes(u.protocol))throw new Error('Adresse non autorisée.');
     return u.href;
   };
-  const ouvrir=(raw,label)=>{
+  const texte=(node,selector)=>{
+    const el=node.querySelector(selector);if(!el)return '';
+    const box=document.createElement('div');box.innerHTML=el.textContent||'';
+    return (box.textContent||'').replace(/\s+/g,' ').trim();
+  };
+  const dateLisible=v=>{const d=new Date(v);return Number.isNaN(d.getTime())?'':d.toLocaleString('fr-FR',{dateStyle:'medium',timeStyle:'short'});};
+  const afficherFlux=async(feed,label)=>{
+    frame.hidden=true;feedList.hidden=false;feedList.innerHTML='';
+    currentLabel.textContent=label||'Actualités';external.href=feed;external.textContent='Ouvrir le site source ↗';
+    feedStatus.hidden=false;feedStatus.textContent='Récupération des dernières publications…';
+    try{
+      let xmlText='',lastError=null;
+      for(const proxy of ['https://api.allorigins.win/raw?url=','https://corsproxy.io/?url=']){
+        try{
+          const response=await fetch(proxy+encodeURIComponent(feed),{cache:'no-store'});
+          if(!response.ok)throw new Error('HTTP '+response.status);
+          xmlText=await response.text();if(!xmlText||!/<(rss|feed|rdf:RDF)\b/i.test(xmlText))throw new Error('Flux RSS indisponible');
+          break;
+        }catch(e){lastError=e;}
+      }
+      if(!xmlText)throw lastError||new Error('Connexion au flux impossible');
+      const doc=new DOMParser().parseFromString(xmlText,'text/xml');
+      if(doc.querySelector('parsererror'))throw new Error('Le flux reçu est illisible.');
+      let entries=[...doc.querySelectorAll('item')];
+      if(!entries.length)entries=[...doc.querySelectorAll('entry')];
+      if(!entries.length)throw new Error('Aucun article trouvé dans ce flux.');
+      entries.slice(0,45).forEach(item=>{
+        const title=texte(item,'title')||'Article sans titre';
+        const description=texte(item,'description')||texte(item,'summary')||texte(item,'content');
+        const linkEl=item.querySelector('link');
+        let href=linkEl?.getAttribute('href')||linkEl?.textContent||'';
+        if(!href){const guid=item.querySelector('guid');href=guid?.textContent||'';}
+        try{href=new URL(href,feed).href;}catch(_){href=feed;}
+        const pub=texte(item,'pubDate')||texte(item,'published')||texte(item,'updated');
+        const card=document.createElement('article');card.className='web-reader-article';
+        const h=document.createElement('h3');h.textContent=title;card.appendChild(h);
+        if(description){const p=document.createElement('p');p.textContent=description.slice(0,560)+(description.length>560?'…':'');card.appendChild(p);}
+        const foot=document.createElement('div');foot.className='web-reader-article-foot';
+        const time=document.createElement('small');time.textContent=dateLisible(pub)||new URL(href).hostname;foot.appendChild(time);
+        const a=document.createElement('a');a.href=href;a.target='_blank';a.rel='noopener noreferrer';a.textContent='Lire l’article complet ↗';foot.appendChild(a);
+        card.appendChild(foot);feedList.appendChild(card);
+      });
+      feedStatus.textContent=entries.length+' actualités disponibles · contenu fourni par le média'; 
+    }catch(e){
+      feedStatus.textContent='Impossible de charger ce flux pour le moment. Vérifiez la connexion ou ouvrez le média directement.';
+      const a=document.createElement('a');a.href=feed;a.target='_blank';a.rel='noopener noreferrer';a.textContent='Ouvrir le flux du média ↗';feedList.appendChild(a);
+    }
+  };
+  const ouvrirSite=(raw,label)=>{
     try{
       const url=cleanUrl(raw);if(!url)return;
-      frame.src=url;external.href=url;address.value=raw;
+      feedList.hidden=true;feedStatus.hidden=true;frame.hidden=false;frame.src=url;
+      external.href=url;external.textContent='Ouvrir dans le navigateur ↗';address.value=raw;
       currentLabel.textContent=label||new URL(url).hostname;
       try{localStorage.setItem('mwrs.webreader.lastUrl',url);}catch(_){}
       pane.querySelectorAll('[data-web-url]').forEach(b=>b.classList.toggle('active',b.dataset.webUrl===url));
     }catch(e){currentLabel.textContent=e.message||'Impossible d’ouvrir cette adresse.';}
   };
+  const choisirFlux=(key)=>{
+    const f=feeds[key];if(!f)return;
+    pane.querySelectorAll('[data-web-feed]').forEach(b=>b.classList.toggle('active',b.dataset.webFeed===key));
+    pane.querySelectorAll('[data-web-url]').forEach(b=>b.classList.remove('active'));
+    address.value=f.name;try{localStorage.setItem('mwrs.webreader.lastFeed',key);}catch(_){}
+    afficherFlux(f.url,f.name);
+  };
   const afficher=()=>{
-    if(typeof tvHide==='function')tvHide();
-    if(typeof radioHide==='function')radioHide();
-    if(typeof spotifyHide==='function')spotifyHide();
-    if(typeof fifaHide==='function')fifaHide();
-    if(typeof matchsHide==='function')matchsHide();
-    if(typeof tvDriveHide==='function')tvDriveHide();
-    if(typeof youtubeHide==='function')youtubeHide();
-    if(typeof cacherOngletMesFilms==='function')cacherOngletMesFilms();
+    if(typeof tvHide==='function')tvHide();if(typeof radioHide==='function')radioHide();
+    if(typeof spotifyHide==='function')spotifyHide();if(typeof fifaHide==='function')fifaHide();
+    if(typeof matchsHide==='function')matchsHide();if(typeof tvDriveHide==='function')tvDriveHide();
+    if(typeof youtubeHide==='function')youtubeHide();if(typeof cacherOngletMesFilms==='function')cacherOngletMesFilms();
     const p=document.getElementById('playlist');if(p)p.hidden=true;
-    pane.hidden=false;
-    if(typeof setMode==='function')setMode('web');else document.body.dataset.mode='web';
+    pane.hidden=false;if(typeof setMode==='function')setMode('web');else document.body.dataset.mode='web';
     document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('active',b===tab));
-    if(!frame.src||frame.src==='about:blank'){
-      let last='';try{last=localStorage.getItem('mwrs.webreader.lastUrl')||'';}catch(_){}
-      ouvrir(last||'https://news.google.com/home?hl=fr&gl=CD&ceid=CD:fr','Actualités à la une');
+    if(feedList.dataset.loaded!=='yes'){
+      let last='top';try{last=localStorage.getItem('mwrs.webreader.lastFeed')||'top';}catch(_){}
+      choisirFlux(feeds[last]?last:'top');feedList.dataset.loaded='yes';
     }
   };
   tab.addEventListener('click',afficher);
   document.getElementById('tabs')?.addEventListener('click',e=>{if(!e.target.closest('#webReaderTab'))pane.hidden=true;},true);
-  form.addEventListener('submit',e=>{e.preventDefault();ouvrir(address.value);});
-  document.getElementById('webReaderReload')?.addEventListener('click',()=>{try{frame.contentWindow.location.reload();}catch(_){frame.src=frame.src;}});
-  external.addEventListener('click',()=>{if(!external.href||external.href==='about:blank')return;});
-  pane.querySelectorAll('[data-web-url]').forEach(b=>b.addEventListener('click',()=>ouvrir(b.dataset.webUrl,b.textContent.trim())));
+  form.addEventListener('submit',e=>{
+    e.preventDefault();const value=address.value.trim();if(!value)return;
+    if(/^https?:\/\//i.test(value)||/^[\w.-]+\.[a-z]{2,}(\/|$)/i.test(value)){ouvrirSite(value);return;}
+    afficherFlux('https://news.google.com/rss/search?q='+encodeURIComponent(value)+'&hl=fr&gl=CD&ceid=CD:fr','Recherche : '+value);
+  });
+  document.getElementById('webReaderReload')?.addEventListener('click',()=>{
+    const active=pane.querySelector('[data-web-feed].active');
+    if(active)choisirFlux(active.dataset.webFeed);else if(!frame.hidden){try{frame.contentWindow.location.reload();}catch(_){frame.src=frame.src;}}
+  });
+  pane.querySelectorAll('[data-web-feed]').forEach(b=>b.addEventListener('click',()=>choisirFlux(b.dataset.webFeed)));
+  pane.querySelectorAll('[data-web-url]').forEach(b=>b.addEventListener('click',()=>ouvrirSite(b.dataset.webUrl,b.textContent.trim())));
 })();
 
 })();
