@@ -1074,6 +1074,36 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
   #sidebar>.tabs button { min-height:28px!important; padding:4px 7px!important; }
   #playlist { min-height:0!important; overflow:auto!important; }
 }
+
+/* Menu principal unique : aucun onglet principal ne reste visible hors du bouton Menu */
+#sidebar > #tabs{
+  display:none!important;
+  flex-direction:column!important;
+  flex-wrap:nowrap!important;
+  gap:6px!important;
+  width:100%!important;
+  max-height:min(58vh,520px)!important;
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+  padding:8px 12px 12px!important;
+  margin:0!important;
+  border:0!important;
+  background:var(--panel)!important;
+}
+#sidebar > #tabs.menu-open{
+  display:flex!important;
+}
+#sidebar > #tabs button{
+  display:flex!important;
+  flex:0 0 auto!important;
+  width:100%!important;
+  min-height:38px!important;
+  justify-content:flex-start!important;
+  text-align:left!important;
+  white-space:normal!important;
+}
+#sidebar > #menuToggle{display:flex!important;flex:0 0 auto!important}
+
 </style>
 
 
