@@ -119,6 +119,15 @@ exports.lecteurProRevokeLicense = api(async (req, res, admin) => {
 }, true);
 
 exports.lecteurProActivateLicense = api(async (req, res, user) => {
+  const limitRef = db.collection("lecteurProActivationLimits").doc(user.uid);
+  await db.runTransaction(async tx => {
+    const limitSnap = await tx.get(limitRef);
+    const now = Date.now();
+    const recent = (limitSnap.get("attempts") || []).filter(t => Number(t) > now - 60 * 60 * 1000);
+    if (recent.length >= 10) throw Object.assign(new Error("Trop de tentatives. Réessayez dans une heure."), { status: 429 });
+    recent.push(now);
+    tx.set(limitRef, { attempts: recent, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+  });
   const code = cleanCode(req.body?.code);
   if (!/^LP-(?:[A-F0-9]{5}-){5}[A-F0-9]{5}$/.test(code)) return res.status(400).json({ error: "Code de licence invalide." });
   const ref = db.collection("lecteurProLicenses").doc(codeHash(code));
