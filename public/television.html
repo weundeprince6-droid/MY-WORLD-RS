@@ -923,14 +923,17 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
   #stage {
     order:1!important;
     display:flex!important;
-    flex:0 0 56dvh!important;
+    flex:0 0 42dvh!important;
     width:100%!important;
-    height:56dvh!important;
+    height:42dvh!important;
+    max-height:42dvh!important;
+    box-sizing:border-box!important;
     min-width:0!important;
-    min-height:230px!important;
+    min-height:0!important;
     padding:0!important;
     gap:0!important;
     overflow:hidden!important;
+    box-sizing:border-box!important;
   }
   #viewer {
     flex:1 1 auto!important;
@@ -994,7 +997,7 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
   #sidebar {
     order:2!important;
     display:flex!important;
-    flex:1 1 44dvh!important;
+    flex:1 1 58dvh!important;
     width:100%!important;
     height:auto!important;
     min-width:0!important;
