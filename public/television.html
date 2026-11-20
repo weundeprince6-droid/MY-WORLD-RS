@@ -1052,15 +1052,43 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
   #app.panel-open #panel { top:6px!important; right:6px!important; bottom:6px!important; width:min(370px,calc(100vw - 12px))!important; max-width:calc(100vw - 12px)!important; }
 }
 @media (max-width:480px) {
-  #stage { flex-basis:54dvh!important; height:54dvh!important; min-height:220px!important; }
-  #sidebar { flex-basis:46dvh!important; }
+  /* Portrait : réduire le lecteur pour donner la priorité à la bibliothèque */
+  #stage {
+    flex:0 0 40dvh!important;
+    height:40dvh!important;
+    min-height:0!important;
+    max-height:430px!important;
+    flex-direction:column!important;
+  }
+  #viewer {
+    flex:1 1 auto!important;
+    min-height:0!important;
+    height:auto!important;
+  }
+  #controls {
+    padding:4px 7px calc(4px + env(safe-area-inset-bottom))!important;
+  }
+  #seekRow { margin-bottom:2px!important; }
+  #btnRow { gap:3px!important; }
+  #btnRow .group { gap:3px!important; }
+  #btnRow button, #btnRow select {
+    min-height:32px!important;
+    min-width:33px!important;
+    padding:4px 6px!important;
+  }
+  #btnRow button.primary {
+    width:36px!important;
+    height:36px!important;
+    min-width:36px!important;
+  }
+  #volume { width:52px!important; }
+  #sidebar { flex:1 1 60dvh!important; min-height:0!important; }
   #sidebar .side-head { padding:6px 8px!important; }
   #sidebar .side-head h1 { font-size:13px!important; }
   #sidebar .btn-row button { min-height:34px!important; }
   #titleBar button { max-width:42vw!important; overflow:hidden!important; text-overflow:ellipsis!important; white-space:nowrap!important; }
   #btnRow .group:first-child { gap:3px!important; }
-  #btnRow .group:first-child button { min-width:34px!important; padding:5px!important; }
-  #btnRow button.primary { width:40px!important; height:40px!important; min-width:40px!important; }
+  #btnRow .group:first-child button { min-width:33px!important; padding:4px!important; }
 }
 @media (max-width:820px) and (orientation:landscape) {
   #app { flex-direction:row!important; }
