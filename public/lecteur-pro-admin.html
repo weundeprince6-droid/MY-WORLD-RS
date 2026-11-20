@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101820"><title>Administration — Lecteur Pro</title>
+<style>
+:root{color-scheme:dark;--bg:#0d151b;--panel:#17242d;--line:#30434b;--text:#f2f7f5;--muted:#a8b8b2;--green:#25b77b;--blue:#39a8db}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 80% 0%,#123c35 0,transparent 36%),var(--bg);color:var(--text);font:15px/1.5 Segoe UI,system-ui,sans-serif}
+main{width:min(1100px,calc(100% - 28px));margin:28px auto 60px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.brand{font-size:22px;font-weight:900}.brand span{color:var(--green)}h1{font-size:clamp(26px,5vw,38px);margin:28px 0 5px}.muted{color:var(--muted)}.panel{background:#17242df2;border:1px solid var(--line);border-radius:17px;padding:20px;margin:18px 0}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.field{display:grid;gap:6px;margin:12px 0}label{font-size:13px;color:var(--muted)}input,select{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;background:#0e171e;color:var(--text);font:inherit}button{padding:11px 15px;border-radius:10px;border:1px solid var(--line);background:#22343d;color:var(--text);font-weight:750;cursor:pointer}button.primary{background:var(--green);color:#062116;border-color:var(--green)}button:disabled{opacity:.5;cursor:not-allowed}.row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.status{padding:11px 13px;border-radius:10px;background:#12252a;color:#b9e9d3;margin:12px 0;white-space:pre-wrap}.status.error{background:#321d21;color:#ffc6c6}.hidden{display:none!important}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:680px}th,td{text-align:left;padding:11px;border-bottom:1px solid var(--line);font-size:13px}th{color:var(--muted)}.code{font:700 16px ui-monospace,monospace;letter-spacing:.5px;overflow-wrap:anywhere}.tag{display:inline-block;padding:3px 8px;border-radius:20px;background:#173b30;color:#8de0b7;font-size:12px}.small{font-size:12px}.actions{display:flex;gap:7px;flex-wrap:wrap}
+@media(max-width:700px){.grid{grid-template-columns:1fr}.panel{padding:15px}.top{align-items:flex-start}}
+</style>
+</head>
+<body><main>
+<header class="top"><div class="brand">🎬 <span>LECTEUR</span> PRO <small class="muted">/ Administration</small></div><div class="row"><a class="muted" href="lecteur-pro-offres.html">Voir les offres</a><button id="login">Connexion Google</button><button id="logout" class="hidden">Déconnexion</button></div></header>
+<h1>Gestion des licences</h1><div class="muted">Espace réservé à l'administrateur Lecteur Pro. Les ventes sont enregistrées après vérification manuelle du paiement.</div>
+<div id="message" class="status">Connectez-vous avec le compte administrateur autorisé.</div>
+<section id="workspace" class="hidden">
+<div class="grid">
+<article class="panel"><h2>Émettre une licence</h2><p class="muted small">N'émettez le code qu'après avoir confirmé le paiement reçu. La référence est obligatoire pour l'audit.</p>
+<div class="field"><label for="plan">Formule</label><select id="plan"><option value="monthly">Premium mensuel — 3 000 FC / 30 jours</option><option value="annual">Premium annuel — 30 000 FC / 365 jours</option><option value="lifetime">Licence à vie — 60 000 FC</option></select></div>
+<div class="field"><label for="email">E-mail du client</label><input id="email" type="email" placeholder="client@exemple.com" autocomplete="email"></div>
+<div class="field"><label for="reference">Référence du paiement vérifié</label><input id="reference" placeholder="ID transaction / référence reçue"></div>
+<button id="create" class="primary">Créer la licence</button><div id="newcode" class="status hidden"></div>
+</article>
+<article class="panel"><h2>Règles de sécurité</h2><ul class="muted"><li>Connexion Google obligatoire.</li><li>Seul le compte administrateur autorisé peut émettre ou désactiver une licence.</li><li>Une licence est liée au compte e-mail de l'acheteur et à un seul compte utilisateur.</li><li>Le code complet n'est affiché qu'à sa création.</li><li>Les paiements ne sont pas encaissés par cette interface.</li></ul></article>
+</div>
+<article class="panel"><div class="row" style="justify-content:space-between"><h2>Licences émises</h2><button id="refresh">Actualiser</button></div><div class="table-wrap"><table><thead><tr><th>Client</th><th>Formule</th><th>Montant</th><th>État</th><th>Créée le</th><th>Expiration</th><th>Action</th></tr></thead><tbody id="licenses"><tr><td colspan="7">Chargement…</td></tr></tbody></table></div></article>
+</section>
+</main>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import { firebaseConfig } from "./config.js";
+const app=initializeApp(firebaseConfig),auth=getAuth(app),provider=new GoogleAuthProvider();
+const base="https://us-central1-my-world-rs.cloudfunctions.net/";
+const $=id=>document.getElementById(id);
+let currentUser=null;
+function message(s,error=false){$("message").textContent=s;$("message").classList.toggle("error",error)}
+async function api(name,data={}){if(!currentUser)throw new Error("Connexion requise.");const token=await currentUser.getIdToken();const r=await fetch(base+name,{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},body:JSON.stringify(data)});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||"Erreur serveur ("+r.status+")");return j}
+onAuthStateChanged(auth,async user=>{currentUser=user;$("login").classList.toggle("hidden",!!user);$("logout").classList.toggle("hidden",!user);if(!user){$("workspace").classList.add("hidden");message("Connectez-vous avec le compte administrateur autorisé.");return}try{await api("lecteurProListLicenses");$("workspace").classList.remove("hidden");message("Accès administrateur confirmé : "+user.email);await load()}catch(e){$("workspace").classList.add("hidden");message(e.message,true)}});
+$("login").onclick=async()=>{try{await signInWithPopup(auth,provider)}catch(e){message(e.message,true)}};
+$("logout").onclick=()=>signOut(auth);
+async function load(){try{const data=await api("lecteurProListLicenses");$("licenses").innerHTML="";if(!data.licenses.length){$("licenses").innerHTML='<tr><td colspan="7">Aucune licence pour le moment.</td></tr>';return}for(const x of data.licenses){const tr=document.createElement("tr");const vals=[x.buyerEmail,x.planLabel,x.amount.toLocaleString("fr-FR")+" "+x.currency,x.status,x.createdAt?new Date(x.createdAt).toLocaleDateString("fr-FR"):"—",x.expiresAt?new Date(x.expiresAt).toLocaleDateString("fr-FR"):"À vie"];for(const v of vals){const td=document.createElement("td");td.textContent=v;tr.appendChild(td)}const td=document.createElement("td");if(x.status!=="revoked"){const b=document.createElement("button");b.textContent="Désactiver";b.onclick=async()=>{if(!confirm("Désactiver cette licence ?"))return;try{await api("lecteurProRevokeLicense",{id:x.id});message("Licence désactivée.");await load()}catch(e){message(e.message,true)}};td.appendChild(b)}else td.textContent="—";tr.appendChild(td);$("licenses").appendChild(tr)}}catch(e){message(e.message,true)}}
+$("refresh").onclick=load;
+$("create").onclick=async()=>{const btn=$("create");btn.disabled=true;try{const x=await api("lecteurProCreateLicense",{plan:$("plan").value,buyerEmail:$("email").value,paymentReference:$("reference").value});$("newcode").classList.remove("hidden");$("newcode").innerHTML="";const p=document.createElement("div");p.className="code";p.textContent=x.code;const copy=document.createElement("button");copy.textContent="Copier le code";copy.onclick=()=>navigator.clipboard.writeText(x.code);$("newcode").append(p,copy);$("reference").value="";message("Licence créée. Transmettez le code au client de manière privée.");await load()}catch(e){message(e.message,true)}finally{btn.disabled=false}};
+</script></body></html>
