@@ -4117,8 +4117,6 @@ async function synchroniserTout(demander) {
   // Tous les dossiers : synchro silencieuse si déjà autorisés, sinon un bouton de confirmation s'affiche
   try { await synchroniserTout(false); } catch (e) {}
 })();
-})();
-
 // ----- Actualités & Web : navigateur intégré au lecteur -----
 (function initWebReader(){
   const pane=document.getElementById('webReaderPane');
@@ -4172,6 +4170,9 @@ async function synchroniserTout(demander) {
   external.addEventListener('click',()=>{if(!external.href||external.href==='about:blank')return;});
   pane.querySelectorAll('[data-web-url]').forEach(b=>b.addEventListener('click',()=>ouvrir(b.dataset.webUrl,b.textContent.trim())));
 })();
+
+})();
+
 </script>
 </body>
 </html>
