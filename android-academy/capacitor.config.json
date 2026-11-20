@@ -1,0 +1,15 @@
+{
+  "appId": "app.myworldrs.webservicesacademy",
+  "appName": "WEBSERVICES ACADEMY",
+  "webDir": "www",
+  "server": {
+    "url": "https://weundeprince6-droid.github.io/MY-WORLD-RS/webs-classroom.html",
+    "cleartext": false,
+    "allowNavigation": [
+      "weundeprince6-droid.github.io",
+      "*.google.com",
+      "*.firebaseapp.com",
+      "*.web.app"
+    ]
+  }
+}
