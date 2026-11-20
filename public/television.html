@@ -4141,8 +4141,8 @@ async function synchroniserTout(demander) {
   const feedStatus=document.getElementById('webReaderFeedStatus');
   if(!pane||!tab||!frame||!form||!address||!feedList||!feedStatus)return;
   const feeds={
-    top:{name:'À la une · France 24',url:'https://www.france24.com/fr/rss'},
-    rdc:{name:'RDC · Actualite.cd',url:'https://actualite.cd/feed'},
+    top:{name:'À la une · France 24',url:'https://www.france24.com/fr/rss',site:'https://www.france24.com/fr/'},
+    rdc:{name:'RDC · Actualite.cd',url:'https://actualite.cd/feed',site:'https://actualite.cd/'},
     okapi:{name:'RDC · Radio Okapi',url:'https://www.radiookapi.net/rss.xml'},
     africa:{name:'Afrique & Monde',url:'https://news.google.com/rss/search?q=Afrique%20OR%20monde&hl=fr&gl=CD&ceid=CD:fr'},
     economy:{name:'Économie',url:'https://news.google.com/rss/search?q=%C3%A9conomie&hl=fr&gl=CD&ceid=CD:fr'},
@@ -4164,9 +4164,9 @@ async function synchroniserTout(demander) {
     return (box.textContent||'').replace(/\s+/g,' ').trim();
   };
   const dateLisible=v=>{const d=new Date(v);return Number.isNaN(d.getTime())?'':d.toLocaleString('fr-FR',{dateStyle:'medium',timeStyle:'short'});};
-  const afficherFlux=async(feed,label)=>{
+  const afficherFlux=async(feed,label,site)=>{
     frame.hidden=true;feedList.hidden=false;feedList.innerHTML='';
-    currentLabel.textContent=label||'Actualités';external.href=feed;external.textContent='Ouvrir le site source ↗';
+    currentLabel.textContent=label||'Actualités';external.href=site||feed;external.textContent='Ouvrir le site source ↗';
     feedStatus.hidden=false;feedStatus.textContent='Récupération des dernières publications…';
     try{
       let xmlText='',lastError=null;
@@ -4221,7 +4221,7 @@ async function synchroniserTout(demander) {
     pane.querySelectorAll('[data-web-feed]').forEach(b=>b.classList.toggle('active',b.dataset.webFeed===key));
     pane.querySelectorAll('[data-web-url]').forEach(b=>b.classList.remove('active'));
     address.value=f.name;try{localStorage.setItem('mwrs.webreader.lastFeed',key);}catch(_){}
-    afficherFlux(f.url,f.name);
+    afficherFlux(f.url,f.name,f.site);
   };
   const afficher=()=>{
     if(typeof tvHide==='function')tvHide();if(typeof radioHide==='function')radioHide();
