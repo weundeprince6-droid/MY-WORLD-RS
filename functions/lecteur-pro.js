@@ -118,7 +118,7 @@ exports.lecteurProRevokeLicense = api(async (req, res, admin) => {
 
 exports.lecteurProActivateLicense = api(async (req, res, user) => {
   const code = cleanCode(req.body?.code);
-  if (!/^LP-(?:[A-F0-9]{5}-){2}[A-F0-9]{5}$/.test(code)) return res.status(400).json({ error: "Code de licence invalide." });
+  if (!/^LP-(?:[A-F0-9]{5}-){5}[A-F0-9]{5}$/.test(code)) return res.status(400).json({ error: "Code de licence invalide." });
   const ref = db.collection("lecteurProLicenses").doc(codeHash(code));
   let result;
   await db.runTransaction(async tx => {
