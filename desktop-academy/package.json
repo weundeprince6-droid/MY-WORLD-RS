@@ -1,0 +1,42 @@
+{
+  "name": "webservices-academy",
+  "version": "1.0.0",
+  "description": "WEBSERVICES ACADEMY - Espace pédagogique My World RS",
+  "main": "main.js",
+  "author": "My World RS",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win nsis --x64 --ia32 --publish never"
+  },
+  "devDependencies": {
+    "electron": "22.3.27",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "app.myworldrs.webservicesacademy",
+    "productName": "WEBSERVICES ACADEMY",
+    "files": [
+      "main.js",
+      "icon.png",
+      "package.json"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "icon.png"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "runAfterFinish": true,
+      "createDesktopShortcut": true,
+      "artifactName": "WEBSERVICES-ACADEMY-Installation-${arch}.${ext}"
+    },
+    "compression": "maximum",
+    "electronLanguages": ["fr", "en-US"]
+  }
+}
