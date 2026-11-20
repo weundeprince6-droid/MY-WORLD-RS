@@ -907,6 +907,173 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
 .web-reader-side button[data-web-feed].active{border-left-color:var(--accent2);background:var(--panel2);color:var(--accent2)}
 @media(max-width:760px){.web-reader-feed-list{grid-template-columns:minmax(0,1fr);padding:9px 8px 20px;gap:9px}.web-reader-article{padding:14px 13px;border-radius:11px}.web-reader-article h3{font-size:15px}.web-reader-article p{font-size:13px;line-height:1.6}.web-reader-feed-status{padding:10px 8px}}
 @media(max-width:760px){.web-reader-head{gap:8px;padding:9px}.web-reader-brand{min-width:100%;}.web-reader-search{min-width:0;width:100%;}.web-reader-search button{padding:8px;font-size:11px}.web-reader-actions{width:100%;justify-content:flex-end}.web-reader-side{width:142px;padding:8px 6px}.web-reader-side button{font-size:11px;padding:8px 6px}.web-reader-current{align-items:flex-start;flex-direction:column;gap:3px}.web-reader-tip{text-align:left}.web-reader-main iframe{min-height:250px}}
+
+/* ===== Correctif responsive mobile Lecteur Pro ===== */
+@media (max-width: 820px) {
+  html, body { width:100%; height:100%; min-height:100%; overflow:hidden; }
+  body { overscroll-behavior:none; }
+  #app {
+    display:flex!important;
+    flex-direction:column!important;
+    width:100%!important;
+    height:100dvh!important;
+    min-height:0!important;
+    overflow:hidden!important;
+  }
+  #stage {
+    order:1!important;
+    display:flex!important;
+    flex:0 0 56dvh!important;
+    width:100%!important;
+    height:56dvh!important;
+    min-width:0!important;
+    min-height:230px!important;
+    padding:0!important;
+    gap:0!important;
+    overflow:hidden!important;
+  }
+  #viewer {
+    flex:1 1 auto!important;
+    width:100%!important;
+    min-width:0!important;
+    min-height:110px!important;
+    height:auto!important;
+    border-radius:0!important;
+  }
+  #titleBar {
+    flex:0 0 auto!important;
+    min-width:0!important;
+    min-height:38px!important;
+    gap:7px!important;
+    padding:6px 9px!important;
+    font-size:12px!important;
+  }
+  #titleBar #nowPlaying { min-width:0!important; }
+  #titleBar button { min-height:34px!important; padding:6px 8px!important; font-size:11px!important; }
+  #controls {
+    flex:0 0 auto!important;
+    min-width:0!important;
+    padding:6px 8px calc(6px + env(safe-area-inset-bottom))!important;
+    border-radius:0!important;
+  }
+  #seekRow { gap:7px!important; margin:0 0 5px!important; }
+  #seekRow span.t { width:38px!important; flex:none!important; font-size:10px!important; }
+  #seek { min-width:0!important; min-height:24px!important; }
+  #btnRow {
+    display:flex!important;
+    flex-wrap:wrap!important;
+    justify-content:center!important;
+    gap:5px!important;
+    min-width:0!important;
+  }
+  #btnRow .group {
+    display:flex!important;
+    flex-wrap:nowrap!important;
+    justify-content:center!important;
+    gap:4px!important;
+    min-width:0!important;
+  }
+  #btnRow .group:first-child { flex:1 1 100%!important; }
+  #btnRow .group:not(:first-child) {
+    max-width:100%!important;
+    overflow-x:auto!important;
+    justify-content:flex-start!important;
+    scrollbar-width:none!important;
+  }
+  #btnRow .group:not(:first-child)::-webkit-scrollbar { display:none!important; }
+  #btnRow button, #btnRow select {
+    flex:0 0 auto!important;
+    min-width:36px!important;
+    min-height:36px!important;
+    padding:6px 8px!important;
+    font-size:12px!important;
+    touch-action:manipulation;
+  }
+  #btnRow button.primary { width:42px!important; height:42px!important; min-width:42px!important; }
+  #volume { width:58px!important; }
+  #sidebar {
+    order:2!important;
+    display:flex!important;
+    flex:1 1 44dvh!important;
+    width:100%!important;
+    height:auto!important;
+    min-width:0!important;
+    min-height:0!important;
+    max-height:none!important;
+    border:0!important;
+    border-top:1px solid var(--border)!important;
+    overflow:hidden!important;
+    box-shadow:0 -4px 16px rgba(0,0,0,.12)!important;
+  }
+  #sidebar .side-head {
+    flex:0 0 auto!important;
+    padding:7px 9px!important;
+  }
+  #sidebar .side-head h1 { font-size:14px!important; margin:0 0 6px!important; }
+  #sidebar .btn-row { gap:6px!important; margin:0 0 6px!important; }
+  #sidebar .btn-row button { min-height:36px!important; padding:6px 9px!important; font-size:12px!important; }
+  #sidebar .row2 { gap:6px!important; }
+  #sidebar .row2 input { min-width:0!important; flex:1 1 auto!important; }
+  #sidebar .row2 select { flex:0 0 auto!important; max-width:100px!important; }
+  #sidebar>.tabs {
+    display:flex!important;
+    flex:0 0 auto!important;
+    flex-wrap:nowrap!important;
+    gap:6px!important;
+    overflow-x:auto!important;
+    overflow-y:hidden!important;
+    padding:7px 8px!important;
+    margin:0!important;
+    scrollbar-width:thin!important;
+    -webkit-overflow-scrolling:touch;
+    border-bottom:1px solid var(--border)!important;
+  }
+  #sidebar>.tabs button {
+    flex:0 0 auto!important;
+    min-width:max-content!important;
+    min-height:36px!important;
+    padding:7px 11px!important;
+    white-space:nowrap!important;
+    font-size:11px!important;
+    border-radius:18px!important;
+  }
+  #syncBar { flex:0 0 auto!important; margin:5px 8px 0!important; padding:6px 8px!important; }
+  #playlist {
+    flex:1 1 auto!important;
+    min-height:0!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    padding:5px 7px calc(8px + env(safe-area-inset-bottom))!important;
+    -webkit-overflow-scrolling:touch;
+  }
+  #playlist li { min-height:42px!important; padding:9px 10px!important; font-size:12px!important; }
+  #playlist li .rm { opacity:1!important; min-width:30px!important; min-height:30px!important; }
+  .side-foot { flex:0 0 auto!important; padding:6px 9px!important; }
+  #app.panel-open #panel { top:6px!important; right:6px!important; bottom:6px!important; width:min(370px,calc(100vw - 12px))!important; max-width:calc(100vw - 12px)!important; }
+}
+@media (max-width:480px) {
+  #stage { flex-basis:54dvh!important; height:54dvh!important; min-height:220px!important; }
+  #sidebar { flex-basis:46dvh!important; }
+  #sidebar .side-head { padding:6px 8px!important; }
+  #sidebar .side-head h1 { font-size:13px!important; }
+  #sidebar .btn-row button { min-height:34px!important; }
+  #titleBar button { max-width:42vw!important; overflow:hidden!important; text-overflow:ellipsis!important; white-space:nowrap!important; }
+  #btnRow .group:first-child { gap:3px!important; }
+  #btnRow .group:first-child button { min-width:34px!important; padding:5px!important; }
+  #btnRow button.primary { width:40px!important; height:40px!important; min-width:40px!important; }
+}
+@media (max-width:820px) and (orientation:landscape) {
+  #app { flex-direction:row!important; }
+  #stage { order:1!important; flex:1 1 64%!important; width:64%!important; height:100dvh!important; min-height:0!important; }
+  #sidebar { order:2!important; flex:0 0 36%!important; width:36%!important; height:100dvh!important; border-top:0!important; border-left:1px solid var(--border)!important; }
+  #sidebar .side-head h1 { font-size:12px!important; }
+  #sidebar .btn-row button { font-size:10px!important; }
+  #sidebar>.tabs { flex-wrap:wrap!important; max-height:92px!important; overflow-y:auto!important; }
+  #sidebar>.tabs button { min-height:29px!important; padding:5px 8px!important; }
+  #titleBar { padding:4px 7px!important; min-height:30px!important; }
+  #controls { padding:4px 6px!important; }
+}
+
 </style>
 
 
