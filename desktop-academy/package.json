@@ -1,6 +1,6 @@
 {
   "name": "webservices-academy",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "WEBSERVICES ACADEMY - Espace pédagogique My World RS",
   "main": "main.js",
   "author": "My World RS",
@@ -8,7 +8,10 @@
   "private": true,
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder --win nsis --x64 --ia32 --publish never"
+    "build": "electron-builder --win nsis --x64 --ia32 --publish always"
+  },
+  "dependencies": {
+    "electron-updater": "^6.6.2"
   },
   "devDependencies": {
     "electron": "22.3.27",
@@ -20,7 +23,8 @@
     "files": [
       "main.js",
       "icon.png",
-      "package.json"
+      "package.json",
+      "node_modules/electron-updater/**/*"
     ],
     "directories": {
       "output": "dist"
@@ -36,6 +40,14 @@
       "createDesktopShortcut": true,
       "artifactName": "WEBSERVICES-ACADEMY-Installation-${arch}.${ext}"
     },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "weundeprince6-droid",
+        "repo": "MY-WORLD-RS",
+        "releaseType": "release"
+      }
+    ],
     "compression": "maximum",
     "electronLanguages": ["fr", "en-US"]
   }
