@@ -658,6 +658,9 @@ a.btn{display:inline-block;text-decoration:none}
 @page docportrait{size:A4 portrait;margin:10mm}
 @media(max-width:900px){.nav-groupe{display:none}.doc-grille{grid-template-columns:1fr 1fr}#zone-doc .doc{padding:26px 20px}.cid{zoom:1.05}}
 @media print{#zone-doc{position:static!important;background:#fff!important;padding:0!important;overflow:visible!important}#zone-doc .barre{display:none!important}#zone-doc .doc{box-shadow:none!important;margin:0!important;width:auto!important;min-height:270mm;padding:12mm 14mm}.doc.saut{break-before:page}.cid{zoom:1!important;box-shadow:none}}
+.lien-eleve{color:var(--or);font-weight:700;text-decoration:none;border-bottom:1px dotted var(--or)}.lien-eleve:hover{filter:brightness(1.2)}
+.dossier-tete{display:flex;gap:16px;align-items:center;flex-wrap:wrap}.dossier-photo{width:96px;height:120px;object-fit:cover;border-radius:12px;border:2px solid var(--or);background:var(--carte2);display:grid;place-items:center;font-size:12px;color:var(--doux);text-align:center}.dossier-actions{display:flex;gap:8px;flex-wrap:wrap}
+.dossier-grille{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px 18px}.dossier-grille span{display:block;font-size:11px;color:var(--doux);text-transform:uppercase;letter-spacing:.05em}.dossier-grille b{display:block;overflow-wrap:anywhere;font-weight:600}
 </style>
 </head>
 <body>
@@ -824,6 +827,13 @@ function vueConnexion(erreur) {
 }
 
 // --- Dossier global de suivi des élèves (direction)
+let suiviCible = "";
+// Pour la direction : le nom d'un élève ouvre son dossier complet.
+function lienEleve(uid, nom) {
+  if (!uid || !peut("direction")) return nom;
+  return h("a", { href: "#", class: "lien-eleve", title: "Ouvrir le dossier complet", onclick: (ev) => { ev.preventDefault(); suiviCible = uid; vueCourante = "suivi"; vueApp(); } }, nom);
+}
+const LIBELLES_PROFIL = { prenom: "Prénom", postnom: "Post-nom", nom: "Nom", sexe: "Sexe", naissance: "Date de naissance", lieuNaissance: "Lieu de naissance", nationalite: "Nationalité", telephone: "Téléphone", email: "Email", adresse: "Adresse", profession: "Profession", personneUrgence: "Personne à prévenir en urgence", telUrgence: "Tél. de l'urgence", filiere: "Filière souhaitée", niveau: "Niveau", ecolePrecedente: "École / formation précédente", tuteur: "Tuteur / parent", telTuteur: "Tél. du tuteur", message: "Message de la candidature", date: "Date de candidature", statut: "Statut de la candidature" };
 async function sSuiviEleves(m) {
   const el = await eleves(true);
   const choix = h("select", { style: "min-width:260px" },
@@ -834,13 +844,16 @@ async function sSuiviEleves(m) {
     zone.replaceChildren();
     if (!choix.value) return;
     const u = el.find((x) => x.id === choix.value);
-    const [pres, notes, rendus, quiz, compta, parcours] = await Promise.all([
+    const [pres, notes, rendus, quiz, compta, parcours, brevets, devoirs, inscriptions] = await Promise.all([
       lister("ecole_presences", where("uid", "==", u.id)),
       lister("ecole_notes", where("uid", "==", u.id)),
       lister("ecole_rendus", where("uid", "==", u.id)),
       lister("ecole_resultats", where("uid", "==", u.id)),
       lister("ecole_compta", where("uid", "==", u.id)),
-      lister("ecole_parcours", where("uid", "==", u.id))
+      lister("ecole_parcours", where("uid", "==", u.id)),
+      lister("ecole_brevets", where("uid", "==", u.id)).catch(() => []),
+      lister("ecole_devoirs").catch(() => []),
+      lister("ecole_inscriptions").catch(() => [])
     ]);
     const totalPres = pres.length;
     const presents = pres.filter((x) => x.statut === "Présent").length;
@@ -857,12 +870,27 @@ async function sSuiviEleves(m) {
     compta.forEach((x) => { const dv = (x.devise || "USD").toUpperCase(); soldes[dv] = (soldes[dv] || 0) + (x.type === "paiement" ? -1 : 1) * nombre(x.montant); });
     const carteStat = (label, valeur, detail) => h("div", { class: "carte", style: "flex:1 1 155px;min-width:145px;margin:0" },
       h("div", { class: "meta" }, label), h("div", { style: "font-size:25px;font-weight:800;margin:5px 0" }, valeur), h("div", { class: "meta" }, detail || ""));
-    const profil = u.profil || {};
+    const insc = inscriptions.find((i) => norm(i.email) && norm(i.email) === norm(u.email)) || inscriptions.find((i) => norm([i.prenom, i.postnom, i.nom].join(" ")) === norm(u.nom)) || {};
+    const profil = { ...insc, ...(u.profil || {}) }; delete profil.consentement;
+    const champsProfil = Object.entries(profil).filter(([k, v]) => v !== "" && v != null && typeof v !== "object" && !/^photo/i.test(k));
+    const fichierPhoto = h("input", { type: "file", accept: "image/*", hidden: true, onchange: async () => { try { const photo = await photoCompressee(fichierPhoto.files[0]); await setDoc(doc(db, "ecole_users", u.id), { ...sans(u), photo }); u.photo = photo; cacheEleves = null; await charger(); } catch (e) { alert(erreurTexte(e)); } } });
+    const entete = h("div", { class: "carte dossier-tete" },
+      u.photo ? h("img", { class: "dossier-photo", src: u.photo, alt: "Photo de " + u.nom }) : h("div", { class: "dossier-photo vide" }, "Pas de photo"),
+      h("div", { style: "flex:1;min-width:220px" }, h("h2", { style: "margin:0" }, u.nom), h("p", { class: "meta", style: "margin:4px 0" }, [u.classe || "Sans classe", "Matricule " + matricule(u), anneeAcad()].join(" · ")),
+        h("div", { class: "ligne" }, h("span", { class: "puce " + (u.actif === false ? "mal" : "ok") }, u.actif === false ? "Compte désactivé" : "Compte actif"), u.cree && h("span", { class: "puce" }, "Compte créé le " + fmtDate(u.cree) + (u.creePar ? " par " + u.creePar : "")))),
+      h("div", { class: "dossier-actions" }, fichierPhoto, h("button", { class: "btn petit", onclick: () => fichierPhoto.click() }, "📷 " + (u.photo ? "Changer la photo" : "Ajouter la photo")),
+        h("button", { class: "btn petit", onclick: async () => ouvrirDocument("Bulletin — " + u.nom, documentBulletin(u, await calculBulletin(u, "", "", true), "Année en cours", "")) }, "📄 Bulletin"),
+        h("button", { class: "btn petit", onclick: () => ouvrirDocument("Carte — " + u.nom, h("div", { class: "doc" }, carteEtudiant(u))) }, "🪪 Carte d'étudiant"),
+        h("button", { class: "btn petit", onclick: () => { vueCourante = "brevets"; vueApp(); } }, "🏅 Brevets")));
     const identite = h("div", { class: "carte" },
-      h("div", { class: "ligne" }, h("h3", {}, "Identité et parcours"), h("span", { class: "espace" }), h("span", { class: "puce ok" }, u.actif === false ? "Compte désactivé" : "Compte actif")),
-      h("p", {}, h("b", {}, [profil.prenom, profil.postnom, profil.nom].filter(Boolean).join(" ") || u.nom)),
-      h("p", { class: "meta" }, [u.classe || profil.filiere, profil.niveau, profil.telephone, profil.email || u.email].filter(Boolean).join(" · ")),
-      h("p", { class: "meta" }, [profil.naissance && "Né(e) le " + fmtDate(profil.naissance), profil.lieuNaissance, profil.adresse].filter(Boolean).join(" · ")));
+      h("h3", {}, "Identité complète"),
+      h("div", { class: "dossier-grille" }, [["Email du compte", u.email], ["Rôle", ROLES[u.role] || u.role], ...champsProfil.map(([k, v]) => [LIBELLES_PROFIL[k] || k, /(naissance|^date)$/i.test(k) ? fmtDate(v) : String(v)])]
+        .filter(([, v]) => v).map(([k, v]) => h("div", {}, h("span", {}, k), h("b", {}, v)))));
+    const devoirsRendus = rendus.length ? h("table", {}, h("tr", {}, h("th", {}, "Devoir"), h("th", {}, "Rendu le"), h("th", {}, "Réponse"), h("th", {}, "Note"), h("th", {}, "Commentaire")),
+      ...tri(rendus, (x) => x.date || "", true).map((x) => h("tr", {}, h("td", {}, (devoirs.find((d) => d.id === x.devoirId) || {}).titre || "Devoir"), h("td", {}, fmtDate(x.date)),
+        h("td", {}, x.texte && h("div", { style: "white-space:pre-wrap" }, x.texte), x.lien && HTTPS.test(x.lien) && h("a", { href: x.lien, target: "_blank", rel: "noopener noreferrer" }, "Ouvrir le lien ↗")),
+        h("td", {}, x.note !== undefined && x.note !== "" ? nombre(x.note) + "/" + (nombre(x.sur) || 20) : h("span", { class: "puce or" }, "à corriger")), h("td", {}, x.commentaire)))) : h("p", { class: "vide" }, "Aucun devoir rendu.");
+    const brevetsListe = brevets.length ? h("table", {}, h("tr", {}, h("th", {}, "N°"), h("th", {}, "Formation"), h("th", {}, "Délivré le"), h("th", {})), ...brevets.map((b) => h("tr", {}, h("td", {}, b.numero), h("td", {}, b.intitule), h("td", {}, fmtDate(b.dateDelivrance)), h("td", {}, h("button", { class: "btn petit", onclick: () => afficherBrevet(b) }, "Voir le brevet"))))) : h("p", { class: "vide" }, "Aucun brevet délivré.");
     const formulaireParcours = formulaire([
       { n: "intitule", label: "Étape / activité", req: true },
       { n: "periode", label: "Période (ex. novembre 2026)" },
@@ -878,10 +906,11 @@ async function sSuiviEleves(m) {
         h("td", {}, x.intitule), h("td", {}, x.periode), h("td", {}, h("span", { class: "puce " + (x.statut === "Validé" ? "ok" : x.statut === "À renforcer" ? "mal" : "or") }, x.statut)),
         h("td", {}, x.observation), h("td", {}, fmtDate(x.date)), h("td", {}, suppr("ecole_parcours", x, charger))))) : h("p", { class: "vide" }, "Aucune étape de parcours enregistrée.");
     const historiqueFin = compta.length ? h("table", {},
-      h("tr", {}, h("th", {}, "Date"), h("th", {}, "Libellé"), h("th", {}, "Opération"), h("th", {}, "Montant")),
+      h("tr", {}, h("th", {}, "Date"), h("th", {}, "Libellé"), h("th", {}, "Opération"), h("th", {}, "Montant"), h("th", {}, "Échéance"), h("th", {})),
       ...tri(compta, (x) => x.date || "", true).map((x) => h("tr", {},
-        h("td", {}, fmtDate(x.date)), h("td", {}, x.libelle), h("td", {}, x.type === "paiement" ? "Paiement reçu" : "Frais dus"),
-        h("td", {}, nombre(x.montant).toFixed(2) + " " + (x.devise || "USD"))))) : h("p", { class: "vide" }, "Aucune opération financière.");
+        h("td", {}, fmtDate(x.date)), h("td", {}, x.libelle), h("td", {}, x.type === "paiement" ? "Paiement reçu" + (x.mode ? " (" + x.mode + ")" : "") : "Frais dus"),
+        h("td", {}, nombre(x.montant).toFixed(2) + " " + (x.devise || "USD")), h("td", {}, x.echeance ? fmtDate(x.echeance) : ""),
+        h("td", {}, x.type === "paiement" && h("button", { class: "btn petit", onclick: () => { const dv = x.devise || "USD"; ouvrirRecu(x, compta.filter((y) => (y.devise || "USD") === dv).reduce((t, y) => t + (y.type === "paiement" ? -1 : 1) * nombre(y.montant), 0)); } }, "🧾 Reçu"))))) : h("p", { class: "vide" }, "Aucune opération financière.");
     const historiqueNotes = valeurs.length ? h("table", {},
       h("tr", {}, h("th", {}, "Évaluation"), h("th", {}, "Note"), h("th", {}, "Date")),
       ...[
@@ -890,7 +919,7 @@ async function sSuiviEleves(m) {
         ...quiz.map((x) => ({ nom: x.titre || "Quiz", note: x.score, sur: x.sur || 20, date: x.date }))
       ].map((x) => h("tr", {}, h("td", {}, x.nom), h("td", {}, nombre(x.note) + "/" + nombre(x.sur)), h("td", {}, fmtDate(x.date))))) : h("p", { class: "vide" }, "Aucun résultat scolaire enregistré.");
     zone.replaceChildren(
-      identite,
+      entete, identite,
       h("div", { class: "ligne", style: "align-items:stretch;flex-wrap:wrap" },
         carteStat("ASSIDUITÉ", assiduite === null ? "—" : assiduite + "%", presents + " présents · " + absents + " absences · " + retards + " retards"),
         carteStat("MOYENNE GÉNÉRALE", moyenne === null ? "—" : moyenne.toFixed(2) + "/20", valeurs.length + " résultat(s) pris en compte"),
@@ -898,6 +927,8 @@ async function sSuiviEleves(m) {
       ),
       h("div", { class: "carte" }, h("h3", {}, "Parcours de formation"), aide("Consignez les étapes, objectifs, validations et observations propres à cet élève."), formulaireParcours, parcoursTable),
       h("div", { class: "carte" }, h("h3", {}, "Résultats scolaires"), historiqueNotes),
+      h("div", { class: "carte" }, h("h3", {}, "Devoirs rendus"), devoirsRendus),
+      h("div", { class: "carte" }, h("h3", {}, "Brevets"), brevetsListe),
       h("div", { class: "carte" }, h("h3", {}, "Présences et assiduité"),
         h("p", { class: "meta" }, presents + " présent(s) · " + absents + " absent(s) · " + retards + " retard(s) · " + totalPres + " séance(s) enregistrée(s)"),
         pres.length ? h("table", {}, h("tr", {}, h("th", {}, "Date"), h("th", {}, "Statut")), ...tri(pres, (x) => x.date || "", true).map((x) => h("tr", {}, h("td", {}, fmtDate(x.date)), h("td", {}, x.statut)))) : h("p", { class: "vide" }, "Aucun appel enregistré.")),
@@ -905,6 +936,7 @@ async function sSuiviEleves(m) {
     );
   }
   choix.addEventListener("change", charger);
+  if (suiviCible && el.some((x) => x.id === suiviCible)) { choix.value = suiviCible; suiviCible = ""; charger(); }
   monter(m, ...titre("Suivi complet des élèves", "Une vue individuelle du parcours, de l’assiduité, des résultats et de la situation financière."),
     h("div", { class: "carte ligne" }, h("label", {}, "Choisir un élève", choix)), zone);
 }
@@ -1028,7 +1060,7 @@ async function sCartes(m) {
   const rech = h("input", { placeholder: "Rechercher un élève…", style: "max-width:320px" }), zone = h("div", {});
   const dessiner = () => zone.replaceChildren(...el.filter((u) => norm(u.nom + u.classe).includes(norm(rech.value))).map((u) => {
     const f = h("input", { type: "file", accept: "image/*", hidden: true, onchange: async () => { try { const photo = await photoCompressee(f.files[0]); await setDoc(doc(db, "ecole_users", u.id), { ...sans(u), photo }); cacheEleves = null; u.photo = photo; msg.textContent = "Photo enregistrée ✓"; dessiner(); } catch (e) { msg.textContent = erreurTexte(e); } } });
-    return h("div", { class: "carte ligne" }, h("div", {}, h("b", {}, u.nom), h("div", { class: "meta" }, (u.classe || "—") + " · " + matricule(u))), h("span", { class: "espace" }), u.photo ? h("span", { class: "puce ok" }, "photo ✓") : h("span", { class: "puce" }, "sans photo"), f,
+    return h("div", { class: "carte ligne" }, h("div", {}, h("b", {}, lienEleve(u.id, u.nom)), h("div", { class: "meta" }, (u.classe || "—") + " · " + matricule(u))), h("span", { class: "espace" }), u.photo ? h("span", { class: "puce ok" }, "photo ✓") : h("span", { class: "puce" }, "sans photo"), f,
       h("button", { class: "btn petit", onclick: () => f.click() }, u.photo ? "Changer la photo" : "Ajouter la photo"), h("button", { class: "btn petit pri", onclick: () => ouvrirDocument("Carte — " + u.nom, h("div", { class: "doc" }, carteEtudiant(u))) }, "Voir / imprimer la carte"));
   }));
   rech.addEventListener("input", dessiner); dessiner();
@@ -1066,7 +1098,7 @@ async function sCaisse(m) {
       h("div", { class: "carte" }, h("div", { class: "ligne" }, h("h3", {}, "Élèves ayant un solde à payer"), h("span", { class: "espace" }), h("span", { class: "meta" }, impayes.length + " élève(s)")),
         impayes.length ? h("table", {}, h("tr", {}, h("th", {}, "Élève"), h("th", {}, "Classe"), h("th", {}, "Reste à payer"), h("th", {}, "Statut"), h("th", {})), impayes.map((s) => {
           const u = el.find((x) => x.id === s.uid), lien = liensWhatsApp(u && u.profil && u.profil.telephone, "Bonjour, WEBSERVICES ACADEMY : il reste " + argent(s.restant, s.dv) + " à régler pour " + s.nom + ". Merci de passer à la caisse. 🙏");
-          return h("tr", {}, h("td", {}, s.nom), h("td", {}, s.classe || "—"), h("td", {}, h("b", {}, argent(s.restant, s.dv))), h("td", {}, s.retardDepuis ? h("span", { class: "puce mal" }, "En retard depuis le " + fmtDate(s.retardDepuis)) : h("span", { class: "puce or" }, "À payer")),
+          return h("tr", {}, h("td", {}, lienEleve(s.uid, s.nom)), h("td", {}, s.classe || "—"), h("td", {}, h("b", {}, argent(s.restant, s.dv))), h("td", {}, s.retardDepuis ? h("span", { class: "puce mal" }, "En retard depuis le " + fmtDate(s.retardDepuis)) : h("span", { class: "puce or" }, "À payer")),
             h("td", {}, lien ? h("a", { class: "btn petit", href: lien, target: "_blank", rel: "noopener noreferrer" }, "📲 Relancer") : h("span", { class: "meta" }, "pas de n° de téléphone")));
         })) : h("p", { class: "vide" }, "Aucun impayé 🎉")),
       h("div", { class: "carte" }, h("div", { class: "ligne" }, h("h3", {}, "Rapport de caisse · " + mm), h("span", { class: "espace" }), h("button", { class: "btn petit pri", onclick: () => rapportCaisse(mm, pm, parMode) }, "🖨 Imprimer le rapport")),
@@ -1347,7 +1379,7 @@ async function sClasses(m) {
       return h("div", { class: "carte" }, h("div", { class: "ligne" }, h("h3", {}, n), h("span", { class: "espace" }), gere && c.id && suppr("ecole_classes", c, rafraichir)),
         h("p", { class: "meta" }, [c.niveau, c.salle && "Salle " + c.salle, c.responsable && "Resp. " + c.responsable].filter(Boolean).join(" · ") || "Classe créée automatiquement depuis les élèves"),
         estStaff() && h("div", { class: "ligne" }, h("span", { class: "puce " + (plein ? "mal" : "ok") }, membres.length + (c.capacite ? " / " + c.capacite : "") + " élève(s)"), c.frais ? h("span", { class: "puce or" }, c.frais + " " + (c.devise || "USD") + " de frais") : null),
-        estStaff() && membres.length ? h("p", { class: "meta" }, membres.map((u) => u.nom).join(", ")) : null);
+        estStaff() && membres.length ? h("p", { class: "meta" }, membres.map((u, i) => [i ? ", " : "", lienEleve(u.id, u.nom)])) : null);
     })) : h("p", { class: "vide" }, "Aucune classe pour le moment."));
 }
 
@@ -1468,7 +1500,7 @@ async function voirRendus(devoir) {
     const sur = h("input", { type: "number", step: "any", value: r.sur ?? 20, style: "width:70px" });
     const com = h("input", { placeholder: "Commentaire", value: r.commentaire || "" });
     const etat = h("span", { class: "meta" });
-    return h("div", { class: "carte" }, h("div", { class: "ligne" }, h("b", {}, r.nom), h("span", { class: "meta" }, fmtDate(r.date))), r.texte && h("p", { style: "white-space:pre-wrap" }, r.texte), r.lien && /^https?:\/\//i.test(r.lien) && h("p", {}, h("a", { href: r.lien, target: "_blank", rel: "noopener noreferrer" }, "Ouvrir le fichier ↗")),
+    return h("div", { class: "carte" }, h("div", { class: "ligne" }, h("b", {}, lienEleve(r.uid, r.nom)), h("span", { class: "meta" }, fmtDate(r.date))), r.texte && h("p", { style: "white-space:pre-wrap" }, r.texte), r.lien && /^https?:\/\//i.test(r.lien) && h("p", {}, h("a", { href: r.lien, target: "_blank", rel: "noopener noreferrer" }, "Ouvrir le fichier ↗")),
       h("div", { class: "ligne" }, note, "/", sur, com, h("button", { class: "btn petit pri", onclick: async () => {
         if (note.value === "") { etat.textContent = "Saisissez une note."; return; }
         await setDoc(doc(db, "ecole_rendus", r.id), { ...sans(r), note: nombre(note.value), sur: nombre(sur.value) || 20, commentaire: com.value.trim(), corrigePar: moi.nom });
@@ -1524,7 +1556,7 @@ function passerQuiz(quiz) {
 }
 async function resultatsQuiz(quiz) {
   const l = tri(await lister("ecole_resultats", where("quizId", "==", quiz.id)), (x) => norm(x.nom));
-  modal("Résultats : " + quiz.titre, l.length ? h("table", {}, h("tr", {}, h("th", {}, "Élève"), h("th", {}, "Score"), h("th", {}, "Date")), l.map((r) => h("tr", {}, h("td", {}, r.nom), h("td", {}, r.score + "/" + r.sur), h("td", {}, fmtDate(r.date))))) : h("p", { class: "vide" }, "Personne n'a encore passé ce quiz."));
+  modal("Résultats : " + quiz.titre, l.length ? h("table", {}, h("tr", {}, h("th", {}, "Élève"), h("th", {}, "Score"), h("th", {}, "Date")), l.map((r) => h("tr", {}, h("td", {}, lienEleve(r.uid, r.nom)), h("td", {}, r.score + "/" + r.sur), h("td", {}, fmtDate(r.date))))) : h("p", { class: "vide" }, "Personne n'a encore passé ce quiz."));
 }
 
 // --- Notes
@@ -1538,15 +1570,15 @@ async function sNotes(m) {
   const peutEcrire = peut("direction", "enseignant");
   const devoirs = eleve ? await lister("ecole_devoirs") : [];
   const lignes = [
-    ...notes.map((x) => ({ date: x.date, nom: x.nom, source: "Note", matiere: x.matiere, note: x.note + "/" + (x.sur || 20), com: x.commentaire, ref: x })),
-    ...rendus.filter((r) => r.note !== undefined && r.note !== "").map((r) => ({ date: r.date, nom: r.nom, source: "Devoir", matiere: (devoirs.find((d) => d.id === r.devoirId) || {}).titre || "Devoir", note: r.note + "/" + (r.sur || 20), com: r.commentaire })),
-    ...quiz.map((r) => ({ date: r.date, nom: r.nom, source: "Quiz", matiere: r.titre, note: r.score + "/" + r.sur }))];
+    ...notes.map((x) => ({ uid: x.uid, date: x.date, nom: x.nom, source: "Note", matiere: x.matiere, note: x.note + "/" + (x.sur || 20), com: x.commentaire, ref: x })),
+    ...rendus.filter((r) => r.note !== undefined && r.note !== "").map((r) => ({ uid: r.uid, date: r.date, nom: r.nom, source: "Devoir", matiere: (devoirs.find((d) => d.id === r.devoirId) || {}).titre || "Devoir", note: r.note + "/" + (r.sur || 20), com: r.commentaire })),
+    ...quiz.map((r) => ({ uid: r.uid, date: r.date, nom: r.nom, source: "Quiz", matiere: r.titre, note: r.score + "/" + r.sur }))];
   const tab = tri(lignes, (x) => x.date || "", true);
   monter(m, ...titre("Notes", eleve ? "Vos notes, corrections de devoirs et résultats de quiz." : "Saisie et suivi des notes."),
     peutEcrire && h("div", { class: "carte" }, h("h3", {}, "Ajouter une note"), formulaire([
       { n: "uid", label: "Élève", type: "select", options: choixEleve(el), req: true }, { n: "matiere", label: "Matière / évaluation", req: true }, { n: "note", label: "Note", type: "number", req: true }, { n: "sur", label: "Sur", type: "number", val: 20 }, { n: "commentaire", label: "Commentaire" }],
       async (d) => { const u = el.find((x) => x.id === d.uid); await addDoc(collection(db, "ecole_notes"), { uid: d.uid, nom: u.nom, classe: u.classe || "", matiere: d.matiere, note: nombre(d.note), sur: nombre(d.sur) || 20, commentaire: d.commentaire, date: new Date().toISOString(), par: moi.nom }); rafraichir(); })),
-    tab.length ? h("div", { class: "carte" }, h("table", {}, h("tr", {}, !eleve && h("th", {}, "Élève"), h("th", {}, "Type"), h("th", {}, "Matière"), h("th", {}, "Note"), h("th", {}, "Date"), peutEcrire && h("th", {})), tab.map((x) => h("tr", {}, !eleve && h("td", {}, x.nom), h("td", {}, h("span", { class: "puce" }, x.source)), h("td", {}, x.matiere, x.com && h("div", { class: "meta" }, x.com)), h("td", {}, h("b", {}, x.note)), h("td", {}, fmtDate(x.date)), peutEcrire && h("td", {}, x.ref && suppr("ecole_notes", x.ref, rafraichir)))))) : h("p", { class: "vide" }, eleve ? "Aucune note pour le moment." : "Aucune note saisie."),
+    tab.length ? h("div", { class: "carte" }, h("table", {}, h("tr", {}, !eleve && h("th", {}, "Élève"), h("th", {}, "Type"), h("th", {}, "Matière"), h("th", {}, "Note"), h("th", {}, "Date"), peutEcrire && h("th", {})), tab.map((x) => h("tr", {}, !eleve && h("td", {}, lienEleve(x.uid, x.nom)), h("td", {}, h("span", { class: "puce" }, x.source)), h("td", {}, x.matiere, x.com && h("div", { class: "meta" }, x.com)), h("td", {}, h("b", {}, x.note)), h("td", {}, fmtDate(x.date)), peutEcrire && h("td", {}, x.ref && suppr("ecole_notes", x.ref, rafraichir)))))) : h("p", { class: "vide" }, eleve ? "Aucune note pour le moment." : "Aucune note saisie."),
     !eleve && aide("Les notes de devoirs se saisissent depuis « Devoirs → Voir les rendus / noter »."));
 }
 
@@ -1568,7 +1600,7 @@ async function sPresences(m) {
     const lst = el.filter((u) => u.classe === choix.value);
     const sels = lst.map((u) => { const e = ex.find((p) => p.uid === u.id); return { u, s: h("select", { style: "width:auto" }, ["Présent", "Absent", "Retard"].map((o) => h("option", { value: o, selected: (e && e.statut) === o }, o))) }; });
     const etat = h("span", { class: "meta" });
-    zone.replaceChildren(h("div", { class: "carte" }, sels.length ? h("table", {}, h("tr", {}, h("th", {}, "Élève"), h("th", {}, "Statut")), sels.map(({ u, s }) => h("tr", {}, h("td", {}, u.nom), h("td", {}, s)))) : h("p", { class: "vide" }, "Aucun élève dans cette classe."), sels.length ? h("div", { class: "ligne", style: "margin-top:12px" }, h("button", { class: "btn pri", onclick: async () => {
+    zone.replaceChildren(h("div", { class: "carte" }, sels.length ? h("table", {}, h("tr", {}, h("th", {}, "Élève"), h("th", {}, "Statut")), sels.map(({ u, s }) => h("tr", {}, h("td", {}, lienEleve(u.id, u.nom)), h("td", {}, s)))) : h("p", { class: "vide" }, "Aucun élève dans cette classe."), sels.length ? h("div", { class: "ligne", style: "margin-top:12px" }, h("button", { class: "btn pri", onclick: async () => {
       const b = writeBatch(db); for (const { u, s } of sels) b.set(doc(db, "ecole_presences", date.value + "_" + u.id), { uid: u.id, nom: u.nom, classe: u.classe, date: date.value, statut: s.value, par: moi.nom });
       try { await b.commit(); etat.textContent = "Présences enregistrées ✓"; } catch (e) { etat.textContent = erreurTexte(e); }
     } }, "Enregistrer l'appel"), etat) : null));
@@ -1586,14 +1618,14 @@ async function sCompta(m) {
   const total = {};
   for (const [k, v] of Object.entries(solde)) { const dv = k.split("|")[1]; total[dv] = (total[dv] || 0) + v; }
   const peutEcrire = peut("comptable", "direction");
-  const bilan = Object.entries(solde).filter(([, v]) => Math.abs(v) > 0.004).map(([k, v]) => { const [u, dv] = k.split("|"); const x = l.find((y) => y.uid === u); return { nom: x.nom, dv, v }; });
+  const bilan = Object.entries(solde).filter(([, v]) => Math.abs(v) > 0.004).map(([k, v]) => { const [u, dv] = k.split("|"); const x = l.find((y) => y.uid === u); return { uid: u, nom: x.nom, dv, v }; });
   monter(m, ...titre("Frais & comptabilité", eleve ? "Vos frais de scolarité et paiements." : "Frais dus et paiements reçus par élève."),
     peutEcrire && h("div", { class: "carte" }, h("h3", {}, "Nouvelle écriture"), formulaire([
       { n: "uid", label: "Élève", type: "select", options: choixEleve(el), req: true }, { n: "type", label: "Type", type: "select", options: [["du", "Frais dus"], ["paiement", "Paiement reçu"]], req: true }, { n: "libelle", label: "Libellé (ex. Minerval novembre)", req: true },
       { n: "montant", label: "Montant", type: "number", req: true }, { n: "devise", label: "Devise", val: "USD" }, { n: "date", label: "Date", type: "date", val: aujourdhui() }, { n: "echeance", label: "Échéance (frais dus)", type: "date" }, { n: "mode", label: "Mode de paiement", type: "select", options: ["Espèces", "Mobile Money", "Banque", "Autre"] }],
       async (d) => { const u = el.find((x) => x.id === d.uid); await addDoc(collection(db, "ecole_compta"), { uid: d.uid, nom: u.nom, classe: u.classe || "", type: d.type, libelle: d.libelle, montant: nombre(d.montant), devise: (d.devise || "USD").toUpperCase(), date: d.date || aujourdhui(), echeance: d.echeance || "", mode: d.type === "paiement" ? d.mode : "", par: moi.nom }); rafraichir(); })),
-    bilan.length ? h("div", { class: "carte" }, h("h3", {}, eleve ? "Solde à payer" : "Soldes par élève (positif = reste à payer)"), h("table", {}, bilan.map((b) => h("tr", {}, h("td", {}, b.nom), h("td", {}, h("span", { class: "puce " + (b.v > 0 ? "mal" : "ok") }, (b.v > 0 ? "Reste à payer " : "Crédit ") + Math.abs(b.v).toFixed(2) + " " + b.dv)))))) : null,
-    l.length ? h("div", { class: "carte" }, h("h3", {}, "Historique"), h("table", {}, h("tr", {}, h("th", {}, "Date"), !eleve && h("th", {}, "Élève"), h("th", {}, "Libellé"), h("th", {}, "Montant"), h("th", {})), tri(l, (x) => x.date || "", true).map((x) => h("tr", {}, h("td", {}, fmtDate(x.date)), !eleve && h("td", {}, x.nom), h("td", {}, x.libelle), h("td", {}, h("span", { class: "puce " + (x.type === "paiement" ? "ok" : "or") }, (x.type === "paiement" ? "− " : "+ ") + nombre(x.montant).toFixed(2) + " " + (x.devise || "USD"))), h("td", {}, x.type === "paiement" && h("button", { class: "btn petit", onclick: () => { const dv = x.devise || "USD", mine = l.filter((y) => y.uid === x.uid && (y.devise || "USD") === dv); ouvrirRecu(x, mine.reduce((t, y) => t + (y.type === "paiement" ? -1 : 1) * nombre(y.montant), 0)); } }, "🧾 Reçu"), " ", peutEcrire && suppr("ecole_compta", x, rafraichir)))))) : h("p", { class: "vide" }, "Aucune écriture."));
+    bilan.length ? h("div", { class: "carte" }, h("h3", {}, eleve ? "Solde à payer" : "Soldes par élève (positif = reste à payer)"), h("table", {}, bilan.map((b) => h("tr", {}, h("td", {}, lienEleve(b.uid, b.nom)), h("td", {}, h("span", { class: "puce " + (b.v > 0 ? "mal" : "ok") }, (b.v > 0 ? "Reste à payer " : "Crédit ") + Math.abs(b.v).toFixed(2) + " " + b.dv)))))) : null,
+    l.length ? h("div", { class: "carte" }, h("h3", {}, "Historique"), h("table", {}, h("tr", {}, h("th", {}, "Date"), !eleve && h("th", {}, "Élève"), h("th", {}, "Libellé"), h("th", {}, "Montant"), h("th", {})), tri(l, (x) => x.date || "", true).map((x) => h("tr", {}, h("td", {}, fmtDate(x.date)), !eleve && h("td", {}, lienEleve(x.uid, x.nom)), h("td", {}, x.libelle), h("td", {}, h("span", { class: "puce " + (x.type === "paiement" ? "ok" : "or") }, (x.type === "paiement" ? "− " : "+ ") + nombre(x.montant).toFixed(2) + " " + (x.devise || "USD"))), h("td", {}, x.type === "paiement" && h("button", { class: "btn petit", onclick: () => { const dv = x.devise || "USD", mine = l.filter((y) => y.uid === x.uid && (y.devise || "USD") === dv); ouvrirRecu(x, mine.reduce((t, y) => t + (y.type === "paiement" ? -1 : 1) * nombre(y.montant), 0)); } }, "🧾 Reçu"), " ", peutEcrire && suppr("ecole_compta", x, rafraichir)))))) : h("p", { class: "vide" }, "Aucune écriture."));
 }
 
 
@@ -1814,7 +1846,7 @@ async function sUtilisateurs(m) {
       { n: "nom", label: "Nom complet", req: true }, { n: "email", label: "Email", type: "email", req: true }, { n: "role", label: "Rôle", type: "select", options: rolesCreables, req: true },
       { n: "classe", label: "Classe / filière (élèves)", liste: "dl-cl6", ph: "ex. Informatique 1" }, { n: "mdp", label: "Mot de passe provisoire (6+ car.)", type: "text", req: true }],
       async (d, f) => { await creerCompte(d); f.reset(); rafraichir();       }, "Créer le compte")),
-    h("div", { class: "carte" }, h("table", {}, h("tr", {}, h("th", {}, "Nom"), h("th", {}, "Email"), h("th", {}, "Rôle"), h("th", {}, "Classe"), h("th", {}, "Dossier"), h("th", {}, "")), tous.map((u) => h("tr", {}, h("td", {}, u.nom), h("td", {}, u.email), h("td", {}, h("span", { class: "puce" }, ROLES[u.role] || u.role)), h("td", {}, u.classe || ""), h("td", {}, u.role === "eleve" && h("button", { class: "btn petit", onclick: () => ficheDossierEleve(u) }, "Consulter")), h("td", {}, (peut("direction") || u.role === "eleve") && h("button", { class: "btn petit" + (u.actif === false ? "" : " mal"), onclick: async () => { await setDoc(doc(db, "ecole_users", u.id), { ...sans(u), actif: u.actif === false }); cacheEleves = null; rafraichir(); } }, u.actif === false ? "Réactiver" : "Désactiver")))))),
+    h("div", { class: "carte" }, h("table", {}, h("tr", {}, h("th", {}, "Nom"), h("th", {}, "Email"), h("th", {}, "Rôle"), h("th", {}, "Classe"), h("th", {}, "Dossier"), h("th", {}, "")), tous.map((u) => h("tr", {}, h("td", {}, u.role === "eleve" ? lienEleve(u.id, u.nom) : u.nom), h("td", {}, u.email), h("td", {}, h("span", { class: "puce" }, ROLES[u.role] || u.role)), h("td", {}, u.classe || ""), h("td", {}, u.role === "eleve" && h("button", { class: "btn petit", onclick: () => ficheDossierEleve(u) }, "Consulter")), h("td", {}, (peut("direction") || u.role === "eleve") && h("button", { class: "btn petit" + (u.actif === false ? "" : " mal"), onclick: async () => { await setDoc(doc(db, "ecole_users", u.id), { ...sans(u), actif: u.actif === false }); cacheEleves = null; rafraichir(); } }, u.actif === false ? "Réactiver" : "Désactiver")))))),
     aide("Désactiver un compte bloque l'accès à la classe. Pour supprimer définitivement un compte de connexion, utilisez la console Firebase (Authentication)."));
 }
 
