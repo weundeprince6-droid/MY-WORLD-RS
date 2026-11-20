@@ -1,0 +1,17 @@
+{
+  "name": "lecteur-pro-android",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Application Android Lecteur Pro de MY WORLD RS",
+  "type": "module",
+  "scripts": {
+    "android:sync": "cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/core": "^7.4.3",
+    "@capacitor/android": "^7.4.3"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.4.3"
+  }
+}
