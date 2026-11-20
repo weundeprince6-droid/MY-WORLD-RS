@@ -36,5 +36,9 @@ jobs:
         run: npm install --no-audit --no-fund
         working-directory: functions
 
+      - name: Vérifier la syntaxe JavaScript
+        run: node --check index.js && node --check lecteur-pro.js
+        working-directory: functions
+
       - name: Déployer les Cloud Functions
         run: firebase deploy --only functions --project my-world-rs --non-interactive
