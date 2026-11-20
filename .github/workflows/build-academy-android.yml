@@ -1,0 +1,64 @@
+name: Application Android WEBSERVICES ACADEMY
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "android-academy/**"
+      - "public/webs-classroom.html"
+      - "public/academy-192.png"
+      - "public/academy-512.png"
+      - ".github/workflows/build-academy-android.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v4
+
+      - name: Installer Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: android-academy/package.json
+
+      - name: Installer Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Préparer les ressources de l'application
+        working-directory: android-academy
+        run: |
+          mkdir -p www
+          cp ../public/academy-192.png www/icon.png
+          cp ../public/academy-512.png www/icon-512.png
+
+      - name: Installer Capacitor et créer Android
+        working-directory: android-academy
+        run: |
+          npm install
+          npx cap add android
+          npx cap sync android
+
+      - name: Construire le fichier APK
+        working-directory: android-academy/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Publier l'APK dans GitHub Releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "webservices-academy-android-${{ github.run_number }}" \
+            "android-academy/android/app/build/outputs/apk/debug/app-debug.apk#WEBSERVICES-ACADEMY-Android.apk" \
+            --title "WEBSERVICES ACADEMY pour Android (v${{ github.run_number }})" \
+            --notes "Application Android dédiée à WEBSERVICES ACADEMY dans MY WORLD RS. APK de test installable sur Android. L'application utilise l'espace pédagogique en ligne et nécessite une connexion Internet."
