@@ -1,0 +1,54 @@
+name: Application Android Lecteur Pro
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v4
+
+      - name: Installer Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: android-app/package.json
+
+      - name: Installer Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Préparer le lecteur Android
+        run: |
+          mkdir -p android-app/www
+          cp public/television.html android-app/www/index.html
+
+      - name: Installer Capacitor et créer Android
+        working-directory: android-app
+        run: |
+          npm install
+          npx cap add android
+          npx cap sync android
+
+      - name: Construire le fichier APK
+        working-directory: android-app/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Publier l'APK dans GitHub Releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "lecteur-pro-android-${{ github.run_number }}" \
+            "android-app/android/app/build/outputs/apk/debug/app-debug.apk#Lecteur-Pro-Android.apk" \
+            --title "Lecteur Pro pour Android (v${{ github.run_number }})" \
+            --notes "Application Android Lecteur Pro de MY WORLD RS. APK de test installable sur Android. Téléchargez Lecteur-Pro-Android.apk."
