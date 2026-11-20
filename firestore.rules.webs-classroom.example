@@ -120,6 +120,18 @@
       allow read, update, delete: if ecoleEst(["direction", "secretaire"]);
     }
 
+    // ==========================================
+    // CLASSES ET SALLES
+    // ==========================================
+
+    match /ecole_classes/{id} {
+
+      allow read: if ecoleTous();
+
+      allow write: if ecoleEst(["direction", "secretaire"]);
+    }
+
+
     // Parcours pédagogique complémentaire : la direction gère le dossier ;
     // l'élève peut consulter uniquement son propre parcours.
     match /ecole_parcours/{id} {
