@@ -22,7 +22,7 @@ input[type=search]{width:100%;padding:8px 10px;border-radius:8px;border:1px soli
 /* ----- Liste de lecture ----- */
 #sidebar{width:310px;min-width:230px;background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column}
 .side-head{padding:14px;border-bottom:1px solid var(--border)}
-.side-head h1{font-size:18px;margin:0 0 12px}
+.side-head h1{font-size:18px;margin:0 0 12px}.brand-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}.brand-row h1{margin:0!important;min-width:0}.brand-row #btnRestart{flex:none;padding:6px 9px;font-size:12px;border-color:var(--accent);color:var(--accent2)}.brand-row #btnRestart:hover{background:var(--accent);color:#fff}
 .btn-row{display:flex;gap:8px;margin-bottom:10px}.btn-row button{flex:1}
 .tabs{display:flex;gap:4px;margin-bottom:10px}.tabs button{flex:1;padding:6px 0;font-size:12px}
 .tabs button.active{background:var(--accent);color:#fff}
@@ -1083,7 +1083,7 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
 <div id="app">
   <aside id="sidebar">
     <div class="side-head">
-      <h1>🎬 Lecteur Pro</h1>
+      <div class="brand-row"><h1>🎬 Lecteur Pro</h1><button id="btnRestart" type="button" title="Redémarrer Lecteur Pro">↻ Redémarrer</button></div>
       <div class="btn-row">
         <button id="btnFiles" title="Ctrl+O">＋ Fichiers</button>
         <button id="btnFolder">📁 Dossier</button>
@@ -4281,6 +4281,13 @@ async function synchroniserTout(demander) {
     afficherSync('Synchronisation impossible : ' + (e && e.message || e));
   } finally { syncEnCours = false; }
 }
+
+// ================= Redémarrage de l'application =================
+const btnRestart = $('btnRestart');
+if (btnRestart) btnRestart.addEventListener('click', () => {
+  if (!window.confirm('Redémarrer Lecteur Pro ? La page va se recharger. Vos réglages et votre bibliothèque enregistrés seront conservés.')) return;
+  window.location.reload();
+});
 
 // ================= Démarrage =================
 (async function init() {
