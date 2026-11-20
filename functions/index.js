@@ -176,3 +176,7 @@ exports.googleRevoke = onRequest(
     } catch (error) { erreur(res, error); }
   }
 );
+
+
+// Fonctions commerciales isolées de Lecteur Pro.
+Object.assign(exports, require("./lecteur-pro"));
