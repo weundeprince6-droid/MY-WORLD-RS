@@ -126,6 +126,24 @@
 #academy-fenetre iframe{display:block;width:100%;height:100%;border:0;background:#0b1220}
 @media(max-width:560px){#academy-fenetre .academy-barre{padding:7px 10px}#academy-fenetre .academy-barre strong{font-size:12px}#academy-fenetre .academy-barre button{padding:8px 10px}}
 </style>
+
+<style id="dashboard-news-style">
+#pane-dashboard .dashboard-news{margin-top:17px;padding:20px;border:1px solid var(--border);border-radius:18px;background:var(--surface);box-shadow:0 4px 15px rgba(15,35,55,.05)}
+#pane-dashboard .dashboard-news-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:12px}
+#pane-dashboard .dashboard-news-heading .eyebrow{font-size:10px;font-weight:900;letter-spacing:1.4px;color:var(--primary)!important;margin:0 0 4px}
+#pane-dashboard .dashboard-news-heading h2{font-size:21px;margin:0 0 5px}
+#pane-dashboard .dashboard-news-heading p:not(.eyebrow){font-size:13px;color:var(--muted);margin:0;line-height:1.5}
+#pane-dashboard .dashboard-news-meta{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);font-size:11px;color:var(--muted)}
+#pane-dashboard .dashboard-news-feed{display:grid;grid-template-columns:minmax(0,1fr);gap:11px;max-width:900px;margin:14px auto 0}
+#pane-dashboard .dashboard-news-card{padding:16px 17px;border:1px solid var(--border);border-radius:14px;background:var(--bg,var(--surface));min-width:0}
+#pane-dashboard .dashboard-news-card h3{font-size:16px;line-height:1.4;margin:0 0 8px;color:var(--text)}
+#pane-dashboard .dashboard-news-card p{font-size:13px;line-height:1.65;color:var(--muted);margin:0 0 10px;overflow-wrap:anywhere}
+#pane-dashboard .dashboard-news-card-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--muted)}
+#pane-dashboard .dashboard-news-card-foot a{color:var(--primary);font-weight:800;text-decoration:none}
+#pane-dashboard .dashboard-news-card-foot a:hover{text-decoration:underline}
+@media(max-width:560px){#pane-dashboard .dashboard-news{padding:14px}#pane-dashboard .dashboard-news-heading{align-items:flex-start}#pane-dashboard .dashboard-news-heading h2{font-size:18px}#pane-dashboard .dashboard-news-card{padding:13px}#pane-dashboard .dashboard-news-card h3{font-size:15px}}
+</style>
+
 </head>
 <body>
   <header class="entete">
@@ -221,6 +239,11 @@
               <section class="carte dashboard-detail"><div class="card-heading"><div><p class="eyebrow">À SUIVRE</p><h2>Projets et échéances</h2></div><button class="text-link" data-go="notes">Notes &amp; Projets →</button></div><ul id="dashboard-projets" class="liste"><li class="vide">Chargement des projets…</li></ul></section>
 </div>
             <section class="carte dashboard-alerts"><div class="card-heading"><div><p class="eyebrow">À NE PAS MANQUER</p><h2>Alertes et rappels</h2></div><span class="heading-icon">⚑</span></div><ul id="liste-alertes" class="liste alertes"></ul></section>
+            <section class="carte dashboard-news" id="dashboard-news" aria-labelledby="dashboard-news-title">
+              <div class="dashboard-news-heading"><div><p class="eyebrow">LE MONDE EN DIRECT</p><h2 id="dashboard-news-title">📰 Fil d’actualité</h2><p>Les dernières publications de médias et de sources d’information, réunies automatiquement.</p></div><button type="button" id="dashboard-news-refresh" class="btn btn-light">↻ Actualiser</button></div>
+              <div class="dashboard-news-meta"><span id="dashboard-news-status" role="status" aria-live="polite">Chargement automatique des actualités…</span><span>RDC · Afrique · Monde · Économie · Technologie · Sport</span></div>
+              <div id="dashboard-news-feed" class="dashboard-news-feed"><article class="dashboard-news-card"><p>Récupération des dernières publications…</p></article></div>
+            </section>
           </section>
 <section class="tab-pane" id="pane-communication" role="tabpanel" data-root-pane="communication" hidden>
 <div class="section-heading"><div><p class="eyebrow">ÉCHANGES ET COMMUNAUTÉ</p><h2>Communication</h2><p>Retrouvez vos conversations et vos réseaux au même endroit.</p></div></div>
@@ -801,7 +824,73 @@
       setTimeout(function(){if(!window.__appPret)montrer("L'application n'a pas démarré. Vérifiez votre connexion internet (les composants Firebase se chargent depuis Google), désactivez un éventuel bloqueur de publicités, puis rechargez. Sans internet : l'application doit d'abord avoir été ouverte deux fois avec internet sur cet appareil pour s'installer hors ligne. Appuyez sur F12 > Console pour voir le détail.");},6000);
     })();
   </script>
-  <script type="module" src="app.js?v=20261115-tv11"></script>
+  <script>
+(()=> {
+ const host=document.getElementById('dashboard-news-feed'),status=document.getElementById('dashboard-news-status'),refresh=document.getElementById('dashboard-news-refresh');
+ if(!host||!status||!refresh)return;
+ const sources=[
+  {name:'France 24',url:'https://www.france24.com/fr/rss'},
+  {name:'Actualité.cd · RDC',url:'https://actualite.cd/feed'},
+  {name:'Radio Okapi · RDC',url:'https://www.radiookapi.net/rss.xml'},
+  {name:'Afrique & Monde',url:'https://news.google.com/rss/search?q=Afrique%20OR%20monde&hl=fr&gl=CD&ceid=CD:fr'},
+  {name:'Économie',url:'https://news.google.com/rss/search?q=%C3%A9conomie&hl=fr&gl=CD&ceid=CD:fr'},
+  {name:'Technologie',url:'https://techcrunch.com/feed/'},
+  {name:'Sport',url:'https://news.google.com/rss/search?q=sport%20football&hl=fr&gl=CD&ceid=CD:fr'}
+ ];
+ const clean=n=>{const d=document.createElement('div');d.innerHTML=n||'';return(d.textContent||'').replace(/\s+/g,' ').trim();};
+ const fetchFeed=async src=>{
+  let xml='',err;
+  for(const proxy of ['https://api.allorigins.win/raw?url=','https://corsproxy.io/?url=']){
+   try{
+    const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),12000);
+    const r=await fetch(proxy+encodeURIComponent(src.url),{cache:'no-store',signal:ctl.signal});clearTimeout(timer);
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    xml=await r.text();if(!/<(rss|feed|rdf:RDF)\b/i.test(xml))throw new Error('Flux invalide');break;
+   }catch(e){err=e;}
+  }
+  if(!xml)throw(err||new Error('Source inaccessible'));
+  const doc=new DOMParser().parseFromString(xml,'text/xml');if(doc.querySelector('parsererror'))throw new Error('XML invalide');
+  let nodes=[...doc.querySelectorAll('item')];if(!nodes.length)nodes=[...doc.querySelectorAll('entry')];
+  return nodes.slice(0,12).map(node=>{
+   const pick=sel=>clean(node.querySelector(sel)?.textContent||'');
+   const link=node.querySelector('link');let href=link?.getAttribute('href')||link?.textContent||pick('guid');
+   try{href=new URL(href,src.url).href;}catch(_){href=src.url;}
+   const rawDate=pick('pubDate')||pick('published')||pick('updated');
+   return {source:src.name,title:pick('title')||'Article sans titre',summary:pick('description')||pick('summary')||pick('content'),url:href,date:rawDate,stamp:Date.parse(rawDate)||0};
+  });
+ };
+ const render=items=>{
+  host.replaceChildren();
+  items.forEach(item=>{
+   const card=document.createElement('article');card.className='dashboard-news-card';
+   const title=document.createElement('h3');title.textContent=item.title;card.appendChild(title);
+   if(item.summary){const p=document.createElement('p');p.textContent=item.summary.slice(0,420)+(item.summary.length>420?'…':'');card.appendChild(p);}
+   const foot=document.createElement('div');foot.className='dashboard-news-card-foot';
+   const meta=document.createElement('span');meta.textContent=item.source+(item.date?' · '+new Date(item.date).toLocaleString('fr-FR',{dateStyle:'medium',timeStyle:'short'}):'');foot.appendChild(meta);
+   const a=document.createElement('a');a.href=item.url;a.target='_blank';a.rel='noopener noreferrer';a.textContent='Lire l’article complet ↗';foot.appendChild(a);
+   card.appendChild(foot);host.appendChild(card);
+  });
+ };
+ let loading=false;
+ const load=async()=>{
+  if(loading)return;loading=true;refresh.disabled=true;status.textContent='Mise à jour des fils d’actualité…';
+  try{
+   const results=await Promise.allSettled(sources.map(fetchFeed));
+   const all=results.filter(x=>x.status==='fulfilled').flatMap(x=>x.value);
+   const unique=[...new Map(all.filter(x=>x.title&&x.url).map(x=>[x.url,x])).values()].sort((a,b)=>b.stamp-a.stamp).slice(0,24);
+   if(!unique.length)throw new Error('Les flux ne répondent pas pour le moment. Réessayez plus tard.');
+   render(unique);
+   const ok=results.filter(x=>x.status==='fulfilled').length;
+   status.textContent=unique.length+' publications affichées · '+ok+'/'+sources.length+' sources disponibles · actualisation automatique toutes les 15 minutes.';
+  }catch(e){status.textContent=e.message||'Impossible de charger les actualités.';}
+  finally{loading=false;refresh.disabled=false;}
+ };
+ refresh.addEventListener('click',load);
+ load();setInterval(load,15*60*1000);
+})();
+</script>
+
+<script type="module" src="app.js?v=20261115-tv11"></script>
   <div id="tv-fenetre" class="tv-fenetre" hidden><div class="tv-barre"><strong>📺 Télévision</strong><span class="tv-actions"><button type="button" id="tv-masquer" aria-label="Mettre en arrière-plan" title="Mettre en arrière-plan : la lecture continue">━</button><button type="button" id="tv-fermer" aria-label="Fermer le lecteur" title="Fermer et arrêter la lecture">✖</button></span></div><div id="tv-zone" class="tv-zone"></div></div>
   <div id="tv-mini" class="tv-mini" hidden><span class="tv-mini-pastille">🎵</span><span id="tv-mini-titre" class="tv-mini-titre">Télévision en lecture</span><button type="button" id="tv-mini-afficher" aria-label="Afficher le lecteur" title="Afficher le lecteur">▣</button><button type="button" id="tv-mini-arreter" title="Arrêter la lecture">✕</button></div>
   <section id="academy-fenetre" hidden aria-label="WEBSERVICES ACADEMY en plein écran">
