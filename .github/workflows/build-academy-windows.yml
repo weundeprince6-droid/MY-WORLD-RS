@@ -3,6 +3,7 @@ name: Application Windows WEBSERVICES ACADEMY
 on:
   workflow_dispatch:
   push:
+    branches: [main]
     paths:
       - "desktop-academy/**"
       - ".github/workflows/build-academy-windows.yml"
@@ -18,21 +19,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
+          cache-dependency-path: desktop-academy/package.json
       - name: Préparer l'icône Academy
         shell: bash
         run: cp public/academy-512.png desktop-academy/icon.png
-      - name: Installer et construire les installateurs
+      - name: Installer les dépendances et construire avec publication des métadonnées de mise à jour
         working-directory: desktop-academy
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npm install
           npm run build
-      - name: Publier les installateurs Windows
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release create "webservices-academy-windows-${{ github.run_number }}" \
-            "desktop-academy/dist/WEBSERVICES-ACADEMY-Installation-x64.exe" \
-            "desktop-academy/dist/WEBSERVICES-ACADEMY-Installation-ia32.exe" \
-            --title "WEBSERVICES ACADEMY pour Windows (v${{ github.run_number }})" \
-            --notes "Installateur Windows de WEBSERVICES ACADEMY. x64 = Windows 64 bits (recommandé pour la plupart des PC récents). ia32 = Windows 32 bits."
