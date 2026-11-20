@@ -2,6 +2,12 @@ name: Application Android Lecteur Pro
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'android-app/**'
+      - 'public/television.html'
+      - '.github/workflows/build-lecteur-android.yml'
 
 permissions:
   contents: write
