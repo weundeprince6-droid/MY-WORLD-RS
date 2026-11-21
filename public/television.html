@@ -1164,13 +1164,25 @@ body[data-mode="matchs"] #sidebar #matchsNext:not([hidden]){display:flex}
 }
 #sidebar > #menuToggle{display:flex!important;flex:0 0 auto!important}
 
+
+/* Accueil du lecteur uniquement : grille des rubriques au démarrage. */
+#app.reader-home{display:block}
+#app.reader-home #sidebar{width:100%;height:100vh;min-width:0;border:0;align-items:stretch}
+#app.reader-home #sidebar>.side-head,#app.reader-home #sidebar>#menuToggle,#app.reader-home #sidebar>#syncBar,#app.reader-home #sidebar>#playlist,#app.reader-home #sidebar>#mesFilmsPane,#app.reader-home #sidebar>#tvDrivePane,#app.reader-home #sidebar>.side-foot,#app.reader-home #stage{display:none!important}
+#app.reader-home #sidebar>#tabs{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:14px;width:min(1120px,100%);max-height:none;overflow:auto;margin:0 auto;padding:clamp(20px,5vh,55px) 22px;background:transparent}
+#app.reader-home #tabs:before{content:"LECTEUR PRO — CHOISISSEZ UNE RUBRIQUE";grid-column:1/-1;text-align:center;color:var(--muted);font-size:13px;font-weight:800;letter-spacing:1.6px;padding:8px 0 14px}
+#app.reader-home #tabs button{min-height:104px;border:1px solid var(--border);border-radius:16px;background:var(--panel);box-shadow:0 5px 18px rgba(0,0,0,.16);font-size:14px;font-weight:700;padding:16px;white-space:normal;line-height:1.35}
+#app.reader-home #tabs button.active{border-color:var(--accent);background:var(--panel2);color:var(--accent2)}
+#readerHomeBtn{margin-right:8px}
+@media(max-width:560px){#app.reader-home #sidebar>#tabs{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;padding:22px 12px}#app.reader-home #tabs button{min-height:88px;font-size:12px;padding:10px 7px;border-radius:13px}}
+
 </style>
 
 
 
 </head>
 <body data-mode="empty">
-<div id="app">
+<div id="app" class="reader-home">
   <aside id="sidebar">
     <div class="side-head">
       <div class="brand-row"><h1>🎬 Lecteur Pro</h1><button id="btnRestart" type="button" title="Redémarrer Lecteur Pro">↻ Redémarrer</button></div>
@@ -1466,7 +1478,7 @@ body[data-mode="matchs"] #sidebar #matchsNext:not([hidden]){display:flex}
       <div id="toast"></div>
       <div id="info"></div>
     </div>
-    <div id="titleBar"><span id="nowPlaying">Aucun média</span><button id="ytRetour" type="button" hidden title="Revenir aux résultats de recherche YouTube">🔍 Recherche YouTube</button><button id="ytDlNow" type="button" title="Télécharger cette vidéo YouTube">⬇ Télécharger</button><button id="favBtn" type="button" hidden title="Ajouter le fichier lu aux favoris">☆ Ajouter aux favoris</button></div>
+    <div id="titleBar"><button id="readerHomeBtn" type="button" title="Revenir aux menus du lecteur">☰ Menus</button><span id="nowPlaying">Aucun média</span><button id="ytRetour" type="button" hidden title="Revenir aux résultats de recherche YouTube">🔍 Recherche YouTube</button><button id="ytDlNow" type="button" title="Télécharger cette vidéo YouTube">⬇ Télécharger</button><button id="favBtn" type="button" hidden title="Ajouter le fichier lu aux favoris">☆ Ajouter aux favoris</button></div>
     <div id="controls">
       <div id="seekRow">
         <span class="t" id="curTime">0:00</span>
@@ -2742,7 +2754,12 @@ $('tabs').onclick = (e) => {
   if (filter === 'image') { if (items.some((i) => i.type === 'image')) ouvrirGalerie(); }
   else if (document.body.dataset.mode === 'gallery') { setMode(current === -1 ? 'empty' : items[current].type); if (current === -1) { $('nowPlaying').textContent = 'Aucun média'; renderResume(); } }
 };
+const readerHomeBtn = $('readerHomeBtn'), readerApp = $('app');
+if (readerHomeBtn) readerHomeBtn.addEventListener('click', () => readerApp.classList.add('reader-home'));
 const menuToggle = $('menuToggle'), navTabs = $('tabs');
+if (navTabs) navTabs.addEventListener('click', (e) => {
+  if (e.target.closest('button')) readerApp.classList.remove('reader-home');
+});
 if (menuToggle && navTabs) {
   menuToggle.addEventListener('click', () => {
     const ouvert = navTabs.classList.toggle('menu-open');
