@@ -886,6 +886,18 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
 #matchsPane.vue-lecteur .matchs-head,#matchsPane.vue-lecteur .matchs-help,#matchsPane.vue-site .matchs-head,#matchsPane.vue-site .matchs-help,#matchsPane:fullscreen .matchs-head,#matchsPane:fullscreen .matchs-help{display:none!important}
 #matchsPane.vue-lecteur #matchsPlayer{position:relative;flex:1;min-height:0;background:#000}
 #matchsPlayerFrame{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000}
+/* Suggestions dans la bande noire sous la vidéo, masquées en plein écran */
+#matchsNext{display:none;position:absolute;left:12px;right:12px;bottom:9px;z-index:6;padding:8px 10px 9px;border:1px solid rgba(255,255,255,.14);border-radius:12px;background:linear-gradient(110deg,rgba(5,12,9,.96),rgba(12,20,17,.88));color:#fff;box-shadow:0 5px 22px rgba(0,0,0,.35)}
+#matchsPane.vue-lecteur #matchsNext{display:block}
+#matchsPane:fullscreen #matchsNext{display:none!important}
+.matchs-next-title{font-size:12px;font-weight:800;color:#e8bd5c;margin:0 0 7px}
+#matchsNextList{display:flex;gap:8px;overflow-x:auto;scrollbar-width:thin;padding-bottom:2px}
+.mnext-card{flex:0 0 190px;min-width:0;display:flex;align-items:center;gap:7px;padding:7px 9px;border:1px solid #455347;border-radius:9px;background:#17221b;color:#fff;text-align:center;cursor:pointer}
+.mnext-card:hover{border-color:#e8bd5c;background:#223328}
+.mnext-team{flex:1;min-width:0;font-size:10px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mnext-score{flex:none;font-size:11px;font-weight:900;white-space:nowrap}
+.mnext-score small{display:block;font-size:9px;color:#ff7777}
+@media(max-width:700px){#matchsNext{left:6px;right:6px;bottom:6px;padding:6px}.matchs-next-title{font-size:10px}.mnext-card{flex-basis:155px;padding:6px}.mnext-team{font-size:9px}}
 #matchsMsg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;color:#fff;background:rgba(0,0,0,.8);z-index:3;white-space:pre-line}
 #matchsMsg[hidden]{display:none}
 #matchsHot{position:absolute;top:0;left:0;right:0;height:16px;z-index:4}
@@ -1388,6 +1400,7 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
         <div id="matchsGrid" aria-live="polite"></div>
         <div id="matchsPlayer">
           <iframe id="matchsPlayerFrame" title="Lecteur du match" sandbox="allow-scripts allow-same-origin allow-forms allow-presentation" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowfullscreen referrerpolicy="origin"></iframe>
+          <div id="matchsNext" aria-label="Autres matchs en direct ou à venir"><div class="matchs-next-title">⚽ Autres matchs en direct ou au programme</div><div id="matchsNextList"></div></div>
           <div id="matchsMsg" hidden></div>
           <div id="matchsHot" title="Afficher les commandes"></div>
           <div id="matchsBar"><button id="mpBack" type="button">← Liste des matchs</button><span id="mpTitle"></span><span id="mpServers"></span><button id="mpReload" type="button" title="Recharger le lecteur">↻</button><button id="mpFS" type="button">⛶ Plein écran</button><span id="mpOpen" title="Les ouvertures externes sont désactivées" style="font-size:12px;color:#b9d8c4;padding:7px 8px">Navigation externe bloquée</span></div>
@@ -3880,7 +3893,7 @@ function renderResume() {
  // Zone « Matchs en direct » : liste de matchs (lue sur Kooralive), puis lecteur vidéo seul, sans le site autour
  const MATCHS_API = 'https://lecteur-pro-matchs.weundeprince6.workers.dev/';
  const matchsFrame = $('matchsFrame'), mpFrame = $('matchsPlayerFrame'), mpBar = $('matchsBar');
- let matchsJour = 'today', matchsCourant = null, matchsInfo = null, matchsBarTimer = 0;
+ let matchsJour = 'today', matchsCourant = null, matchsInfo = null, matchsBarTimer = 0, matchsListeData = [];
  const matchsEl = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
  function matchsPleinEcran() { try { const f = matchsPane.requestFullscreen || matchsPane.webkitRequestFullscreen; const r = f && f.call(matchsPane); if (r && r.catch) r.catch(() => {}); } catch (e) {} }
  function matchsQuitterPE() { try { if (document.fullscreenElement === matchsPane) document.exitFullscreen(); } catch (e) {} }
@@ -3915,12 +3928,29 @@ function renderResume() {
    try {
      const r = await fetch(MATCHS_API + 'matches?day=' + matchsJour); const j = await r.json();
      if (!r.ok) throw new Error(j.error || 'Service indisponible');
-     g.replaceChildren(); if (!j.matches.length) g.appendChild(matchsEl('div', 'mempty', 'Aucun match listé pour ce jour.'));
-     j.matches.forEach(m => g.appendChild(matchsCarte(m)));
+     matchsListeData = Array.isArray(j.matches) ? j.matches : [];
+     g.replaceChildren(); if (!matchsListeData.length) g.appendChild(matchsEl('div', 'mempty', 'Aucun match listé pour ce jour.'));
+     matchsListeData.forEach(m => g.appendChild(matchsCarte(m)));
+     matchsProchainsAfficher();
    } catch (e) {
      const d = matchsEl('div', 'mempty', 'Impossible de charger la liste des matchs (' + (e.message || 'erreur') + '). Vérifiez votre connexion, ou utilisez « Site complet ».');
      g.replaceChildren(d);
    }
+ }
+ function matchsProchainsAfficher() {
+   const wrap=$('matchsNext'), list=$('matchsNextList');
+   if(!wrap||!list)return;
+   list.replaceChildren();
+   const autres=matchsListeData.filter(m=>m && m.link && m.status!=='finished' && !(matchsCourant && (m.link===matchsCourant.link || (m.home===matchsCourant.home && m.away===matchsCourant.away))));
+   autres.slice(0,10).forEach(m=>{
+     const b=matchsEl('button','mnext-card');b.type='button';b.title='Regarder '+m.home+' – '+m.away;
+     const h=matchsEl('span','mnext-team',m.home||'Équipe 1');h.dir='auto';
+     const score=matchsEl('span','mnext-score',m.status==='upcoming'?(m.time||'À venir'):((m.homeGoals??'0')+' - '+(m.awayGoals??'0')));
+     if(m.status==='live')score.appendChild(matchsEl('small','','EN DIRECT'));
+     const a=matchsEl('span','mnext-team',m.away||'Équipe 2');a.dir='auto';
+     b.append(h,score,a);b.addEventListener('click',()=>matchsOuvrir(m));list.appendChild(b);
+   });
+   wrap.hidden=autres.length===0;
  }
  function matchsMontrerListe() { matchsVue('liste'); matchsCharger(); }
  function matchsServeur(n) {
@@ -3929,7 +3959,7 @@ function renderResume() {
    $('mpServers').querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.n === n));
  }
  async function matchsOuvrir(m) {
-   matchsCourant = m; matchsInfo = null; matchsVue('lecteur');
+   matchsCourant = m; matchsInfo = null; matchsProchainsAfficher(); matchsVue('lecteur');
    const titre = m.home + ' – ' + m.away; $('mpTitle').textContent = titre; $('mpTitle').dir = 'auto'; $('nowPlaying').textContent = '⚽ ' + titre;
    $('mpServers').replaceChildren();
    const msg = $('matchsMsg'); msg.textContent = 'Ouverture du lecteur…'; msg.hidden = false; matchsMontrerBarre(4500);
