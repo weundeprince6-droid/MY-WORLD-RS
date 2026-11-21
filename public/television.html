@@ -863,16 +863,16 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
 }
 /* Matchs en direct : liste de matchs, lecteur seul, site complet */
 #matchsFloat,#matchsPlayer,#matchsFrame{display:none}
-#matchsGoalSpot{position:absolute;top:58px;left:50%;z-index:30;display:flex;align-items:center;gap:12px;min-width:220px;max-width:min(92%,420px);padding:12px 18px;border:1px solid rgba(255,255,255,.35);border-radius:16px;background:linear-gradient(120deg,rgba(15,18,22,.97),rgba(28,75,48,.96));color:#fff;box-shadow:0 12px 36px rgba(0,0,0,.42);opacity:0;pointer-events:none;transform:translate(-50%,-18px) scale(.92)}
+#matchsGoalSpot{position:absolute;top:58px;left:50%;z-index:30;display:flex;align-items:center;justify-content:center;gap:14px;min-width:260px;max-width:min(94%,460px);padding:12px 18px;border:1px solid rgba(255,255,255,.35);border-radius:16px;background:linear-gradient(120deg,rgba(15,18,22,.97),rgba(28,75,48,.96));color:#fff;box-shadow:0 12px 36px rgba(0,0,0,.42);opacity:0;pointer-events:none;transform:translate(-50%,-18px) scale(.92)}
 #matchsGoalSpot[hidden]{display:none!important}
 #matchsGoalSpot.show{display:flex;animation:matchGoalPop .42s cubic-bezier(.2,.85,.25,1.25) forwards}
-#matchsGoalSpot .goal-logo{width:48px;height:48px;flex:0 0 48px;object-fit:contain;filter:drop-shadow(0 2px 5px rgba(0,0,0,.35));animation:matchBallSpin .8s ease-out}#matchsGoalSpot .goal-ball{font-size:34px;animation:matchBallSpin .8s ease-out}
+#matchsGoalSpot .goal-logo{width:48px;height:48px;flex:0 0 48px;object-fit:contain;filter:drop-shadow(0 2px 5px rgba(0,0,0,.35));animation:matchBallSpin .8s ease-out}#matchsGoalSpot .goal-score{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:76px;text-align:center}#matchsGoalSpot .goal-score strong{font-size:20px;letter-spacing:1.5px;color:#7dff9b}#matchsGoalSpot .goal-score span{font-size:20px;font-weight:900;white-space:nowrap}#matchsGoalSpot .goal-scorer{font-size:11px!important;font-weight:700;white-space:nowrap;max-width:130px;overflow:hidden;text-overflow:ellipsis}
 #matchsGoalSpot .goal-copy{display:flex;flex-direction:column;gap:3px;min-width:0}
 #matchsGoalSpot strong{font-size:20px;letter-spacing:1.5px;color:#7dff9b}
 #matchsGoalSpot span{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @keyframes matchGoalPop{0%{opacity:0;transform:translate(-50%,-18px) scale(.92)}65%{opacity:1;transform:translate(-50%,5px) scale(1.03)}100%{opacity:1;transform:translate(-50%,0) scale(1)}}
 @keyframes matchBallSpin{from{transform:rotate(-90deg) scale(.6)}to{transform:rotate(0) scale(1)}}
-@media(max-width:600px){#matchsGoalSpot{top:48px;padding:9px 13px;min-width:190px}#matchsGoalSpot .goal-logo{width:38px;height:38px;flex-basis:38px}#matchsGoalSpot .goal-ball{font-size:28px}#matchsGoalSpot strong{font-size:17px}}
+@media(max-width:600px){#matchsGoalSpot{top:48px;padding:9px 10px;min-width:230px;gap:9px}#matchsGoalSpot .goal-logo{width:38px;height:38px;flex-basis:38px}#matchsGoalSpot .goal-score{min-width:68px}#matchsGoalSpot .goal-score strong{font-size:17px}#matchsGoalSpot .goal-score span{font-size:18px}}
 #matchsPane.vue-liste #matchsGrid{display:grid}
 #matchsPane.vue-lecteur #matchsPlayer{display:block}
 #matchsPane.vue-site #matchsFrame{display:block}
@@ -1410,7 +1410,7 @@ body[data-mode="matchs"] #sidebar #matchsNext:not([hidden]){display:flex}
       <section id="matchsPane" class="vue-liste" hidden>
         <div class="matchs-head"><strong>⚽ Matchs en direct</strong><button id="matchsBack" type="button">← Mes fichiers</button><span class="mdays" role="tablist"><button type="button" data-day="yesterday">Hier</button><button type="button" data-day="today" class="on">Aujourd’hui</button><button type="button" data-day="tomorrow">Demain</button></span><button id="matchsRefresh" type="button" title="Actualiser la liste">↻</button><button id="matchsSite" type="button" title="Afficher le site Kooralive complet">🌐 Site complet</button></div>
         <p class="matchs-help" id="matchsHelp">Choisissez un match : seule la vidéo s’affiche, sans le site autour, et vous pouvez la mettre en plein écran. Les heures sont celles du site Kooralive. Si un match ne démarre pas, essayez un autre serveur ou « Site complet ».</p>
-        <div id="matchsGoalSpot" role="status" aria-live="assertive" hidden><img id="matchsGoalLogo" class="goal-logo" alt="Logo de l’équipe qui a marqué" hidden><span id="matchsGoalBall" class="goal-ball">⚽</span><div class="goal-copy"><strong>BUT !</strong><span id="matchsGoalText"></span></div></div>
+        <div id="matchsGoalSpot" role="status" aria-live="assertive" hidden><img id="matchsGoalHomeLogo" class="goal-logo" alt="Logo équipe domicile"><div class="goal-score"><strong>BUT !</strong><span id="matchsGoalScore"></span><span id="matchsGoalScorer" class="goal-scorer"></span></div><img id="matchsGoalAwayLogo" class="goal-logo" alt="Logo équipe extérieure"></div>
         <div id="matchsGrid" aria-live="polite"></div>
         <div id="matchsPlayer">
           <iframe id="matchsPlayerFrame" title="Lecteur du match" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
@@ -3920,14 +3920,13 @@ function renderResume() {
    } catch (e) {}
  }
  function matchsButAfficher(ev) {
-   const spot=$('matchsGoalSpot'), label=$('matchsGoalText'), logo=$('matchsGoalLogo'), ball=$('matchsGoalBall');
-   if(!spot||!label)return;
-   label.textContent=ev.team+'  '+ev.score;
-   if(logo&&ball){
-     logo.onerror=()=>{logo.hidden=true;ball.hidden=false;};
-     if(ev.logo){logo.src=ev.logo;logo.hidden=false;ball.hidden=true;}
-     else{logo.removeAttribute('src');logo.hidden=true;ball.hidden=false;}
-   }
+   const spot=$('matchsGoalSpot'), homeLogo=$('matchsGoalHomeLogo'), awayLogo=$('matchsGoalAwayLogo');
+   const score=$('matchsGoalScore'), scorer=$('matchsGoalScorer');
+   if(!spot||!score||!homeLogo||!awayLogo)return;
+   score.textContent=ev.score;
+   scorer.textContent=ev.team||'';
+   const setLogo=(img,url)=>{img.onerror=()=>{img.style.visibility='hidden';};img.style.visibility='visible';if(url){img.src=url;}else{img.removeAttribute('src');img.style.visibility='hidden';}};
+   setLogo(homeLogo,ev.homeLogo);setLogo(awayLogo,ev.awayLogo);
    spot.hidden=false; spot.classList.remove('show'); void spot.offsetWidth; spot.classList.add('show');
    matchsButSon(); clearTimeout(matchsButTimer);
    matchsButTimer=setTimeout(()=>{spot.classList.remove('show');spot.hidden=true;},4200);
@@ -3942,8 +3941,8 @@ function renderResume() {
      if(!Number.isFinite(home)||!Number.isFinite(away))continue;
      const old=matchsScoresConnus&&matchsScoresConnus[key];
      if(old){
-       if(home>old.home)events.push({team:matchsNomAnglais(m.home,m.homeLogo),logo:m.homeLogo,score:home+' - '+away});
-       if(away>old.away)events.push({team:matchsNomAnglais(m.away,m.awayLogo),logo:m.awayLogo,score:home+' - '+away});
+       if(home>old.home)events.push({team:matchsNomAnglais(m.home,m.homeLogo),homeLogo:m.homeLogo,awayLogo:m.awayLogo,score:home+' - '+away});
+       if(away>old.away)events.push({team:matchsNomAnglais(m.away,m.awayLogo),homeLogo:m.homeLogo,awayLogo:m.awayLogo,score:home+' - '+away});
      }
      next[key]={home,away};
    }
