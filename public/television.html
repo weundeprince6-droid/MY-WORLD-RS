@@ -3916,24 +3916,55 @@ function renderResume() {
  mpBar?.addEventListener('mouseleave', () => matchsMontrerBarre(1200));
  mpBar?.addEventListener('mouseenter', () => { clearTimeout(matchsBarTimer); });
  mpBar?.addEventListener('click', () => matchsMontrerBarre(6000));
- // Convertit les noms arabes courants en noms anglais; translittération anglaise pour les autres.
+ // Traduction des noms d'équipes arabes vers leurs appellations anglaises.
+ // Normalisation des variantes d'écriture avant la recherche dans le dictionnaire.
  const matchsNomsArabes = {
- 'الأهلي':'Al Ahly','الاهلي':'Al Ahly','الزمالك':'Zamalek','بيراميدز':'Pyramids FC',
+ 'الأهلي':'Al Ahly','الاهلي':'Al Ahly','النادي الأهلي':'Al Ahly','نادي الأهلي':'Al Ahly',
+ 'الزمالك':'Zamalek','بيراميدز':'Pyramids FC','مودرن سبورت':'Modern Sport','فيوتشر':'Future FC',
  'ريال مدريد':'Real Madrid','برشلونة':'Barcelona','مانشستر سيتي':'Manchester City','مانشستر يونايتد':'Manchester United',
- 'ليفربول':'Liverpool','أرسنال':'Arsenal','تشيلسي':'Chelsea','توتنهام':'Tottenham',
+ 'ليفربول':'Liverpool','أرسنال':'Arsenal','ارسنال':'Arsenal','تشيلسي':'Chelsea','توتنهام':'Tottenham Hotspur',
+ 'نيوكاسل':'Newcastle United','أستون فيلا':'Aston Villa','استون فيلا':'Aston Villa','وست هام':'West Ham United',
  'بايرن ميونخ':'Bayern Munich','بايرن ميونيخ':'Bayern Munich','بوروسيا دورتموند':'Borussia Dortmund',
- 'باريس سان جيرمان':'Paris Saint-Germain','يوفنتوس':'Juventus','إنتر ميلان':'Inter Milan','ميلان':'AC Milan',
- 'النصر':'Al Nassr','الهلال':'Al Hilal','الاتحاد':'Al Ittihad','الشباب':'Al Shabab',
- 'الوداد':'Wydad AC','الرجاء':'Raja CA','الترجي':'Espérance de Tunis','الصفاقسي':'CS Sfaxien',
- 'منتخب مصر':'Egypt','منتخب المغرب':'Morocco','منتخب الجزائر':'Algeria','منتخب تونس':'Tunisia'
+ 'لايبزيغ':'RB Leipzig','باير ليفركوزن':'Bayer Leverkusen','باريس سان جيرمان':'Paris Saint-Germain',
+ 'باريس':'Paris Saint-Germain','يوفنتوس':'Juventus','إنتر ميلان':'Inter Milan','انتر ميلان':'Inter Milan',
+ 'ميلان':'AC Milan','إيه سي ميلان':'AC Milan','روما':'AS Roma','نابولي':'Napoli',
+ 'أتلتيكو مدريد':'Atletico Madrid','اتلتيكو مدريد':'Atletico Madrid','إشبيلية':'Sevilla','اشبيلية':'Sevilla',
+ 'النصر':'Al Nassr','نادي النصر':'Al Nassr','الهلال':'Al Hilal','نادي الهلال':'Al Hilal',
+ 'الاتحاد':'Al Ittihad','اتحاد جدة':'Al Ittihad','الشباب':'Al Shabab','الأهلي السعودي':'Al Ahli Saudi FC',
+ 'القادسية':'Al Qadsiah','التعاون':'Al Taawoun','الاتفاق':'Al Ettifaq','الفتح':'Al Fateh',
+ 'الوحدة':'Al Wehda','ضمك':'Damac FC','الفيحاء':'Al Fayha','الرائد':'Al Raed',
+ 'العين':'Al Ain','شباب الأهلي':'Shabab Al Ahli','الوصل':'Al Wasl','الشارقة':'Sharjah FC',
+ 'السد':'Al Sadd','الدحيل':'Al Duhail','الريان':'Al Rayyan','الغرافة':'Al Gharafa',
+ 'الوداد':'Wydad AC','الوداد الرياضي':'Wydad AC','الرجاء':'Raja CA','الرجاء الرياضي':'Raja CA',
+ 'الجيش الملكي':'AS FAR','نهضة بركان':'RS Berkane','اتحاد طنجة':'Ittihad Tanger',
+ 'الترجي':'Espérance de Tunis','الترجي الرياضي':'Espérance de Tunis','النجم الساحلي':'Étoile du Sahel',
+ 'الصفاقسي':'CS Sfaxien','الاتحاد المنستيري':'US Monastir',
+ 'شبيبة القبائل':'JS Kabylie','مولودية الجزائر':'MC Alger','اتحاد العاصمة':'USM Alger','وفاق سطيف':'ES Setif',
+ 'منتخب مصر':'Egypt','مصر':'Egypt','منتخب المغرب':'Morocco','المغرب':'Morocco',
+ 'منتخب الجزائر':'Algeria','الجزائر':'Algeria','منتخب تونس':'Tunisia','تونس':'Tunisia',
+ 'منتخب السعودية':'Saudi Arabia','السعودية':'Saudi Arabia','منتخب قطر':'Qatar','قطر':'Qatar',
+ 'منتخب العراق':'Iraq','العراق':'Iraq','منتخب الأردن':'Jordan','الأردن':'Jordan',
+ 'منتخب الإمارات':'United Arab Emirates','الإمارات':'United Arab Emirates',
+ 'منتخب سوريا':'Syria','سوريا':'Syria','منتخب لبنان':'Lebanon','لبنان':'Lebanon',
+ 'منتخب فلسطين':'Palestine','فلسطين':'Palestine','منتخب الكويت':'Kuwait','الكويت':'Kuwait',
+ 'منتخب البحرين':'Bahrain','البحرين':'Bahrain','منتخب عمان':'Oman','عمان':'Oman'
  };
- const matchsTranslit={'ا':'a','أ':'a','إ':'i','آ':'aa','ب':'b','ت':'t','ث':'th','ج':'j','ح':'h','خ':'kh','د':'d','ذ':'dh','ر':'r','ز':'z','س':'s','ش':'sh','ص':'s','ض':'d','ط':'t','ظ':'z','ع':'a','غ':'gh','ف':'f','ق':'q','ك':'k','ل':'l','م':'m','ن':'n','ه':'h','و':'w','ؤ':'w','ي':'y','ى':'a','ئ':'y','ة':'a','ء':'','پ':'p','چ':'ch','گ':'g'};
+ const matchsNormaliserArabe = value => String(value||'').normalize('NFKC')
+   .replace(/[\u064B-\u065F\u0670\u0640]/g,'')
+   .replace(/[أإآٱ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه')
+   .replace(/[.،,:;()\[\]{}]/g,' ').replace(/\s+/g,' ').trim();
+ const matchsNomsArabesNormalises = Object.fromEntries(
+   Object.entries(matchsNomsArabes).map(([k,v])=>[matchsNormaliserArabe(k),v])
+ );
+ const matchsTranslit={'ا':'a','أ':'a','إ':'i','آ':'aa','ٱ':'a','ب':'b','ت':'t','ث':'th','ج':'j','ح':'h','خ':'kh','د':'d','ذ':'dh','ر':'r','ز':'z','س':'s','ش':'sh','ص':'s','ض':'d','ط':'t','ظ':'z','ع':'a','غ':'gh','ف':'f','ق':'q','ك':'k','ل':'l','م':'m','ن':'n','ه':'h','و':'w','ؤ':'w','ي':'y','ى':'a','ئ':'y','ة':'a','ء':'','پ':'p','چ':'ch','گ':'g'};
  function matchsNomAnglais(value){
    const raw=String(value||'').trim();if(!raw)return '';
-   if(matchsNomsArabes[raw])return matchsNomsArabes[raw];
-   const cleaned=raw.replace(/[ًٌٍَُِّْـ]/g,'');
+   const cleaned=matchsNormaliserArabe(raw);
+   const known=matchsNomsArabesNormalises[cleaned];
+   if(known)return known;
    if(!/[\u0600-\u06FF]/.test(cleaned))return raw;
-   return cleaned.replace(/[\u0600-\u06FF]/g,ch=>matchsTranslit[ch]??'').replace(/\s+/g,' ').trim().replace(/\b\w/g,ch=>ch.toUpperCase());
+   return cleaned.replace(/[\u0600-\u06FF]/g,ch=>matchsTranslit[ch]??'')
+     .replace(/\s+/g,' ').trim().replace(/\b\w/g,ch=>ch.toUpperCase());
  }
  function matchsCarte(m) {
    const c = matchsEl('button', 'mcard'); c.type = 'button'; if (!m.link) c.disabled = true;
