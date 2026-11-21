@@ -1346,7 +1346,8 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
         <button type="button" id="radioTab">📻 RADIO</button>
         <button type="button" id="matchsTab">⚽ Matchs en direct</button>
         <button type="button" id="fifaTab">🏆 FIFA+</button>
-        <button type="button" id="offresTab">💎 Abonnement : m’abonner / suivre</button>
+        <button type="button" id="profileTab">👤 Profil</button>
+        <button type="button" id="settingsTab">⚙️ Paramètres du lecteur</button>
       </div>
     <div id="syncBar" hidden></div>
     <ul id="playlist"></ul>
@@ -1653,7 +1654,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
     <div class="panel-head"><strong>Réglages du lecteur</strong><button id="btnPanelClose" type="button" title="Fermer les réglages" aria-label="Fermer les réglages">✕</button></div>
     <div class="ptabs" id="ptabs">
       <button data-p="video" class="active">Vidéo</button><button data-p="audio">Audio</button>
-      <button data-p="subs">Sous-titres</button><button data-p="marks">Repères</button><button data-p="history">Historique</button><button data-p="opts">Options</button><button data-p="youtube">YouTube</button>
+      <button data-p="subs">Sous-titres</button><button data-p="marks">Repères</button><button data-p="history">Historique</button><button data-p="opts">Options</button><button data-p="youtube">YouTube</button><button type="button" id="panelSubscriptions">💎 Abonnements</button>
     </div>
 
     <section class="psec active" data-p="video">
@@ -2847,7 +2848,7 @@ function showTab(p) {
 }
 $('btnPanel').onclick = () => openPanel('youtube');
 $('btnPanelClose').onclick = () => $('app').classList.remove('panel-open');;
-$('ptabs').onclick = (e) => { const b = e.target.closest('button'); if (b) showTab(b.dataset.p); };
+$('ptabs').onclick = (e) => { const b = e.target.closest('button'); if (!b) return; if (b.id === 'panelSubscriptions') { window.location.href = 'lecteur-pro-offres.html'; return; } showTab(b.dataset.p); };
 $('clearReadHistory').onclick = () => {
   if (!confirm("Effacer tout l’historique des fichiers lus à 50 % ou plus ?")) return;
   readHistory = {}; flushHistory(); renderHistory();
@@ -2872,6 +2873,8 @@ $('btnClear').onclick = () => {
 };
 $('tabs').onclick = (e) => {
   const b = e.target.closest('button'); if (!b) return;
+  if (b.id === 'profileTab') { window.location.href = 'lecteur-pro-profil.html'; return; }
+  if (b.id === 'settingsTab') { readerApp.classList.remove('reader-home'); openPanel('opts'); return; }
   if (b.id === 'offresTab') { window.location.href = 'lecteur-pro-offres.html'; return; }
   if (b.id === 'tvDriveTab' || b.id === 'mesFilmsTab' || b.id === 'youtubeTab' || b.id === 'matchsTab' || b.id === 'fifaTab' || b.id === 'tvTab') return;
   if (typeof tvHide === 'function') tvHide();
