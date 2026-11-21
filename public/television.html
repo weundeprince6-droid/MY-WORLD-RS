@@ -3887,11 +3887,19 @@ function renderResume() {
    $('nowPlaying').textContent = current < 0 ? 'Aucun média' : items[current].name;
  });
  let matchsActive = false;
+ let matchsRefreshTimer = null;
+ function matchsDemarrerSynchro() {
+   clearInterval(matchsRefreshTimer);
+   matchsRefreshTimer = setInterval(() => {
+     if (matchsActive && matchsJour === 'today' && document.visibilityState === 'visible') matchsCharger();
+   }, 30000);
+ }
+ function matchsArreterSynchro() { clearInterval(matchsRefreshTimer); matchsRefreshTimer = null; }
  function matchsShow() {
    tvHide(); fifaHide(); tvDriveHide(); youtubeHide(); cacherOngletMesFilms();
    matchsActive = true; $('playlist').hidden = true; matchsPane.hidden = false;
    $('tabs').querySelectorAll('button').forEach(b => b.classList.toggle('active', b === matchsTab));
-   setMode('matchs'); $('nowPlaying').textContent = '⚽ Matchs en direct'; updatePlayBtn(); matchsMontrerListe();
+   setMode('matchs'); $('nowPlaying').textContent = '⚽ Matchs en direct'; updatePlayBtn(); matchsMontrerListe(); matchsDemarrerSynchro();
  }
  // Zone « Matchs en direct » : liste de matchs (lue sur Kooralive), puis lecteur vidéo seul, sans le site autour
  const MATCHS_API = 'https://lecteur-pro-matchs.weundeprince6.workers.dev/';
@@ -3978,17 +3986,23 @@ function renderResume() {
    if (m.link) c.addEventListener('click', () => matchsOuvrir(m));
    return c;
  }
+ let matchsLoadSeq = 0;
  async function matchsCharger() {
-   const g = $('matchsGrid'); g.replaceChildren(matchsEl('div', 'mempty', 'Chargement des matchs…'));
+   const seq = ++matchsLoadSeq, g = $('matchsGrid');
+   if (!matchsListeData.length) g.replaceChildren(matchsEl('div', 'mempty', 'Synchronisation des matchs en cours…'));
    try {
-     const r = await fetch(MATCHS_API + 'matches?day=' + matchsJour); const j = await r.json();
+     const r = await fetch(MATCHS_API + 'matches?day=' + matchsJour, { cache: 'no-store' }); const j = await r.json();
+     if (seq !== matchsLoadSeq) return;
      if (!r.ok) throw new Error(j.error || 'Service indisponible');
      matchsListeData = Array.isArray(j.matches) ? j.matches : [];
-     g.replaceChildren(); if (!matchsListeData.length) g.appendChild(matchsEl('div', 'mempty', 'Aucun match listé pour ce jour.'));
-     matchsListeData.forEach(m => g.appendChild(matchsCarte(m)));
+     const directs = matchsListeData.filter(m => m && m.status === 'live');
+     g.replaceChildren();
+     if (!directs.length) g.appendChild(matchsEl('div', 'mempty', matchsJour === 'today' ? 'Aucun match actuellement signalé en direct par Kooralive. La liste se resynchronise automatiquement.' : 'Aucun match en direct pour ce jour.'));
+     directs.forEach(m => g.appendChild(matchsCarte(m)));
      matchsProchainsAfficher();
    } catch (e) {
-     const d = matchsEl('div', 'mempty', 'Impossible de charger la liste des matchs (' + (e.message || 'erreur') + '). Vérifiez votre connexion, ou utilisez « Site complet ».');
+     if (seq !== matchsLoadSeq) return;
+     const d = matchsEl('div', 'mempty', 'Impossible de synchroniser les directs (' + (e.message || 'erreur') + '). Vérifiez votre connexion, ou utilisez « Site complet ».');
      g.replaceChildren(d);
    }
  }
@@ -4042,13 +4056,14 @@ function renderResume() {
  $('mpReload')?.addEventListener('click', () => { if (matchsInfo) { const s = $('mpServers').querySelector('button.on'); matchsServeur(s ? +s.dataset.n : 0); } else if (matchsCourant) matchsOuvrir(matchsCourant); });
  $('mpFS')?.addEventListener('click', () => { if (document.fullscreenElement === matchsPane) matchsQuitterPE(); else matchsPleinEcran(); });
  $('matchsPane')?.querySelectorAll('.mdays button').forEach(b => b.addEventListener('click', () => {
-   matchsJour = b.dataset.day; $('matchsPane').querySelectorAll('.mdays button').forEach(x => x.classList.toggle('on', x === b)); matchsCharger();
+   matchsJour = b.dataset.day; $('matchsPane').querySelectorAll('.mdays button').forEach(x => x.classList.toggle('on', x === b)); matchsListeData = []; matchsCharger();
  }));
  $('matchsRefresh')?.addEventListener('click', matchsCharger);
  $('matchsSite')?.addEventListener('click', () => { matchsVue('site'); matchsFrame.src = 'https://kooralive.la/'; });
  $('matchsList')?.addEventListener('click', () => { matchsQuitterPE(); matchsMontrerListe(); });
  $('matchsFS')?.addEventListener('click', () => { if (document.fullscreenElement === matchsPane) matchsQuitterPE(); else matchsPleinEcran(); });
  function matchsHide() {
+   matchsArreterSynchro();
    matchsQuitterPE(); if (matchsPane) matchsVue('liste');
    matchsActive = false; if (matchsPane) matchsPane.hidden = true;
    if (!tvDriveActive && mesFilmsPane.hidden && youtubePane.hidden) $('playlist').hidden = false;
