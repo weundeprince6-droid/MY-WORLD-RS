@@ -4596,7 +4596,7 @@ if (btnRestart) btnRestart.addEventListener('click', () => {
 const playbackDock = document.createElement('div');
 playbackDock.id = 'mwrsPlaybackDock';
 playbackDock.style.cssText = 'position:fixed;z-index:100000;left:50%;bottom:max(12px,env(safe-area-inset-bottom));transform:translateX(-50%);display:none;align-items:center;gap:9px;max-width:calc(100vw - 20px);width:max-content;padding:9px 11px;border:1px solid #43845f;border-radius:15px;background:rgba(7,20,13,.96);color:#fff;box-shadow:0 8px 30px rgba(0,0,0,.4);font:600 13px system-ui,sans-serif';
-playbackDock.innerHTML = '<span id="mwrsPlaybackLabel" style="max-width:min(42vw,260px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Lecture en cours</span><button id="mwrsPlaybackResume" type="button" style="border:0;border-radius:9px;padding:9px 12px;background:#35a867;color:#fff;font-weight:800;cursor:pointer;white-space:nowrap">↩ Reprendre</button><button id="mwrsPlaybackClose" type="button" aria-label="Fermer la lecture" title="Arrêter et fermer cette lecture" style="border:1px solid #a65b5b;border-radius:9px;padding:8px 11px;background:#542727;color:#fff;font-weight:800;cursor:pointer">✕</button>';
+playbackDock.innerHTML = '<span id="mwrsPlaybackLabel" style="max-width:min(38vw,240px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Lecture en arrière-plan</span><button id="mwrsPlaybackResume" type="button" style="border:0;border-radius:9px;padding:9px 12px;background:#35a867;color:#fff;font-weight:800;cursor:pointer;white-space:nowrap">▣ Afficher le lecteur</button><button id="mwrsPlaybackClose" type="button" aria-label="Arrêter et fermer la lecture" title="Arrêter définitivement le son ou la vidéo" style="border:1px solid #a65b5b;border-radius:9px;padding:8px 11px;background:#542727;color:#fff;font-weight:800;cursor:pointer;white-space:nowrap">✕ Arrêter</button>';
 document.body.appendChild(playbackDock);
 function playbackDockRefresh() {
   const label=$('mwrsPlaybackLabel');
@@ -4609,48 +4609,36 @@ function playbackDockRefresh() {
     || (playbackKind==='radio' && !!radioStations[radioCurrentKey]);
   if(!valid){playbackKind='';playbackDock.style.display='none';return;}
   const names={local:it?.name||'Fichier en cours',youtube:'YouTube · '+(youtubeCurrentTitle||youtubeCurrentId),tv:'TV · '+(tvStations[tvCurrentStationKey]?.name||'Chaîne en direct'),radio:'Radio · '+(radioStations[radioCurrentKey]?.name||'Station en direct')};
-  if(label)label.textContent=names[playbackKind]||'Lecture en cours';
-  let visible=false, paused=false;
+  if(label)label.textContent=names[playbackKind]+' · en arrière-plan';
+  let visible=false;
   if(playbackKind==='local'){
     visible=document.body.dataset.mode===it.type;
-    const m=activeMedia(); paused=!!m && (m.paused || m.ended);
   }else if(playbackKind==='youtube'){
-    visible=document.body.dataset.mode==='youtube' && youtubePane.hidden;
-    paused=!!youtubePaused;
+    visible=document.body.dataset.mode==='youtube' && !!youtubePane && !youtubePane.hidden;
   }else if(playbackKind==='tv'){
     visible=!!tvPane && !tvPane.hidden;
   }else if(playbackKind==='radio'){
     visible=!!radioPane && !radioPane.hidden;
-    paused=!!radioStations[radioCurrentKey]?.url && !radioStations[radioCurrentKey]?.embedUrl && radioAudio.paused;
   }
-  resume.hidden=visible && !paused;
-  resume.textContent=paused?'▶ Continuer':(visible?'▶ Continuer':'↩ Revenir');
-  resume.title=paused?'Reprendre la lecture en pause':'Afficher le lecteur actuellement actif';
-  playbackDock.style.display='flex';
+  // La barre n'apparaît que lorsque le lecteur est réellement en arrière-plan.
+  resume.hidden=visible;
+  playbackDock.style.display=visible?'none':'flex';
 }
 function playbackDockResume() {
   if(!playbackKind)return;
   if(playbackKind==='tv'){tvShow();playbackDockRefresh();return;}
-  if(playbackKind==='radio'){
-    radioShow();
-    const station=radioStations[radioCurrentKey];
-    if(station && !station.embedUrl && radioAudio.paused) radioAudio.play().catch(()=>{ $('radioStatus').textContent='Appuyez sur Lecture pour reprendre la radio.'; });
-    playbackDockRefresh();return;
-  }
+  if(playbackKind==='radio'){radioShow();playbackDockRefresh();return;}
   tvHide();radioHide();fifaHide();matchsHide();tvDriveHide();youtubeHide();cacherOngletMesFilms();
   const spotify=$('spotifyPane');if(spotify)spotify.hidden=true;
   const web=$('webReaderPane');if(web)web.hidden=true;
   if(playbackKind==='youtube'){
     youtubeShow();
-    if(youtubePaused){youtubeCommand('playVideo');youtubePaused=false;updatePlayBtn();}
     playbackDockRefresh();return;
   }
   const it=items[current];
   if(it){
     $('playlist').hidden=false;setMode(it.type);$('nowPlaying').textContent=it.name;
     $('tabs').querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.filter==='all'));
-    const m=activeMedia();
-    if(m && (m.paused || m.ended)){if(m.ended)m.currentTime=0;m.play().catch(()=>osd('Appuyez sur Lecture pour reprendre le média.'));}
   }
   playbackDockRefresh();
 }
