@@ -889,6 +889,7 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
 /* Suggestions dans la bande noire sous la vidéo, masquées en plein écran */
 #matchsNext{display:none;position:absolute;left:12px;right:12px;bottom:9px;z-index:6;padding:8px 10px 9px;border:1px solid rgba(255,255,255,.14);border-radius:12px;background:linear-gradient(110deg,rgba(5,12,9,.96),rgba(12,20,17,.88));color:#fff;box-shadow:0 5px 22px rgba(0,0,0,.35)}
 #matchsPane.vue-lecteur #matchsNext{display:block}
+#matchsNext[hidden]{display:none!important}
 #matchsPane:fullscreen #matchsNext{display:none!important}
 .matchs-next-title{font-size:12px;font-weight:800;color:#e8bd5c;margin:0 0 7px}
 #matchsNextList{display:flex;gap:8px;overflow-x:auto;scrollbar-width:thin;padding-bottom:2px}
