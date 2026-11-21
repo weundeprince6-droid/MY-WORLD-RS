@@ -4962,37 +4962,7 @@ function playbackDockResume() {
   const it=items[current];
   if(it){
     $('playlist').hidden=false;setMode(it.type);$('nowPlaying').textContent=it.name;
-    $('tabs').querySelectorAll('button').forEach
-<script>
-/* Icônes uniformisées pour les rubriques du lecteur uniquement. */
-(() => {
-  const icons = {
-    all:"⌂", audio:"♫", video:"▶", image:"▧", doc:"▤", favorisTab:"★",
-    mesFilmsTab:"▣", tvDriveTab:"☁", youtubeTab:"▷", webReaderTab:"◎",
-    spotifyTab:"♫", tvTab:"▣", radioTab:"◖", matchsTab:"⚽",
-    fifaTab:"♜", offresTab:"◆"
-  };
-  const tabs = document.getElementById("tabs");
-  if (!tabs) return;
-  tabs.querySelectorAll("button").forEach(button => {
-    const key = button.id || button.dataset.filter;
-    const icon = icons[key];
-    if (!icon || button.querySelector(".menu-icon")) return;
-    const label = button.textContent.trim().replace(/^[^\p{L}\p{N}]+/u, "").trim();
-    button.textContent = "";
-    const symbol = document.createElement("span");
-    symbol.className = "menu-icon";
-    symbol.setAttribute("aria-hidden", "true");
-    symbol.textContent = icon;
-    const title = document.createElement("span");
-    title.className = "menu-label";
-    title.textContent = label;
-    button.append(symbol, title);
-  });
-})();
-</script>
-
-(b=>b.classList.toggle('active',b.dataset.filter==='all'));
+    $('tabs').querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.filter==='all'));
   }
   playbackDockRefresh();
 }
