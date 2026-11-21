@@ -1165,16 +1165,17 @@ body[data-mode="matchs"] #sidebar #matchsNext:not([hidden]){display:flex}
 #sidebar > #menuToggle{display:flex!important;flex:0 0 auto!important}
 
 
-/* Accueil du lecteur uniquement : grille des rubriques au démarrage. */
-#app.reader-home{display:block}
-#app.reader-home #sidebar{width:100%;height:100vh;min-width:0;border:0;align-items:stretch}
+/* Accueil du lecteur uniquement : tableau de bord plein écran. */
+html,body{min-width:0;min-height:100%;margin:0}
+#app.reader-home{display:block!important;width:100vw;height:100vh;height:100dvh;min-height:100vh;overflow:auto}
+#app.reader-home #sidebar{display:flex!important;flex-direction:column;width:100%;height:100%;min-height:100vh;min-width:0;border:0;align-items:stretch;overflow:visible}
 #app.reader-home #sidebar>.side-head,#app.reader-home #sidebar>#menuToggle,#app.reader-home #sidebar>#syncBar,#app.reader-home #sidebar>#playlist,#app.reader-home #sidebar>#mesFilmsPane,#app.reader-home #sidebar>#tvDrivePane,#app.reader-home #sidebar>.side-foot,#app.reader-home #stage{display:none!important}
-#app.reader-home #sidebar>#tabs{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:14px;width:min(1120px,100%);max-height:none;overflow:auto;margin:0 auto;padding:clamp(20px,5vh,55px) 22px;background:transparent}
-#app.reader-home #tabs:before{content:"LECTEUR PRO — CHOISISSEZ UNE RUBRIQUE";grid-column:1/-1;text-align:center;color:var(--muted);font-size:13px;font-weight:800;letter-spacing:1.6px;padding:8px 0 14px}
-#app.reader-home #tabs button{min-height:104px;border:1px solid var(--border);border-radius:16px;background:var(--panel);box-shadow:0 5px 18px rgba(0,0,0,.16);font-size:14px;font-weight:700;padding:16px;white-space:normal;line-height:1.35}
+#app.reader-home #sidebar>#tabs{display:grid!important;box-sizing:border-box;grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr));grid-auto-rows:minmax(120px,1fr);align-content:stretch;gap:clamp(10px,1.5vw,20px);width:100%;max-width:none;min-height:100%;max-height:none;overflow:visible;margin:0;padding:clamp(16px,3vw,38px);background:transparent}
+#app.reader-home #tabs:before{content:"LECTEUR PRO — CHOISISSEZ UNE RUBRIQUE";grid-column:1/-1;text-align:center;align-self:center;color:var(--muted);font-size:clamp(12px,1.2vw,15px);font-weight:800;letter-spacing:1.6px;padding:4px 0}
+#app.reader-home #tabs button{width:100%;min-height:120px;height:100%;border:1px solid var(--border);border-radius:16px;background:var(--panel);box-shadow:0 5px 18px rgba(0,0,0,.16);font-size:clamp(13px,1.15vw,16px);font-weight:700;padding:16px;white-space:normal;line-height:1.35}
 #app.reader-home #tabs button.active{border-color:var(--accent);background:var(--panel2);color:var(--accent2)}
 #readerHomeBtn{margin-right:8px}
-@media(max-width:560px){#app.reader-home #sidebar>#tabs{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;padding:22px 12px}#app.reader-home #tabs button{min-height:88px;font-size:12px;padding:10px 7px;border-radius:13px}}
+@media(max-width:560px){#app.reader-home #sidebar>#tabs{grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(105px,1fr);gap:9px;padding:14px}#app.reader-home #tabs button{min-height:105px;font-size:12px;padding:10px 7px;border-radius:13px}}
 
 </style>
 
@@ -1215,7 +1216,7 @@ body[data-mode="matchs"] #sidebar #matchsNext:not([hidden]){display:flex}
         <button type="button" id="radioTab">📻 RADIO</button>
         <button type="button" id="matchsTab">⚽ Matchs en direct</button>
         <button type="button" id="fifaTab">🏆 FIFA+</button>
-        <button type="button" id="offresTab">💎 Offres Premium</button>
+        <button type="button" id="offresTab">💎 Abonnement : m’abonner / suivre</button>
       </div>
     <div id="syncBar" hidden></div>
     <ul id="playlist"></ul>
