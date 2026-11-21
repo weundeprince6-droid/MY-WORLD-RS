@@ -896,7 +896,7 @@ body[data-mode="matchs"] #sidebar #matchsNext:not([hidden]){display:flex}
 #matchsNextList{display:flex;flex:1;min-height:0;flex-direction:column;gap:6px;overflow-y:auto;overflow-x:hidden;padding:1px 2px 5px}
 .mnext-card{flex:none;width:100%;min-width:0;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:5px;padding:8px 6px;border:1px solid var(--border);border-radius:8px;background:var(--panel2);color:var(--text);text-align:center;cursor:pointer}
 .mnext-card:hover{border-color:var(--accent2)}
-.mnext-team{min-width:0;font-size:10px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mnext-team{width:30px;height:30px;min-width:30px;display:flex;align-items:center;justify-content:center;overflow:hidden}.mnext-team img{display:block;width:28px;height:28px;max-width:100%;max-height:100%;object-fit:contain}.mnext-team .mnext-no-logo{font-size:18px;line-height:1}
 .mnext-score{min-width:40px;font-size:11px;font-weight:900;white-space:nowrap}
 .mnext-score small{display:block;font-size:9px;color:#e05252}
 #matchsPane:fullscreen #matchsNext{display:none!important}
@@ -3998,11 +3998,21 @@ function renderResume() {
    list.replaceChildren();
    const autres=matchsListeData.filter(m=>m && m.link && m.status!=='finished' && !(matchsCourant && (m.link===matchsCourant.link || (m.home===matchsCourant.home && m.away===matchsCourant.away))));
    autres.slice(0,10).forEach(m=>{
-     const b=matchsEl('button','mnext-card');b.type='button';b.title='Watch '+matchsNomAnglais(m.home,m.homeLogo)+' – '+matchsNomAnglais(m.away,m.awayLogo);
-     const h=matchsEl('span','mnext-team',matchsNomAnglais(m.home,m.homeLogo)||'Team 1');h.dir='auto';
+     const homeName=matchsNomAnglais(m.home,m.homeLogo), awayName=matchsNomAnglais(m.away,m.awayLogo);
+     const b=matchsEl('button','mnext-card');b.type='button';b.title=homeName+' – '+awayName;
+     const creerLogo=(url,nom)=>{
+       const holder=matchsEl('span','mnext-team');
+       if(url){
+         const img=document.createElement('img');img.src=url;img.alt='';img.title=nom||'Team';img.loading='lazy';img.referrerPolicy='no-referrer';
+         img.onerror=()=>{img.remove();holder.appendChild(matchsEl('span','mnext-no-logo','⚽'));};
+         holder.appendChild(img);
+       }else holder.appendChild(matchsEl('span','mnext-no-logo','⚽'));
+       return holder;
+     };
+     const h=creerLogo(m.homeLogo,homeName);
      const score=matchsEl('span','mnext-score',m.status==='upcoming'?(m.time||'À venir'):((m.homeGoals??'0')+' - '+(m.awayGoals??'0')));
      if(m.status==='live')score.appendChild(matchsEl('small','','EN DIRECT'));
-     const a=matchsEl('span','mnext-team',matchsNomAnglais(m.away,m.awayLogo)||'Team 2');a.dir='auto';
+     const a=creerLogo(m.awayLogo,awayName);
      b.append(h,score,a);b.addEventListener('click',()=>matchsOuvrir(m));list.appendChild(b);
    });
    wrap.hidden=autres.length===0;
