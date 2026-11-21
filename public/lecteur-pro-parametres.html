@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#07130f">
+<title>Paramètres — Lecteur Pro</title>
+<style>
+:root{color-scheme:dark;--bg:#07130f;--panel:#102019;--panel2:#172b22;--text:#f2faf5;--muted:#9db5a7;--green:#20c77a;--blue:#36a9ff;--line:#294637}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 10% 0,rgba(32,199,122,.19),transparent 34%),radial-gradient(ellipse at 95% 80%,rgba(54,169,255,.12),transparent 36%),var(--bg);color:var(--text);font:15px/1.5 Inter,"Segoe UI",system-ui,sans-serif}
+.wrap{width:min(1050px,calc(100% - 30px));margin:auto;padding:22px 0 48px}
+header{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding-bottom:18px;border-bottom:1px solid var(--line)}
+.brand{font-size:18px;font-weight:950;letter-spacing:.7px}.brand span{color:var(--green)}
+a,button{font:inherit}
+.back,.reset{border:1px solid var(--line);border-radius:11px;padding:10px 14px;background:var(--panel2);color:var(--text);text-decoration:none;font-weight:750;cursor:pointer}
+.hero{padding:32px 0 22px}.eyebrow{color:var(--green);font-size:11px;font-weight:900;letter-spacing:2px}.hero h1{font-size:clamp(30px,6vw,44px);line-height:1.1;margin:8px 0}.hero p{color:var(--muted);max-width:650px;margin:0}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.card{min-width:0;padding:22px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(145deg,rgba(16,32,25,.97),rgba(14,29,42,.96));box-shadow:0 14px 35px #0003}
+.card-head{display:flex;align-items:center;gap:12px;margin-bottom:18px}.ico{width:42px;height:42px;display:grid;place-items:center;border-radius:13px;background:linear-gradient(140deg,var(--green),#087c78);font-size:20px}.card h2{font-size:17px;margin:0}.card-head small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.field{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 0;border-top:1px solid rgba(157,181,167,.13)}.field:first-of-type{border-top:0}.field-copy{min-width:0}.field-copy strong{display:block;font-size:14px}.field-copy small{display:block;color:var(--muted);font-size:12px;margin-top:3px}
+select{min-width:145px;max-width:48%;padding:10px;border-radius:10px;border:1px solid var(--line);background:#0a1912;color:var(--text)}
+input[type=range]{width:min(190px,45%);accent-color:var(--green)}
+.switch{position:relative;flex:none;width:48px;height:27px}.switch input{opacity:0;width:0;height:0}.track{position:absolute;inset:0;border-radius:30px;background:#43584c;cursor:pointer;transition:.2s}.track:before{content:"";position:absolute;width:19px;height:19px;left:4px;top:4px;background:white;border-radius:50%;transition:.2s}.switch input:checked+.track{background:var(--green)}.switch input:checked+.track:before{transform:translateX(21px)}
+.value{min-width:48px;text-align:right;color:var(--green);font-weight:800;font-variant-numeric:tabular-nums}
+.footer{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-top:18px;padding:16px 2px}.status{color:#7ee6b4;font-size:13px;min-height:20px}.reset{border-color:#79504a;color:#ffd5cb}
+@media(max-width:700px){.grid{grid-template-columns:1fr}.card{padding:18px}.field{gap:8px}.field-copy{max-width:65%}select{min-width:120px}.hero{padding-top:25px}}
+</style>
+</head>
+<body>
+<main class="wrap">
+<header><div class="brand">🎬 <span>LECTEUR</span> PRO <small style="display:block;color:var(--muted);font-size:10px;letter-spacing:2px">CENTRE DE CONFIGURATION</small></div><a class="back" href="television.html">← Retour au lecteur</a></header>
+<section class="hero"><div class="eyebrow">VOTRE EXPÉRIENCE, VOS RÈGLES</div><h1>Paramètres du lecteur</h1><p>Configurez l'apparence, la lecture, les sous-titres et le son dans un espace dédié. Vos choix sont enregistrés sur cet appareil pour Lecteur Pro.</p></section>
+<div class="grid">
+<section class="card"><div class="card-head"><div class="ico">🎨</div><div><h2>Apparence</h2><small>Personnalisez l'interface du lecteur</small></div></div>
+<div class="field"><div class="field-copy"><strong>Thème du lecteur</strong><small>Choisissez votre ambiance visuelle</small></div><select id="theme"><option value="dark">Sombre</option><option value="light">Clair</option><option value="gold">Doré</option></select></div>
+</section>
+<section class="card"><div class="card-head"><div class="ico">▶️</div><div><h2>Lecture</h2><small>Comportement de vos médias</small></div></div>
+<div class="field"><div class="field-copy"><strong>Reprendre la lecture</strong><small>Retrouver la dernière position du média</small></div><label class="switch"><input id="resume" type="checkbox"><span class="track"></span></label></div>
+<div class="field"><div class="field-copy"><strong>Sous-titres automatiques</strong><small>Charger les sous-titres disponibles automatiquement</small></div><label class="switch"><input id="autosub" type="checkbox"><span class="track"></span></label></div>
+</section>
+<section class="card"><div class="card-head"><div class="ico">💬</div><div><h2>Sous-titres</h2><small>Réglez le confort de lecture</small></div></div>
+<div class="field"><div class="field-copy"><strong>Taille du texte</strong><small>Dimension des sous-titres à l'écran</small></div><input id="subSize" type="range" min="14" max="64" step="1"><span class="value" id="subSizeValue"></span></div>
+<div class="field"><div class="field-copy"><strong>Fond noir</strong><small>Améliorer la lisibilité du texte</small></div><label class="switch"><input id="subBg" type="checkbox"><span class="track"></span></label></div>
+</section>
+<section class="card"><div class="card-head"><div class="ico">🔊</div><div><h2>Son</h2><small>Volume général du lecteur</small></div></div>
+<div class="field"><div class="field-copy"><strong>Volume par défaut</strong><small>Réglage mémorisé pour vos prochaines lectures</small></div><input id="vol" type="range" min="0" max="200" step="1"><span class="value" id="volValue"></span></div>
+<div class="field"><div class="field-copy"><strong>Démarrer en mode muet</strong><small>Couper le son au démarrage du lecteur</small></div><label class="switch"><input id="muted" type="checkbox"><span class="track"></span></label></div>
+</section>
+</div>
+<div class="footer"><div><div class="status" id="status" role="status">Paramètres chargés.</div><small style="color:var(--muted)">Les modifications sont enregistrées automatiquement.</small></div><button class="reset" id="reset" type="button">↺ Réinitialiser</button></div>
+</main>
+<script>
+(()=>{const KEY='lp_settings',defaults={resume:true,autosub:true,subSize:28,subBg:true,eq:'flat',eqGains:Array(10).fill(0),theme:'dark',vol:100,muted:false};const $=id=>document.getElementById(id);let S={...defaults};try{S={...S,...JSON.parse(localStorage.getItem(KEY)||'{}')}}catch(_){}
+const ids=['theme','resume','autosub','subSize','subBg','vol','muted'];
+function paint(){ $('theme').value=['dark','light','gold'].includes(S.theme)?S.theme:'dark';$('resume').checked=S.resume!==false;$('autosub').checked=S.autosub!==false;$('subSize').value=Number(S.subSize)||28;$('subBg').checked=S.subBg!==false;$('vol').value=Number(S.vol)||0;$('muted').checked=!!S.muted;values();}
+function values(){$('subSizeValue').textContent=$('subSize').value;$('volValue').textContent=$('vol').value+' %';}
+function save(){S.theme=$('theme').value;S.resume=$('resume').checked;S.autosub=$('autosub').checked;S.subSize=Number($('subSize').value);S.subBg=$('subBg').checked;S.vol=Number($('vol').value);S.muted=$('muted').checked;try{localStorage.setItem(KEY,JSON.stringify(S));$('status').textContent='✓ Modifications enregistrées. Elles seront appliquées au retour dans Lecteur Pro.'}catch(_){$('status').textContent='Impossible d’enregistrer dans ce navigateur.'}values();}
+ids.forEach(id=>$(id).addEventListener('input',save));$('reset').addEventListener('click',()=>{if(!confirm('Réinitialiser les paramètres de Lecteur Pro ?'))return;S={...defaults,eqGains:[...defaults.eqGains]};paint();save();});paint();
+})();
+</script>
+</body></html>
