@@ -3326,7 +3326,7 @@ function renderResume() {
  const youtubeTab = $('youtubeTab'), youtubePane = $('youtubePane'), youtubeFrame = $('youtubeFrame');
  const tvTab = $('tvTab');
  const radioTab = $('radioTab'), radioPane = $('radioPane'), radioAudio = $('radioAudio'), radioEmbedWrap = $('radioEmbedWrap'), radioEmbedFrame = $('radioEmbedFrame');
- let radioActive = false, radioCurrentKey = 'franceinter';
+ let radioActive = false, radioCurrentKey = 'franceinter', radioLoadedKey = '';
  const radioStations = {
   franceinter:{name:'France Inter',url:'https://icecast.radiofrance.fr/franceinter-midfi.mp3?id=openapi',official:'https://www.radiofrance.fr/franceinter'},
   franceinfo:{name:'franceinfo',url:'https://icecast.radiofrance.fr/franceinfo-midfi.mp3?id=openapi',official:'https://www.radiofrance.fr/franceinfo'},
@@ -3350,7 +3350,7 @@ function renderResume() {
   bbcworld:{name:'BBC World Service',url:'https://stream.live.vc.bbcmedia.co.uk/bbc_world_service',official:'https://www.bbc.com/audio'}
  };
  function radioSelect(key,autoplay=true) {
-  const station=radioStations[key];if(!station)return;radioCurrentKey=key;radioAudio.pause();
+  const station=radioStations[key];if(!station)return;radioCurrentKey=key;radioLoadedKey=key;radioAudio.pause();
   if(station.embedUrl){radioAudio.hidden=true;radioAudio.removeAttribute('src');radioAudio.load();radioEmbedFrame.src=station.embedUrl;radioEmbedWrap.hidden=false;$('radioPlay').hidden=true;}
   else{radioEmbedFrame.src='about:blank';radioEmbedWrap.hidden=true;radioAudio.hidden=false;radioAudio.src=station.url;radioAudio.load();$('radioPlay').hidden=false;}
   $('radioNowPlaying').textContent='📻 '+station.name;$('radioOfficial').href=station.official;$('nowPlaying').textContent='📻 RADIO · '+station.name;
@@ -3359,8 +3359,8 @@ function renderResume() {
   if(autoplay&&!station.embedUrl)radioAudio.play().then(()=>{$('radioStatus').textContent='En direct · '+station.name;updatePlayBtn();}).catch(()=>{$('radioStatus').textContent='Lecture non démarrée. Appuyez sur ▶ ou ouvrez le site officiel.';updatePlayBtn();});
  }
  function radioNavigate(direction){const keys=Object.keys(radioStations);let i=keys.indexOf(radioCurrentKey);i=(i+direction+keys.length)%keys.length;radioSelect(keys[i]);osd('📻 '+radioStations[keys[i]].name);}
- function radioHide(){if(!radioPane)return;radioPane.hidden=true;if(radioActive){radioActive=false;radioAudio.pause();radioAudio.removeAttribute('src');radioAudio.load();radioEmbedFrame.src='about:blank';radioEmbedWrap.hidden=true;}}
- function radioShow(){tvHide();fifaHide();matchsHide();tvDriveHide();youtubeHide();cacherOngletMesFilms();radioActive=true;$('playlist').hidden=true;radioPane.hidden=false;$('tabs').querySelectorAll('button').forEach(b=>b.classList.toggle('active',b===radioTab));radioSelect(radioCurrentKey,true);}
+ function radioHide(){if(!radioPane)return;radioPane.hidden=true;radioActive=false;/* Garder le flux audio ou le lecteur intégré chargé : le retour à Radio reprend exactement la station en cours. */}
+ function radioShow(){tvHide();fifaHide();matchsHide();tvDriveHide();youtubeHide();cacherOngletMesFilms();radioActive=true;$('playlist').hidden=true;radioPane.hidden=false;$('tabs').querySelectorAll('button').forEach(b=>b.classList.toggle('active',b===radioTab));if(radioLoadedKey!==radioCurrentKey)radioSelect(radioCurrentKey,true);else{setMode('audio');updatePlayBtn();}}
  // Menu Stations Radio : gestion directe et fermeture fiable.
  const radioStationsButton=$('radioStationsToggle'), radioStationsMenu=$('radioStations');
  if(radioStationsButton&&radioStationsMenu){
