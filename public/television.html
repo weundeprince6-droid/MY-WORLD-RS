@@ -4600,29 +4600,58 @@ playbackDock.innerHTML = '<span id="mwrsPlaybackLabel" style="max-width:min(42vw
 document.body.appendChild(playbackDock);
 function playbackDockRefresh() {
   const label=$('mwrsPlaybackLabel');
-  if(!playbackKind){playbackDock.style.display='none';return;}
-  const names={local:items[current]?.name||'Fichier en cours',youtube:'YouTube · '+(youtubeCurrentTitle||youtubeCurrentId||'Vidéo'),tv:'TV · '+(tvStations[tvCurrentStationKey]?.name||'Chaîne en direct'),radio:'Radio · '+(radioStations[radioCurrentKey]?.name||'Station en direct')};
-  if(label)label.textContent=names[playbackKind]||'Lecture en cours';
-  let visible=false;
-  if(playbackKind==='local') visible=!!items[current] && document.body.dataset.mode===items[current].type;
-  else if(playbackKind==='youtube') visible=document.body.dataset.mode==='youtube' && youtubePane.hidden;
-  else if(playbackKind==='tv') visible=!!tvPane && !tvPane.hidden;
-  else if(playbackKind==='radio') visible=!!radioPane && !radioPane.hidden;
   const resume=$('mwrsPlaybackResume');
-  resume.textContent=visible?'↗ Afficher':'↩ Reprendre';
-  resume.title=visible?'Réafficher le lecteur':'Revenir à la lecture en cours';
+  if(!playbackKind){playbackDock.style.display='none';return;}
+  const it=items[current];
+  const valid=(playbackKind==='local' && !!it)
+    || (playbackKind==='youtube' && !!youtubeCurrentId)
+    || (playbackKind==='tv' && !!tvStations[tvCurrentStationKey])
+    || (playbackKind==='radio' && !!radioStations[radioCurrentKey]);
+  if(!valid){playbackKind='';playbackDock.style.display='none';return;}
+  const names={local:it?.name||'Fichier en cours',youtube:'YouTube · '+(youtubeCurrentTitle||youtubeCurrentId),tv:'TV · '+(tvStations[tvCurrentStationKey]?.name||'Chaîne en direct'),radio:'Radio · '+(radioStations[radioCurrentKey]?.name||'Station en direct')};
+  if(label)label.textContent=names[playbackKind]||'Lecture en cours';
+  let visible=false, paused=false;
+  if(playbackKind==='local'){
+    visible=document.body.dataset.mode===it.type;
+    const m=activeMedia(); paused=!!m && (m.paused || m.ended);
+  }else if(playbackKind==='youtube'){
+    visible=document.body.dataset.mode==='youtube' && youtubePane.hidden;
+    paused=!!youtubePaused;
+  }else if(playbackKind==='tv'){
+    visible=!!tvPane && !tvPane.hidden;
+  }else if(playbackKind==='radio'){
+    visible=!!radioPane && !radioPane.hidden;
+    paused=!!radioStations[radioCurrentKey]?.url && !radioStations[radioCurrentKey]?.embedUrl && radioAudio.paused;
+  }
+  resume.hidden=visible && !paused;
+  resume.textContent=paused?'▶ Continuer':(visible?'▶ Continuer':'↩ Revenir');
+  resume.title=paused?'Reprendre la lecture en pause':'Afficher le lecteur actuellement actif';
   playbackDock.style.display='flex';
 }
 function playbackDockResume() {
   if(!playbackKind)return;
-  if(playbackKind==='tv'){tvShow();return;}
-  if(playbackKind==='radio'){radioShow();return;}
+  if(playbackKind==='tv'){tvShow();playbackDockRefresh();return;}
+  if(playbackKind==='radio'){
+    radioShow();
+    const station=radioStations[radioCurrentKey];
+    if(station && !station.embedUrl && radioAudio.paused) radioAudio.play().catch(()=>{ $('radioStatus').textContent='Appuyez sur Lecture pour reprendre la radio.'; });
+    playbackDockRefresh();return;
+  }
   tvHide();radioHide();fifaHide();matchsHide();tvDriveHide();youtubeHide();cacherOngletMesFilms();
   const spotify=$('spotifyPane');if(spotify)spotify.hidden=true;
   const web=$('webReaderPane');if(web)web.hidden=true;
-  if(playbackKind==='youtube'){youtubeShow();return;}
+  if(playbackKind==='youtube'){
+    youtubeShow();
+    if(youtubePaused){youtubeCommand('playVideo');youtubePaused=false;updatePlayBtn();}
+    playbackDockRefresh();return;
+  }
   const it=items[current];
-  if(it){$('playlist').hidden=false;setMode(it.type);$('nowPlaying').textContent=it.name;$('tabs').querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.filter==='all'));}
+  if(it){
+    $('playlist').hidden=false;setMode(it.type);$('nowPlaying').textContent=it.name;
+    $('tabs').querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.filter==='all'));
+    const m=activeMedia();
+    if(m && (m.paused || m.ended)){if(m.ended)m.currentTime=0;m.play().catch(()=>osd('Appuyez sur Lecture pour reprendre le média.'));}
+  }
   playbackDockRefresh();
 }
 function playbackDockClose() {
