@@ -1406,7 +1406,7 @@ body[data-mode="matchs"] #sidebar #matchsNext:not([hidden]){display:flex}
           <div id="matchsNext" aria-label="Autres matchs en direct ou à venir"><div class="matchs-next-title">⚽ Autres matchs en direct ou au programme</div><div id="matchsNextList"></div></div>
           <div id="matchsMsg" hidden></div>
           <div id="matchsHot" title="Afficher les commandes"></div>
-          <div id="matchsBar"><button id="mpBack" type="button">← Liste des matchs</button><span id="mpTitle"></span><span id="mpServers"></span><button id="mpAutoOk" type="button" hidden title="Arrêter le changement automatique quand la lecture fonctionne">✓ Lecture OK</button><button id="mpReload" type="button" title="Recharger le lecteur">↻</button><button id="mpFS" type="button">⛶ Plein écran</button><span id="mpOpen" title="Les ouvertures externes sont désactivées" style="font-size:12px;color:#b9d8c4;padding:7px 8px">Navigation externe bloquée</span></div>
+          <div id="matchsBar"><button id="mpBack" type="button">← Liste des matchs</button><span id="mpTitle"></span><span id="mpServers"></span><button id="mpReload" type="button" title="Recharger le lecteur">↻</button><button id="mpFS" type="button">⛶ Plein écran</button><span id="mpOpen" title="Les ouvertures externes sont désactivées" style="font-size:12px;color:#b9d8c4;padding:7px 8px">Navigation externe bloquée</span></div>
         </div>
         <div id="matchsFloat"><button id="matchsList" type="button">← Liste des matchs</button><button id="matchsFS" type="button">⛶ Plein écran</button></div>
         <iframe id="matchsFrame" title="Kooralive - site complet" loading="lazy" sandbox="allow-scripts allow-same-origin allow-forms allow-presentation" referrerpolicy="no-referrer" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
@@ -4018,62 +4018,28 @@ function renderResume() {
    wrap.hidden=autres.length===0;
  }
  function matchsMontrerListe() { matchsVue('liste'); matchsCharger(); }
- let matchsAutoTimer = 0, matchsServeursEssai = [], matchsServeurIndex = 0, matchsAutoActif = false;
- const MATCHS_DELAI_SERVEUR = 18000;
- function matchsStopAuto(confirmation = false) {
-   clearTimeout(matchsAutoTimer); matchsAutoTimer = 0; matchsAutoActif = false;
-   const ok = $('mpAutoOk'); if (ok) ok.textContent = confirmation ? '✓ Lecture confirmée' : '✓ Lecture OK';
- }
- function matchsEssayerSuivant() {
-   clearTimeout(matchsAutoTimer);
-   if (!matchsAutoActif || !matchsInfo) return;
-   matchsServeurIndex++;
-   if (matchsServeurIndex >= matchsServeursEssai.length) {
-     matchsStopAuto();
-     const msg = $('matchsMsg');
-     msg.textContent = 'Aucun serveur ne semble répondre après plusieurs essais. Vous pouvez sélectionner un serveur manuellement ou réessayer.';
-     msg.hidden = false; matchsMontrerBarre(0); return;
-   }
-   matchsChargerServeurCourant();
- }
- function matchsChargerServeurCourant() {
-   if (!matchsInfo || !matchsServeursEssai.length) return;
-   const n = matchsServeursEssai[matchsServeurIndex], msg = $('matchsMsg');
-   if (matchsAutoActif) {
-     msg.textContent = ''; msg.hidden = true; $('mpTitle').textContent = matchsCourant.home + ' – ' + matchsCourant.away; matchsAutoTimer = setTimeout(matchsEssayerSuivant, MATCHS_DELAI_SERVEUR);
-   } else msg.hidden = true;
-   mpFrame.src = matchsInfo.playerUrl + (n ? '?serv=' + n : '');
-   $('mpServers').querySelectorAll('button[data-n]').forEach(btn => btn.classList.toggle('on', +btn.dataset.n === n));
- }
  function matchsServeur(n) {
-   if (!matchsInfo) return;
-   matchsStopAuto();
-   const i = matchsServeursEssai.indexOf(n); matchsServeurIndex = i >= 0 ? i : 0;
-   $('matchsMsg').hidden = true; matchsChargerServeurCourant();
+   if (!matchsInfo) return; $('matchsMsg').hidden = true;
+   mpFrame.src = matchsInfo.playerUrl + (n ? '?serv=' + n : '');
+   $('mpServers').querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.n === n));
  }
  async function matchsOuvrir(m) {
-   matchsStopAuto(); matchsCourant = m; matchsInfo = null; matchsProchainsAfficher(); matchsVue('lecteur');
+   matchsCourant = m; matchsInfo = null; matchsProchainsAfficher(); matchsVue('lecteur');
    const titre = m.home + ' – ' + m.away; $('mpTitle').textContent = titre; $('mpTitle').dir = 'auto'; $('nowPlaying').textContent = '⚽ ' + titre;
    $('mpServers').replaceChildren();
-   const msg = $('matchsMsg'); msg.textContent = 'Recherche des serveurs disponibles…'; msg.hidden = false; matchsMontrerBarre(4500);
+   const msg = $('matchsMsg'); msg.textContent = 'Ouverture du lecteur…'; msg.hidden = false; matchsMontrerBarre(4500);
    try {
-     const r = await fetch(MATCHS_API + 'player?u=' + encodeURIComponent(m.link)), j = await r.json();
+     const r = await fetch(MATCHS_API + 'player?u=' + encodeURIComponent(m.link)); const j = await r.json();
      if (!r.ok) throw new Error(j.error || 'Lecteur indisponible');
-     matchsInfo = j;
-     matchsServeursEssai = [...new Set([0, ...(Array.isArray(j.servers) ? j.servers.map(s => Number(s.n)).filter(Number.isFinite) : [])])];
-     const box = $('mpServers');
-     (j.servers || []).forEach(s => { const btn = matchsEl('button', '', 'Serveur ' + s.n); btn.type = 'button'; btn.dataset.n = s.n; btn.title = s.label || ''; btn.addEventListener('click', () => matchsServeur(Number(s.n))); box.appendChild(btn); });
-     matchsServeurIndex = 0; matchsAutoActif = matchsServeursEssai.length > 1;
-     const ok = $('mpAutoOk'); if (ok) { ok.hidden = false; ok.textContent = '✓ Lecture OK'; }
-     matchsChargerServeurCourant();
+     matchsInfo = j; const box = $('mpServers');
+     j.servers.forEach(s => { const b = matchsEl('button', '', 'Serveur ' + s.n); b.type = 'button'; b.dataset.n = s.n; b.title = s.label || ''; b.addEventListener('click', () => matchsServeur(s.n)); box.appendChild(b); });
+     matchsServeur(0);
    } catch (e) {
-     msg.textContent = 'Impossible de récupérer les serveurs (' + (e.message || 'erreur') + '). Réessayez ou choisissez un autre match.';
-     msg.hidden = false; matchsMontrerBarre(0);
+     msg.textContent = 'Le lecteur de ce match ne s’ouvre pas (' + (e.message || 'erreur') + ').\nLes ouvertures vers le navigateur sont bloquées. Essayez un autre serveur ou un autre match.'; msg.hidden = false; matchsMontrerBarre(0);
    }
  }
  $('mpBack')?.addEventListener('click', () => { matchsQuitterPE(); matchsMontrerListe(); $('nowPlaying').textContent = '⚽ Matchs en direct'; });
- $('mpAutoOk')?.addEventListener('click', () => { matchsStopAuto(true); $('matchsMsg').hidden = true; });
- $('mpReload')?.addEventListener('click', () => { if (matchsInfo) { matchsStopAuto(); matchsServeurIndex = 0; matchsAutoActif = matchsServeursEssai.length > 1; matchsChargerServeurCourant(); } else if (matchsCourant) matchsOuvrir(matchsCourant); });
+ $('mpReload')?.addEventListener('click', () => { if (matchsInfo) { const s = $('mpServers').querySelector('button.on'); matchsServeur(s ? +s.dataset.n : 0); } else if (matchsCourant) matchsOuvrir(matchsCourant); });
  $('mpFS')?.addEventListener('click', () => { if (document.fullscreenElement === matchsPane) matchsQuitterPE(); else matchsPleinEcran(); });
  $('matchsPane')?.querySelectorAll('.mdays button').forEach(b => b.addEventListener('click', () => {
    matchsJour = b.dataset.day; $('matchsPane').querySelectorAll('.mdays button').forEach(x => x.classList.toggle('on', x === b)); matchsCharger();
