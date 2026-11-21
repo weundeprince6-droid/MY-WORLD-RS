@@ -144,6 +144,19 @@
 @media(max-width:560px){#pane-dashboard .dashboard-news{padding:14px}#pane-dashboard .dashboard-news-heading{align-items:flex-start}#pane-dashboard .dashboard-news-heading h2{font-size:18px}#pane-dashboard .dashboard-news-card{padding:13px}#pane-dashboard .dashboard-news-card h3{font-size:15px}}
 </style>
 
+<style id="menu-demarrage-style">
+#tableau.menu-demarrage .workspace{display:block;max-width:1180px;margin:clamp(18px,5vh,56px) auto;padding:0 22px}
+#tableau.menu-demarrage .sidebar{width:100%;max-width:none;box-sizing:border-box;border:0;background:transparent;box-shadow:none;padding:0}
+#tableau.menu-demarrage .nav-caption{text-align:center;font-size:12px;margin:0 0 22px;letter-spacing:2px}
+#tableau.menu-demarrage .navigation{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:15px}
+#tableau.menu-demarrage .nav-item{min-height:112px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:12px;padding:18px 12px;border:1px solid var(--border);border-radius:18px;background:var(--surface);box-shadow:var(--shadow);text-align:center;font-size:14px;font-weight:750}
+#tableau.menu-demarrage .nav-item .nav-icon{width:auto;font-size:29px}
+#tableau.menu-demarrage .nav-item .nav-arrow{display:none}
+#tableau.menu-demarrage .nav-item.active{border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-soft),var(--shadow)}
+#tableau.menu-demarrage .sidebar-note,#tableau.menu-demarrage .sidebar-footer,#tableau.menu-demarrage .content-area{display:none!important}
+#tableau:not(.menu-demarrage) .retour-menus-wrap{display:flex;justify-content:flex-start;margin:0 0 4px}
+@media(max-width:560px){#tableau.menu-demarrage .workspace{margin:18px auto;padding:0 13px}#tableau.menu-demarrage .navigation{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}#tableau.menu-demarrage .nav-item{min-height:100px;padding:13px 7px;font-size:12px;border-radius:14px}#tableau.menu-demarrage .nav-item .nav-icon{font-size:25px}}
+</style>
 </head>
 <body>
   <header class="entete">
@@ -195,7 +208,7 @@
       <p class="meta">Votre profil est synchronisé avec Firebase lorsque vous enregistrez vos informations.</p>
       <p class="meta" id="adresse-page"></p>
     </section>
-    <div id="tableau" hidden>
+    <div id="tableau" class="menu-demarrage" hidden>
       <div class="workspace">
         <aside class="sidebar" aria-label="Navigation principale">
           <p class="nav-caption">MENU PRINCIPAL</p>
@@ -219,6 +232,7 @@
           <div class="sidebar-footer"><span class="status-dot"></span> Espace connecté</div>
         </aside>
         <div class="content-area">
+          <div class="retour-menus-wrap"><button type="button" id="retour-menus" class="btn btn-light">← Tous les menus</button></div>
           <section class="resume-jour"><div class="resume-contenu"><span class="summary-label">VOTRE RÉSUMÉ</span><p id="resume" aria-live="polite">Chargement…</p></div><div class="resume-actions"><button id="direct" class="direct" type="button" hidden title="Actualisation automatique : cliquez pour arrêter ou reprendre">● En direct</button><span id="derniere-maj" class="meta"></span></div></section>
           <section class="tab-pane active" id="pane-dashboard" role="tabpanel" data-root-pane="dashboard">
             <div class="section-heading"><div><p class="eyebrow">APERÇU GÉNÉRAL</p><h2>Vue d'ensemble</h2><p>Les informations importantes à portée de main.</p></div></div>
@@ -789,6 +803,8 @@
       document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!document.getElementById("academy-fenetre")?.hidden)fermerAcademyPleinEcran();});
       function ouvrirOnglet(nom) {
         fermerAcademyPleinEcran();
+        var tableau=document.getElementById("tableau");
+        if(tableau) tableau.classList.toggle("menu-demarrage",nom==="dashboard");
         var parent = nom === "messages" || nom === "social" ? "communication" : nom === "agenda" || nom === "notes" ? "organisation" : nom;
         document.querySelectorAll("[data-root-pane]").forEach(function (p) { var actif=p.dataset.rootPane===parent; p.hidden=!actif; p.classList.toggle("active",actif); });
         document.querySelectorAll("[data-tab]").forEach(function (b) { var actif=b.dataset.tab===parent; b.classList.toggle("active",actif); b.setAttribute("aria-selected",actif?"true":"false"); });
@@ -802,6 +818,7 @@
       }
       document.querySelectorAll("[data-subview]").forEach(function(b){b.addEventListener("click",function(){choisirSousVue(b.closest("[data-root-pane]").dataset.rootPane,b.dataset.subview);});});
       document.querySelectorAll("[data-tab]").forEach(function(b){b.addEventListener("click",function(){ouvrirOnglet(b.dataset.tab);});});
+      document.getElementById("retour-menus")?.addEventListener("click",function(){ouvrirOnglet("dashboard");window.scrollTo({top:0,behavior:"smooth"});});
       var lienClasse=document.getElementById("classroom-lien");if(lienClasse)lienClasse.addEventListener("click",function(){var u=new URL("webs-classroom.html",location.href).href;(navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(function(){lienClasse.textContent="Lien copié ✓";},function(){prompt("Copiez ce lien :",u);});});
       document.querySelectorAll("[data-go]").forEach(function(b){b.addEventListener("click",function(){ouvrirOnglet(b.dataset.go);});});
       document.querySelectorAll("[data-finance-view]").forEach(function(b){b.addEventListener("click",function(){
