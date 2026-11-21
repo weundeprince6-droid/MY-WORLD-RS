@@ -38,33 +38,39 @@ function classifyStatus(classes, state) {
   return "upcoming";
 }
 
+// La page peut arriver « compressée » (guillemets retirés : class=TM_Name) : on accepte les deux écritures.
+const CL = (n) => 'class=["\']?' + n + '["\']?(?:\\s[^>]*)?>';
+const textOf = (re, s) => decode(firstMatch(re, s));
+
 export function parseMatches(html) {
   const out = [];
-  for (const part of html.split('<div class="AY_Match').slice(1)) {
-    const cls = firstMatch(/^([^"]*)"/, part);
+  for (const part of html.split(/<div class=["']?AY_Match/).slice(1)) {
+    const cls = firstMatch(/^([^"'>]*)/, part);
     const team = (n) => {
-      const blk = firstMatch(new RegExp('class="MT_Team TM' + n + '">([\\s\\S]*?)<div class="MT_Data"|class="MT_Team TM' + n + '">([\\s\\S]*?)</div>\\s*</div>\\s*</div>'), part) || part;
-      const seg = new RegExp('class="MT_Team TM' + n + '">([\\s\\S]*?class="TM_Name">[\\s\\S]*?)</div>').exec(part);
-      const b = seg ? seg[1] : blk;
-      const img = firstMatch(/<img [^>]*?src="(https?:[^"]+)"/, b) || firstMatch(/data-src="(https?:[^"]+)"/, b);
-      return { name: decode(firstMatch(/class="TM_Name">([\s\S]*?)$/, b)), logo: safeUrl(img) };
+      const st = new RegExp(CL("MT_Team TM" + n)).exec(part);
+      if (!st) return { name: "", logo: "" };
+      const rest = part.slice(st.index + st[0].length);
+      const end = rest.search(/class=["']?(?:MT_Data|MT_Team)/);
+      const blk = end < 0 ? rest : rest.slice(0, end);
+      const img = firstMatch(/\bsrc=["']?(https?:[^"'\s>]+)/, blk) || firstMatch(/data-src=["']?(https?:[^"'\s>]+)/, blk);
+      return { name: textOf(new RegExp(CL("TM_Name") + "([\\s\\S]*?)</div>"), blk), logo: safeUrl(img) };
     };
     const info = [...part.matchAll(/<li><span>([\s\S]*?)<\/span><\/li>/g)].map(m => decode(m[1]));
-    const a = /<a href="([^"]+)" title="([^"]*)">\s*<div class="MT_Mask"/.exec(part);
-    let link = a ? safeUrl(decode(a[1]).replace(/&amp;/g, "&"), PAGE_HOSTS) : "";
+    const a = /<a href=["']?([^"'\s>]+)["']?[^>]*>\s*<div class=["']?MT_Mask/.exec(part);
+    let link = a ? safeUrl(decode(a[1]), PAGE_HOSTS) : "";
     const t1 = team(1), t2 = team(2);
     if (!t1.name || !t2.name) continue;
     if (!slugOf(link)) { // pas de lien précis : on déduit la chaîne beIN à partir de son nom
       const slug = beinSlug(info[0]);
       link = slug ? "https://22.pinkshooters.com/" + slug : "";
     }
-    const goals = [...part.matchAll(/class="RS-goals">(\d*)</g)].map(m => m[1]);
+    const goals = [...part.matchAll(new RegExp(CL("RS-goals") + "(\\d*)<", "g"))].map(m => m[1]);
     out.push({
       home: t1.name, homeLogo: t1.logo, away: t2.name, awayLogo: t2.logo,
-      time: decode(firstMatch(/class="MT_Time">([\s\S]*?)<\/span>/, part)),
+      time: textOf(new RegExp(CL("MT_Time") + "([\\s\\S]*?)</span>"), part),
       homeGoals: goals[0] || "", awayGoals: goals[1] || "",
-      state: decode(firstMatch(/class="MT_Stat">([\s\S]*?)<\/div>/, part)),
-      status: classifyStatus(cls, decode(firstMatch(/class="MT_Stat">([\s\S]*?)<\/div>/, part))),
+      state: textOf(new RegExp(CL("MT_Stat") + "([\\s\\S]*?)</div>"), part),
+      status: /live|started|playing/i.test(cls) && !/not-started|soon/i.test(cls) ? "live" : /finish|ended/i.test(cls) ? "finished" : "upcoming",
       channel: info[0] || "", commentator: info[1] || "", league: info[2] || "", link, slug: slugOf(link)
     });
   }
