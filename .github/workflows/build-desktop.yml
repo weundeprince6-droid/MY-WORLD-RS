@@ -4,6 +4,14 @@ name: Application Windows Lecteur Pro
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - "public/television.html"
+      - "desktop/main.js"
+      - "desktop/preload.js"
+      - "desktop/telechargement.js"
+      - "desktop/package.json"
+      - ".github/workflows/build-desktop.yml"
 
 permissions:
   contents: write
