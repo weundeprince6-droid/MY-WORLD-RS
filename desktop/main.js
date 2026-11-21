@@ -370,7 +370,12 @@ function creerFenetre() {
     if (principal && !repli && /^https?:/i.test(url) && code !== -3) { repli = true; fenetre.loadFile(COPIE_LOCALE); }
   });
 
-  fenetre.loadURL(URL_EN_LIGNE);
+  // À chaque lancement, vider le cache Chromium puis charger la version web actuelle.
+  // Le paramètre de version évite de réutiliser une ancienne page conservée par Windows.
+  const urlActualisee = URL_EN_LIGNE + '?desktop=' + encodeURIComponent(app.getVersion());
+  fenetre.webContents.session.clearCache()
+    .then(() => { if (fenetre && !fenetre.isDestroyed()) fenetre.loadURL(urlActualisee, { extraHeaders: 'Cache-Control: no-cache\\r\\nPragma: no-cache\\r\\n' }); })
+    .catch(() => { if (fenetre && !fenetre.isDestroyed()) fenetre.loadURL(urlActualisee); });
   fenetre.on('closed', () => { fenetre = null; });
 }
 
