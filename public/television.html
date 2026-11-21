@@ -3662,7 +3662,7 @@ function renderResume() {
   function tvSelectStation(key) {
      tvFreeEmbedded = false;
     if (tvQuotaRefresh() <= 0 || tvQuotaBlocked) {
-      if (tvStationFrame) tvStationFrame.src = 'about:blank';
+      if (tvStationFrame) { tvStationFrame.src = 'about:blank'; delete tvStationFrame.dataset.mwrsLoaded; }
       return;
     }
     const station = tvStations[key]; if (!station) return;
@@ -3673,6 +3673,7 @@ function renderResume() {
     if (station.hls) srcStation = 'tv-direct.html?p=1&u=' + encodeURIComponent(station.hls) + (station.alts || []).map(a => '&u=' + encodeURIComponent(a)).join('') + '&n=' + encodeURIComponent(station.name) + '&q=' + encodeURIComponent(tvQualityGet());
     if (station.resolveLive) { try { const c = localStorage.getItem('mwrs_tv_live_' + key); if (c && /^[\w-]{6,20}$/.test(c)) srcStation = 'https://www.youtube.com/embed/' + c + '?autoplay=1&rel=0&playsinline=1&controls=1'; } catch {} }
     tvStationFrame.src = tvYoutube480(srcStation) || 'about:blank';
+    tvStationFrame.dataset.mwrsLoaded = '1';
     tvFitFrame();
     tvStationFrame.title = station.hls ? 'Chaîne de télévision en direct : ' + station.name : 'Chaîne de télévision en direct sur YouTube';
     tvStationFrame.name = 'tvStationFrame';
@@ -3715,7 +3716,8 @@ function renderResume() {
     tvQuotaPersist();
     tvQuotaSessionStart = 0;
     tvActive = false;
-    if (tvStationFrame) tvStationFrame.src = 'about:blank';
+    // Ne pas détruire le flux : il continue en arrière-plan et sera réaffiché
+    // exactement au même endroit lorsque l'utilisateur revient dans l'onglet TV.
     if (!tvDriveActive && mesFilmsPane.hidden && youtubePane.hidden && !matchsActive) $('playlist').hidden = false;
   }
   function tvShow() {
@@ -3726,7 +3728,9 @@ function renderResume() {
     $('tabs').querySelectorAll('button').forEach(b => b.classList.toggle('active', b === tvTab));
     tvFilterList();
     tvLoadFree();
-    if (tvQuotaRefresh() > 0 && !tvQuotaBlocked) tvSelectStation('france24');
+    // Au premier affichage, démarrer la chaîne par défaut. Aux retours suivants,
+    // conserver le flux et la chaîne déjà sélectionnés sans relancer la vidéo.
+    if (tvQuotaRefresh() > 0 && !tvQuotaBlocked && tvStationFrame && tvStationFrame.dataset.mwrsLoaded !== '1') tvSelectStation(tvCurrentStationKey || 'france24');
   }
 
   // ---- Chaînes gratuites hors YouTube (catalogue IPTV-org) : mélangées à la liste principale, lecture limitée à 480p ----
@@ -3992,9 +3996,13 @@ function renderResume() {
  spotifyTab?.addEventListener('click',spotifyShow);$('spotifyConnect')?.addEventListener('click',spotifyConnect);$('spotifySearchBtn')?.addEventListener('click',spotifySearch);$('spotifySearch')?.addEventListener('keydown',e=>{if(e.key==='Enter')spotifySearch();});$('spotifyLoad')?.addEventListener('click',spotifyLoad);spotifyLink?.addEventListener('keydown',e=>{if(e.key==='Enter')spotifyLoad();});$('tabs')?.addEventListener('click',e=>{if(!e.target.closest('#spotifyTab'))spotifyHide();});
  (async function spotifyHandleCallback(){const p=new URLSearchParams(window.location.search),code=p.get('code'),state=p.get('state'),error=p.get('error'),errorDescription=p.get('error_description');if(!code&&!error)return;try{if(error)throw Error('Spotify a refusé l’autorisation ('+error+'). '+(errorDescription||'Vérifiez que le compte choisi est autorisé dans Users Management et que l’URI de redirection correspond exactement.'));if(!state||state!==sessionStorage.getItem('mwrs_spotify_state'))throw Error('Vérification de sécurité OAuth échouée. Relancez la connexion dans le même navigateur.');await spotifyExchangeCode(code);sessionStorage.removeItem('mwrs_spotify_state');window.history.replaceState({},document.title,window.location.pathname+window.location.hash);spotifyStatus('Compte Spotify connecté. Vous pouvez maintenant rechercher des chansons.');spotifyShow();}catch(e){spotifyStatus(e.message);window.history.replaceState({},document.title,window.location.pathname+window.location.hash);}})();
  function youtubeShow() {
-   tvHide(); fifaHide(); matchsHide(); tvDriveHide(); cacherOngletMesFilms(); youtubePane.hidden = false;
+   tvHide(); fifaHide(); matchsHide(); tvDriveHide(); cacherOngletMesFilms();
+   // Si une vidéo YouTube est déjà en cours, réafficher la scène au lieu de la recouvrir
+   // par la page de recherche : la lecture et sa position restent dans le même iframe.
+   const lectureYouTubeEnCours = document.body.dataset.mode === 'youtube' && !!youtubeCurrentId;
+   youtubePane.hidden = lectureYouTubeEnCours;
    $('tabs').querySelectorAll('button').forEach(b => b.classList.toggle('active', b === youtubeTab));
-   if (document.body.dataset.mode !== 'youtube') setMode('empty');
+   if (!lectureYouTubeEnCours && document.body.dataset.mode !== 'youtube') setMode('empty');
    ytMajRetour();
    if (!ytResults.children.length) youtubeSearch('tendances RDC');
  }
