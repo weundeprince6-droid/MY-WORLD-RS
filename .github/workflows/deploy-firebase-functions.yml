@@ -3,13 +3,9 @@
 # FIREBASE_SERVICE_ACCOUNT_MY_WORLD_RS = JSON d'un compte de service Google autorisé à déployer Firebase.
 name: Déployer les Cloud Functions Firebase
 
+# Déploiement automatique désactivé : le projet Firebase n'est pas sur le plan Blaze.
+# Les licences Lecteur Pro tournent sur le Worker Cloudflare (cloudflare-licences/).
 on:
-  push:
-    branches: [main]
-    paths:
-      - "functions/**"
-      - "firebase.json"
-      - ".github/workflows/deploy-firebase-functions.yml"
   workflow_dispatch:
 
 permissions:

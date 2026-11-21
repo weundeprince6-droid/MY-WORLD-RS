@@ -32,7 +32,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/fireba
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import { firebaseConfig } from "./config.js";
 const app=initializeApp(firebaseConfig),auth=getAuth(app),provider=new GoogleAuthProvider();
-const base="https://us-central1-my-world-rs.cloudfunctions.net/";
+const base="https://lecteur-pro-licences.weundeprince6.workers.dev/";
 const $=id=>document.getElementById(id);
 let currentUser=null;
 function message(s,error=false){$("message").textContent=s;$("message").classList.toggle("error",error)}
