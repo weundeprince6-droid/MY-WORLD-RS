@@ -38,7 +38,10 @@ async function getUser(request, env) {
     d = await r.json();
   } catch (e) { throw new HttpError(503, "Vérification de connexion indisponible."); }
   const u = d && d.users && d.users[0];
-  if (!r.ok || !u) throw new HttpError(401, "Session invalide. Reconnectez-vous.");
+  if (!r.ok || !u) {
+    const why = d && d.error && d.error.message ? String(d.error.message).slice(0, 120) : "aucun compte";
+    throw new HttpError(401, "Session invalide. Reconnectez-vous. (" + why + ")");
+  }
   return { uid: u.localId, email: (u.email || "").toLowerCase(), email_verified: u.emailVerified === true };
 }
 async function getAdmin(request, env) {
