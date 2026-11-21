@@ -26,6 +26,18 @@ const beinSlug = (name) => {
 };
 const slugOf = (u) => { try { return new URL(u).pathname.split("/").filter(Boolean).pop() || ""; } catch (e) { return ""; } };
 
+// Statut du match : priorité aux classes explicites de Kooralive, puis au libellé du match.
+function classifyStatus(classes, state) {
+  const c = String(classes || "").toLowerCase();
+  const s = String(state || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const all = c + " " + s;
+  if (/not-started|not started|upcoming|scheduled|pas commence|a venir|لم تبدأ|لم يبدا|لم تبدأ بعد|لم يبدأ بعد/.test(all)) return "upcoming";
+  if (/finish|ended|full[ -]?time|\bft\b|termine|fin du match|انتهت|نهاية المباراة/.test(all)) return "finished";
+  if ((/live|started(?!\w)|playing|in[ -]?play/.test(c) && !/not-started/.test(c)) ||
+      /en direct|live|in[ -]?play|playing|1st half|2nd half|first half|second half|half[ -]?time|mi-temps|premiere mi-temps|deuxieme mi-temps|مباشر|الشوط|استراحة|جارية|بدأت|انطلقت/.test(s)) return "live";
+  return "upcoming";
+}
+
 export function parseMatches(html) {
   const out = [];
   for (const part of html.split('<div class="AY_Match').slice(1)) {
@@ -52,7 +64,7 @@ export function parseMatches(html) {
       time: decode(firstMatch(/class="MT_Time">([\s\S]*?)<\/span>/, part)),
       homeGoals: goals[0] || "", awayGoals: goals[1] || "",
       state: decode(firstMatch(/class="MT_Stat">([\s\S]*?)<\/div>/, part)),
-      status: /live|started(?!\w)|playing/i.test(cls) && !/not-started/.test(cls) ? "live" : /finish|ended/i.test(cls) ? "finished" : "upcoming",
+      status: classifyStatus(cls, decode(firstMatch(/class="MT_Stat">([\s\S]*?)<\/div>/, part))),
       channel: info[0] || "", commentator: info[1] || "", league: info[2] || "", link, slug: slugOf(link)
     });
   }
@@ -91,11 +103,11 @@ export default {
       if (route === "matches") {
         const day = DAYS[url.searchParams.get("day") || "today"];
         if (!day) return reply({ error: "Jour invalide." }, 400);
-        return await cached(request, 60, async () => {
+        return await cached(request, 15, async () => {
           const r = await fetch(SITE + day + "/", { headers: HEADERS });
           if (!r.ok) return reply({ error: "Kooralive indisponible (" + r.status + ")." }, 502);
           const matches = parseMatches(await r.text());
-          return reply({ day: url.searchParams.get("day") || "today", matches }, 200, 60);
+          return reply({ day: url.searchParams.get("day") || "today", matches, updatedAt: new Date().toISOString() }, 200, 15);
         });
       }
       if (route === "player") {
