@@ -886,19 +886,31 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
 #matchsPane.vue-lecteur .matchs-head,#matchsPane.vue-lecteur .matchs-help,#matchsPane.vue-site .matchs-head,#matchsPane.vue-site .matchs-help,#matchsPane:fullscreen .matchs-head,#matchsPane:fullscreen .matchs-help{display:none!important}
 #matchsPane.vue-lecteur #matchsPlayer{position:relative;flex:1;min-height:0;background:#000}
 #matchsPlayerFrame{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000}
-/* Suggestions dans la bande noire sous la vidéo, masquées en plein écran */
-#matchsNext{display:none;position:absolute;left:12px;right:12px;bottom:9px;z-index:6;padding:8px 10px 9px;border:1px solid rgba(255,255,255,.14);border-radius:12px;background:linear-gradient(110deg,rgba(5,12,9,.96),rgba(12,20,17,.88));color:#fff;box-shadow:0 5px 22px rgba(0,0,0,.35)}
-#matchsPane.vue-lecteur #matchsNext{display:block}
+/* Colonne verticale des autres matchs à droite du lecteur */
+#matchsPane.vue-lecteur #matchsPlayer{padding-right:clamp(190px,27vw,320px)}
+#matchsPane.vue-lecteur #matchsPlayerFrame{right:clamp(190px,27vw,320px);width:calc(100% - clamp(190px,27vw,320px))}
+#matchsNext{display:none;position:absolute;top:0;right:0;bottom:0;width:clamp(190px,27vw,320px);z-index:6;padding:12px 10px;border-left:1px solid #35463a;background:#101812;color:#fff;overflow:hidden;flex-direction:column;gap:9px}
+#matchsPane.vue-lecteur #matchsNext{display:flex}
 #matchsNext[hidden]{display:none!important}
-#matchsPane:fullscreen #matchsNext{display:none!important}
-.matchs-next-title{font-size:12px;font-weight:800;color:#e8bd5c;margin:0 0 7px}
-#matchsNextList{display:flex;gap:8px;overflow-x:auto;scrollbar-width:thin;padding-bottom:2px}
-.mnext-card{flex:0 0 190px;min-width:0;display:flex;align-items:center;gap:7px;padding:7px 9px;border:1px solid #455347;border-radius:9px;background:#17221b;color:#fff;text-align:center;cursor:pointer}
+.matchs-next-title{flex:none;font-size:12px;line-height:1.4;font-weight:800;color:#e8bd5c;margin:0;padding:2px 3px 8px;border-bottom:1px solid #35463a}
+#matchsNextList{display:flex;flex:1;min-height:0;flex-direction:column;gap:7px;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;padding:1px 2px 6px}
+.mnext-card{flex:none;width:100%;min-width:0;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:6px;padding:10px 7px;border:1px solid #35463a;border-radius:9px;background:#17221b;color:#fff;text-align:center;cursor:pointer}
 .mnext-card:hover{border-color:#e8bd5c;background:#223328}
-.mnext-team{flex:1;min-width:0;font-size:10px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.mnext-score{flex:none;font-size:11px;font-weight:900;white-space:nowrap}
+.mnext-team{min-width:0;font-size:10px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mnext-score{min-width:44px;font-size:11px;font-weight:900;white-space:nowrap}
 .mnext-score small{display:block;font-size:9px;color:#ff7777}
-@media(max-width:700px){#matchsNext{left:6px;right:6px;bottom:6px;padding:6px}.matchs-next-title{font-size:10px}.mnext-card{flex-basis:155px;padding:6px}.mnext-team{font-size:9px}}
+#matchsPane:fullscreen #matchsPlayer{padding-right:0}
+#matchsPane:fullscreen #matchsPlayerFrame{right:0;width:100%}
+#matchsPane:fullscreen #matchsNext{display:none!important}
+@media(max-width:700px){
+ #matchsPane.vue-lecteur #matchsPlayer{padding-right:min(42vw,190px)}
+ #matchsPane.vue-lecteur #matchsPlayerFrame{right:min(42vw,190px);width:calc(100% - min(42vw,190px))}
+ #matchsNext{width:min(42vw,190px);padding:8px 5px}
+ .matchs-next-title{font-size:10px;padding-bottom:6px}
+ .mnext-card{gap:3px;padding:8px 3px}
+ .mnext-team{font-size:9px}
+ .mnext-score{min-width:34px;font-size:10px}
+}
 #matchsMsg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;color:#fff;background:rgba(0,0,0,.8);z-index:3;white-space:pre-line}
 #matchsMsg[hidden]{display:none}
 #matchsHot{position:absolute;top:0;left:0;right:0;height:16px;z-index:4}
@@ -3911,10 +3923,29 @@ function renderResume() {
  mpBar?.addEventListener('mouseleave', () => matchsMontrerBarre(1200));
  mpBar?.addEventListener('mouseenter', () => { clearTimeout(matchsBarTimer); });
  mpBar?.addEventListener('click', () => matchsMontrerBarre(6000));
+ // Convertit les noms arabes courants en noms anglais; translittération anglaise pour les autres.
+ const matchsNomsArabes = {
+ 'الأهلي':'Al Ahly','الاهلي':'Al Ahly','الزمالك':'Zamalek','بيراميدز':'Pyramids FC',
+ 'ريال مدريد':'Real Madrid','برشلونة':'Barcelona','مانشستر سيتي':'Manchester City','مانشستر يونايتد':'Manchester United',
+ 'ليفربول':'Liverpool','أرسنال':'Arsenal','تشيلسي':'Chelsea','توتنهام':'Tottenham',
+ 'بايرن ميونخ':'Bayern Munich','بايرن ميونيخ':'Bayern Munich','بوروسيا دورتموند':'Borussia Dortmund',
+ 'باريس سان جيرمان':'Paris Saint-Germain','يوفنتوس':'Juventus','إنتر ميلان':'Inter Milan','ميلان':'AC Milan',
+ 'النصر':'Al Nassr','الهلال':'Al Hilal','الاتحاد':'Al Ittihad','الشباب':'Al Shabab',
+ 'الوداد':'Wydad AC','الرجاء':'Raja CA','الترجي':'Espérance de Tunis','الصفاقسي':'CS Sfaxien',
+ 'منتخب مصر':'Egypt','منتخب المغرب':'Morocco','منتخب الجزائر':'Algeria','منتخب تونس':'Tunisia'
+ };
+ const matchsTranslit={'ا':'a','أ':'a','إ':'i','آ':'aa','ب':'b','ت':'t','ث':'th','ج':'j','ح':'h','خ':'kh','د':'d','ذ':'dh','ر':'r','ز':'z','س':'s','ش':'sh','ص':'s','ض':'d','ط':'t','ظ':'z','ع':'a','غ':'gh','ف':'f','ق':'q','ك':'k','ل':'l','م':'m','ن':'n','ه':'h','و':'w','ؤ':'w','ي':'y','ى':'a','ئ':'y','ة':'a','ء':'','پ':'p','چ':'ch','گ':'g'};
+ function matchsNomAnglais(value){
+   const raw=String(value||'').trim();if(!raw)return '';
+   if(matchsNomsArabes[raw])return matchsNomsArabes[raw];
+   const cleaned=raw.replace(/[ًٌٍَُِّْـ]/g,'');
+   if(!/[\u0600-\u06FF]/.test(cleaned))return raw;
+   return cleaned.replace(/[\u0600-\u06FF]/g,ch=>matchsTranslit[ch]??'').replace(/\s+/g,' ').trim().replace(/\b\w/g,ch=>ch.toUpperCase());
+ }
  function matchsCarte(m) {
    const c = matchsEl('button', 'mcard'); c.type = 'button'; if (!m.link) c.disabled = true;
    const row = matchsEl('div', 'mrow');
-   const eq = (nom, logo) => { const t = matchsEl('div', 'mteam'); if (logo) { const i = document.createElement('img'); i.src = logo; i.alt = ''; i.loading = 'lazy'; i.referrerPolicy = 'no-referrer'; i.onerror = () => { i.style.visibility = 'hidden'; }; t.appendChild(i); } const n = matchsEl('span', '', nom); n.dir = 'auto'; t.appendChild(n); return t; };
+   const eq = (nom, logo) => { nom=matchsNomAnglais(nom); const t = matchsEl('div', 'mteam'); if (logo) { const i = document.createElement('img'); i.src = logo; i.alt = ''; i.loading = 'lazy'; i.referrerPolicy = 'no-referrer'; i.onerror = () => { i.style.visibility = 'hidden'; }; t.appendChild(i); } const n = matchsEl('span', '', nom); n.dir = 'auto'; t.appendChild(n); return t; };
    const mid = matchsEl('div', 'mmid');
    if (m.status === 'upcoming') mid.append(m.time || '—'); else { mid.append((m.homeGoals || '0') + ' - ' + (m.awayGoals || '0')); mid.appendChild(matchsEl('small', m.status === 'live' ? 'mlive' : '', m.state || (m.status === 'live' ? 'En direct' : 'Terminé'))); }
    row.append(eq(m.home, m.homeLogo), mid, eq(m.away, m.awayLogo)); c.appendChild(row);
@@ -3944,11 +3975,11 @@ function renderResume() {
    list.replaceChildren();
    const autres=matchsListeData.filter(m=>m && m.link && m.status!=='finished' && !(matchsCourant && (m.link===matchsCourant.link || (m.home===matchsCourant.home && m.away===matchsCourant.away))));
    autres.slice(0,10).forEach(m=>{
-     const b=matchsEl('button','mnext-card');b.type='button';b.title='Regarder '+m.home+' – '+m.away;
-     const h=matchsEl('span','mnext-team',m.home||'Équipe 1');h.dir='auto';
+     const b=matchsEl('button','mnext-card');b.type='button';b.title='Watch '+matchsNomAnglais(m.home)+' – '+matchsNomAnglais(m.away);
+     const h=matchsEl('span','mnext-team',matchsNomAnglais(m.home)||'Team 1');h.dir='auto';
      const score=matchsEl('span','mnext-score',m.status==='upcoming'?(m.time||'À venir'):((m.homeGoals??'0')+' - '+(m.awayGoals??'0')));
      if(m.status==='live')score.appendChild(matchsEl('small','','EN DIRECT'));
-     const a=matchsEl('span','mnext-team',m.away||'Équipe 2');a.dir='auto';
+     const a=matchsEl('span','mnext-team',matchsNomAnglais(m.away)||'Team 2');a.dir='auto';
      b.append(h,score,a);b.addEventListener('click',()=>matchsOuvrir(m));list.appendChild(b);
    });
    wrap.hidden=autres.length===0;
