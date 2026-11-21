@@ -1561,7 +1561,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
           <div id="matchsNext" aria-label="Autres matchs en direct ou à venir"><div class="matchs-next-title">⚽ Autres matchs en direct ou au programme</div><div id="matchsNextList"></div></div>
           <div id="matchsMsg" hidden></div>
           <div id="matchsHot" title="Afficher les commandes"></div>
-          <div id="matchsBar"><button id="mpBack" type="button">← Liste des matchs</button><span id="mpTitle"></span><span id="mpServers"></span><button id="mpReload" type="button" title="Recharger le lecteur">↻</button><button id="mpFS" type="button">⛶ Plein écran</button><span id="mpOpen" title="Les ouvertures externes sont désactivées" style="font-size:12px;color:#b9d8c4;padding:7px 8px">Navigation externe bloquée</span></div>
+          <div id="matchsBar"><button id="mpBack" type="button">← Liste des matchs</button><span id="mpTitle"></span><span id="mpServers"></span><button id="mpFS" type="button">⛶ Plein écran</button><span id="mpOpen" title="Les ouvertures externes sont désactivées" style="font-size:12px;color:#b9d8c4;padding:7px 8px">Navigation externe bloquée</span></div>
         </div>
         <div id="matchsFloat"><button id="matchsList" type="button">← Liste des matchs</button><button id="matchsFS" type="button">⛶ Plein écran</button></div>
         <iframe id="matchsFrame" title="Kooralive - site complet" loading="lazy" sandbox="allow-scripts allow-same-origin allow-forms allow-presentation" referrerpolicy="no-referrer" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
@@ -4269,7 +4269,6 @@ function renderResume() {
    }
  }
  $('mpBack')?.addEventListener('click', () => { matchsQuitterPE(); matchsMontrerListe(); $('nowPlaying').textContent = '⚽ Matchs en direct'; });
- $('mpReload')?.addEventListener('click', () => { if (matchsInfo) { const s = $('mpServers').querySelector('button.on'); matchsServeur(s ? +s.dataset.n : 0); } else if (matchsCourant) matchsOuvrir(matchsCourant); });
  $('mpFS')?.addEventListener('click', () => { if (document.fullscreenElement === matchsPane) matchsQuitterPE(); else matchsPleinEcran(); });
  $('matchsPane')?.querySelectorAll('.mdays button').forEach(b => b.addEventListener('click', () => {
    matchsJour = b.dataset.day; $('matchsPane').querySelectorAll('.mdays button').forEach(x => x.classList.toggle('on', x === b)); matchsListeData = []; matchsCharger();
