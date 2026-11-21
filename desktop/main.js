@@ -353,8 +353,12 @@ function creerFenetre() {
   fenetre.webContents.setUserAgent(UA);
 
   // Liens externes (Spotify, sites de chaînes…) : dans le navigateur habituel, pas dans la fenêtre du lecteur
-  fenetre.webContents.setWindowOpenHandler(({ url }) => {
-    if (/^https?:/i.test(url)) shell.openExternal(url);
+  fenetre.webContents.setWindowOpenHandler(({ url, referrer }) => {
+    // Les fenêtres déclenchées par les lecteurs de matchs restent bloquées :
+    // elles ne doivent jamais envoyer l'utilisateur vers son navigateur externe.
+    const source = String(referrer && referrer.url || '');
+    const depuisMatch = /(^|\\.)((kooralive\\.la)|(pinkshooters\\.com)|(shootinggames1\\.com))([/:?#]|$)/i.test(source);
+    if (/^https?:/i.test(url) && !depuisMatch) shell.openExternal(url);
     return { action: 'deny' };
   });
   // Un fichier lâché sur la fenêtre ne doit jamais faire quitter le lecteur
