@@ -3916,60 +3916,59 @@ function renderResume() {
  mpBar?.addEventListener('mouseleave', () => matchsMontrerBarre(1200));
  mpBar?.addEventListener('mouseenter', () => { clearTimeout(matchsBarTimer); });
  mpBar?.addEventListener('click', () => matchsMontrerBarre(6000));
- // Traduction des noms d'équipes arabes vers leurs appellations anglaises.
- // Normalisation des variantes d'écriture avant la recherche dans le dictionnaire.
+ // Identification des équipes : priorité au nom lisible dans l'URL du logo,
+ // puis au dictionnaire des noms connus. Ne jamais fabriquer un nom par translittération.
+ const matchsLogoNoms = {
+  'al-ahly':'Al Ahly','alahly':'Al Ahly','zamalek':'Zamalek','pyramids':'Pyramids FC',
+  'real-madrid':'Real Madrid','realmadrid':'Real Madrid','barcelona':'Barcelona','fc-barcelona':'Barcelona',
+  'manchester-city':'Manchester City','manchester-united':'Manchester United','liverpool':'Liverpool',
+  'arsenal':'Arsenal','chelsea':'Chelsea','tottenham':'Tottenham Hotspur','newcastle':'Newcastle United',
+  'bayern-munich':'Bayern Munich','borussia-dortmund':'Borussia Dortmund','psg':'Paris Saint-Germain',
+  'paris-saint-germain':'Paris Saint-Germain','juventus':'Juventus','inter-milan':'Inter Milan','ac-milan':'AC Milan',
+  'al-nassr':'Al Nassr','alnassr':'Al Nassr','al-hilal':'Al Hilal','alhilal':'Al Hilal',
+  'al-ittihad':'Al Ittihad','alittihad':'Al Ittihad','al-ahli':'Al Ahli Saudi FC',
+  'wydad':'Wydad AC','wydad-casablanca':'Wydad AC','raja':'Raja CA','raja-casablanca':'Raja CA',
+  'esperance':'Espérance de Tunis','esperance-tunis':'Espérance de Tunis','etoile-du-sahel':'Étoile du Sahel',
+  'js-kabylie':'JS Kabylie','mc-alger':'MC Alger','usm-alger':'USM Alger'
+ };
  const matchsNomsArabes = {
- 'الأهلي':'Al Ahly','الاهلي':'Al Ahly','النادي الأهلي':'Al Ahly','نادي الأهلي':'Al Ahly',
- 'الزمالك':'Zamalek','بيراميدز':'Pyramids FC','مودرن سبورت':'Modern Sport','فيوتشر':'Future FC',
- 'ريال مدريد':'Real Madrid','برشلونة':'Barcelona','مانشستر سيتي':'Manchester City','مانشستر يونايتد':'Manchester United',
- 'ليفربول':'Liverpool','أرسنال':'Arsenal','ارسنال':'Arsenal','تشيلسي':'Chelsea','توتنهام':'Tottenham Hotspur',
- 'نيوكاسل':'Newcastle United','أستون فيلا':'Aston Villa','استون فيلا':'Aston Villa','وست هام':'West Ham United',
- 'بايرن ميونخ':'Bayern Munich','بايرن ميونيخ':'Bayern Munich','بوروسيا دورتموند':'Borussia Dortmund',
- 'لايبزيغ':'RB Leipzig','باير ليفركوزن':'Bayer Leverkusen','باريس سان جيرمان':'Paris Saint-Germain',
- 'باريس':'Paris Saint-Germain','يوفنتوس':'Juventus','إنتر ميلان':'Inter Milan','انتر ميلان':'Inter Milan',
- 'ميلان':'AC Milan','إيه سي ميلان':'AC Milan','روما':'AS Roma','نابولي':'Napoli',
- 'أتلتيكو مدريد':'Atletico Madrid','اتلتيكو مدريد':'Atletico Madrid','إشبيلية':'Sevilla','اشبيلية':'Sevilla',
- 'النصر':'Al Nassr','نادي النصر':'Al Nassr','الهلال':'Al Hilal','نادي الهلال':'Al Hilal',
- 'الاتحاد':'Al Ittihad','اتحاد جدة':'Al Ittihad','الشباب':'Al Shabab','الأهلي السعودي':'Al Ahli Saudi FC',
- 'القادسية':'Al Qadsiah','التعاون':'Al Taawoun','الاتفاق':'Al Ettifaq','الفتح':'Al Fateh',
- 'الوحدة':'Al Wehda','ضمك':'Damac FC','الفيحاء':'Al Fayha','الرائد':'Al Raed',
- 'العين':'Al Ain','شباب الأهلي':'Shabab Al Ahli','الوصل':'Al Wasl','الشارقة':'Sharjah FC',
- 'السد':'Al Sadd','الدحيل':'Al Duhail','الريان':'Al Rayyan','الغرافة':'Al Gharafa',
- 'الوداد':'Wydad AC','الوداد الرياضي':'Wydad AC','الرجاء':'Raja CA','الرجاء الرياضي':'Raja CA',
- 'الجيش الملكي':'AS FAR','نهضة بركان':'RS Berkane','اتحاد طنجة':'Ittihad Tanger',
- 'الترجي':'Espérance de Tunis','الترجي الرياضي':'Espérance de Tunis','النجم الساحلي':'Étoile du Sahel',
- 'الصفاقسي':'CS Sfaxien','الاتحاد المنستيري':'US Monastir',
- 'شبيبة القبائل':'JS Kabylie','مولودية الجزائر':'MC Alger','اتحاد العاصمة':'USM Alger','وفاق سطيف':'ES Setif',
- 'منتخب مصر':'Egypt','مصر':'Egypt','منتخب المغرب':'Morocco','المغرب':'Morocco',
- 'منتخب الجزائر':'Algeria','الجزائر':'Algeria','منتخب تونس':'Tunisia','تونس':'Tunisia',
- 'منتخب السعودية':'Saudi Arabia','السعودية':'Saudi Arabia','منتخب قطر':'Qatar','قطر':'Qatar',
- 'منتخب العراق':'Iraq','العراق':'Iraq','منتخب الأردن':'Jordan','الأردن':'Jordan',
- 'منتخب الإمارات':'United Arab Emirates','الإمارات':'United Arab Emirates',
- 'منتخب سوريا':'Syria','سوريا':'Syria','منتخب لبنان':'Lebanon','لبنان':'Lebanon',
- 'منتخب فلسطين':'Palestine','فلسطين':'Palestine','منتخب الكويت':'Kuwait','الكويت':'Kuwait',
- 'منتخب البحرين':'Bahrain','البحرين':'Bahrain','منتخب عمان':'Oman','عمان':'Oman'
+  'الأهلي':'Al Ahly','الاهلي':'Al Ahly','النادي الأهلي':'Al Ahly','الزمالك':'Zamalek','بيراميدز':'Pyramids FC',
+  'ريال مدريد':'Real Madrid','برشلونة':'Barcelona','مانشستر سيتي':'Manchester City','مانشستر يونايتد':'Manchester United',
+  'ليفربول':'Liverpool','أرسنال':'Arsenal','ارسنال':'Arsenal','تشيلسي':'Chelsea','توتنهام':'Tottenham Hotspur',
+  'بايرن ميونخ':'Bayern Munich','بايرن ميونيخ':'Bayern Munich','بوروسيا دورتموند':'Borussia Dortmund',
+  'باريس سان جيرمان':'Paris Saint-Germain','يوفنتوس':'Juventus','إنتر ميلان':'Inter Milan','ميلان':'AC Milan',
+  'النصر':'Al Nassr','الهلال':'Al Hilal','الاتحاد':'Al Ittihad','الشباب':'Al Shabab',
+  'الوداد':'Wydad AC','الوداد الرياضي':'Wydad AC','الرجاء':'Raja CA','الرجاء الرياضي':'Raja CA',
+  'الترجي':'Espérance de Tunis','الترجي الرياضي':'Espérance de Tunis','النجم الساحلي':'Étoile du Sahel',
+  'شبيبة القبائل':'JS Kabylie','مولودية الجزائر':'MC Alger','اتحاد العاصمة':'USM Alger',
+  'منتخب مصر':'Egypt','مصر':'Egypt','منتخب المغرب':'Morocco','المغرب':'Morocco',
+  'منتخب الجزائر':'Algeria','الجزائر':'Algeria','منتخب تونس':'Tunisia','تونس':'Tunisia'
  };
  const matchsNormaliserArabe = value => String(value||'').normalize('NFKC')
-   .replace(/[\u064B-\u065F\u0670\u0640]/g,'')
-   .replace(/[أإآٱ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه')
-   .replace(/[.،,:;()\[\]{}]/g,' ').replace(/\s+/g,' ').trim();
+   .replace(/[\u064B-\u065F\u0670\u0640]/g,'').replace(/[أإآٱ]/g,'ا')
+   .replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/\s+/g,' ').trim();
  const matchsNomsArabesNormalises = Object.fromEntries(
    Object.entries(matchsNomsArabes).map(([k,v])=>[matchsNormaliserArabe(k),v])
  );
- const matchsTranslit={'ا':'a','أ':'a','إ':'i','آ':'aa','ٱ':'a','ب':'b','ت':'t','ث':'th','ج':'j','ح':'h','خ':'kh','د':'d','ذ':'dh','ر':'r','ز':'z','س':'s','ش':'sh','ص':'s','ض':'d','ط':'t','ظ':'z','ع':'a','غ':'gh','ف':'f','ق':'q','ك':'k','ل':'l','م':'m','ن':'n','ه':'h','و':'w','ؤ':'w','ي':'y','ى':'a','ئ':'y','ة':'a','ء':'','پ':'p','چ':'ch','گ':'g'};
- function matchsNomAnglais(value){
-   const raw=String(value||'').trim();if(!raw)return '';
-   const cleaned=matchsNormaliserArabe(raw);
-   const known=matchsNomsArabesNormalises[cleaned];
-   if(known)return known;
-   if(!/[\u0600-\u06FF]/.test(cleaned))return raw;
-   return cleaned.replace(/[\u0600-\u06FF]/g,ch=>matchsTranslit[ch]??'')
-     .replace(/\s+/g,' ').trim().replace(/\b\w/g,ch=>ch.toUpperCase());
+ function matchsNomAnglais(value, logo){
+   const raw=String(value||'').trim();
+   if(!raw)return '';
+   // Certains fournisseurs utilisent un slug de club dans le chemin du fichier du logo.
+   if(logo){
+     let path='';
+     try{path=decodeURIComponent(new URL(logo,location.href).pathname).toLowerCase();}catch(e){path=String(logo).toLowerCase();}
+     const slug=path.split('/').pop().replace(/\\.(png|jpe?g|svg|webp)(\\?.*)?$/i,'').replace(/[^a-z0-9-]/g,'');
+     if(matchsLogoNoms[slug])return matchsLogoNoms[slug];
+     for(const [key,name] of Object.entries(matchsLogoNoms))if(slug.includes(key))return name;
+   }
+   const known=matchsNomsArabesNormalises[matchsNormaliserArabe(raw)];
+   // Si aucune correspondance fiable n'existe, conserver le nom fourni plutôt que produire une translittération erronée.
+   return known||raw;
  }
  function matchsCarte(m) {
    const c = matchsEl('button', 'mcard'); c.type = 'button'; if (!m.link) c.disabled = true;
    const row = matchsEl('div', 'mrow');
-   const eq = (nom, logo) => { nom=matchsNomAnglais(nom); const t = matchsEl('div', 'mteam'); if (logo) { const i = document.createElement('img'); i.src = logo; i.alt = ''; i.loading = 'lazy'; i.referrerPolicy = 'no-referrer'; i.onerror = () => { i.style.visibility = 'hidden'; }; t.appendChild(i); } const n = matchsEl('span', '', nom); n.dir = 'auto'; t.appendChild(n); return t; };
+   const eq = (nom, logo) => { nom=matchsNomAnglais(nom, logo); const t = matchsEl('div', 'mteam'); if (logo) { const i = document.createElement('img'); i.src = logo; i.alt = ''; i.loading = 'lazy'; i.referrerPolicy = 'no-referrer'; i.onerror = () => { i.style.visibility = 'hidden'; }; t.appendChild(i); } const n = matchsEl('span', '', nom); n.dir = 'auto'; t.appendChild(n); return t; };
    const mid = matchsEl('div', 'mmid');
    if (m.status === 'upcoming') mid.append(m.time || '—'); else { mid.append((m.homeGoals || '0') + ' - ' + (m.awayGoals || '0')); mid.appendChild(matchsEl('small', m.status === 'live' ? 'mlive' : '', m.state || (m.status === 'live' ? 'En direct' : 'Terminé'))); }
    row.append(eq(m.home, m.homeLogo), mid, eq(m.away, m.awayLogo)); c.appendChild(row);
@@ -3999,11 +3998,11 @@ function renderResume() {
    list.replaceChildren();
    const autres=matchsListeData.filter(m=>m && m.link && m.status!=='finished' && !(matchsCourant && (m.link===matchsCourant.link || (m.home===matchsCourant.home && m.away===matchsCourant.away))));
    autres.slice(0,10).forEach(m=>{
-     const b=matchsEl('button','mnext-card');b.type='button';b.title='Watch '+matchsNomAnglais(m.home)+' – '+matchsNomAnglais(m.away);
-     const h=matchsEl('span','mnext-team',matchsNomAnglais(m.home)||'Team 1');h.dir='auto';
+     const b=matchsEl('button','mnext-card');b.type='button';b.title='Watch '+matchsNomAnglais(m.home,m.homeLogo)+' – '+matchsNomAnglais(m.away,m.awayLogo);
+     const h=matchsEl('span','mnext-team',matchsNomAnglais(m.home,m.homeLogo)||'Team 1');h.dir='auto';
      const score=matchsEl('span','mnext-score',m.status==='upcoming'?(m.time||'À venir'):((m.homeGoals??'0')+' - '+(m.awayGoals??'0')));
      if(m.status==='live')score.appendChild(matchsEl('small','','EN DIRECT'));
-     const a=matchsEl('span','mnext-team',matchsNomAnglais(m.away)||'Team 2');a.dir='auto';
+     const a=matchsEl('span','mnext-team',matchsNomAnglais(m.away,m.awayLogo)||'Team 2');a.dir='auto';
      b.append(h,score,a);b.addEventListener('click',()=>matchsOuvrir(m));list.appendChild(b);
    });
    wrap.hidden=autres.length===0;
