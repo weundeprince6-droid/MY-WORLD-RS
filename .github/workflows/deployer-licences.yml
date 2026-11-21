@@ -1,0 +1,22 @@
+# Déploie le Worker des licences Lecteur Pro (cloudflare-licences/worker.js).
+# Prérequis : secret GitHub CLOUDFLARE_API_TOKEN (déjà utilisé par l'autre Worker).
+name: Déployer le Worker des licences
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["cloudflare-licences/**", ".github/workflows/deployer-licences.yml"]
+
+jobs:
+  deployer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: 9202ebde97a78d0ec24797f2296f6d89
+          workingDirectory: cloudflare-licences
+          wranglerVersion: "4"
+          command: deploy

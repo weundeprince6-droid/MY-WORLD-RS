@@ -1,0 +1,12 @@
+name = "lecteur-pro-licences"
+main = "worker.js"
+compatibility_date = "2025-01-01"
+account_id = "9202ebde97a78d0ec24797f2296f6d89"
+
+[vars]
+FIREBASE_API_KEY = "AIzaSyCmTqeg6EByQCns7HpVi9PV0EdVObRR4ck"
+ADMIN_EMAIL = "weundeprince6@gmail.com"
+
+# Stockage des licences (créé automatiquement au premier déploiement)
+[[kv_namespaces]]
+binding = "LICENSES"

@@ -43,3 +43,13 @@ Région : `us-central1`.
 
 ## Déploiement
 Le workflow GitHub Actions `.github/workflows/deploy-firebase-functions.yml` déploie les Cloud Functions après les changements dans `functions/**`. Il nécessite le secret GitHub `FIREBASE_SERVICE_ACCOUNT_MY_WORLD_RS`. Le statut du workflow doit être vérifié dans l'onglet Actions du dépôt avant de considérer les endpoints disponibles.
+
+## Hébergement actuel : Worker Cloudflare (sans plan Blaze)
+
+Les licences tournent sur un Worker Cloudflare indépendant : `cloudflare-licences/worker.js`
+(adresse : `https://lecteur-pro-licences.weundeprince6.workers.dev/`), avec stockage KV.
+Mêmes routes, formules (3 000 / 30 000 / 60 000 FC) et messages que `functions/lecteur-pro.js`.
+Déploiement automatique à chaque changement dans `cloudflare-licences/` (secret `CLOUDFLARE_API_TOKEN`).
+Le déploiement automatique des Cloud Functions Firebase est désactivé (plan Blaze requis).
+Limite connue : KV est « éventuellement cohérent » ; deux activations simultanées du même code
+peuvent, très rarement, passer ensemble. Acceptable pour les premières ventes.
