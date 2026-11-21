@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b1420">
+<title>Mon profil — Lecteur Pro</title>
+<style>
+:root{color-scheme:dark;--bg:#080d16;--panel:#101a27;--panel2:#172638;--text:#f3f7fb;--muted:#9aabbd;--green:#13b981;--blue:#36a5ff;--border:#26384b}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 15% 0,rgba(19,185,129,.18),transparent 38%),radial-gradient(ellipse at 90% 90%,rgba(54,165,255,.13),transparent 42%),var(--bg);color:var(--text);font:15px/1.55 Inter,"Segoe UI",system-ui,sans-serif}
+.wrap{width:min(760px,calc(100% - 28px));margin:auto;padding:24px 0 50px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.brand{font-size:19px;font-weight:900}.brand span{color:var(--green)}a,button{color:inherit}.back,.save{border:1px solid var(--border);background:var(--panel2);padding:10px 14px;border-radius:11px;text-decoration:none;font:inherit;font-weight:750;cursor:pointer}.hero{margin:34px 0 20px}.eyebrow{color:var(--green);font-size:12px;font-weight:850;letter-spacing:2px}.hero h1{font-size:clamp(30px,6vw,42px);margin:8px 0}.hero p{color:var(--muted);margin:0}.card{background:linear-gradient(145deg,var(--panel),#111f2d);border:1px solid var(--border);border-radius:20px;padding:clamp(18px,4vw,28px);box-shadow:0 18px 45px #0003}.avatar{width:82px;height:82px;border-radius:24px;display:grid;place-items:center;background:linear-gradient(135deg,var(--green),var(--blue));font-size:30px;font-weight:900;margin-bottom:20px;color:#041b17}.field{display:grid;gap:7px;margin:15px 0}.field label{font-weight:750;font-size:13px;color:var(--muted)}input,textarea{width:100%;padding:13px 14px;border:1px solid var(--border);border-radius:11px;background:#0b1420;color:var(--text);font:inherit;outline:none}input:focus,textarea:focus{border-color:var(--green)}.hint{font-size:12px;color:var(--muted)}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}.save{background:linear-gradient(120deg,var(--green),#087eaa);border:0;color:white}.status{color:#7ee6b4;min-height:22px;margin-top:12px;font-size:13px}
+</style></head>
+<body><main class="wrap">
+<header class="top"><div class="brand">🎬 <span>LECTEUR</span> PRO</div><a class="back" href="television.html">← Retour au lecteur</a></header>
+<section class="hero"><div class="eyebrow">ESPACE PERSONNEL</div><h1>Mon profil</h1><p>Un profil indépendant, réservé à Lecteur Pro. Ces informations ne modifient pas votre compte MY WORLD RS.</p></section>
+<section class="card">
+<div class="avatar" id="avatar">LP</div>
+<form id="profileForm">
+<div class="field"><label for="displayName">Nom ou pseudonyme</label><input id="displayName" maxlength="60" placeholder="Comment souhaitez-vous apparaître ?"></div>
+<div class="field"><label for="email">Adresse e-mail (facultatif)</label><input id="email" type="email" maxlength="120" placeholder="exemple@email.com"></div>
+<div class="field"><label for="about">À propos (facultatif)</label><textarea id="about" rows="3" maxlength="240" placeholder="Quelques mots sur vous…"></textarea></div>
+<p class="hint">Le profil est enregistré sur cet appareil et dans ce navigateur. Il n'est pas synchronisé avec MY WORLD RS.</p>
+<div class="actions"><button class="save" type="submit">Enregistrer mon profil</button><a class="back" href="lecteur-pro-parametres.html">Paramètres du lecteur</a></div><div class="status" id="status" role="status"></div>
+</form></section></main>
+<script>
+(()=>{const key='lecteurPro.profile.v1';const $=id=>document.getElementById(id);let data={};try{data=JSON.parse(localStorage.getItem(key)||'{}')||{}}catch(_){}
+$('displayName').value=data.name||'';$('email').value=data.email||'';$('about').value=data.about||'';
+function initials(v){const p=(v||'Lecteur Pro').trim().split(/\\s+/).filter(Boolean);return p.slice(0,2).map(x=>x[0].toUpperCase()).join('')||'LP'}
+function paint(){$('avatar').textContent=initials($('displayName').value)}
+$('displayName').addEventListener('input',paint);paint();
+$('profileForm').addEventListener('submit',e=>{e.preventDefault();const d={name:$('displayName').value.trim(),email:$('email').value.trim(),about:$('about').value.trim()};try{localStorage.setItem(key,JSON.stringify(d));$('status').textContent='Profil enregistré sur cet appareil.';paint()}catch(_){$('status').textContent='Impossible d’enregistrer le profil dans ce navigateur.'}});
+})();
+</script></body></html>
