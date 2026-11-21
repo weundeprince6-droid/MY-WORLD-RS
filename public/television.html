@@ -4040,7 +4040,7 @@ function renderResume() {
    if (!matchsInfo || !matchsServeursEssai.length) return;
    const n = matchsServeursEssai[matchsServeurIndex], msg = $('matchsMsg');
    if (matchsAutoActif) {
-     msg.textContent = ''; msg.hidden = true; $('mpTitle').textContent = 'Serveur ' + (matchsServeurIndex + 1) + '/' + matchsServeursEssai.length + ' · ' + matchsCourant.home + ' – ' + matchsCourant.away; matchsAutoTimer = setTimeout(matchsEssayerSuivant, MATCHS_DELAI_SERVEUR);
+     msg.textContent = ''; msg.hidden = true; $('mpTitle').textContent = matchsCourant.home + ' – ' + matchsCourant.away; matchsAutoTimer = setTimeout(matchsEssayerSuivant, MATCHS_DELAI_SERVEUR);
    } else msg.hidden = true;
    mpFrame.src = matchsInfo.playerUrl + (n ? '?serv=' + n : '');
    $('mpServers').querySelectorAll('button[data-n]').forEach(btn => btn.classList.toggle('on', +btn.dataset.n === n));
