@@ -4978,7 +4978,7 @@ function playbackDockResume() {
     const key = button.id || button.dataset.filter;
     const icon = icons[key];
     if (!icon || button.querySelector(".menu-icon")) return;
-    const label = button.textContent.trim().replace(/^[^\\p{L}\\p{N}]+/u, "").trim();
+    const label = button.textContent.trim().replace(/^[^\p{L}\p{N}]+/u, "").trim();
     button.textContent = "";
     const symbol = document.createElement("span");
     symbol.className = "menu-icon";
