@@ -3999,10 +3999,14 @@ function renderResume() {
    tvHide(); fifaHide(); matchsHide(); tvDriveHide(); cacherOngletMesFilms();
    // Si une vidéo YouTube est déjà en cours, réafficher la scène au lieu de la recouvrir
    // par la page de recherche : la lecture et sa position restent dans le même iframe.
-   const lectureYouTubeEnCours = document.body.dataset.mode === 'youtube' && !!youtubeCurrentId;
+   const modeAvantMenu = document.body.dataset.mode;
+   const lectureYouTubeEnCours = modeAvantMenu === 'youtube' && !!youtubeCurrentId;
+   const autreMediaEnCours = ['video','audio','image','doc'].includes(modeAvantMenu);
    youtubePane.hidden = lectureYouTubeEnCours;
    $('tabs').querySelectorAll('button').forEach(b => b.classList.toggle('active', b === youtubeTab));
-   if (!lectureYouTubeEnCours && document.body.dataset.mode !== 'youtube') setMode('empty');
+   // Ne pas basculer la scène sur « vide » lorsqu'un fichier local est ouvert :
+   // la page YouTube se superpose temporairement et le fichier réapparaît au retour.
+   if (!lectureYouTubeEnCours && !autreMediaEnCours && modeAvantMenu !== 'youtube') setMode('empty');
    ytMajRetour();
    if (!ytResults.children.length) youtubeSearch('tendances RDC');
  }
