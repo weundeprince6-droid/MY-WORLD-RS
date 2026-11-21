@@ -1708,6 +1708,7 @@ const DB = {
 
 // ================= État =================
 let items = [], current = -1, filter = 'all', query = '';
+let playbackKind = '';
 let shuffle = false, repeat = 'off', slideTimer = null, zoom = 1, panX = 0, panY = 0, seeking = false;
 let curUrl = null, playToken = 0, lastSave = 0, abA = null, abB = null, stopAfter = false, sleepT = null;
 let subCues = [], subIdx = -1, subDelay = 0, subOn = true, subName = '', lastSubText = '';
@@ -2007,6 +2008,7 @@ async function play(i) {
   const token = ++playToken;
   stopAll();
   current = i;
+  playbackKind = 'local';
   const it = items[i];
   resetAB(); clearSubs(); renderSubList(); renderMarks();
   $('nowPlaying').textContent = it.name;
@@ -3350,7 +3352,7 @@ function renderResume() {
   bbcworld:{name:'BBC World Service',url:'https://stream.live.vc.bbcmedia.co.uk/bbc_world_service',official:'https://www.bbc.com/audio'}
  };
  function radioSelect(key,autoplay=true) {
-  const station=radioStations[key];if(!station)return;radioCurrentKey=key;radioLoadedKey=key;radioAudio.pause();
+  const station=radioStations[key];if(!station)return;radioCurrentKey=key;radioLoadedKey=key;playbackKind='radio';radioAudio.pause();
   if(station.embedUrl){radioAudio.hidden=true;radioAudio.removeAttribute('src');radioAudio.load();radioEmbedFrame.src=station.embedUrl;radioEmbedWrap.hidden=false;$('radioPlay').hidden=true;}
   else{radioEmbedFrame.src='about:blank';radioEmbedWrap.hidden=true;radioAudio.hidden=false;radioAudio.src=station.url;radioAudio.load();$('radioPlay').hidden=false;}
   $('radioNowPlaying').textContent='📻 '+station.name;$('radioOfficial').href=station.official;$('nowPlaying').textContent='📻 RADIO · '+station.name;
@@ -3666,7 +3668,7 @@ function renderResume() {
       return;
     }
     const station = tvStations[key]; if (!station) return;
-    tvCurrentStationKey = key;
+    tvCurrentStationKey = key; playbackKind = 'tv';
     // Les services sans lecteur vidéo YouTube sont chargés dans le cadre du lecteur TV,
     // afin de rester dans MY WORLD RS au lieu d'ouvrir un nouvel onglet.
     let srcStation = station.externalOnly ? station.official : station.url;
@@ -4039,7 +4041,7 @@ function renderResume() {
  function youtubePlay(id, title='') {
    if (!/^[\w-]{6,20}$/.test(id)) return;
    youtubeQueueIndex = youtubeQueue.findIndex(v => v.id === id);
-   youtubeCurrentId = id; youtubeCurrentTitle = title || '';
+   youtubeCurrentId = id; youtubeCurrentTitle = title || ''; playbackKind = 'youtube';
    youtubeRemember(id,title);
    youtubeUpdateNav();
    saveProg(); stopAll();
@@ -4588,6 +4590,67 @@ if (btnRestart) btnRestart.addEventListener('click', () => {
   pane.querySelectorAll('[data-web-feed]').forEach(b=>b.addEventListener('click',()=>choisirFlux(b.dataset.webFeed)));
   pane.querySelectorAll('[data-web-url]').forEach(b=>b.addEventListener('click',()=>ouvrirSite(b.dataset.webUrl,b.textContent.trim())));
 })();
+
+
+/* Barre de contrôle persistante : retrouver ou fermer le média actuellement lu. */
+const playbackDock = document.createElement('div');
+playbackDock.id = 'mwrsPlaybackDock';
+playbackDock.style.cssText = 'position:fixed;z-index:100000;left:50%;bottom:max(12px,env(safe-area-inset-bottom));transform:translateX(-50%);display:none;align-items:center;gap:9px;max-width:calc(100vw - 20px);width:max-content;padding:9px 11px;border:1px solid #43845f;border-radius:15px;background:rgba(7,20,13,.96);color:#fff;box-shadow:0 8px 30px rgba(0,0,0,.4);font:600 13px system-ui,sans-serif';
+playbackDock.innerHTML = '<span id="mwrsPlaybackLabel" style="max-width:min(42vw,260px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Lecture en cours</span><button id="mwrsPlaybackResume" type="button" style="border:0;border-radius:9px;padding:9px 12px;background:#35a867;color:#fff;font-weight:800;cursor:pointer;white-space:nowrap">↩ Reprendre</button><button id="mwrsPlaybackClose" type="button" aria-label="Fermer la lecture" title="Arrêter et fermer cette lecture" style="border:1px solid #a65b5b;border-radius:9px;padding:8px 11px;background:#542727;color:#fff;font-weight:800;cursor:pointer">✕</button>';
+document.body.appendChild(playbackDock);
+function playbackDockRefresh() {
+  const label=$('mwrsPlaybackLabel');
+  if(!playbackKind){playbackDock.style.display='none';return;}
+  const names={local:items[current]?.name||'Fichier en cours',youtube:'YouTube · '+(youtubeCurrentTitle||youtubeCurrentId||'Vidéo'),tv:'TV · '+(tvStations[tvCurrentStationKey]?.name||'Chaîne en direct'),radio:'Radio · '+(radioStations[radioCurrentKey]?.name||'Station en direct')};
+  if(label)label.textContent=names[playbackKind]||'Lecture en cours';
+  let visible=false;
+  if(playbackKind==='local') visible=!!items[current] && document.body.dataset.mode===items[current].type;
+  else if(playbackKind==='youtube') visible=document.body.dataset.mode==='youtube' && youtubePane.hidden;
+  else if(playbackKind==='tv') visible=!!tvPane && !tvPane.hidden;
+  else if(playbackKind==='radio') visible=!!radioPane && !radioPane.hidden;
+  const resume=$('mwrsPlaybackResume');
+  resume.textContent=visible?'↗ Afficher':'↩ Reprendre';
+  resume.title=visible?'Réafficher le lecteur':'Revenir à la lecture en cours';
+  playbackDock.style.display='flex';
+}
+function playbackDockResume() {
+  if(!playbackKind)return;
+  if(playbackKind==='tv'){tvShow();return;}
+  if(playbackKind==='radio'){radioShow();return;}
+  tvHide();radioHide();fifaHide();matchsHide();tvDriveHide();youtubeHide();cacherOngletMesFilms();
+  const spotify=$('spotifyPane');if(spotify)spotify.hidden=true;
+  const web=$('webReaderPane');if(web)web.hidden=true;
+  if(playbackKind==='youtube'){youtubeShow();return;}
+  const it=items[current];
+  if(it){$('playlist').hidden=false;setMode(it.type);$('nowPlaying').textContent=it.name;$('tabs').querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.filter==='all'));}
+  playbackDockRefresh();
+}
+function playbackDockClose() {
+  if(playbackKind==='local'){
+    saveProg();stopAll();stopSlideshow();current=-1;
+    const df=$('docFrame');if(df)df.src='about:blank';
+    setMode('empty');$('nowPlaying').textContent='Aucun média';renderList();renderResume();updatePlayBtn();
+  }else if(playbackKind==='youtube'){
+    const yf=$('youtubeFrame');if(yf)yf.src='about:blank';
+    youtubeCurrentId='';youtubeCurrentTitle='';youtubePaused=true;youtubePane.hidden=true;
+    setMode('empty');$('nowPlaying').textContent='Aucun média';updatePlayBtn();ytMajRetour();
+  }else if(playbackKind==='tv'){
+    tvQuotaPersist();tvQuotaSessionStart=0;tvActive=false;
+    if(tvStationFrame){tvStationFrame.src='about:blank';delete tvStationFrame.dataset.mwrsLoaded;}
+    if(tvPane)tvPane.hidden=true;document.body.classList.remove('tv-fullscreen');
+    $('playlist').hidden=false;
+  }else if(playbackKind==='radio'){
+    radioActive=false;radioAudio.pause();radioAudio.removeAttribute('src');radioAudio.load();
+    radioEmbedFrame.src='about:blank';radioEmbedWrap.hidden=true;radioLoadedKey='';
+    radioPane.hidden=true;$('playlist').hidden=false;
+  }
+  playbackKind='';playbackDockRefresh();
+}
+$('mwrsPlaybackResume').addEventListener('click',playbackDockResume);
+$('mwrsPlaybackClose').addEventListener('click',playbackDockClose);
+for(const m of [audio,video]){m.addEventListener('play',playbackDockRefresh);m.addEventListener('pause',playbackDockRefresh);}
+$('tabs')?.addEventListener('click',()=>setTimeout(playbackDockRefresh,0));
+setInterval(playbackDockRefresh,1200);
 
 })();
 
