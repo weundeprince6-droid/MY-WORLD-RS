@@ -33,7 +33,10 @@ async function getUser(request, env) {
   let r, d;
   try {
     r = await fetch("https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=" + encodeURIComponent(env.FIREBASE_API_KEY), {
-      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ idToken: auth.slice(7) })
+      method: "POST",
+      // La clé Firebase n'accepte que les requêtes venant des sites du projet : on s'annonce comme tel
+      headers: { "Content-Type": "application/json", "Referer": "https://weundeprince6-droid.github.io/MY-WORLD-RS/" },
+      body: JSON.stringify({ idToken: auth.slice(7) })
     });
     d = await r.json();
   } catch (e) { throw new HttpError(503, "Vérification de connexion indisponible."); }
