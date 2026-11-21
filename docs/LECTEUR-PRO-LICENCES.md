@@ -53,3 +53,13 @@ Déploiement automatique à chaque changement dans `cloudflare-licences/` (secre
 Le déploiement automatique des Cloud Functions Firebase est désactivé (plan Blaze requis).
 Limite connue : KV est « éventuellement cohérent » ; deux activations simultanées du même code
 peuvent, très rarement, passer ensemble. Acceptable pour les premières ventes.
+
+## Paiement Mobile Money semi-automatique
+
+1. Le client choisit une formule sur `lecteur-pro-offres.html`, paie sur le numéro M-Pesa / Airtel Money / Orange Money affiché
+   (numéros dans `PAYMENT_ACCOUNTS`, `cloudflare-licences/wrangler.toml`), se connecte avec Google et envoie la référence de la transaction.
+2. L'administrateur voit la commande dans « Commandes Mobile Money à valider » (`lecteur-pro-admin.html`), vérifie le paiement dans
+   son application Mobile Money, puis clique sur « Valider » (ou « Refuser »).
+3. À la validation, le Premium est activé directement sur le compte du client (aucun code à transmettre).
+   Un renouvellement s'ajoute à la fin de l'abonnement en cours ; un accès « à vie » n'est jamais raccourci.
+Sécurité : le client ne peut rien s'accorder lui-même ; référence de transaction unique par opérateur ; 3 commandes en attente maximum par compte.
