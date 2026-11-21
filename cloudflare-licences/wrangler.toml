@@ -6,6 +6,8 @@ account_id = "9202ebde97a78d0ec24797f2296f6d89"
 [vars]
 FIREBASE_API_KEY = "AIzaSyCmTqeg6EByQCns7HpVi9PV0EdVObRR4ck"
 ADMIN_EMAIL = "weundeprince6@gmail.com"
+# Numéros qui reçoivent les paiements (affichés aux clients). À compléter, puis commit.
+PAYMENT_ACCOUNTS = '''{"holder":"","mpesa":"","airtel":"","orange":""}'''
 
 # Stockage des licences (créé automatiquement au premier déploiement)
 [[kv_namespaces]]
