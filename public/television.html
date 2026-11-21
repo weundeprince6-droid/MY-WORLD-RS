@@ -1400,7 +1400,7 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
         <p class="matchs-help" id="matchsHelp">Choisissez un match : seule la vidéo s’affiche, sans le site autour, et vous pouvez la mettre en plein écran. Les heures sont celles du site Kooralive. Si un match ne démarre pas, essayez un autre serveur ou « Site complet ».</p>
         <div id="matchsGrid" aria-live="polite"></div>
         <div id="matchsPlayer">
-          <iframe id="matchsPlayerFrame" title="Lecteur du match" sandbox="allow-scripts allow-same-origin allow-forms allow-presentation" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowfullscreen referrerpolicy="origin"></iframe>
+          <iframe id="matchsPlayerFrame" title="Lecteur du match" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
           <div id="matchsNext" aria-label="Autres matchs en direct ou à venir"><div class="matchs-next-title">⚽ Autres matchs en direct ou au programme</div><div id="matchsNextList"></div></div>
           <div id="matchsMsg" hidden></div>
           <div id="matchsHot" title="Afficher les commandes"></div>
