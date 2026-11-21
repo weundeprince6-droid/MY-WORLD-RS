@@ -863,6 +863,16 @@ body.tv-fullscreen #viewer #tvPane{position:absolute!important;inset:0!important
 }
 /* Matchs en direct : liste de matchs, lecteur seul, site complet */
 #matchsFloat,#matchsPlayer,#matchsFrame{display:none}
+#matchsGoalSpot{position:absolute;top:58px;left:50%;z-index:30;display:flex;align-items:center;gap:12px;min-width:220px;max-width:min(92%,420px);padding:12px 18px;border:1px solid rgba(255,255,255,.35);border-radius:16px;background:linear-gradient(120deg,rgba(15,18,22,.97),rgba(28,75,48,.96));color:#fff;box-shadow:0 12px 36px rgba(0,0,0,.42);opacity:0;pointer-events:none;transform:translate(-50%,-18px) scale(.92)}
+#matchsGoalSpot[hidden]{display:none!important}
+#matchsGoalSpot.show{display:flex;animation:matchGoalPop .42s cubic-bezier(.2,.85,.25,1.25) forwards}
+#matchsGoalSpot .goal-ball{font-size:34px;animation:matchBallSpin .8s ease-out}
+#matchsGoalSpot .goal-copy{display:flex;flex-direction:column;gap:3px;min-width:0}
+#matchsGoalSpot strong{font-size:20px;letter-spacing:1.5px;color:#7dff9b}
+#matchsGoalSpot span{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@keyframes matchGoalPop{0%{opacity:0;transform:translate(-50%,-18px) scale(.92)}65%{opacity:1;transform:translate(-50%,5px) scale(1.03)}100%{opacity:1;transform:translate(-50%,0) scale(1)}}
+@keyframes matchBallSpin{from{transform:rotate(-90deg) scale(.6)}to{transform:rotate(0) scale(1)}}
+@media(max-width:600px){#matchsGoalSpot{top:48px;padding:9px 13px;min-width:190px}#matchsGoalSpot .goal-ball{font-size:28px}#matchsGoalSpot strong{font-size:17px}}
 #matchsPane.vue-liste #matchsGrid{display:grid}
 #matchsPane.vue-lecteur #matchsPlayer{display:block}
 #matchsPane.vue-site #matchsFrame{display:block}
@@ -1400,6 +1410,7 @@ body[data-mode="matchs"] #sidebar #matchsNext:not([hidden]){display:flex}
       <section id="matchsPane" class="vue-liste" hidden>
         <div class="matchs-head"><strong>⚽ Matchs en direct</strong><button id="matchsBack" type="button">← Mes fichiers</button><span class="mdays" role="tablist"><button type="button" data-day="yesterday">Hier</button><button type="button" data-day="today" class="on">Aujourd’hui</button><button type="button" data-day="tomorrow">Demain</button></span><button id="matchsRefresh" type="button" title="Actualiser la liste">↻</button><button id="matchsSite" type="button" title="Afficher le site Kooralive complet">🌐 Site complet</button></div>
         <p class="matchs-help" id="matchsHelp">Choisissez un match : seule la vidéo s’affiche, sans le site autour, et vous pouvez la mettre en plein écran. Les heures sont celles du site Kooralive. Si un match ne démarre pas, essayez un autre serveur ou « Site complet ».</p>
+        <div id="matchsGoalSpot" role="status" aria-live="assertive" hidden><span class="goal-ball">⚽</span><div class="goal-copy"><strong>BUT !</strong><span id="matchsGoalText"></span></div></div>
         <div id="matchsGrid" aria-live="polite"></div>
         <div id="matchsPlayer">
           <iframe id="matchsPlayerFrame" title="Lecteur du match" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
@@ -3887,6 +3898,55 @@ function renderResume() {
    $('nowPlaying').textContent = current < 0 ? 'Aucun média' : items[current].name;
  });
  let matchsActive = false;
+ let matchsAudioContext = null, matchsButTimer = null, matchsScoresConnus = null, matchsScoresJour = '';
+ function matchsActiverAudio() {
+   try {
+     const AC = window.AudioContext || window.webkitAudioContext;
+     if (AC && !matchsAudioContext) matchsAudioContext = new AC();
+     if (matchsAudioContext && matchsAudioContext.state === 'suspended') matchsAudioContext.resume().catch(() => {});
+   } catch (e) {}
+ }
+ function matchsButSon() {
+   try {
+     if (!matchsAudioContext || matchsAudioContext.state !== 'running') return;
+     const ctx = matchsAudioContext, start = ctx.currentTime + .02;
+     [660,880,1046].forEach((hz,i) => {
+       const osc=ctx.createOscillator(), gain=ctx.createGain(), t=start+i*.14;
+       osc.type='sine'; osc.frequency.setValueAtTime(hz,t);
+       gain.gain.setValueAtTime(.0001,t); gain.gain.exponentialRampToValueAtTime(.16,t+.025);
+       gain.gain.exponentialRampToValueAtTime(.0001,t+.19);
+       osc.connect(gain); gain.connect(ctx.destination); osc.start(t); osc.stop(t+.2);
+     });
+   } catch (e) {}
+ }
+ function matchsButAfficher(ev) {
+   const spot=$('matchsGoalSpot'), label=$('matchsGoalText');
+   if(!spot||!label)return;
+   label.textContent=ev.team+'  '+ev.score;
+   spot.hidden=false; spot.classList.remove('show'); void spot.offsetWidth; spot.classList.add('show');
+   matchsButSon(); clearTimeout(matchsButTimer);
+   matchsButTimer=setTimeout(()=>{spot.classList.remove('show');spot.hidden=true;},4200);
+ }
+ function matchsDetecterButs(matches) {
+   if(matchsScoresJour!==matchsJour){matchsScoresJour=matchsJour;matchsScoresConnus=null;}
+   const next={}, events=[];
+   for(const m of matches){
+     if(!m)continue;
+     const key=m.link||[m.home,m.away].join('|');
+     const home=Number.parseInt(m.homeGoals,10), away=Number.parseInt(m.awayGoals,10);
+     if(!Number.isFinite(home)||!Number.isFinite(away))continue;
+     const old=matchsScoresConnus&&matchsScoresConnus[key];
+     if(old){
+       if(home>old.home)events.push({team:matchsNomAnglais(m.home,m.homeLogo),score:home+' - '+away});
+       if(away>old.away)events.push({team:matchsNomAnglais(m.away,m.awayLogo),score:home+' - '+away});
+     }
+     next[key]={home,away};
+   }
+   matchsScoresConnus=next;
+   if(matchsJour==='today'&&events.length){
+     events.forEach((ev,i)=>setTimeout(()=>{if(matchsActive)matchsButAfficher(ev);},i*4300));
+   }
+ }
  let matchsRefreshTimer = null;
  function matchsDemarrerSynchro() {
    clearInterval(matchsRefreshTimer);
@@ -3897,6 +3957,7 @@ function renderResume() {
  function matchsArreterSynchro() { clearInterval(matchsRefreshTimer); matchsRefreshTimer = null; }
  function matchsShow() {
    tvHide(); fifaHide(); tvDriveHide(); youtubeHide(); cacherOngletMesFilms();
+   matchsActiverAudio();
    matchsActive = true; $('playlist').hidden = true; matchsPane.hidden = false;
    $('tabs').querySelectorAll('button').forEach(b => b.classList.toggle('active', b === matchsTab));
    setMode('matchs'); $('nowPlaying').textContent = '⚽ Matchs en direct'; updatePlayBtn(); matchsMontrerListe(); matchsDemarrerSynchro();
@@ -3995,6 +4056,7 @@ function renderResume() {
      if (seq !== matchsLoadSeq) return;
      if (!r.ok) throw new Error(j.error || 'Service indisponible');
      matchsListeData = Array.isArray(j.matches) ? j.matches : [];
+     matchsDetecterButs(matchsListeData);
      const directs = matchsListeData.filter(m => m && m.status === 'live');
      g.replaceChildren();
      if (!directs.length) g.appendChild(matchsEl('div', 'mempty', matchsJour === 'today' ? 'Aucun match actuellement signalé en direct par Kooralive. La liste se resynchronise automatiquement.' : 'Aucun match en direct pour ce jour.'));
