@@ -1,0 +1,4 @@
+name = "lecteur-pro-matchs"
+main = "worker.js"
+compatibility_date = "2025-01-01"
+account_id = "9202ebde97a78d0ec24797f2296f6d89"

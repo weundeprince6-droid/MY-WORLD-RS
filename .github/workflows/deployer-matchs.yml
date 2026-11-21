@@ -1,0 +1,22 @@
+# Déploie le Worker des matchs en direct (cloudflare-matchs/worker.js).
+# Prérequis : secret GitHub CLOUDFLARE_API_TOKEN (déjà utilisé par les autres Workers).
+name: Déployer le Worker des matchs
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["cloudflare-matchs/**", ".github/workflows/deployer-matchs.yml"]
+
+jobs:
+  deployer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: 9202ebde97a78d0ec24797f2296f6d89
+          workingDirectory: cloudflare-matchs
+          wranglerVersion: "4"
+          command: deploy
